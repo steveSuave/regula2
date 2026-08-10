@@ -28,6 +28,7 @@ import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/rhombus_macro_tool.dart';
 import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/slope_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/three_point_tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
@@ -146,6 +147,14 @@ void main() {
     await tester.tap(find.text('Area'));
     await tester.pumpAndSettle();
     expect(container.read(toolProvider).tool, isA<AreaTool>());
+    expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
+
+    await tester.tap(find.byIcon(Icons.straighten));
+    await tester.pump(kDoubleTapTimeout);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Slope'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isA<SlopeTool>());
     expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
   });
 

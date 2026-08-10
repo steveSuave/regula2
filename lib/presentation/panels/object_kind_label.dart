@@ -30,6 +30,7 @@ import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
+import '../../domain/construction/objects/slope_measurement.dart';
 import '../../domain/construction/objects/tangent_line.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
 
@@ -80,6 +81,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       DistanceMeasurement() => 'Distance',
       AreaMeasurement() => 'Area',
       LengthMeasurement() => 'Length',
+      SlopeMeasurement() => 'Slope',
       GeoMeasurement() => 'Measurement',
       GeoText() => 'Text',
       GeoLocus() => 'Locus',

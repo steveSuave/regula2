@@ -58,6 +58,7 @@ import 'domain/tools/regular_polygon_macro_tool.dart';
 import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/right_triangle_macro_tool.dart';
+import 'domain/tools/slope_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/tangent_tool.dart';
 import 'domain/tools/text_tool.dart';
@@ -713,6 +714,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(DistanceTool(newId: newObjectId));
       case AppAction.areaTool:
         tools.activate(AreaTool(newId: newObjectId));
+      case AppAction.slopeTool:
+        tools.activate(SlopeTool(newId: newObjectId));
       case AppAction.locusTool:
         tools.activate(LocusTool(newId: newObjectId));
       case AppAction.compassTool:
