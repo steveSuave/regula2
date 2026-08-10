@@ -1,37 +1,174 @@
-# Build TODO
+# Build TODO — V2 kernel track
 
-Live checklist for the build phases described in `docs/PLAN.md`. Tick items as they land on `main` with `flutter analyze` clean and `flutter test` green.
+Live checklist for the V2 phases described in `docs/PLAN.md`. Tick items as they land on `main` with `flutter analyze` clean and `flutter test` green.
 
-Definition of done for each phase: code merged, tests passing, `docs/TODO.md` updated, `docs/STATUS.md` entry written.
+Definition of done for each phase: code merged, tests passing, app runnable (chrome + one native target), `docs/TODO.md` updated, `docs/STATUS.md` entry written.
 
-Rotation: this file holds open phases plus the most recent couple of completed ones. Fully-completed phase checklists move to `docs/archive/TODO-completed-phases.md` — move a phase there once it's merged and a newer phase has landed after it.
+Rotation: this file holds open phases plus the most recent couple of completed ones. Fully-completed phase checklists move to `docs/archive/TODO-completed-phases.md`. V1's final checklist state is archived at `docs/archive/TODO-v1-final.md`.
 
-## Phase 12 — Tests & polish
-- [x] Widget tests for representative tool flows (audit found 15 sessions of per-phase coverage already dense — creation flows, undo units, selection, drags, pan/zoom, file menu, every shortcut path; the one missing PLAN scenario landed: a circumcircle recomputing live under a real vertex-drag gesture, restored by undo)
-- [x] Golden tests (light + dark) for each object kind (Session 2 decision resolved: discontinued `golden_toolkit` dropped for plain `matchesGoldenFile` — five scenes ×2 themes framed by `fittedViewport`, tagged `golden` via new `dart_test.yaml`; CI's `--exclude-tags golden` still skips them, regenerate with `flutter test --update-goldens --tags golden`)
-- [x] Save/load round-trip on a non-trivial construction (already covered since Phase 9: the codec kitchen-sink test round-trips every concrete kind + attributes + viewport, `file_menu_test` drives Save/Open at the widget level, and the browser smoke parses a real downloaded document — no new work needed)
-- [ ] Manual cross-platform smoke (`flutter run -d chrome`, Android emulator, iOS simulator) (web done — full `tool/web_smoke/drive.js` suite SMOKE PASS on a release build, zero console errors; Android emulator needs an AVD first, and no system image is installed — a multi-GB `sdkmanager` download to approve; iOS simulator blocked on the incomplete Xcode install)
-- [ ] `flutter build apk` and `flutter build ios` succeed (`flutter build apk` ✓ — 49.5 MB release APK; `flutter build ios` still blocked: Xcode incomplete + CocoaPods missing since Session 2 — needs an App Store install and `sudo xcode-select --switch`, then `sudo xcodebuild -runFirstLaunch`)
+Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover (M-P) and 3D (M-3D) milestones get numbered phases when opened — see their outlines in `docs/PLAN.md`.
 
-## Phase 19 — Export
-- [x] Off-screen PNG renderer in `lib/application/export/` (`PictureRecorder` + `GeometryPainter`; framing: fit construction / current viewport / drag-selected region; scale factor 1×/2×/4×; theme-color vs transparent background; no UI chrome — selection halos, in-progress markers, band never render) (landed as `png_exporter.dart`: `renderConstructionImage` + `encodePng` + `exportConstructionPng`, framings as a `({viewport, logicalSize})` record; the canvas `scale(pixelRatio)` upscales strokes/labels like a Hi-DPI screen would)
-- [x] Export options dialog: framing choice, scale, background, and the **exact output size in pixels** shown live ("Output: 1920 × 1080 px"); File-menu "Export as PNG…" entry (wide File popup + compact overflow) + `Ctrl/Cmd + E` shortcut + cheat-sheet row (export is read-only view work: no `Command`, not undoable, no save-format change) (framing radios are plain `ListTile`s + icon pairs — Flutter's radio tiles are mid-migration to `RadioGroup`; options persist across dialog round trips in `EditorScreen` state; a stale fit/region initial framing sanitizes to current view)
-- [x] Region picking: one-shot marquee overlay stacked on the canvas (canvas widget untouched); drag → rect in canvas screen coords → dialog reopens with region framing; Esc cancels; region viewport = same scale, pan at the rect's top-left corner (`RegionPickOverlay` anchors at `onPanDown` — `onPanStart` would shave the ~18 px slop off the corner; scrim with a cutout previews the crop; sub-8-px drags keep the overlay armed; all *other* shortcuts are swallowed mid-pick)
-- [x] Delivery via a `savePngBytes` sibling in `file_io.dart`; verified on web via the widget-test picker fake + the smoke's existing Save… download path (same `FilePicker.saveFile` route) — Android native-picker check rides the Phase 12 emulator blocker
-- [x] Tests: pixel check on the rendered image for a known scene (dimensions × scale, transparent vs opaque background, object pixels present, region crop correct); widget test for the menu → dialog → save flow and the region-pick round trip (13 exporter tests + 7 flow widget tests, incl. PNG IHDR dimension parsing and Esc-cancel; 771 green, analyze clean, web smoke SMOKE PASS on a fresh release build)
-- [ ] Stretch: hand-written SVG writer mirroring the painter per kind (`dashPeriod` → `stroke-dasharray`, labels as `<text>`) + "Export as SVG…" entry — may slip; PDF and clipboard-copy stay out of scope
+## Carried over from V1 (environment, not code)
 
-## Phase 72 — Configurable measurement rounding (user request)
-- [x] `docs/PLAN.md` updated first: build-order item 55, `valueDecimals` on the attributes line, Phase 72 notes on the measure-format and inspector sections
-- [x] `ObjectAttributes.valueDecimals` (`int?`, default null = kind default: 2 for lengths/areas, 1 for angles — the pre-72 fixed counts; additive with a default, no save-format version bump)
-- [x] `measure_format.dart`: `formatLength`/`formatAngle`/`formatArea` take `{int? decimals}` falling back to new `defaultLengthDecimals`/`defaultAngleDecimals` constants; `labelText` passes the object's `valueDecimals`
-- [x] Inspector: Decimals preset row `0`–`5` (`_PresetSelector`) over value-carrying kinds (segments, angles, measurements, expression texts with slots), placed under Show value; values shown as each object's *effective* count so fresh lengths highlight 2 and fresh angles 1
-- [x] Text `{…}` slots (follow-up user request): `formatComputedValue`/`TextTemplate.render` take `{int? decimals}` (null = 2; negative-zero guard generalized to every count), `ExpressionText.recompute` passes `attributes.valueDecimals`, `Construction.setAttributes` re-renders texts (the one carve-out from "attributes never recompute" — parents untouched, texts have no dependents), `ExpressionText.hasExpressions` gates the inspector row off literal-only texts
-- [x] Tests: formatter decimals overrides (presentation + domain), `labelText` end-to-end (segment 4dp, angle 0dp, measurement 1dp), text render + setAttributes re-render + `hasExpressions`, attributes default + JSON round-trip — analyze clean, 1597 green
+- [ ] Android emulator smoke — needs an AVD + system image (`sdkmanager` download to approve)
+- [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
+- [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 73 — Slope measurement of a line (user request)
-- [x] `docs/PLAN.md` updated first: Phase 73 sentence in the Measurements bullet + build-order item 56
-- [x] `SlopeMeasurement` (`GeoMeasurement`; one `GeoLine` subject, constructor kind-guard on the `AreaMeasurement` model); value = carrier `direction.y / direction.x`, undefined for vertical lines or while the subject is; anchor from `parameterExtent` (segment midpoint, ray origin, `pointOnLine` for infinite carriers)
-- [x] `SlopeTool`: stateless one-tap on the `AreaTool` model — topmost `GeoLine` from `hits`, else ignored
-- [x] Registration: codec (+ kitchen-sink round-trip + ill-typed-subject `FormatException`), `object_kind_label.dart` ('Slope'), Measure flyout row 4 + tooltip + `measureActive`, `AppAction.slopeTool` + `⇧ M` shortcut row, `main.dart` switch
-- [x] Tests: object recompute/undefined units (incl. vertical line, ray/segment anchors), tool funnel (commit, reusable, extraHits, ignored), toolbar row + highlight, `⇧ M` end-to-end — analyze clean, suite green (1613 tests)
+## Phase 100 — Seed repo & docs reset (this bootstrap)
+
+- [x] Clone regula with full history into `regula2`; remove `origin` remote; tag branch point `v1-final`
+- [x] Archive `cl-V2.md` as `docs/V2-assessment.md`
+- [x] Rotate V1 docs: `PLAN-v1.md`, `STATUS-sessions-89-98.md`, `TODO-v1-final.md` into `docs/archive/`
+- [x] Write V2 `docs/PLAN.md` (migration strategy, milestones, risks, reuse contract)
+- [x] Write V2 `docs/TODO.md` (this file) and fresh `docs/STATUS.md`
+- [x] Update `CLAUDE.md` (V2 kernel invariants) and `README.md`
+- [x] Record deferred decisions: package rename, remote/CI/Pages
+- [x] Verify: analyze clean, suite green (1587 + 26 goldens), web-server smoke HTTP 200, blame traces to V1 phase commits
+
+## Phase 101 — SPIKE 1: `Complex` + benchmark harness
+
+- [ ] `lib/domain/projective/complex.dart`: immutable `Complex` — `+ - * / conj abs arg`, principal `sqrt`, `polar`, `isRealWithin(eps)`
+- [ ] Glados: field axioms up to eps; `sqrt(z)·sqrt(z) ≈ z`; conjugation/abs identities; branch-cut conventions pinned in tests
+- [ ] `benchmark/`: boxed `Complex` vs `Float64List` struct-of-arrays on tracing-shaped workloads (quadratic/cubic roots in a tight loop), run on VM, dart2js, dart2wasm
+- [ ] STATUS records: benchmark table, web compile-target policy, the SoA API shape the tracing loop uses from day one
+
+## Phase 102 — SPIKE 2: conic∩conic pencil prototype
+
+- [ ] `lib/domain/projective/pencil.dart` prototype: complex cubic solver; degenerate-member split (rank-2 → two lines via adjugate, rank-1 → double line); one-Newton-step root polishing; matrix normalization
+- [ ] Glados vs ground truth: random circle pairs against V1 `intersectCircleCircle`; conics through shared random points must intersect there
+- [ ] Near-tangent / near-degenerate stress corpus with measured error bounds
+- [ ] STATUS records the stability recipe (root choice for cleanest split, normalization, achieved tolerances) — Phase 105 implements to it
+
+## Phase 103 — `ProjPoint` / `ProjLine`
+
+- [ ] `proj_point.dart` / `proj_line.dart`: cross-product `join`/`meet`, incidence `⟨p,l⟩`, normalization, equality-up-to-complex-scalar, `isReal`/`isFinite` (eps), lift from `Vec2`/`LineEq`, project to `Vec2?`/`LineEq?`
+- [ ] Glados: join/meet duality; `p`,`q` incident to `join(p,q)`; all predicates/projections invariant under random complex scaling of homogeneous coords
+- [ ] Glados: line∩line always one point; parallel lines meet at `[d.x, d.y, 0]`; lift∘project = id on real finite inputs
+
+## Phase 104 — `ConicMatrix`, circular points, line∩conic
+
+- [ ] `conic_matrix.dart`: symmetric 3×3 complex matrix; evaluate `pᵀAp`; polar line `Ap`; lift from `CircleEq`; conic-from-five-points; degenerate-rank classification; `I=(1,i,0)`, `J=(1,−i,0)` constants
+- [ ] `intersectLineConic`: always exactly 2 `ProjPoint`s (multiplicity at tangency), canonically ordered by real parameter along the line when both are real (old-ordering compatibility)
+- [ ] Glados: every lifted circle passes through I and J; is-circle ⇔ passes through I,J; roots incident to both carriers
+- [ ] Glados: agreement (positions *and order*) with V1 `intersectLineCircle` on real transverse/tangent/miss cases (miss = conjugate pair, projection non-real)
+
+## Phase 105 — conic∩conic (production)
+
+- [ ] `intersectConicConic`: always 4 roots with multiplicities, per the Spike-2 recipe; canonical ordering (real roots first, old circle∩circle order among them, conjugate pairs pinned)
+- [ ] Single documented tolerance/eps policy for the projective layer
+- [ ] Glados: all 4 roots incident to both conics; any two distinct circles → exactly two of the four roots are I and J
+- [ ] Agreement with V1 `intersectCircleCircle` on real cases; Spike-2 stress corpus promoted to regression tests
+
+## Phase 106 — Bridge layer in the abstract kinds
+
+- [ ] `geo_object.dart`: `GeoPoint.projPoint` / `GeoLine.projLine` / `GeoCircle.conic` nullable getters with lift-from-affine defaults; projection helpers; kind-level `isDefined` docs updated to the "real and finite" reading
+- [ ] Zero behaviour change: full suite green untouched
+- [ ] Exhaustive test: lift defaults agree with affine values for every concrete kind (loop over the codec's kind registry)
+- [ ] PLAN documents the migrated/unmigrated contract + rule: new domain code reads projective accessors only
+
+## Phase 107 — Object batch 1: incidence core
+
+- [ ] Migrate: `FreePoint` (stores `ProjPoint`, drag sets it real), `Midpoint`, `LineThroughTwoPoints`, `Segment`, `Ray` (projective carrier, real-extent metadata unchanged), `ParallelLine` (meet with line at infinity → join), `PerpendicularLine` / `PerpendicularBisectorLine` (conjugate directions w.r.t. I,J), `Centroid`, `Orthocenter`, circumcenter-as-point
+- [ ] Existing suite green (the spec); per-kind glados: recompute invariant under complex rescaling of parent homogeneous coords
+- [ ] New V2-semantics tests: old degeneracies that now correctly yield points at infinity, marked as such
+
+## Phase 108 — Object batch 2: transforms as projective maps
+
+- [ ] `proj_transform.dart`: 3×3 complex matrix; apply to point, line, conic (congruence)
+- [ ] Migrate: `ReflectedPoint`, `CentralReflectionPoint`, `RotatedPoint`, `TranslatedPoint`, `HomotheticPoint`, `ProjectionPoint`, `SegmentRatioPoint`, `HarmonicConjugatePoint` (cross-ratio, natively)
+- [ ] Glados: transform∘inverse = id; conic transforms consistently with its points (`pᵀAp=0` preserved); old-vs-new agreement on real inputs
+
+## Phase 109 — Object batch 3: circles as conics
+
+- [ ] Migrate all circle kinds to store `ConicMatrix`: `ThreePointCircle`, `CompassCircle`, `DiameterCircle`, `FixedRadiusCircle`, `ApolloniusCircle`, `TriangleCircle` (circum/in/nine-point), `Arc`, `Sector` carriers; `CircleCenterPoint` from polar structure; `circle` getter becomes projection (center/radius when the conic is a real circle)
+- [ ] Glados: every migrated circle's conic passes through I,J; center/radius projection round-trips against old computation
+- [ ] Three collinear points now yield the degenerate line-conic instead of undefined (isDefined projection handles rendering until Phase 119)
+
+## Phase 110 — `IntersectionPoint` v2 + tangency family
+
+- [ ] `IntersectionPoint`: candidates always 2 or 4; `branchIndex` indexes canonical order with I/J filtered; `candidateCount` = real-candidate count (locus walker contract until 117)
+- [ ] Migrate: `TangentLine` (polar-based, always 2), `PolarLine`, `RadicalAxisLine` (line through the two non-I/J common points — now a one-liner), `AngleBisectorLine`, `TwoLineBisectorLine` (old ordering guarantee kept)
+- [ ] `point_resolution.dart` snap-to-intersection re-pointed at real candidates
+- [ ] All existing branch-ordering tests stay green; glados: intersection points incident to both parents always (in ℂ); tangency = double root
+
+## Phase 111 — `PointOnObject` + parameterization on projective carriers
+
+- [ ] Decision recorded in PLAN: parameters stay real in the affine chart (arc-length on real lines, angle on real circles — gluing is a UI concept on the rendered curve); general real conics via stereographic parameterization; hyperbola-at-infinity as clamped extents
+- [ ] Migrate: `PointOnObject`, `Arc`/`Sector` extents, `TriangleCenterPoint`
+- [ ] Glados: `pointAt(parameterAt(p))` projections stable; glued point stays on carrier under parent perturbation
+
+## Phase 112 — Object batch 4: consumers
+
+- [ ] Migrate: `VertexAngle`, `LineAngle`, `Polygon`, `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `SlopeMeasurement` (slope through infinity renders "—"), `ExpressionText`
+- [ ] `Locus` deliberately untouched (rewritten in 117)
+- [ ] Grep gate: no object file imports `intersections.dart` except `locus.dart`; every concrete kind except `Locus` reads projective accessors
+
+## Phase 113 — SPIKE 3 / Tracing I: scaffolding
+
+- [ ] `lib/domain/projective/tracing/`: `DragPath` (real `t∈[0,1]`, complexifiable), `TracedBranch` slots on intersection-bearing objects, `Construction.recomputeAlongPath` (fixed-step naive), SoA `Float64List` buffers per the Phase 101 decision
+- [ ] Feature flag so `drag_session.dart` can opt in; static-solve bail always available
+- [ ] Toy-harness tests: line dragged across a circle with fixed steps → continuous root histories; endpoint agrees with static solve up to branch labels
+- [ ] STATUS records whether SoA meets the frame-budget estimate on js/wasm (feeds 122)
+
+## Phase 114 — Tracing II: adaptive step control + root matching
+
+- [ ] Step controller (Cinderella rule): accept a step only if every root moved less than half its minimum pairwise separation at the previous step; else halve
+- [ ] Nearest-neighbour root matching with collision refusal; per-drag step budget with graceful bail to static solve (flagged in debug overlay)
+- [ ] Glados: random constructions × random smooth drags → no branch swaps; endpoint = static solve modulo matching; bounded step counts; adversarial near-tangency paths force halving and still match
+
+## Phase 115 — Tracing III: degeneracy detection + complex detour
+
+- [ ] Singularity detection: root separation under tolerance / step-controller starvation
+- [ ] Path deformation: semicircular detour in complex `t` around the singular parameter; fixed detour orientation recorded (determinism)
+- [ ] Canonical tests: drag a line through tangency with a circle → intersection points go complex and return with no jump, no swap; bisector continuity across degenerate crossings
+- [ ] Property: detoured endpoint = real-path endpoint when no singularity is enclosed
+
+## Phase 116 — Tracing integration: default drag resolution + perf gate
+
+- [ ] `drag_session.dart` drives `recomputeAlongPath` by default; branch identity held by `TracedBranch` between recomputes
+- [ ] Save re-derives `branchIndex` from canonical order; jump-behaviour tests updated (documented spec change, STATUS notes)
+- [ ] Debug overlay showing step counts
+- [ ] **Performance gate** (standing from here on): ≤ 8 ms kernel time per drag frame on a 100-object stress construction (VM); js/wasm numbers recorded
+
+## Phase 117 — Locus rewrite on tracing
+
+- [ ] New `Locus.recompute`: adaptive sweep of the driver parameter via the tracing engine; keep density adaptation + polyline rendering
+- [ ] Delete: tan-grid ray sampling, defined/undefined boundary bisection, branchIndex flipping, infinity tails (infinity now falls out of projection)
+- [ ] Existing locus corpus is the spec: closed loci stay closed; figure-eights and conic loci compared point-set-wise with tolerance
+- [ ] Goldens regenerated where the (better) curve differs; diffs reviewed in STATUS
+
+## Phase 118 — Codec v2 + v1 migration
+
+- [ ] `constructionFormatVersion = 2`; v1 decode path kept permanently (`branchIndex` documented as canonical-order seed)
+- [ ] v2 hooks: homogeneous params (needed by five-point conic), per-file kernel flags (needed by M-CK)
+- [ ] Migration corpus: directory of real v1 `.rgl` fixtures that must load and round-trip; kitchen-sink v1 file loads into identical geometry
+- [ ] `version > 2` still throws
+
+## Phase 119 — Conic rendering + hit-testing
+
+- [ ] Painter: classify conic (ellipse / parabola / hyperbola / degenerate line pair); viewport-clipped parametric sampling → `Path` (reuse locus polyline machinery); styled like circles; degenerate conics render as their line pair
+- [ ] Hit-tester: conic distance via seeded Newton on the closest-point condition (coarse-sample seed); (priority, distance) contract kept
+- [ ] Goldens: each conic class × light/dark; circles render identically to before (regression goldens)
+- [ ] Property: distance ≈ 0 on-curve, monotone off-curve
+
+## Phase 120 — Five-point conic: object + tool (payoff demo)
+
+- [ ] `FivePointConic` object (conic-from-five-points from Phase 104)
+- [ ] `ConicTool` (`MultiPointTool`, 5 slots) + toolbar row + shortcut + inspector + object-tree label + codec entries — the template checklist for shell additions
+- [ ] Intersection tool accepts conics (conic∩line, conic∩conic already total)
+- [ ] Tests: tool flow widget test; codec round-trip; painter golden; glados — conic passes through its five parents; degenerate five-point sets give the right degenerate conic
+
+## Phase 121 — Old kernel deletion + convention unification
+
+- [ ] Delete `lib/domain/math/intersections.dart`; demote `LineEq`/`CircleEq` to presentation view structs (remove throwing construction paths from domain flows)
+- [ ] One degeneracy convention everywhere: projective value total; projection nullable
+- [ ] Remove lift-default dead code where every kind now overrides
+- [ ] `point_coincidence.dart` re-pointed at projected positions (probe stays sound — it only reads positions)
+- [ ] Grep gates recorded in CLAUDE.md; PLAN's migration-contract section replaced by the final architecture description
+
+## Phase 122 — Performance hardening + compile-target finalization
+
+- [ ] Tracing inner loop fully on SoA `Float64List` (no boxed `Complex` in the hot loop)
+- [ ] Benchmark suite runnable in CI (informational job)
+- [ ] Final dart2js-vs-dart2wasm decision executed (Pages deploy switched if wasm wins, per 101/113 numbers)
+- [ ] Drag budget re-measured and recorded as the standing gate

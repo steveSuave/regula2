@@ -1,10 +1,10 @@
-# Claude Code Working Notes — regula
+# Claude Code Working Notes — regula2
 
 This file is auto-loaded into every Claude Code session for this project. **Read it first.**
 
 ## What this project is
 
-Cross-platform (web / Android / iOS) dynamic geometry app written in Flutter. Construction-graph based: free points are the only mutable roots, every other object derives from its parents and recomputes when they change. See `docs/PLAN.md` for the full architecture and build order.
+V2 of regula: a cross-platform (web / Android / iOS) dynamic geometry app written in Flutter, being migrated from a numeric affine kernel to a **complex projective kernel** (homogeneous coordinates over ℂ, drags resolved by analytic continuation) — Cinderella-class behaviour: no jumping intersection points, complete loci. Construction-graph based: free points are the only mutable roots, every other object derives from its parents and recomputes when they change. See `docs/PLAN.md` for the V2 architecture and migration strategy; `docs/archive/PLAN-v1.md` documents the surviving V1 design. The repo carries regula's full git history (branch point tagged `v1-final`), so `git blame`/`bisect` trace surviving lines to their original phase commits.
 
 ## Session start
 
@@ -27,7 +27,14 @@ Cross-platform (web / Android / iOS) dynamic geometry app written in Flutter. Co
 - **The `Construction` DAG is the single source of truth.** Rendering, hit testing, undo/redo, and save/load all read from it.
 - **All user actions are reversible `Command`s.** No direct mutation of the construction outside a command, with one carve-out: drag *preview* frames mutate directly, and the gesture must end by emitting exactly one command capturing start → end (or rolling the preview back on cancel). One command per drag gesture, never per frame.
 - **Save format carries a `version` field.** Bump it on any breaking schema change and add a migration.
-- **No new public API in `domain/` without a test.** Especially `domain/math/` and `domain/construction/`.
+- **No new public API in `domain/` without a test.** Especially `domain/math/`, `domain/projective/`, and `domain/construction/`.
+
+### V2 kernel invariants (migration era — see PLAN §Migration strategy)
+
+- **Projective is canonical; affine is a view.** Migrated objects store homogeneous state; `position`/`line`/`circle` are projections; `isDefined` means "real and finite after projection".
+- **New domain code reads projective accessors only** (`projPoint` / `projLine` / `conic`). The affine getters exist for the painter, hit-tester, codec, and unmigrated objects.
+- **No new consumers of `lib/domain/math/intersections.dart`.** It is legacy, deleted in Phase 121.
+- **Branch orderings are load-bearing.** New intersection functions must agree with the old orderings on real transverse cases (canonical order, circular points I/J filtered) until tracing deliberately replaces per-frame ordering with continuation in Phases 116–117. Don't "fix" branch-ordering tests before then.
 
 ## Commands
 
@@ -47,14 +54,15 @@ CI gate: `flutter analyze && flutter test`.
 - File naming: `snake_case.dart`. One non-trivial class per file.
 - Class naming: `GeoObject` subclasses end in their kind (`Midpoint`, `IntersectionPoint`, `PerpendicularLine`).
 - Tests mirror source layout under `test/`. Test file: `<source>_test.dart`.
-- Property-based tests via `glados`; golden tests via `golden_toolkit` (tagged so they can be skipped on platforms where they're flaky).
+- Property-based tests via `glados`; golden tests via bare `matchesGoldenFile` (tagged `golden`, excluded in CI, regenerate on macOS).
 - Riverpod: prefer `@riverpod`-annotated providers (code-gen) for type safety.
 
 ## What goes where
 
 | Concern | Location |
 |---|---|
-| Pure geometry math | `lib/domain/math/` |
+| Projective kernel (Complex, ProjPoint, ConicMatrix, tracing) | `lib/domain/projective/` |
+| Legacy affine math (frozen; shrinking) | `lib/domain/math/` |
 | Construction graph & objects | `lib/domain/construction/` |
 | Tool state machines | `lib/domain/tools/` |
 | Reversible commands | `lib/domain/commands/` |

@@ -1,6 +1,13 @@
-# regula
+# regula2
 
-A cross-platform (web, Android, iOS) dynamic geometry app built with Flutter.
+A cross-platform (web, Android, iOS) dynamic geometry app built with Flutter —
+the V2 of [regula](https://github.com/steveSuave/regula), migrating the kernel to
+**homogeneous coordinates over ℂ** with drags resolved by analytic continuation
+(Cinderella-style): intersection points that never jump, loci that close, conics
+as first-class objects, and — down the road — a geometry theorem prover with
+replayable proofs and 3D. The full V1 git history is carried in this repo (branch
+point tagged `v1-final`); the roadmap lives in `docs/PLAN.md` and `docs/TODO.md`,
+and the assessment that motivated the rewrite in `docs/V2-assessment.md`.
 
 Construct points, lines, circles, and derived objects (intersections, midpoints,
 perpendiculars, triangle centers, transforms, macros, …) on an interactive canvas.
@@ -41,4 +48,4 @@ and `docs/TODO.md`. See `CLAUDE.md` for the working invariants (domain/applicati
 presentation layering, command pattern, etc.).
 
 ## Demo deployment
-You can use the app on: https://stevesuave.github.io/regula/
+V1 remains usable at: https://stevesuave.github.io/regula/ (regula2 has no remote/deployment yet).
