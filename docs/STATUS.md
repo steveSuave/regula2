@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 97 — 2026-08-10
+
+**Done**
+- **Phase 72 — configurable measurement rounding** (user request: keep 2 decimals as the default, allow more). PLAN build-order item 55 + section notes written first.
+- `ObjectAttributes.valueDecimals` (`int?`): decimal digits for the value part of a label — a measurement's value, a segment's shown length, an angle's degrees. `null` (the default) = kind default, 2 for lengths/areas and 1 for angles, i.e. exactly the pre-72 fixed counts — so no existing document or golden changes. Additive with a default → no save-format version bump (the codec's constructor-fallback rule).
+- `measure_format.dart` formatters gain `{int? decimals}` with `defaultLengthDecimals`/`defaultAngleDecimals` constants; `labelText` threads the attribute through, so painter, hit rect, declutter and PNG export all agree for free.
+- Inspector: Decimals preset row `0`–`5` under Show value, over segments + angles + measurements + expression texts with `{…}` slots (literal-only texts excluded via a new `ExpressionText.hasExpressions` — the row would be a silent no-op). The row shows each object's *effective* count (a fresh length highlights 2, a fresh angle 1); a tap writes an explicit value via one `ChangeAttributesCommand`.
+- Text slots (follow-up request in-session): `formatComputedValue` and `TextTemplate.render` take `{int? decimals}` (null = 2; the `-0.00` guard generalized to every count — `-0` at zero decimals also normalizes), `ExpressionText.recompute` bakes `attributes.valueDecimals` into `renderedText`. Because the rendered string lives on the object, `Construction.setAttributes` gains its one carve-out from "attributes are display-only, nothing recomputes": it recomputes `GeoText`s — parents untouched, and nothing can derive from a text, so no cascade.
+- 1597 tests green (+9: formatter overrides presentation + domain, `labelText` end-to-end at 4/0/1 decimals, text render + setAttributes re-render + `hasExpressions`, attributes default + round-trip), analyze clean.
+
+**Next**
+- No queued phase.
+
+**Open questions / gotchas**
+- The `setAttributes` recompute is deliberately `GeoText`-only — recomputing every kind would be near-free except `Locus`, whose sweep-and-restore sampling is expensive and mutates free points; don't widen it casually.
+- There's no way back to "kind default" from the inspector once an explicit count is set (equivalent for lengths/texts at 2; an angle set to 1 is likewise identical in effect). An "Auto" chip could clear to null if ever wanted.
+
 ## Session 96 — 2026-08-05
 
 **Done**
