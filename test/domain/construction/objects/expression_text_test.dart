@@ -54,6 +54,46 @@ void main() {
       expect(text.renderedText, 'AB = 10.00');
     });
 
+    test('valueDecimals sets the slot count; setAttributes re-renders', () {
+      final construction = Construction();
+      final a = namedPoint('a', 'A', 0, 0);
+      final b = namedPoint('b', 'B', 3, 4);
+      construction
+        ..add(a)
+        ..add(b);
+      final text = ExpressionText(
+        id: 't',
+        content: 'AB = {dist(A, B)}',
+        anchor: Vec2.zero,
+        references: bindReferences(
+            TextTemplate.parse('AB = {dist(A, B)}').referenceNames,
+            construction.objects),
+        attributes: const ObjectAttributes(valueDecimals: 4),
+      );
+      construction.add(text);
+      expect(text.renderedText, 'AB = 5.0000');
+      expect(text.hasExpressions, isTrue);
+
+      // The inspector path: an attribute-only change re-renders the text
+      // (the Phase 72 carve-out in setAttributes).
+      construction.setAttributes(
+          't', const ObjectAttributes(valueDecimals: 0));
+      expect(text.renderedText, 'AB = 5');
+
+      construction.moveFreePoint('b', const Vec2(6, 8));
+      expect(text.renderedText, 'AB = 10');
+    });
+
+    test('a literal-only text reports no expressions', () {
+      final text = ExpressionText(
+        id: 't',
+        content: 'Triangle ABC',
+        anchor: Vec2.zero,
+        references: const [],
+      );
+      expect(text.hasExpressions, isFalse);
+    });
+
     test('binding survives a rename (bound to instances, not names)', () {
       final construction = Construction();
       final a = namedPoint('a', 'A', 0, 0);

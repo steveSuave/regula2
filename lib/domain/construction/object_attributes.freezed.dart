@@ -21,7 +21,13 @@ mixin _$ObjectAttributes {
 /// length, an angle's degrees). Independent of [labelVisible], which
 /// governs only the *name* part: a value-showing label paints even
 /// while the name is hidden. Meaningless for kinds without a value.
- bool get showValue;/// Label offset from the object's anchor to the text's top-left, in
+ bool get showValue;/// Decimal digits (0–5) for the value part of a label — a
+/// measurement's value, a segment's shown length, an angle's
+/// degrees. Null = the kind default: 2 for lengths and areas, 1 for
+/// angles (the pre-Phase-72 fixed counts). The count stays fixed per
+/// object — no adaptive precision — so a value's width doesn't
+/// jitter while its object is dragged.
+ int? get valueDecimals;/// Label offset from the object's anchor to the text's top-left, in
 /// *screen* logical pixels (so zoom never flings a label away from
 /// its object). The defaults match the pre-Phase-17 fixed offset;
 /// label dragging clamps the magnitude, the fields themselves don't.
@@ -67,16 +73,16 @@ $ObjectAttributesCopyWith<ObjectAttributes> get copyWith => _$ObjectAttributesCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ObjectAttributes&&(identical(other.name, name) || other.name == name)&&(identical(other.colorArgb, colorArgb) || other.colorArgb == colorArgb)&&(identical(other.visible, visible) || other.visible == visible)&&(identical(other.labelVisible, labelVisible) || other.labelVisible == labelVisible)&&(identical(other.showValue, showValue) || other.showValue == showValue)&&(identical(other.labelDx, labelDx) || other.labelDx == labelDx)&&(identical(other.labelDy, labelDy) || other.labelDy == labelDy)&&(identical(other.labelFontSize, labelFontSize) || other.labelFontSize == labelFontSize)&&(identical(other.strokeWidth, strokeWidth) || other.strokeWidth == strokeWidth)&&(identical(other.dashPeriod, dashPeriod) || other.dashPeriod == dashPeriod)&&(identical(other.tickMarks, tickMarks) || other.tickMarks == tickMarks)&&(identical(other.pointSize, pointSize) || other.pointSize == pointSize)&&(identical(other.angleMarkerRadius, angleMarkerRadius) || other.angleMarkerRadius == angleMarkerRadius)&&(identical(other.fillAlpha, fillAlpha) || other.fillAlpha == fillAlpha)&&(identical(other.lineClip, lineClip) || other.lineClip == lineClip));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ObjectAttributes&&(identical(other.name, name) || other.name == name)&&(identical(other.colorArgb, colorArgb) || other.colorArgb == colorArgb)&&(identical(other.visible, visible) || other.visible == visible)&&(identical(other.labelVisible, labelVisible) || other.labelVisible == labelVisible)&&(identical(other.showValue, showValue) || other.showValue == showValue)&&(identical(other.valueDecimals, valueDecimals) || other.valueDecimals == valueDecimals)&&(identical(other.labelDx, labelDx) || other.labelDx == labelDx)&&(identical(other.labelDy, labelDy) || other.labelDy == labelDy)&&(identical(other.labelFontSize, labelFontSize) || other.labelFontSize == labelFontSize)&&(identical(other.strokeWidth, strokeWidth) || other.strokeWidth == strokeWidth)&&(identical(other.dashPeriod, dashPeriod) || other.dashPeriod == dashPeriod)&&(identical(other.tickMarks, tickMarks) || other.tickMarks == tickMarks)&&(identical(other.pointSize, pointSize) || other.pointSize == pointSize)&&(identical(other.angleMarkerRadius, angleMarkerRadius) || other.angleMarkerRadius == angleMarkerRadius)&&(identical(other.fillAlpha, fillAlpha) || other.fillAlpha == fillAlpha)&&(identical(other.lineClip, lineClip) || other.lineClip == lineClip));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,colorArgb,visible,labelVisible,showValue,labelDx,labelDy,labelFontSize,strokeWidth,dashPeriod,tickMarks,pointSize,angleMarkerRadius,fillAlpha,lineClip);
+int get hashCode => Object.hash(runtimeType,name,colorArgb,visible,labelVisible,showValue,valueDecimals,labelDx,labelDy,labelFontSize,strokeWidth,dashPeriod,tickMarks,pointSize,angleMarkerRadius,fillAlpha,lineClip);
 
 @override
 String toString() {
-  return 'ObjectAttributes(name: $name, colorArgb: $colorArgb, visible: $visible, labelVisible: $labelVisible, showValue: $showValue, labelDx: $labelDx, labelDy: $labelDy, labelFontSize: $labelFontSize, strokeWidth: $strokeWidth, dashPeriod: $dashPeriod, tickMarks: $tickMarks, pointSize: $pointSize, angleMarkerRadius: $angleMarkerRadius, fillAlpha: $fillAlpha, lineClip: $lineClip)';
+  return 'ObjectAttributes(name: $name, colorArgb: $colorArgb, visible: $visible, labelVisible: $labelVisible, showValue: $showValue, valueDecimals: $valueDecimals, labelDx: $labelDx, labelDy: $labelDy, labelFontSize: $labelFontSize, strokeWidth: $strokeWidth, dashPeriod: $dashPeriod, tickMarks: $tickMarks, pointSize: $pointSize, angleMarkerRadius: $angleMarkerRadius, fillAlpha: $fillAlpha, lineClip: $lineClip)';
 }
 
 
@@ -87,7 +93,7 @@ abstract mixin class $ObjectAttributesCopyWith<$Res>  {
   factory $ObjectAttributesCopyWith(ObjectAttributes value, $Res Function(ObjectAttributes) _then) = _$ObjectAttributesCopyWithImpl;
 @useResult
 $Res call({
- String name, int? colorArgb, bool visible, bool labelVisible, bool showValue, double labelDx, double labelDy, double labelFontSize, double strokeWidth, double dashPeriod, int tickMarks, double pointSize, double angleMarkerRadius, double? fillAlpha, int lineClip
+ String name, int? colorArgb, bool visible, bool labelVisible, bool showValue, int? valueDecimals, double labelDx, double labelDy, double labelFontSize, double strokeWidth, double dashPeriod, int tickMarks, double pointSize, double angleMarkerRadius, double? fillAlpha, int lineClip
 });
 
 
@@ -104,14 +110,15 @@ class _$ObjectAttributesCopyWithImpl<$Res>
 
 /// Create a copy of ObjectAttributes
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? colorArgb = freezed,Object? visible = null,Object? labelVisible = null,Object? showValue = null,Object? labelDx = null,Object? labelDy = null,Object? labelFontSize = null,Object? strokeWidth = null,Object? dashPeriod = null,Object? tickMarks = null,Object? pointSize = null,Object? angleMarkerRadius = null,Object? fillAlpha = freezed,Object? lineClip = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? colorArgb = freezed,Object? visible = null,Object? labelVisible = null,Object? showValue = null,Object? valueDecimals = freezed,Object? labelDx = null,Object? labelDy = null,Object? labelFontSize = null,Object? strokeWidth = null,Object? dashPeriod = null,Object? tickMarks = null,Object? pointSize = null,Object? angleMarkerRadius = null,Object? fillAlpha = freezed,Object? lineClip = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,colorArgb: freezed == colorArgb ? _self.colorArgb : colorArgb // ignore: cast_nullable_to_non_nullable
 as int?,visible: null == visible ? _self.visible : visible // ignore: cast_nullable_to_non_nullable
 as bool,labelVisible: null == labelVisible ? _self.labelVisible : labelVisible // ignore: cast_nullable_to_non_nullable
 as bool,showValue: null == showValue ? _self.showValue : showValue // ignore: cast_nullable_to_non_nullable
-as bool,labelDx: null == labelDx ? _self.labelDx : labelDx // ignore: cast_nullable_to_non_nullable
+as bool,valueDecimals: freezed == valueDecimals ? _self.valueDecimals : valueDecimals // ignore: cast_nullable_to_non_nullable
+as int?,labelDx: null == labelDx ? _self.labelDx : labelDx // ignore: cast_nullable_to_non_nullable
 as double,labelDy: null == labelDy ? _self.labelDy : labelDy // ignore: cast_nullable_to_non_nullable
 as double,labelFontSize: null == labelFontSize ? _self.labelFontSize : labelFontSize // ignore: cast_nullable_to_non_nullable
 as double,strokeWidth: null == strokeWidth ? _self.strokeWidth : strokeWidth // ignore: cast_nullable_to_non_nullable
@@ -206,10 +213,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int? colorArgb,  bool visible,  bool labelVisible,  bool showValue,  double labelDx,  double labelDy,  double labelFontSize,  double strokeWidth,  double dashPeriod,  int tickMarks,  double pointSize,  double angleMarkerRadius,  double? fillAlpha,  int lineClip)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int? colorArgb,  bool visible,  bool labelVisible,  bool showValue,  int? valueDecimals,  double labelDx,  double labelDy,  double labelFontSize,  double strokeWidth,  double dashPeriod,  int tickMarks,  double pointSize,  double angleMarkerRadius,  double? fillAlpha,  int lineClip)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ObjectAttributes() when $default != null:
-return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_that.showValue,_that.labelDx,_that.labelDy,_that.labelFontSize,_that.strokeWidth,_that.dashPeriod,_that.tickMarks,_that.pointSize,_that.angleMarkerRadius,_that.fillAlpha,_that.lineClip);case _:
+return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_that.showValue,_that.valueDecimals,_that.labelDx,_that.labelDy,_that.labelFontSize,_that.strokeWidth,_that.dashPeriod,_that.tickMarks,_that.pointSize,_that.angleMarkerRadius,_that.fillAlpha,_that.lineClip);case _:
   return orElse();
 
 }
@@ -227,10 +234,10 @@ return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int? colorArgb,  bool visible,  bool labelVisible,  bool showValue,  double labelDx,  double labelDy,  double labelFontSize,  double strokeWidth,  double dashPeriod,  int tickMarks,  double pointSize,  double angleMarkerRadius,  double? fillAlpha,  int lineClip)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int? colorArgb,  bool visible,  bool labelVisible,  bool showValue,  int? valueDecimals,  double labelDx,  double labelDy,  double labelFontSize,  double strokeWidth,  double dashPeriod,  int tickMarks,  double pointSize,  double angleMarkerRadius,  double? fillAlpha,  int lineClip)  $default,) {final _that = this;
 switch (_that) {
 case _ObjectAttributes():
-return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_that.showValue,_that.labelDx,_that.labelDy,_that.labelFontSize,_that.strokeWidth,_that.dashPeriod,_that.tickMarks,_that.pointSize,_that.angleMarkerRadius,_that.fillAlpha,_that.lineClip);case _:
+return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_that.showValue,_that.valueDecimals,_that.labelDx,_that.labelDy,_that.labelFontSize,_that.strokeWidth,_that.dashPeriod,_that.tickMarks,_that.pointSize,_that.angleMarkerRadius,_that.fillAlpha,_that.lineClip);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -247,10 +254,10 @@ return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int? colorArgb,  bool visible,  bool labelVisible,  bool showValue,  double labelDx,  double labelDy,  double labelFontSize,  double strokeWidth,  double dashPeriod,  int tickMarks,  double pointSize,  double angleMarkerRadius,  double? fillAlpha,  int lineClip)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int? colorArgb,  bool visible,  bool labelVisible,  bool showValue,  int? valueDecimals,  double labelDx,  double labelDy,  double labelFontSize,  double strokeWidth,  double dashPeriod,  int tickMarks,  double pointSize,  double angleMarkerRadius,  double? fillAlpha,  int lineClip)?  $default,) {final _that = this;
 switch (_that) {
 case _ObjectAttributes() when $default != null:
-return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_that.showValue,_that.labelDx,_that.labelDy,_that.labelFontSize,_that.strokeWidth,_that.dashPeriod,_that.tickMarks,_that.pointSize,_that.angleMarkerRadius,_that.fillAlpha,_that.lineClip);case _:
+return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_that.showValue,_that.valueDecimals,_that.labelDx,_that.labelDy,_that.labelFontSize,_that.strokeWidth,_that.dashPeriod,_that.tickMarks,_that.pointSize,_that.angleMarkerRadius,_that.fillAlpha,_that.lineClip);case _:
   return null;
 
 }
@@ -262,7 +269,7 @@ return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_tha
 @JsonSerializable()
 
 class _ObjectAttributes implements ObjectAttributes {
-  const _ObjectAttributes({this.name = '', this.colorArgb, this.visible = true, this.labelVisible = true, this.showValue = false, this.labelDx = 6.0, this.labelDy = -18.0, this.labelFontSize = 16.0, this.strokeWidth = 2.0, this.dashPeriod = 0.0, this.tickMarks = 0, this.pointSize = 4.0, this.angleMarkerRadius = 28.0, this.fillAlpha, this.lineClip = 0});
+  const _ObjectAttributes({this.name = '', this.colorArgb, this.visible = true, this.labelVisible = true, this.showValue = false, this.valueDecimals, this.labelDx = 6.0, this.labelDy = -18.0, this.labelFontSize = 16.0, this.strokeWidth = 2.0, this.dashPeriod = 0.0, this.tickMarks = 0, this.pointSize = 4.0, this.angleMarkerRadius = 28.0, this.fillAlpha, this.lineClip = 0});
   factory _ObjectAttributes.fromJson(Map<String, dynamic> json) => _$ObjectAttributesFromJson(json);
 
 /// User-facing label, e.g. "A" or "circumcircle". Empty = unnamed.
@@ -276,6 +283,13 @@ class _ObjectAttributes implements ObjectAttributes {
 /// governs only the *name* part: a value-showing label paints even
 /// while the name is hidden. Meaningless for kinds without a value.
 @override@JsonKey() final  bool showValue;
+/// Decimal digits (0–5) for the value part of a label — a
+/// measurement's value, a segment's shown length, an angle's
+/// degrees. Null = the kind default: 2 for lengths and areas, 1 for
+/// angles (the pre-Phase-72 fixed counts). The count stays fixed per
+/// object — no adaptive precision — so a value's width doesn't
+/// jitter while its object is dragged.
+@override final  int? valueDecimals;
 /// Label offset from the object's anchor to the text's top-left, in
 /// *screen* logical pixels (so zoom never flings a label away from
 /// its object). The defaults match the pre-Phase-17 fixed offset;
@@ -333,16 +347,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ObjectAttributes&&(identical(other.name, name) || other.name == name)&&(identical(other.colorArgb, colorArgb) || other.colorArgb == colorArgb)&&(identical(other.visible, visible) || other.visible == visible)&&(identical(other.labelVisible, labelVisible) || other.labelVisible == labelVisible)&&(identical(other.showValue, showValue) || other.showValue == showValue)&&(identical(other.labelDx, labelDx) || other.labelDx == labelDx)&&(identical(other.labelDy, labelDy) || other.labelDy == labelDy)&&(identical(other.labelFontSize, labelFontSize) || other.labelFontSize == labelFontSize)&&(identical(other.strokeWidth, strokeWidth) || other.strokeWidth == strokeWidth)&&(identical(other.dashPeriod, dashPeriod) || other.dashPeriod == dashPeriod)&&(identical(other.tickMarks, tickMarks) || other.tickMarks == tickMarks)&&(identical(other.pointSize, pointSize) || other.pointSize == pointSize)&&(identical(other.angleMarkerRadius, angleMarkerRadius) || other.angleMarkerRadius == angleMarkerRadius)&&(identical(other.fillAlpha, fillAlpha) || other.fillAlpha == fillAlpha)&&(identical(other.lineClip, lineClip) || other.lineClip == lineClip));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ObjectAttributes&&(identical(other.name, name) || other.name == name)&&(identical(other.colorArgb, colorArgb) || other.colorArgb == colorArgb)&&(identical(other.visible, visible) || other.visible == visible)&&(identical(other.labelVisible, labelVisible) || other.labelVisible == labelVisible)&&(identical(other.showValue, showValue) || other.showValue == showValue)&&(identical(other.valueDecimals, valueDecimals) || other.valueDecimals == valueDecimals)&&(identical(other.labelDx, labelDx) || other.labelDx == labelDx)&&(identical(other.labelDy, labelDy) || other.labelDy == labelDy)&&(identical(other.labelFontSize, labelFontSize) || other.labelFontSize == labelFontSize)&&(identical(other.strokeWidth, strokeWidth) || other.strokeWidth == strokeWidth)&&(identical(other.dashPeriod, dashPeriod) || other.dashPeriod == dashPeriod)&&(identical(other.tickMarks, tickMarks) || other.tickMarks == tickMarks)&&(identical(other.pointSize, pointSize) || other.pointSize == pointSize)&&(identical(other.angleMarkerRadius, angleMarkerRadius) || other.angleMarkerRadius == angleMarkerRadius)&&(identical(other.fillAlpha, fillAlpha) || other.fillAlpha == fillAlpha)&&(identical(other.lineClip, lineClip) || other.lineClip == lineClip));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,colorArgb,visible,labelVisible,showValue,labelDx,labelDy,labelFontSize,strokeWidth,dashPeriod,tickMarks,pointSize,angleMarkerRadius,fillAlpha,lineClip);
+int get hashCode => Object.hash(runtimeType,name,colorArgb,visible,labelVisible,showValue,valueDecimals,labelDx,labelDy,labelFontSize,strokeWidth,dashPeriod,tickMarks,pointSize,angleMarkerRadius,fillAlpha,lineClip);
 
 @override
 String toString() {
-  return 'ObjectAttributes(name: $name, colorArgb: $colorArgb, visible: $visible, labelVisible: $labelVisible, showValue: $showValue, labelDx: $labelDx, labelDy: $labelDy, labelFontSize: $labelFontSize, strokeWidth: $strokeWidth, dashPeriod: $dashPeriod, tickMarks: $tickMarks, pointSize: $pointSize, angleMarkerRadius: $angleMarkerRadius, fillAlpha: $fillAlpha, lineClip: $lineClip)';
+  return 'ObjectAttributes(name: $name, colorArgb: $colorArgb, visible: $visible, labelVisible: $labelVisible, showValue: $showValue, valueDecimals: $valueDecimals, labelDx: $labelDx, labelDy: $labelDy, labelFontSize: $labelFontSize, strokeWidth: $strokeWidth, dashPeriod: $dashPeriod, tickMarks: $tickMarks, pointSize: $pointSize, angleMarkerRadius: $angleMarkerRadius, fillAlpha: $fillAlpha, lineClip: $lineClip)';
 }
 
 
@@ -353,7 +367,7 @@ abstract mixin class _$ObjectAttributesCopyWith<$Res> implements $ObjectAttribut
   factory _$ObjectAttributesCopyWith(_ObjectAttributes value, $Res Function(_ObjectAttributes) _then) = __$ObjectAttributesCopyWithImpl;
 @override @useResult
 $Res call({
- String name, int? colorArgb, bool visible, bool labelVisible, bool showValue, double labelDx, double labelDy, double labelFontSize, double strokeWidth, double dashPeriod, int tickMarks, double pointSize, double angleMarkerRadius, double? fillAlpha, int lineClip
+ String name, int? colorArgb, bool visible, bool labelVisible, bool showValue, int? valueDecimals, double labelDx, double labelDy, double labelFontSize, double strokeWidth, double dashPeriod, int tickMarks, double pointSize, double angleMarkerRadius, double? fillAlpha, int lineClip
 });
 
 
@@ -370,14 +384,15 @@ class __$ObjectAttributesCopyWithImpl<$Res>
 
 /// Create a copy of ObjectAttributes
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? colorArgb = freezed,Object? visible = null,Object? labelVisible = null,Object? showValue = null,Object? labelDx = null,Object? labelDy = null,Object? labelFontSize = null,Object? strokeWidth = null,Object? dashPeriod = null,Object? tickMarks = null,Object? pointSize = null,Object? angleMarkerRadius = null,Object? fillAlpha = freezed,Object? lineClip = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? colorArgb = freezed,Object? visible = null,Object? labelVisible = null,Object? showValue = null,Object? valueDecimals = freezed,Object? labelDx = null,Object? labelDy = null,Object? labelFontSize = null,Object? strokeWidth = null,Object? dashPeriod = null,Object? tickMarks = null,Object? pointSize = null,Object? angleMarkerRadius = null,Object? fillAlpha = freezed,Object? lineClip = null,}) {
   return _then(_ObjectAttributes(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,colorArgb: freezed == colorArgb ? _self.colorArgb : colorArgb // ignore: cast_nullable_to_non_nullable
 as int?,visible: null == visible ? _self.visible : visible // ignore: cast_nullable_to_non_nullable
 as bool,labelVisible: null == labelVisible ? _self.labelVisible : labelVisible // ignore: cast_nullable_to_non_nullable
 as bool,showValue: null == showValue ? _self.showValue : showValue // ignore: cast_nullable_to_non_nullable
-as bool,labelDx: null == labelDx ? _self.labelDx : labelDx // ignore: cast_nullable_to_non_nullable
+as bool,valueDecimals: freezed == valueDecimals ? _self.valueDecimals : valueDecimals // ignore: cast_nullable_to_non_nullable
+as int?,labelDx: null == labelDx ? _self.labelDx : labelDx // ignore: cast_nullable_to_non_nullable
 as double,labelDy: null == labelDy ? _self.labelDy : labelDy // ignore: cast_nullable_to_non_nullable
 as double,labelFontSize: null == labelFontSize ? _self.labelFontSize : labelFontSize // ignore: cast_nullable_to_non_nullable
 as double,strokeWidth: null == strokeWidth ? _self.strokeWidth : strokeWidth // ignore: cast_nullable_to_non_nullable

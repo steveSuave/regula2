@@ -11,6 +11,13 @@ void main() {
       expect(formatLength(0.005), '0.01');
       expect(formatLength(12345.678), '12345.68');
     });
+
+    test('explicit decimals override the default (Phase 72)', () {
+      expect(formatLength(3.14159, decimals: 0), '3');
+      expect(formatLength(3.14159, decimals: 4), '3.1416');
+      expect(formatLength(3, decimals: 5), '3.00000');
+      expect(formatLength(3.14159, decimals: null), '3.14');
+    });
   });
 
   group('formatAngle', () {
@@ -27,11 +34,17 @@ void main() {
     test('a reflex angle keeps its full measure', () {
       expect(formatAngle(3 * math.pi / 2), '270.0°');
     });
+
+    test('explicit decimals override the default (Phase 72)', () {
+      expect(formatAngle(math.pi, decimals: 0), '180°');
+      expect(formatAngle(1, decimals: 3), '57.296°');
+    });
   });
 
   group('formatArea', () {
     test('same shape as lengths', () {
       expect(formatArea(2.5), formatLength(2.5));
+      expect(formatArea(2.5, decimals: 3), formatLength(2.5, decimals: 3));
     });
   });
 }

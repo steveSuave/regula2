@@ -29,6 +29,15 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     /// while the name is hidden. Meaningless for kinds without a value.
     @Default(false) bool showValue,
 
+    /// Decimal digits (0–5) for the value part of a label — a
+    /// measurement's value, a segment's shown length, an angle's
+    /// degrees, a text's `{…}` slots. Null = the kind default: 2 for
+    /// lengths, areas, and text slots, 1 for angles (the pre-Phase-72
+    /// fixed counts). The count stays fixed per object — no adaptive
+    /// precision — so a value's width doesn't jitter while its object
+    /// is dragged.
+    int? valueDecimals,
+
     /// Label offset from the object's anchor to the text's top-left, in
     /// *screen* logical pixels (so zoom never flings a label away from
     /// its object). The defaults match the pre-Phase-17 fixed offset;

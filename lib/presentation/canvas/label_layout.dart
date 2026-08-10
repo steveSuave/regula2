@@ -28,13 +28,14 @@ String? labelText(GeoObject object) {
     return renderedText;
   }
   final attributes = object.attributes;
+  final decimals = attributes.valueDecimals;
   final value = switch (object) {
     Segment(:final start?, :final end?) when attributes.showValue =>
-      formatLength(start.distanceTo(end)),
+      formatLength(start.distanceTo(end), decimals: decimals),
     GeoAngle(:final angle?) when attributes.showValue =>
-      formatAngle(angle.measure),
-    AreaMeasurement(:final value?) => formatArea(value),
-    GeoMeasurement(:final value?) => formatLength(value),
+      formatAngle(angle.measure, decimals: decimals),
+    AreaMeasurement(:final value?) => formatArea(value, decimals: decimals),
+    GeoMeasurement(:final value?) => formatLength(value, decimals: decimals),
     _ => null,
   };
   final name = attributes.labelVisible && attributes.name.isNotEmpty

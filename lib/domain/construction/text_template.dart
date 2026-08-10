@@ -31,15 +31,19 @@ const Map<String, int> _objectFunctionArity = {
   'y': 1,
 };
 
-/// How a `{…}` slot's value renders. Fixed 2 decimals like the
-/// presentation layer's `formatLength`, but domain-side: the rendered
-/// string is built inside `recompute()`, where presentation code is
-/// unreachable. Fixed width also keeps the text from jittering during
-/// drags.
-String formatComputedValue(double value) {
-  final text = value.toStringAsFixed(2);
-  // toStringAsFixed(2) of a tiny negative rounds to '-0.00'.
-  return text == '-0.00' ? '0.00' : text;
+/// How a `{…}` slot's value renders: [decimals] digits, null = 2 — the
+/// same default as the presentation layer's `formatLength`, but
+/// domain-side: the rendered string is built inside `recompute()`, where
+/// presentation code is unreachable. The count is fixed per text
+/// (`valueDecimals`, Phase 72), which keeps the width from jittering
+/// during drags.
+String formatComputedValue(double value, {int? decimals}) {
+  final text = value.toStringAsFixed(decimals ?? 2);
+  // toStringAsFixed of a tiny negative rounds to '-0.00' ('-0' at zero
+  // decimals): a parsed-zero result drops the sign.
+  return text.startsWith('-') && double.parse(text) == 0
+      ? text.substring(1)
+      : text;
 }
 
 sealed class TextSegment {
@@ -117,9 +121,10 @@ class TextTemplate {
 
   bool get hasExpressions => segments.any((s) => s is ExpressionSegment);
 
-  /// The content with each slot replaced by its value (2 decimals) or `?`
-  /// when the expression is currently undefined. Never throws.
-  String render(ExpressionEnv env) {
+  /// The content with each slot replaced by its value ([decimals]
+  /// digits, null = 2 — see [formatComputedValue]) or `?` when the
+  /// expression is currently undefined. Never throws.
+  String render(ExpressionEnv env, {int? decimals}) {
     final buffer = StringBuffer();
     for (final segment in segments) {
       switch (segment) {
@@ -127,7 +132,9 @@ class TextTemplate {
           buffer.write(text);
         case ExpressionSegment(:final expr):
           final value = evaluateExpression(expr, env);
-          buffer.write(value == null ? '?' : formatComputedValue(value));
+          buffer.write(value == null
+              ? '?'
+              : formatComputedValue(value, decimals: decimals));
       }
     }
     return buffer.toString();

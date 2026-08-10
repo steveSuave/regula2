@@ -57,11 +57,19 @@ class ExpressionText extends GeoText {
   @override
   String? get renderedText => _rendered;
 
+  /// Whether the content has any `{…}` slots — the inspector's Decimals
+  /// row targets only texts this is true for (on a literal-only text the
+  /// row would be a silent no-op).
+  bool get hasExpressions => _template.hasExpressions;
+
   @override
   List<GeoObject> get parents => _references;
 
   @override
   void recompute() {
-    _rendered = _template.render(GeoObjectEnv(_bindings));
+    _rendered = _template.render(
+      GeoObjectEnv(_bindings),
+      decimals: attributes.valueDecimals,
+    );
   }
 }
