@@ -113,5 +113,26 @@ void main() {
     test('negative zero normalizes', () {
       expect(formatComputedValue(-0.0000001), '0.00');
     });
+
+    test('explicit decimals override the default (Phase 72)', () {
+      expect(formatComputedValue(3.14159, decimals: 0), '3');
+      expect(formatComputedValue(3.14159, decimals: 4), '3.1416');
+      expect(formatComputedValue(2, decimals: 5), '2.00000');
+      expect(formatComputedValue(3.14159, decimals: null), '3.14');
+    });
+
+    test('negative zero normalizes at every decimal count', () {
+      expect(formatComputedValue(-0.0000001, decimals: 0), '0');
+      expect(formatComputedValue(-0.0000001, decimals: 4), '0.0000');
+    });
+  });
+
+  group('render with decimals (Phase 72)', () {
+    test('slots render at the requested count, literals untouched', () {
+      final template = TextTemplate.parse('d = {2 + 2.5} cm');
+      expect(template.render(const _TableEnv(), decimals: 4), 'd = 4.5000 cm');
+      expect(template.render(const _TableEnv(), decimals: 0), 'd = 5 cm');
+      expect(template.render(const _TableEnv()), 'd = 4.50 cm');
+    });
   });
 }

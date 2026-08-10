@@ -12,6 +12,7 @@ void main() {
       expect(a.strokeWidth, 2.0);
       expect(a.pointSize, 4.0);
       expect(a.fillAlpha, isNull);
+      expect(a.valueDecimals, isNull, reason: 'null = kind default');
     });
 
     test('copyWith changes only the requested field', () {
@@ -42,6 +43,7 @@ void main() {
         strokeWidth: 1.5,
         pointSize: 6,
         fillAlpha: 0.25,
+        valueDecimals: 4,
       );
       expect(ObjectAttributes.fromJson(a.toJson()), a);
     });

@@ -117,15 +117,22 @@ class Construction {
 
   /// Replaces the attributes of object [id].
   ///
-  /// Attributes are display-only — no geometry depends on them — so no
-  /// recompute happens, but listeners are notified (the painter must
-  /// redraw). Throws [ArgumentError] for an unknown id.
+  /// Attributes are display-only — no geometry depends on them — so
+  /// dependents never recompute, but listeners are notified (the painter
+  /// must redraw). Texts are the one carve-out (Phase 72): their
+  /// `renderedText` bakes `valueDecimals` inside `recompute()`, so the
+  /// object itself re-renders — parents are untouched, dependents can't
+  /// exist (nothing derives from a text). Throws [ArgumentError] for an
+  /// unknown id.
   void setAttributes(String id, ObjectAttributes attributes) {
     final object = _objects[id];
     if (object == null) {
       throw ArgumentError('Unknown object id: $id');
     }
     object.attributes = attributes;
+    if (object is GeoText) {
+      object.recompute();
+    }
     _notify();
   }
 

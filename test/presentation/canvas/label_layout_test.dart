@@ -111,6 +111,29 @@ void main() {
       );
     });
 
+    test('valueDecimals overrides the kind-default decimal count', () {
+      expect(
+        labelText(
+          segment(const ObjectAttributes(showValue: true, valueDecimals: 4)),
+        ),
+        '5.0000',
+      );
+      expect(
+        labelText(
+          angle(const ObjectAttributes(showValue: true, valueDecimals: 0)),
+        ),
+        '90°',
+      );
+      // The same 3–4–5 endpoints as the segment fixture.
+      final distance = DistanceMeasurement(
+        id: 'd',
+        point1: FreePoint(id: 'a', position: const Vec2(0, 0)),
+        point2: FreePoint(id: 'b', position: const Vec2(3, 4)),
+        attributes: const ObjectAttributes(valueDecimals: 1),
+      );
+      expect(labelText(distance), '5.0');
+    });
+
     test('a text renders its content only — the name never composes', () {
       final text = ExpressionText(
         id: 't',

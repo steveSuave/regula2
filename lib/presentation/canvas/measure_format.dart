@@ -2,17 +2,26 @@ import 'dart:math' as math;
 
 /// Fixed-format measure texts for show-value labels (Phase 35).
 ///
-/// Decimal counts are deliberately fixed — no adaptive precision — so
-/// golden tests stay deterministic and a value's width doesn't jitter
-/// while its object is dragged.
+/// Decimal counts are deliberately fixed per object — no adaptive
+/// precision — so golden tests stay deterministic and a value's width
+/// doesn't jitter while its object is dragged. Callers pass the object's
+/// `valueDecimals` (Phase 72); null falls back to the kind default.
 
-/// A length in world units, 2 decimals: `3.14`.
-String formatLength(double length) => length.toStringAsFixed(2);
+/// The kind-default decimal counts — the fixed values of the original
+/// formatters, used whenever `valueDecimals` is unset.
+const int defaultLengthDecimals = 2;
+const int defaultAngleDecimals = 1;
 
-/// An angle in radians, rendered in degrees with 1 decimal: `90.0°`.
-String formatAngle(double radians) =>
-    '${(radians * 180 / math.pi).toStringAsFixed(1)}°';
+/// A length in world units, [decimals] decimals (default 2): `3.14`.
+String formatLength(double length, {int? decimals}) =>
+    length.toStringAsFixed(decimals ?? defaultLengthDecimals);
+
+/// An angle in radians, rendered in degrees with [decimals] decimals
+/// (default 1): `90.0°`.
+String formatAngle(double radians, {int? decimals}) =>
+    '${(radians * 180 / math.pi).toStringAsFixed(decimals ?? defaultAngleDecimals)}°';
 
 /// An area in squared world units — same shape as lengths (Phase 38
 /// forward; areas get no unit suffix either).
-String formatArea(double area) => formatLength(area);
+String formatArea(double area, {int? decimals}) =>
+    formatLength(area, decimals: decimals);

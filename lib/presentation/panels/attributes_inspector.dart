@@ -9,8 +9,10 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/object_naming.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/segment.dart';
+import '../canvas/measure_format.dart';
 import 'object_kind_label.dart';
 
 /// Side panel showing the current selection's attributes; collapses to
@@ -100,6 +102,18 @@ class AttributesInspector extends ConsumerWidget {
     final measurables = [
       for (final object in objects)
         if (object is Segment || object is GeoAngle) object,
+    ];
+    // The kinds whose label renders a numeric value (Phase 72): the
+    // measurables, measurements (whose value is the object itself), and
+    // texts with `{…}` slots — the decimals row targets all of them. A
+    // literal-only text is excluded: the row would be a silent no-op.
+    final valued = [
+      for (final object in objects)
+        if (object is Segment ||
+            object is GeoAngle ||
+            object is GeoMeasurement ||
+            (object is ExpressionText && object.hasExpressions))
+          object,
     ];
     // The kinds that carry equal-mark ticks (Phase 51): segments only —
     // the classic congruence notation at the midpoint.
@@ -191,6 +205,28 @@ class AttributesInspector extends ConsumerWidget {
                       (attributes) => attributes.copyWith(showValue: value),
                     ),
                   ),
+                if (valued.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  _PresetSelector(
+                    key: const ValueKey('value-decimals'),
+                    label: 'Decimals',
+                    presets: _decimalsPresets,
+                    values: [
+                      for (final object in valued)
+                        (object.attributes.valueDecimals ??
+                                (object is GeoAngle
+                                    ? defaultAngleDecimals
+                                    : defaultLengthDecimals))
+                            .toDouble(),
+                    ],
+                    onChanged: (count) => _setForAll(
+                      ref,
+                      valued,
+                      (attributes) =>
+                          attributes.copyWith(valueDecimals: count.toInt()),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 _ColorRow(
                   values: [
@@ -637,6 +673,19 @@ const _extentPresets = <(String, String, double)>[
   ('∞', 'Infinite', 0),
   ('D', 'Between the defining points', 1),
   ('P', 'Span of the incident points', 2),
+];
+
+/// The value-decimals presets (`ObjectAttributes.valueDecimals`, carried
+/// as doubles for [_PresetSelector]). The row shows each object's
+/// *effective* count, so a fresh length highlights 2 and a fresh angle 1
+/// (the kind defaults) until an explicit choice is made.
+const _decimalsPresets = <(String, String, double)>[
+  ('0', 'No decimals', 0),
+  ('1', '1 decimal', 1),
+  ('2', '2 decimals', 2),
+  ('3', '3 decimals', 3),
+  ('4', '4 decimals', 4),
+  ('5', '5 decimals', 5),
 ];
 
 /// The label font-size presets in logical pixels, same single-letter

@@ -59,7 +59,7 @@ final class ViewportNotifierProvider
   }
 }
 
-String _$viewportNotifierHash() => r'37828e6a98692ed7a5c41b6083041480e2b78c51';
+String _$viewportNotifierHash() => r'4ba7ffbb00c63ed400ae9d10f980c0d7025321fc';
 
 /// Pan/zoom state for the canvas. Not undoable, not persisted with the
 /// construction's undo history (the save format snapshots it separately).
