@@ -9,8 +9,8 @@ Cross-platform (web / Android / iOS) dynamic geometry app written in Flutter. Co
 ## Session start
 
 1. Read `docs/PLAN.md` — architecture & decisions, read-mostly.
-2. Read `docs/STATUS.md` — newest entry first; that's where the previous session left off.
-3. Read `docs/TODO.md` — live phase checklist.
+2. Read the newest 2–3 entries of `docs/STATUS.md` — that's where the previous session left off. Don't read the whole file or `docs/archive/` unless hunting for old history.
+3. Read `docs/TODO.md` — open phases plus the most recent couple of completed ones; older completed phases live in `docs/archive/`.
 4. Propose the first concrete change before editing anything.
 
 ## Session end
@@ -18,6 +18,7 @@ Cross-platform (web / Android / iOS) dynamic geometry app written in Flutter. Co
 1. Commit work-in-progress on the current phase branch (one commit per logical step).
 2. Tick boxes in `docs/TODO.md` for items that fully landed (analyze clean + tests green).
 3. Append a new entry to `docs/STATUS.md`: date, what was done, what's next, gotchas.
+4. Rotation (occasional): if `docs/STATUS.md` exceeds ~15 sessions or `docs/TODO.md` accumulates fully-completed phases, move the old material to `docs/archive/` per the notes in each file's header.
 
 ## Architectural invariants (do not violate)
 
