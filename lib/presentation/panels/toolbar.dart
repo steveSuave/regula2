@@ -56,6 +56,7 @@ import '../../domain/tools/regular_polygon_macro_tool.dart';
 import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
 import '../../domain/tools/right_triangle_macro_tool.dart';
+import '../../domain/tools/slope_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
 import '../../domain/tools/tangent_tool.dart';
 import '../../domain/tools/three_point_tool.dart';
@@ -196,7 +197,10 @@ class GeometryToolbar extends ConsumerWidget {
         tool is RegularPolygonMacroTool ||
         tool is RandomShapeStampTool;
     final measureActive =
-        tool is AreaTool || tool is LocusTool || tool is DistanceTool;
+        tool is AreaTool ||
+        tool is SlopeTool ||
+        tool is LocusTool ||
+        tool is DistanceTool;
 
     Future<Tool?> ratioPick() async {
       final build = await askRatioBuilder(context);
@@ -571,7 +575,7 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.straighten,
-          tooltip: 'Measure: distance, area, locus',
+          tooltip: 'Measure: distance, area, slope, locus',
           active: measureActive,
           items: [
             (
@@ -583,6 +587,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Area (tap a polygon, circle, sector or arc)',
               _pick(() => AreaTool(newId: newObjectId)),
               AppAction.areaTool,
+            ),
+            (
+              'Slope (tap a line, segment or ray)',
+              _pick(() => SlopeTool(newId: newObjectId)),
+              AppAction.slopeTool,
             ),
             (
               'Locus (driver point, then traced point)',

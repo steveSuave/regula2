@@ -49,6 +49,7 @@ import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/construction/objects/slope_measurement.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
@@ -210,6 +211,7 @@ Construction buildKitchenSink() {
     ..add(LengthMeasurement(id: 'clen', subject: circle))
     ..add(LengthMeasurement(id: 'alen', subject: arc))
     ..add(LengthMeasurement(id: 'slen', subject: sector))
+    ..add(SlopeMeasurement(id: 'slope', subject: lineAb))
     ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
     ..add(ProjectionPoint(id: 'proj', point: c, line: lineAb))
     // Non-default negative ratio, so the round-trip must carry it.
@@ -632,6 +634,20 @@ void main() {
             'id': 'ar',
             'type': 'AreaMeasurement',
             'parents': ['l'],
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects an ill-typed slope subject', () {
+      expect(
+        () => decodeDocument(document([
+          freePoint('a'),
+          <String, dynamic>{
+            'id': 'sl',
+            'type': 'SlopeMeasurement',
+            'parents': ['a'],
           },
         ])),
         throwsFormatException,

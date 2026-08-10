@@ -54,6 +54,7 @@ enum AppAction {
   fixedLengthSegmentTool,
   distanceTool,
   areaTool,
+  slopeTool,
   locusTool,
   // Constructions behind the G leader.
   centroidTool,
@@ -603,6 +604,13 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Area (tap a polygon, circle, sector or arc)',
     section: ShortcutSection.tools,
     display: '⇧ D',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyM, shift: true)],
+    action: AppAction.slopeTool,
+    label: 'Slope (tap a line, segment or ray)',
+    section: ShortcutSection.tools,
+    display: '⇧ M',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyL, shift: true)],

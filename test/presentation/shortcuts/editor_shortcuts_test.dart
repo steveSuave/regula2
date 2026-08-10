@@ -32,6 +32,7 @@ import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/slope_measurement.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/angle_bisector_tool.dart';
@@ -54,6 +55,7 @@ import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/slope_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/three_point_tool.dart';
@@ -365,6 +367,32 @@ void main() {
         container.read(constructionProvider).construction.objects.toList();
     expect(objects.last, isA<AreaMeasurement>());
     expect((objects.last as AreaMeasurement).value, 6);
+  });
+
+  testWidgets('⇧M activates the slope tool and measures a tapped line', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final stack = container.read(commandStackProvider.notifier);
+    final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+    final b = FreePoint(id: 'b', position: const Vec2(4, 2));
+    final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+    for (final object in [a, b, line]) {
+      stack.execute(AddObjectCommand(object));
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(activeTool(), isA<SlopeTool>());
+
+    container
+        .read(toolProvider.notifier)
+        .handleInput(ToolInput(const Vec2(2, 1), hit: line));
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<SlopeMeasurement>());
+    expect((objects.last as SlopeMeasurement).value, closeTo(0.5, 1e-12));
   });
 
   testWidgets('⇧L activates the locus tool and traces driver → traced', (

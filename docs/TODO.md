@@ -589,3 +589,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Inspector: Decimals preset row `0`–`5` (`_PresetSelector`) over value-carrying kinds (segments, angles, measurements, expression texts with slots), placed under Show value; values shown as each object's *effective* count so fresh lengths highlight 2 and fresh angles 1
 - [x] Text `{…}` slots (follow-up user request): `formatComputedValue`/`TextTemplate.render` take `{int? decimals}` (null = 2; negative-zero guard generalized to every count), `ExpressionText.recompute` passes `attributes.valueDecimals`, `Construction.setAttributes` re-renders texts (the one carve-out from "attributes never recompute" — parents untouched, texts have no dependents), `ExpressionText.hasExpressions` gates the inspector row off literal-only texts
 - [x] Tests: formatter decimals overrides (presentation + domain), `labelText` end-to-end (segment 4dp, angle 0dp, measurement 1dp), text render + setAttributes re-render + `hasExpressions`, attributes default + JSON round-trip — analyze clean, 1597 green
+
+## Phase 73 — Slope measurement of a line (user request)
+- [x] `docs/PLAN.md` updated first: Phase 73 sentence in the Measurements bullet + build-order item 56
+- [x] `SlopeMeasurement` (`GeoMeasurement`; one `GeoLine` subject, constructor kind-guard on the `AreaMeasurement` model); value = carrier `direction.y / direction.x`, undefined for vertical lines or while the subject is; anchor from `parameterExtent` (segment midpoint, ray origin, `pointOnLine` for infinite carriers)
+- [x] `SlopeTool`: stateless one-tap on the `AreaTool` model — topmost `GeoLine` from `hits`, else ignored
+- [x] Registration: codec (+ kitchen-sink round-trip + ill-typed-subject `FormatException`), `object_kind_label.dart` ('Slope'), Measure flyout row 4 + tooltip + `measureActive`, `AppAction.slopeTool` + `⇧ M` shortcut row, `main.dart` switch
+- [x] Tests: object recompute/undefined units (incl. vertical line, ray/segment anchors), tool funnel (commit, reusable, extraHits, ignored), toolbar row + highlight, `⇧ M` end-to-end — analyze clean, suite green (1613 tests)

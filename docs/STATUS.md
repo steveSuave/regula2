@@ -6,6 +6,21 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 98 — 2026-08-10
+
+**Done**
+- **Phase 73 — slope measurement of a line**, on `phase-73-slope-tool` (user request: GeoGebra-style slope readout, chiefly a quick parallelism check). PLAN Measurements sentence + build-order item 56 written first.
+- `SlopeMeasurement` (`GeoMeasurement`; one `GeoLine` subject with the `AreaMeasurement` constructor kind-guard, so any concrete line kind — segments, rays, derived lines — measures alike through the carrier). Value = `direction.y / direction.x` (sign-invariant under the carrier's canonical orientation, so parent order never shows); undefined for vertical lines and while the subject is. Anchor derived from `parameterExtent` in the domain — segment midpoint, ray origin (either carrier orientation), `pointOnLine` for infinite carriers — mirroring `labelAnchor` without touching presentation.
+- `SlopeTool`: stateless one-tap on the `AreaTool` model — topmost `GeoLine` from `hits` (so a point drawn on the line can't shadow it), everything else ignored, never the point ladder.
+- Registration set: codec rows (+ kitchen-sink entry + ill-typed-subject `FormatException` case), `object_kind_label` 'Slope', Measure flyout row 4 + tooltip, `measureActive`, `AppAction.slopeTool` on `⇧ M` (slope is *m*), `main.dart` switch. Slope is dimensionless, so `labelText` formats it through the generic `GeoMeasurement` arm — 2 decimals default, Phase 72 `valueDecimals` row applies for free.
+- 1613 tests green (+16: object units incl. vertical-undefined-recovers and both ray orientations, tool funnel incl. undefined-but-committed vertical, toolbar row + highlight, `⇧ M` end-to-end, codec round-trip + rejection), analyze clean.
+
+**Next**
+- No queued phase. Possible follow-up: a `slope(l)` text-calculation function (`objectFunctionNames`) — today a slope readout is referenced in texts by its own name (`{m}`), but a line can't be asked directly.
+
+**Open questions / gotchas**
+- A vertical line's slope is undefined (`isDefined` false → no label drawn), the codebase's degeneracy convention — GeoGebra shows `∞` instead. Revisit if users expect a visible marker.
+
 ## Session 97 — 2026-08-10
 
 **Done**
