@@ -1,0 +1,23 @@
+benchmark/wasm_driver.mjs
+  s_d307fc2148e287::t_86c4cf58c4b015 1-13
+benchmark/run_all.sh
+  s_d307fc2148e287::t_6e28f5744592f2 1-23
+benchmark/complex_bench.dart
+  s_d307fc2148e287::t_57d15165005fa9 1-367
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "4ca0c9fddf4952238c72bc300e94af421cdf74a0",
+  "prompts": {},
+  "sessions": {
+    "s_d307fc2148e287": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d48c9e4-4c2a-4793-b953-2b4305a85172",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
