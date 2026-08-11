@@ -34,10 +34,10 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 102 — SPIKE 2: conic∩conic pencil prototype
 
-- [ ] `lib/domain/projective/pencil.dart` prototype: complex cubic solver; degenerate-member split (rank-2 → two lines via adjugate, rank-1 → double line); one-Newton-step root polishing; matrix normalization
-- [ ] Glados vs ground truth: random circle pairs against V1 `intersectCircleCircle`; conics through shared random points must intersect there
-- [ ] Near-tangent / near-degenerate stress corpus with measured error bounds
-- [ ] STATUS records the stability recipe (root choice for cleanest split, normalization, achieved tolerances) — Phase 105 implements to it
+- [x] `lib/domain/projective/pencil.dart` prototype: complex cubic solver; degenerate-member split (rank-2 → two lines via adjugate, rank-1 → double line); one-Newton-step root polishing; matrix normalization
+- [x] Glados vs ground truth: random circle pairs against V1 `intersectCircleCircle`; conics through shared random points must intersect there
+- [x] Near-tangent / near-degenerate stress corpus with measured error bounds
+- [x] STATUS records the stability recipe (root choice for cleanest split, normalization, achieved tolerances) — Phase 105 implements to it
 
 ## Phase 103 — `ProjPoint` / `ProjLine`
 
