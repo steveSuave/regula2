@@ -1,0 +1,23 @@
+lib/domain/projective/complex.dart
+  s_d307fc2148e287::t_1c2409bfd5c8ec 1-122
+test/domain/projective/generators.dart
+  s_d307fc2148e287::t_6de41e48c564a7 1-23
+test/domain/projective/complex_test.dart
+  s_d307fc2148e287::t_06727da392b311 1-213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "111b168f5e7541375b8551623b998e4552a9e541",
+  "prompts": {},
+  "sessions": {
+    "s_d307fc2148e287": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d48c9e4-4c2a-4793-b953-2b4305a85172",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
