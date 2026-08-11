@@ -27,10 +27,10 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 101 — SPIKE 1: `Complex` + benchmark harness
 
-- [ ] `lib/domain/projective/complex.dart`: immutable `Complex` — `+ - * / conj abs arg`, principal `sqrt`, `polar`, `isRealWithin(eps)`
-- [ ] Glados: field axioms up to eps; `sqrt(z)·sqrt(z) ≈ z`; conjugation/abs identities; branch-cut conventions pinned in tests
-- [ ] `benchmark/`: boxed `Complex` vs `Float64List` struct-of-arrays on tracing-shaped workloads (quadratic/cubic roots in a tight loop), run on VM, dart2js, dart2wasm
-- [ ] STATUS records: benchmark table, web compile-target policy, the SoA API shape the tracing loop uses from day one
+- [x] `lib/domain/projective/complex.dart`: immutable `Complex` — `+ - * / conj abs arg`, principal `sqrt`, `polar`, `isRealWithin(eps)`
+- [x] Glados: field axioms up to eps; `sqrt(z)·sqrt(z) ≈ z`; conjugation/abs identities; branch-cut conventions pinned in tests
+- [x] `benchmark/`: boxed `Complex` vs `Float64List` struct-of-arrays on tracing-shaped workloads (quadratic/cubic roots in a tight loop), run on VM, dart2js, dart2wasm
+- [x] STATUS records: benchmark table, web compile-target policy, the SoA API shape the tracing loop uses from day one
 
 ## Phase 102 — SPIKE 2: conic∩conic pencil prototype
 
