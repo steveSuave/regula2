@@ -8,6 +8,34 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 101 (V2 Session 3) — 2026-08-12
+
+**Done**
+- **Phase 102 (SPIKE 2) complete** on `phase-102-pencil-spike`: `lib/domain/projective/pencil.dart` — conic∩conic via degenerate pencil members, prototype-quality but fully tested (23 tests: cubic solver units + glados, split recovery, line∩conic vs V1, circle pairs vs V1 `intersectCircleCircle`, five-point conics through 4 shared points, random-conic incidence, stress-corpus regression bounds).
+- `benchmark/pencil_stress.dart` measures the corpus; bounds pinned in `pencil_test.dart` with ~100× margin.
+
+**The stability recipe (Phase 105 implements to this)**
+1. **Balance coordinates** with `S = diag(σ,σ,1)`, σ = max(linear/quadratic, √(constant/quadratic)) entry ratios over both matrices; then unit-Frobenius normalize. Frobenius alone is NOT enough — without balancing, 10⁶-scale circles collapse entirely; with it, scale extremes 10^±8 sit at machine precision.
+2. **Cubic** det(A+λB): Cardano on the depressed form, larger resolvent root, one Newton polish per root on the original cubic; degree drop → quadratic → linear.
+3. **Member choice is the heart of the recipe.** Candidates = 3 Cardano roots + cluster-robust extras: the triple-root center −c₂/(3c₃) and the two derivative roots (≈ double roots) — these are well-conditioned exactly where root clusters make individual Cardano roots garbage (near-identical conics → near-triple root with ∛machine-eps error). Filter |det(member)| ≤ 1e-8 (unit Frobenius), then score = rank2Signature / (√|det| + 1e-16), where rank2Signature = max |diag(adjugate)|. The √det penalty prefers the most *accurately degenerate* member (simple well-separated root → det ~ machine eps) — without it, near-tangency picks the near-double point-circle member and loses 8 digits.
+4. **Split** rank-2 via adjugate (`adj = −ppᵀ` → p from largest diagonal, then `C + M_p = 2hgᵀ` rank 1 → lines = max row/col); rank-1 → double line from the largest row.
+5. **Line∩conic**: span the line by `l×e_i, l×e_j` (i, j avoiding the largest component of l — guarantees independence), homogeneous quadratic, cancellation-free root pairs (q:a), (c:q).
+6. **Polish** each point: one joint Newton step onto both conics (minimal-norm along both gradients, bilinear 2×2 normal equations), skipped near tangency (singular system).
+
+**Achieved tolerances (unit-circle-scale configs)**: transverse ~1e-16 incidence; near-tangent ε→1e-12: incidence ≤ 2e-16, point error ≤ 1.2e-11; just-missing: conjugate pair with |Im| = √ε ± machine noise; near-identical circles (near-triple root): worst incidence 8e-11, worst point error 1.7e-7 at δ=1e-6; concentric → I,J doubled with ~1e-8 tilt.
+
+**Known gap for Phase 105**: balancing has no *translation* part — small circles far from the origin lose digits quadratically in the offset (1e2 → 8.5e-13, 1e4 → 8.6e-9, 1e6 → 2.9e-5 and the points' imaginary contamination starts failing realness checks). Recipe: conjugate by a translation taking the configuration centroid to the origin before scaling. Pinned as bounds in the far-offset stress test.
+
+**Next**
+- Merge `phase-102-pencil-spike`; then Phase 103: `ProjPoint`/`ProjLine` (join/meet, incidence, normalization, lift/project) — the pencil prototype's raw `CVec3`/`CMat3` get proper types in 103/104 and the pencil is productionized against them in 105.
+
+**Gotchas**
+- The five-point-conic helper in `pencil_test.dart` (real Gaussian elimination) is test-only scaffolding; Phase 104's conic-from-five-points is the real one.
+- `dotVec`/`quadForm` are bilinear, NOT Hermitian — deliberate (holomorphy is what analytic continuation needs). Don't "fix" them to conjugate.
+- Glados comparison tests skip 1e-3-relative margins around V1's tangency/concentricity classification boundaries — V1's epsilon semantics, not pencil weakness.
+
+---
+
 ## Session 100 (V2 Session 2) — 2026-08-12
 
 **Done**
