@@ -1,0 +1,36 @@
+benchmark/pencil_stress.dart
+  s_d307fc2148e287::t_c72e3cffb5ac42 1-116,134-141
+  s_d307fc2148e287::t_63408c15b31fa9 142-144
+  s_d307fc2148e287::t_03c97f2bf799c0 117-133
+lib/domain/projective/pencil.dart
+  s_d307fc2148e287::t_eac5e4e7030cb9 365-394,403-405
+  s_d307fc2148e287::t_613df1926830ad 426-443,452,455-456,465-466,468-471,480,486,491-495
+  s_d307fc2148e287::t_379470192a1277 445-451,454,460-464
+  s_d307fc2148e287::t_77e93bad00e194 1-18,24-26,36-41,48-364,395-402,406-425,444,453,457-459,467,472-479,481-485,487-490,496-497
+  s_d307fc2148e287::t_69d96c863886c1 19-23,27-35,42-47
+test/domain/projective/pencil_test.dart
+  s_d307fc2148e287::t_6fd52beea2c0ce 361
+  s_d307fc2148e287::t_d16b4575f72887 526-530
+  s_d307fc2148e287::t_97dfac9597b3f1 10
+  s_d307fc2148e287::t_95b3ce7ff02e02 1-9,11-74,76-134,150-292,294-360,362-405,407-525,531-542
+  s_d307fc2148e287::t_0b2ef8fae1e1ca 75
+  s_d307fc2148e287::t_b3ae306fe5b1eb 135-149
+  s_d307fc2148e287::t_6cfa189029b03b 293
+  s_d307fc2148e287::t_deb0be47459a7d 406
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f318f208683f55c9792b13beff378fcf852873f2",
+  "prompts": {},
+  "sessions": {
+    "s_d307fc2148e287": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4d48c9e4-4c2a-4793-b953-2b4305a85172",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
