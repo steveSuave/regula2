@@ -1,0 +1,21 @@
+test/kitchen_sink.dart
+  s_08eb89933e0ebb::t_0765aad52735a6 1-252
+test/application/persistence/construction_codec_test.dart
+  s_08eb89933e0ebb::t_d7b5b9d72d9bb2 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "97b7aa860b0b221e8fe295edb607826b5705f1fb",
+  "prompts": {},
+  "sessions": {
+    "s_08eb89933e0ebb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bddf5d02-8a4a-4c33-8209-f9c3466dfb32",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
