@@ -8,6 +8,25 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 106 (V2 Session 8) — 2026-08-12
+
+**Done**
+- **Phase 107 complete** on `phase-107-incidence-core`: the incidence core stores homogeneous state. New kernel file `lib/domain/projective/euclidean.dart` (`directionOf`, `normalDirectionOf` = the I,J conjugate, `parallelThrough`/`perpendicularThrough`, `midpointOf`, `centroidOf`, `perpendicularBisectorOf` — all multilinear/holomorphic, zero-triple propagation) with its own unit + glados suite.
+- Migrated: `FreePoint` (stores its lift; `position` reads `.re` back exactly at any magnitude), `LineThroughTwoPoints`/`Segment`/`Ray` on a shared `carrierThrough` join (segments/rays additionally require drawable endpoints — carrier nulled too; only the infinite line gains infinite-parent semantics), `ParallelLine`/`PerpendicularLine` via a projective `carrierFrom` hook on `RelativeLine`, `PerpendicularBisectorLine`, `Midpoint`, and `TriangleCenterPoint` + `Centroid`/`Orthocenter`/`Circumcenter` (centroid trilinear; ortho/circumcenter as meets of altitudes/bisectors — collinear vertices now land at infinity, marked as such). `Incenter` rode along on the migrated base (project → `tc.incenter` → lift): semantically unchanged, not "migrated".
+- `orientedAlong` in `geo_object.dart` re-anchors V1 line orientations at projection time (p1→p2, reference direction) — branch orderings and parameter extents stay bit-compatible in direction. Pre-existing suite passed **untouched**; with the new per-kind glados (complex-rescaling invariance via `test/projective_stubs.dart` stubs) and V2-semantics tests the suite is 1801 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Merge `phase-107-incidence-core`; then Phase 108 — `proj_transform.dart` (3×3 complex matrix; apply to point/line/conic) and the transform-point kinds (`ReflectedPoint`, `RotatedPoint`, `HarmonicConjugatePoint` via cross-ratio, …).
+
+**Gotchas**
+- `join(p, p.scaledBy(k))` is only *algebraically* zero — floating point leaves a tiny nonzero triple. Coincidence is filtered by the `closeTo` guards in `carrierThrough`/`PerpendicularBisectorLine`; only exact duplicates cancel bitwise. Don't rely on `isZero` for rescaled duplicates.
+- Prefix-imported extensions still participate in *implicit* extension resolution: importing both `test/domain/math/generators.dart` and `test/domain/projective/generators.dart` (even `as pg`) makes `any.vec2` ambiguous. In files needing both, build the complex scalar from `any.coordinate` instead.
+- `FreePoint.position` reads the stored lift's `.re` directly (w is exactly 1). Don't "simplify" it to `toVec2()!` — the relative `isFinite` check calls coordinates beyond ~1e9 "at infinity" and the `!` would throw.
+- Coincidence guards are now *relative* (`ProjPoint.closeTo`, eps 1e-9) where V1 used absolute 1e-9 world units — identical at test scales, divergent far from unit scale. Deliberate; the layer's eps policy is relative.
+- The migrated-kind contract for the undefined-projective-view bridge test still holds because degenerate *inputs* null the carrier; but migrated kinds can now expose a non-null `projPoint`/`projLine` while `isDefined` is false (points at infinity) — that is the intended reading, don't "fix" it back.
+
+---
+
 ## Session 105 (V2 Session 7) — 2026-08-12
 
 **Done**

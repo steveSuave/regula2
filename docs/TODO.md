@@ -14,13 +14,6 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 105 — conic∩conic (production)
-
-- [x] `intersectConicConic`: always 4 roots with multiplicities, per the Spike-2 recipe; canonical ordering (real roots first, old circle∩circle order among them, conjugate pairs pinned)
-- [x] Single documented tolerance/eps policy for the projective layer
-- [x] Glados: all 4 roots incident to both conics; any two distinct circles → exactly two of the four roots are I and J
-- [x] Agreement with V1 `intersectCircleCircle` on real cases; Spike-2 stress corpus promoted to regression tests
-
 ## Phase 106 — Bridge layer in the abstract kinds
 
 - [x] `geo_object.dart`: `GeoPoint.projPoint` / `GeoLine.projLine` / `GeoCircle.conic` nullable getters with lift-from-affine defaults; projection helpers; kind-level `isDefined` docs updated to the "real and finite" reading
@@ -30,9 +23,9 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 107 — Object batch 1: incidence core
 
-- [ ] Migrate: `FreePoint` (stores `ProjPoint`, drag sets it real), `Midpoint`, `LineThroughTwoPoints`, `Segment`, `Ray` (projective carrier, real-extent metadata unchanged), `ParallelLine` (meet with line at infinity → join), `PerpendicularLine` / `PerpendicularBisectorLine` (conjugate directions w.r.t. I,J), `Centroid`, `Orthocenter`, circumcenter-as-point
-- [ ] Existing suite green (the spec); per-kind glados: recompute invariant under complex rescaling of parent homogeneous coords
-- [ ] New V2-semantics tests: old degeneracies that now correctly yield points at infinity, marked as such
+- [x] Migrate: `FreePoint` (stores `ProjPoint`, drag sets it real), `Midpoint`, `LineThroughTwoPoints`, `Segment`, `Ray` (projective carrier, real-extent metadata unchanged), `ParallelLine` (meet with line at infinity → join), `PerpendicularLine` / `PerpendicularBisectorLine` (conjugate directions w.r.t. I,J), `Centroid`, `Orthocenter`, circumcenter-as-point
+- [x] Existing suite green (the spec); per-kind glados: recompute invariant under complex rescaling of parent homogeneous coords
+- [x] New V2-semantics tests: old degeneracies that now correctly yield points at infinity, marked as such
 
 ## Phase 108 — Object batch 2: transforms as projective maps
 
