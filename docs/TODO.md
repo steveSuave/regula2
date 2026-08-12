@@ -47,10 +47,10 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 104 — `ConicMatrix`, circular points, line∩conic
 
-- [ ] `conic_matrix.dart`: symmetric 3×3 complex matrix; evaluate `pᵀAp`; polar line `Ap`; lift from `CircleEq`; conic-from-five-points; degenerate-rank classification; `I=(1,i,0)`, `J=(1,−i,0)` constants
-- [ ] `intersectLineConic`: always exactly 2 `ProjPoint`s (multiplicity at tangency), canonically ordered by real parameter along the line when both are real (old-ordering compatibility)
-- [ ] Glados: every lifted circle passes through I and J; is-circle ⇔ passes through I,J; roots incident to both carriers
-- [ ] Glados: agreement (positions *and order*) with V1 `intersectLineCircle` on real transverse/tangent/miss cases (miss = conjugate pair, projection non-real)
+- [x] `conic_matrix.dart`: symmetric 3×3 complex matrix; evaluate `pᵀAp`; polar line `Ap`; lift from `CircleEq`; conic-from-five-points; degenerate-rank classification; `I=(1,i,0)`, `J=(1,−i,0)` constants
+- [x] `intersectLineConic`: always exactly 2 `ProjPoint`s (multiplicity at tangency), canonically ordered by real parameter along the line when both are real (old-ordering compatibility)
+- [x] Glados: every lifted circle passes through I and J; is-circle ⇔ passes through I,J; roots incident to both carriers
+- [x] Glados: agreement (positions *and order*) with V1 `intersectLineCircle` on real transverse/tangent/miss cases (miss = conjugate pair, projection non-real)
 
 ## Phase 105 — conic∩conic (production)
 

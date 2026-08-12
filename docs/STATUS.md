@@ -8,6 +8,23 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 103 (V2 Session 5) — 2026-08-12
+
+**Done**
+- **Phase 104 complete** on `phase-104-conic-matrix`: `lib/domain/projective/conic_matrix.dart` — symmetric 3×3 complex `ConicMatrix` (`evaluate` = pᵀAp, `polarLine`, `containsPoint`, `closeTo`, `isReal`, `rank`, `normalized`, `scaledBy`), lift from `CircleEq`, `linePair`, `throughFivePoints` (complex Gauss–Jordan on chart-normalized points, null on rank < 5), `toCircleEq` projection (added ahead of Phase 109's `circle` getter — small, tested), and the circular points `circularPointI`/`J` as constants.
+- `intersectLineConic` on the proper types: always 2 `ProjPoint`s via the Spike-2 span trick; canonical order = increasing parameter along the representative's `(b, −a)` direction, so `ProjLine.lift` of a V1 `LineEq` orders exactly like V1 `intersectLineCircle` (flipping the representative flips the order — V1 semantics); conjugate pairs pinned by ascending Im of the chart parameter.
+- 33 new tests (units + glados): I/J ⇔ circle shape, five-point recovery of circles, rank on line pairs/double lines, V1 agreement in positions *and order* on transverse + constructed-tangent + miss cases, rescaling invariance of every predicate and of the intersection point set. Full suite 1749 green, analyze clean.
+
+**Next**
+- Phase 105: production `intersectConicConic` on `ConicMatrix`/`ProjPoint` per the Spike-2 recipe, adding the missing *translation* part of balancing (centroid → origin) and the single documented tolerance policy; promote the stress corpus to regression tests; re-point `pencil.dart` at the proper types (its raw `CVec3`/`CMat3` and `pencil_test.dart`'s five-point Gaussian helper survive until then, deliberately).
+
+**Gotchas**
+- `ConicMatrix.closeTo` computes the 2×2 minors of the coefficient 6-vectors directly (Lagrange identity). Don't "simplify" it to the Cauchy–Schwarz difference `‖A‖²‖B‖² − |⟨A,B⟩|²` — that cancels catastrophically and can't resolve residuals below ~1e-16 relative, i.e. it breaks at the default eps² = 1e-18.
+- `rank` is relative to the Frobenius norm, so a tiny circle far from the origin classifies as a point circle (|det| = r² drowns against ‖A‖³ ~ |center|⁶). Real conditioning, not a bug — the translation-balancing gap Phase 105 closes. The rank-3 glados test is deliberately restricted to `smallCircle` scales.
+- Canonical intersection order is a property of the line's *representative*, not the line: scaling by a negative/complex factor can permute the pair. Compare point sets, not indices, after rescaling.
+
+---
+
 ## Session 102 (V2 Session 4) — 2026-08-12
 
 **Done**
