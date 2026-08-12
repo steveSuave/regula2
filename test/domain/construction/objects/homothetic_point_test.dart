@@ -1,9 +1,13 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('HomotheticPoint', () {
@@ -91,6 +95,41 @@ void main() {
             id: 'h', point: p, center: c, ratio: double.infinity),
         throwsArgumentError,
       );
+    });
+  });
+
+  group('projective semantics (Phase 108)', () {
+    test('a homothety fixes a point at infinity, marked as such', () {
+      final r = HomotheticPoint(
+        id: 'r',
+        point: StubProjectivePoint(ProjPoint.real(1, 2, 0)),
+        center: FreePoint(id: 'c', position: const Vec2(3, -1)),
+        ratio: 2.5,
+      );
+      expect(r.isDefined, isFalse);
+      expect(r.position, isNull);
+      final image = r.projPoint!;
+      expect(image.isReal(), isTrue);
+      expect(image.isFinite(), isFalse);
+      expect(image.closeTo(ProjPoint.real(1, 2, 0)), isTrue);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of a parent',
+        (p, c, k) {
+      HomotheticPoint build(ProjPoint point, ProjPoint center) =>
+          HomotheticPoint(
+            id: 'r',
+            point: StubProjectivePoint(point),
+            center: StubProjectivePoint(center),
+            ratio: -1.5,
+          );
+      final plain = build(ProjPoint.lift(p), ProjPoint.lift(c));
+      final scaledPoint = build(ProjPoint.lift(p).scaledBy(k), ProjPoint.lift(c));
+      final scaledCenter =
+          build(ProjPoint.lift(p), ProjPoint.lift(c).scaledBy(k));
+      expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
+      expect(scaledCenter.projPoint!.closeTo(plain.projPoint!), isTrue);
     });
   });
 }

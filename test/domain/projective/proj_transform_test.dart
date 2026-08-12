@@ -43,6 +43,23 @@ void main() {
       expectVecClose(m.apply(ProjPoint.lift(p)).toVec2(), p + t);
     });
 
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('translationTaking agrees with the affine delta', (p, from, to) {
+      final m = ProjTransform.translationTaking(
+          ProjPoint.lift(from), ProjPoint.lift(to));
+      expectVecClose(m.apply(ProjPoint.lift(p)).toVec2(), p + (to - from));
+    });
+
+    test('translationTaking with an endpoint at infinity is singular and '
+        'sends finite points to infinity', () {
+      final m = ProjTransform.translationTaking(
+          ProjPoint.real(1, 2), ProjPoint.real(3, 4, 0));
+      expect(m.det.abs, lessThanOrEqualTo(1e-15));
+      final image = m.apply(ProjPoint.real(5, 6));
+      expect(image.isZero, isFalse);
+      expect(image.isFinite(), isFalse);
+    });
+
     Glados3(any.vec2, any.vec2, any.component)
         .test('rotation agrees with the affine formula', (p, c, a) {
       final angle = a / 300;

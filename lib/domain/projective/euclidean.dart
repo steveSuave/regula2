@@ -75,3 +75,17 @@ ProjPoint centroidOf(ProjPoint a, ProjPoint b, ProjPoint c) {
 /// projectively equal (zero join) or both at infinity.
 ProjLine perpendicularBisectorOf(ProjPoint p, ProjPoint q) =>
     midpointOf(p, q).join(normalDirectionOf(p.join(q)));
+
+/// The affine interpolation `p + t·(q − p)` homogenized:
+/// `[(1−t)·x₁w₂ + t·x₂w₁ : (1−t)·y₁w₂ + t·y₂w₁ : w₁w₂]` — [midpointOf]
+/// generalized to any real parameter ([t] is not clamped, so values
+/// outside [0, 1] extrapolate).
+///
+/// Bilinear in the points, so well-defined projectively. With [q] at
+/// infinity the result is [q] itself for `t ≠ 0` (the affine limit) and
+/// the zero triple at `t = 0`; likewise with the roles swapped.
+ProjPoint lerpOf(ProjPoint p, ProjPoint q, double t) => ProjPoint(
+      (p.x * q.w).scale(1 - t) + (q.x * p.w).scale(t),
+      (p.y * q.w).scale(1 - t) + (q.y * p.w).scale(t),
+      p.w * q.w,
+    );

@@ -1,4 +1,6 @@
 import '../../math/vec2.dart';
+import '../../projective/proj_point.dart';
+import '../../projective/proj_transform.dart';
 import '../geo_object.dart';
 
 /// The mirror image of [point] across the [mirror] line.
@@ -7,6 +9,11 @@ import '../geo_object.dart';
 /// coincide); a point lying on the mirror reflects to itself, which is
 /// not degenerate. Segments and rays mirror across their infinite
 /// carrier, matching `IntersectionPoint`'s carrier semantics.
+///
+/// Migrated (Phase 108): [ProjTransform.reflection] of the mirror's
+/// projective carrier, applied to the parent's projective view. A parent
+/// at infinity reflects to the mirrored direction at infinity, marked as
+/// such: [projPoint] real, [position] null.
 class ReflectedPoint extends GeoPoint {
   ReflectedPoint({
     required super.id,
@@ -20,18 +27,26 @@ class ReflectedPoint extends GeoPoint {
   final GeoPoint point;
   final GeoLine mirror;
 
-  Vec2? _position;
+  ProjPoint? _point;
 
   @override
-  Vec2? get position => _position;
+  ProjPoint? get projPoint => _point;
+
+  @override
+  Vec2? get position => _point?.toVec2();
 
   @override
   List<GeoObject> get parents => [point, mirror];
 
   @override
   void recompute() {
-    final p = point.position;
-    final line = mirror.line;
-    _position = (p == null || line == null) ? null : line.reflect(p);
+    final p = point.projPoint;
+    final axis = mirror.projLine;
+    if (p == null || axis == null) {
+      _point = null;
+      return;
+    }
+    final image = ProjTransform.reflection(axis).apply(p);
+    _point = image.isZero ? null : image;
   }
 }

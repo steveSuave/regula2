@@ -68,6 +68,24 @@ class ProjTransform {
           Complex.one,
         );
 
+  /// The translation taking [from] to [to] — the affine `to − from`
+  /// cleared of denominators, so it is polynomial (bilinear) in both
+  /// homogeneous inputs. Either point at infinity yields a singular map
+  /// that sends every finite point to the translation direction's point at
+  /// infinity (the affine limit of an ever-longer translation).
+  ProjTransform.translationTaking(ProjPoint from, ProjPoint to)
+      : this(
+          from.w * to.w,
+          Complex.zero,
+          to.x * from.w - from.x * to.w,
+          Complex.zero,
+          from.w * to.w,
+          to.y * from.w - from.y * to.w,
+          Complex.zero,
+          Complex.zero,
+          from.w * to.w,
+        );
+
   /// The rotation by [angle] radians (counterclockwise) about [center].
   ///
   /// Polynomial in [center]'s homogeneous coordinates (the affine
