@@ -1,0 +1,24 @@
+lib/domain/projective/cubic.dart
+  s_49399774e182aa::t_dc8e2f64b67b79 1-96
+lib/domain/projective/tolerances.dart
+  s_49399774e182aa::t_7cd3d6f3cf6d16 1,3-24,31-64
+test/domain/projective/cubic_test.dart
+  s_49399774e182aa::t_83a415008b7c26 125-127,129
+  s_49399774e182aa::t_fee0479a6c8e7d 1-124,128,130-147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "ccdf49557cae52fd37ceae8eca6cb1db6d9cf8fd",
+  "prompts": {},
+  "sessions": {
+    "s_49399774e182aa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "da488260-1961-472f-8b98-b680fae3a416",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
