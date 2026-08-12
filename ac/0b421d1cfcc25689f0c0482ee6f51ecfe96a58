@@ -1,0 +1,29 @@
+test/domain/construction/geo_object_bridge_test.dart
+  s_08eb89933e0ebb::t_ff3a3b12c968d4 1-102
+docs/PLAN.md
+  s_08eb89933e0ebb::t_35cc322d581678 24
+lib/domain/construction/geo_object.dart
+  s_08eb89933e0ebb::t_218283dd7f4b2d 5-7
+  s_08eb89933e0ebb::t_d5fd4f455cf8b3 134-136,142-153
+  s_08eb89933e0ebb::t_06f4d25b34cb44 81-84,90-101
+  s_08eb89933e0ebb::t_18af621712d1f9 54-56,62-74
+  s_08eb89933e0ebb::t_7e4856a20d2707 75
+  s_08eb89933e0ebb::t_5c46227f42caf2 102
+  s_08eb89933e0ebb::t_962daa1b8d4722 154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "ac0b421d1cfcc25689f0c0482ee6f51ecfe96a58",
+  "prompts": {},
+  "sessions": {
+    "s_08eb89933e0ebb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bddf5d02-8a4a-4c33-8209-f9c3466dfb32",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
