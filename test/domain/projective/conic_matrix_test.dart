@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:glados/glados.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/intersections.dart';
+import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
@@ -443,6 +444,25 @@ void main() {
           expect(p.toVec2(), isNull);
         }
         expect(pts[0].closeTo(conjPoint(pts[1]), 1e-6), isTrue);
+      }
+    });
+
+    Glados2(any.circleEq, any.angle)
+        .test('agrees with V1 on constructed tangent lines', (c, theta) {
+      final touch = c.pointAt(theta);
+      final l = LineEq.pointDirection(touch, (touch - c.center).perpendicular);
+      final v1 = intersectLineCircle(l, c);
+      expect(v1, hasLength(1));
+      final pts = intersectLineConic(ProjLine.lift(l), ConicMatrix.lift(c));
+      expect(pts, hasLength(2));
+      // Double point: both roots at V1's single tangency point, at the
+      // reduced (√eps) accuracy a double root supports.
+      final tol = 1e-5 * (1 + c.center.norm + c.radius);
+      for (final p in pts) {
+        final v = p.toVec2(1e-5);
+        expect(v, isNotNull, reason: 'line $l circle $c: $pts');
+        expect(v!.distanceTo(v1.single), lessThan(tol),
+            reason: 'line $l circle $c: $pts vs $v1');
       }
     });
 
