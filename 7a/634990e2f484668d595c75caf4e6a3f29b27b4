@@ -1,0 +1,22 @@
+lib/domain/projective/euclidean.dart
+  s_b0d4714a25c816::t_cc8d70cfc0c86c 1-77
+test/domain/projective/euclidean_test.dart
+  s_b0d4714a25c816::t_bcd01b21631fa6 1-158,166-224
+  s_b0d4714a25c816::t_bb06e1bfdc1a47 159-165
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7a634990e2f484668d595c75caf4e6a3f29b27b4",
+  "prompts": {},
+  "sessions": {
+    "s_b0d4714a25c816": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1204aff4-9a2d-42bd-8ef7-a88ec3ae3442",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
