@@ -8,6 +8,23 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 102 (V2 Session 4) — 2026-08-12
+
+**Done**
+- **Phase 103 complete** on `phase-103-proj-types`: `lib/domain/projective/proj_point.dart` + `proj_line.dart` — homogeneous `[x:y:w]` / `[a:b:c]` over boxed `Complex`, cross-product `join`/`meet`, bilinear incidence, chart normalization (divide by largest-magnitude coordinate — removes scale *and* phase, making `isReal` scale-invariant), relative predicates (`closeTo`, `isIncidentTo`, `isReal`, `isFinite`), `lift` from `Vec2`/`LineEq`, total projections `toVec2()`/`toLineEq()` (null = complex or at infinity — the rendering question). Zero triples fail every predicate and propagate instead of throwing; NaN likewise.
+- `lib/domain/projective/tolerances.dart`: provisional shared `projectiveEpsilon = 1e-9` (relative, sine-like measure) — Phase 105 consolidates the layer policy here.
+- 47 new tests (units + glados: duality, incidence, rescaling invariance of every predicate/projection, parallels meeting at `[d.x, d.y, 0]`, lift∘project = id). Full suite 1716 green, analyze clean.
+
+**Next**
+- Phase 104: `ConicMatrix` + circular points I/J + `intersectLineConic` (canonical ordering compatible with V1 `intersectLineCircle`). The pencil prototype's `intersectLineConic` and its span trick are the reference; conic-from-five-points replaces the test-only Gaussian helper in `pencil_test.dart`.
+
+**Gotchas**
+- `ProjPoint`/`ProjLine` `==` is exact component equality; projective equality is `closeTo`. Don't compare homogeneous values with `==` in geometry code.
+- All predicates are *relative* (residual vs the triples' norms), so eps values are dimensionless — don't reuse them as world-space distances.
+- The pencil prototype still runs on raw `CVec3`/`CMat3`; it gets re-pointed at the proper types in Phase 105, not before.
+
+---
+
 ## Session 101 (V2 Session 3) — 2026-08-12
 
 **Done**

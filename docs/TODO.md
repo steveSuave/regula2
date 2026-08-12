@@ -41,9 +41,9 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 103 — `ProjPoint` / `ProjLine`
 
-- [ ] `proj_point.dart` / `proj_line.dart`: cross-product `join`/`meet`, incidence `⟨p,l⟩`, normalization, equality-up-to-complex-scalar, `isReal`/`isFinite` (eps), lift from `Vec2`/`LineEq`, project to `Vec2?`/`LineEq?`
-- [ ] Glados: join/meet duality; `p`,`q` incident to `join(p,q)`; all predicates/projections invariant under random complex scaling of homogeneous coords
-- [ ] Glados: line∩line always one point; parallel lines meet at `[d.x, d.y, 0]`; lift∘project = id on real finite inputs
+- [x] `proj_point.dart` / `proj_line.dart`: cross-product `join`/`meet`, incidence `⟨p,l⟩`, normalization, equality-up-to-complex-scalar, `isReal`/`isFinite` (eps), lift from `Vec2`/`LineEq`, project to `Vec2?`/`LineEq?`
+- [x] Glados: join/meet duality; `p`,`q` incident to `join(p,q)`; all predicates/projections invariant under random complex scaling of homogeneous coords
+- [x] Glados: line∩line always one point; parallel lines meet at `[d.x, d.y, 0]`; lift∘project = id on real finite inputs
 
 ## Phase 104 — `ConicMatrix`, circular points, line∩conic
 
