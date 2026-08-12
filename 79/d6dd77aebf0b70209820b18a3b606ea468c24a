@@ -1,0 +1,25 @@
+lib/domain/projective/conic_matrix.dart
+  s_34082d4b9349b9::t_a7faa4ed84f3d8 1-207,212,219,228-435
+  s_34082d4b9349b9::t_c652e62d39f35f 208-211,213-218,220-227
+test/domain/projective/conic_matrix_test.dart
+  s_34082d4b9349b9::t_c82ceb340536ec 253-258
+  s_34082d4b9349b9::t_bafe8507d8e8ba 45-49
+  s_34082d4b9349b9::t_5159fa5a37442a 1-44,50-252,259-271,273-478
+  s_34082d4b9349b9::t_3e7c1aa11d1b8f 272
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "79d6dd77aebf0b70209820b18a3b606ea468c24a",
+  "prompts": {},
+  "sessions": {
+    "s_34082d4b9349b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f9ebddb-5c4f-4eb4-937f-037ef8a29ccf",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
