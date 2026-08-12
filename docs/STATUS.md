@@ -8,6 +8,25 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 107 (V2 Session 9) — 2026-08-13
+
+**Done**
+- **Phase 108 complete** on `phase-108-transforms`: `lib/domain/projective/proj_transform.dart` — 3×3 complex `ProjTransform` (apply to point `M·p`, line `adj(M)ᵀ·l`, conic congruence `adj(M)ᵀ·A·adj(M)` — all via the adjugate, so division-free and holomorphic; `compose`, `adjugate`-as-inverse, `closeTo`/`isReal`/`normalized`/`scaledBy` per the layer conventions). Euclidean constructors polynomial in their homogeneous inputs: `translation`, `translationTaking` (bilinear in two points), `rotation`, `reflection` (`(a²+b²)I − 2nlᵀ`), `pointReflection`, `homothety`.
+- Migrated the eight transform-point kinds: `ReflectedPoint`, `CentralReflectionPoint`, `RotatedPoint`, `TranslatedPoint`, `HomotheticPoint` (each = named `ProjTransform` applied to projective parents), `ProjectionPoint` (meet with `perpendicularThrough` — foot from a generic infinite point is the carrier's direction), `SegmentRatioPoint` (new kernel `lerpOf`, `midpointOf` generalized), `HarmonicConjugatePoint` (new kernel `harmonicConjugateOf`: `D = (C×B)ᵢA + (C×A)ᵢB` at the join's largest coordinate — division-free cross-ratio; **V2 semantics change**: C at the midpoint now conjugates to the join's point at infinity, marked as such, instead of going undefined).
+- New glados generators `similarity` / `projTransform`; kernel suites for transform∘adjugate = id, join/conic covariance, `evaluate` scaling by det², I/J fixed by direct similarities and swapped by reflections; per-kind rescaling-invariance + at-infinity tests. Pre-existing suite passed untouched; 1861 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Merge `phase-108-transforms`; then Phase 109 — object batch 3: circles as conics (all circle kinds store `ConicMatrix`; `CircleCenterPoint` from polar structure; `circle` getter becomes projection; three collinear points → degenerate line-conic).
+
+**Gotchas**
+- `applyToLine`/`applyToConic` recompute `adjugate` per call (cheap, 9 entries). If a kind ever applies one map to many objects, hoist the transform — but don't cache inside `ProjTransform`; it's immutable-by-convention like the rest of the layer.
+- `ProjTransform.reflection` of the line at infinity is the exact zero matrix (a = b = 0), not merely singular — reflection across ℓ∞ has no Euclidean meaning. Isotropic axes (a² + b² = 0, complex) give singular-but-nonzero maps.
+- `harmonicConjugateOf` is total but only *meaningful* for C on line AB; the object gates collinearity with relative `isIncidentTo` (V1 used absolute world units — identical at test scales, divergent far from unit scale, same deliberate policy as Phase 107's coincidence guards). Coincident base pairs must be guarded with `closeTo` *before* calling (rescaled duplicates leave nonzero join residue — same gotcha as `carrierThrough`).
+- `lerpOf(p, q, t)` with an endpoint at infinity degenerates to the zero triple exactly at the weight that selects the infinite endpoint's complement (t = 0 for q infinite) — `SegmentRatioPoint` nulls there. Bilinear-form artifact, documented in the kernel.
+- The transform kinds null on `image.isZero` (exact zero triples from degenerate maps); near-zero noise triples can't arise for real parent configurations, so no `closeTo` guards are needed in these recomputes.
+
+---
+
 ## Session 106 (V2 Session 8) — 2026-08-12
 
 **Done**
