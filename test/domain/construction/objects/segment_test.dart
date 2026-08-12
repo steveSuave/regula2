@@ -1,7 +1,11 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('Segment', () {
@@ -54,6 +58,38 @@ void main() {
       ];
       expect(ends.any((p) => p.closeTo(const Vec2(1, 0))), isTrue);
       expect(ends.any((p) => p.closeTo(const Vec2(5, 0))), isTrue);
+    });
+  });
+
+  group('projective semantics (Phase 107)', () {
+    test('an endpoint at infinity leaves the segment wholly undefined', () {
+      final a = FreePoint(id: 'a', position: const Vec2(1, 2));
+      final inf = StubProjectivePoint(ProjPoint.real(3, 4, 0));
+      final s = Segment(id: 's', point1: a, point2: inf);
+      expect(s.isDefined, isFalse);
+      expect(s.line, isNull);
+      expect(s.projLine, isNull,
+          reason: 'a segment IS its drawn extent — carrier included');
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of a parent',
+        (p, q, k) {
+      if (p.closeTo(q, 1e-3)) {
+        return;
+      }
+      final plain = Segment(
+        id: 's1',
+        point1: StubProjectivePoint(ProjPoint.lift(p)),
+        point2: StubProjectivePoint(ProjPoint.lift(q)),
+      );
+      final scaled = Segment(
+        id: 's2',
+        point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+        point2: StubProjectivePoint(ProjPoint.lift(q)),
+      );
+      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+      expect(scaled.line!.closeTo(plain.line!), isTrue);
     });
   });
 }

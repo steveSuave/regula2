@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 import 'line_through_two_points.dart';
 
@@ -14,6 +15,12 @@ import 'line_through_two_points.dart';
 /// The carrier's `direction` is normalized independently of the parents'
 /// order, so painter and hit tester must use [start] and
 /// [throughPosition] — not the carrier — to know which half-line exists.
+///
+/// Migrated (Phase 107): the carrier is the projective join
+/// ([carrierThrough]), but like `Segment` a ray needs its endpoint and
+/// direction anchor drawable, so both parents must stay real and finite —
+/// a parent at infinity leaves the whole object undefined, carrier
+/// included, exactly as in V1.
 class Ray extends GeoLine {
   Ray({
     required super.id,
@@ -27,7 +34,11 @@ class Ray extends GeoLine {
   final GeoPoint origin;
   final GeoPoint through;
 
+  ProjLine? _carrier;
   LineEq? _line;
+
+  @override
+  ProjLine? get projLine => _carrier;
 
   @override
   LineEq? get line => _line;
@@ -57,6 +68,14 @@ class Ray extends GeoLine {
 
   @override
   void recompute() {
-    _line = carrierLineThrough(origin, through);
+    final p1 = origin.position;
+    final p2 = through.position;
+    if (p1 == null || p2 == null) {
+      _carrier = null;
+      _line = null;
+      return;
+    }
+    _carrier = carrierThrough(origin, through);
+    _line = orientedAlong(_carrier?.toLineEq(), p2 - p1);
   }
 }

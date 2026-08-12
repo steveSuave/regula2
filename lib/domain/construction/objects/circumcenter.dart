@@ -1,9 +1,14 @@
-import '../../math/triangle_centers.dart' as tc;
-import '../../math/vec2.dart';
+import '../../projective/euclidean.dart';
+import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 
 /// The circumcenter (center of the circle through all three vertices) of
-/// three points. Undefined while the vertices are collinear or coincident.
+/// three points — projectively, the meet of two perpendicular bisectors.
+///
+/// Undefined while any two vertices coincide (a bisector degenerates to
+/// the zero triple); collinear vertices put it at infinity perpendicular
+/// to the common line (V1: undefined), so [position] still goes null
+/// there.
 class Circumcenter extends TriangleCenterPoint {
   Circumcenter({
     required super.id,
@@ -14,5 +19,6 @@ class Circumcenter extends TriangleCenterPoint {
   });
 
   @override
-  Vec2? computeCenter(Vec2 a, Vec2 b, Vec2 c) => tc.circumcenter(a, b, c);
+  ProjPoint computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) =>
+      perpendicularBisectorOf(a, b).meet(perpendicularBisectorOf(a, c));
 }

@@ -1,8 +1,12 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('Ray', () {
@@ -65,6 +69,38 @@ void main() {
       construction.moveFreePoint('b', const Vec2(0, 3));
       expect(r.isDefined, isTrue);
       expect(r.line!.contains(const Vec2(0, 2)), isTrue);
+    });
+  });
+
+  group('projective semantics (Phase 107)', () {
+    test('a parent at infinity leaves the ray wholly undefined', () {
+      final a = FreePoint(id: 'a', position: const Vec2(1, 2));
+      final inf = StubProjectivePoint(ProjPoint.real(3, 4, 0));
+      final r = Ray(id: 'r', origin: a, through: inf);
+      expect(r.isDefined, isFalse);
+      expect(r.line, isNull);
+      expect(r.projLine, isNull,
+          reason: 'a ray needs a drawable endpoint and direction anchor');
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of a parent',
+        (p, q, k) {
+      if (p.closeTo(q, 1e-3)) {
+        return;
+      }
+      final plain = Ray(
+        id: 'r1',
+        origin: StubProjectivePoint(ProjPoint.lift(p)),
+        through: StubProjectivePoint(ProjPoint.lift(q)),
+      );
+      final scaled = Ray(
+        id: 'r2',
+        origin: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+        through: StubProjectivePoint(ProjPoint.lift(q)),
+      );
+      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+      expect(scaled.line!.closeTo(plain.line!), isTrue);
     });
   });
 }

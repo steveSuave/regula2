@@ -602,3 +602,10 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] `intersectLineConic`: always exactly 2 `ProjPoint`s (multiplicity at tangency), canonically ordered by real parameter along the line when both are real (old-ordering compatibility)
 - [x] Glados: every lifted circle passes through I and J; is-circle ⇔ passes through I,J; roots incident to both carriers
 - [x] Glados: agreement (positions *and order*) with V1 `intersectLineCircle` on real transverse/tangent/miss cases (miss = conjugate pair, projection non-real)
+
+## Phase 105 — conic∩conic (production)
+
+- [x] `intersectConicConic`: always 4 roots with multiplicities, per the Spike-2 recipe; canonical ordering (real roots first, old circle∩circle order among them, conjugate pairs pinned)
+- [x] Single documented tolerance/eps policy for the projective layer
+- [x] Glados: all 4 roots incident to both conics; any two distinct circles → exactly two of the four roots are I and J
+- [x] Agreement with V1 `intersectCircleCircle` on real cases; Spike-2 stress corpus promoted to regression tests

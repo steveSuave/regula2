@@ -1,13 +1,16 @@
 import '../../math/vec2.dart';
+import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
 /// Base for point objects derived from the three vertices of a triangle
 /// (`Centroid`, `Orthocenter`, `Incenter`, `Circumcenter`).
 ///
-/// Subclasses supply the closed form in [computeCenter], returning null
-/// for degenerate input (collinear or coincident vertices) — that makes
-/// the object undefined until the degeneracy passes, matching the
-/// `Vec2?` contract of `math/triangle_centers.dart`.
+/// Migrated (Phase 107): stores the homogeneous center from
+/// [computeCenter]. Degenerate configurations that V1 flagged undefined
+/// now mostly land at infinity (collinear vertices) or on the zero triple
+/// (coincident vertices); either way [position] — the chart projection —
+/// goes null there, so `isDefined` keeps its V1 answers while [projPoint]
+/// carries the at-infinity value for projective consumers.
 abstract class TriangleCenterPoint extends GeoPoint {
   TriangleCenterPoint({
     required super.id,
@@ -23,23 +26,32 @@ abstract class TriangleCenterPoint extends GeoPoint {
   final GeoPoint vertex2;
   final GeoPoint vertex3;
 
-  Vec2? _position;
+  ProjPoint? _center;
 
   @override
-  Vec2? get position => _position;
+  ProjPoint? get projPoint => _center;
+
+  @override
+  Vec2? get position => _center?.toVec2();
 
   @override
   List<GeoObject> get parents => [vertex1, vertex2, vertex3];
 
-  /// The center of triangle `abc`, or null when degenerate.
-  Vec2? computeCenter(Vec2 a, Vec2 b, Vec2 c);
+  /// The homogeneous center of triangle `abc`. May be the zero triple, or
+  /// null for degeneracies the subclass computes affinely (`Incenter`);
+  /// both leave the object undefined.
+  ProjPoint? computeCenter(ProjPoint a, ProjPoint b, ProjPoint c);
 
   @override
   void recompute() {
-    final a = vertex1.position;
-    final b = vertex2.position;
-    final c = vertex3.position;
-    _position =
-        (a == null || b == null || c == null) ? null : computeCenter(a, b, c);
+    final a = vertex1.projPoint;
+    final b = vertex2.projPoint;
+    final c = vertex3.projPoint;
+    if (a == null || b == null || c == null) {
+      _center = null;
+      return;
+    }
+    final center = computeCenter(a, b, c);
+    _center = (center == null || center.isZero) ? null : center;
   }
 }

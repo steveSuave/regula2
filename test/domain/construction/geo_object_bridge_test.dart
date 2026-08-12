@@ -5,6 +5,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
+import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 import '../../kitchen_sink.dart';
@@ -97,6 +98,23 @@ void main() {
       expect(degenerateCircle.conic, isNull);
       expect(degeneratePoint.position, isNull);
       expect(degeneratePoint.projPoint, isNull);
+    });
+  });
+
+  group('orientedAlong (Phase 107)', () {
+    test('flips the projection when its direction opposes the anchor', () {
+      final l = LineEq.throughPoints(Vec2.zero, const Vec2(1, 1));
+      final flipped = orientedAlong(l, const Vec2(-1, -1))!;
+      expect(flipped.closeTo(l), isTrue, reason: 'same geometric line');
+      expect(flipped.direction.dot(const Vec2(-1, -1)), greaterThan(0));
+      expect(orientedAlong(l, const Vec2(1, 1)), same(l),
+          reason: 'already aligned: unchanged');
+    });
+
+    test('passes null projections and null anchors through', () {
+      expect(orientedAlong(null, const Vec2(1, 0)), isNull);
+      final l = LineEq(1, 0, -2);
+      expect(orientedAlong(l, null), same(l));
     });
   });
 }

@@ -4,7 +4,10 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/proj_point.dart';
 
+import '../../../projective_stubs.dart';
 import '../../math/generators.dart';
 
 void main() {
@@ -99,5 +102,27 @@ void main() {
         }
       },
     );
+
+    Glados3(any.vec2, any.vec2, any.coordinate).test(
+        'recompute is invariant under complex rescaling of a parent '
+        '(Phase 107)', (p, q, kRe) {
+      if (p.closeTo(q, 1e-3)) {
+        return;
+      }
+      // A genuinely complex scalar, bounded away from zero.
+      final k = Complex(kRe.abs() >= 1 ? kRe : kRe + 2, 1.5);
+      final plain = PerpendicularBisectorLine(
+        id: 'b1',
+        point1: StubProjectivePoint(ProjPoint.lift(p)),
+        point2: StubProjectivePoint(ProjPoint.lift(q)),
+      );
+      final scaled = PerpendicularBisectorLine(
+        id: 'b2',
+        point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+        point2: StubProjectivePoint(ProjPoint.lift(q)),
+      );
+      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+      expect(scaled.line!.closeTo(plain.line!), isTrue);
+    });
   });
 }

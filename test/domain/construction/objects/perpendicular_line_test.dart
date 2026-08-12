@@ -1,11 +1,17 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('PerpendicularLine', () {
@@ -110,6 +116,37 @@ void main() {
       construction.moveFreePoint('p', const Vec2(-3, 7));
       expect(perp.line!.contains(const Vec2(-3, 7)), isTrue);
       expect(perp.line!.direction.dot(ref.line!.direction), closeTo(0, 1e-12));
+    });
+  });
+
+  group('projective semantics (Phase 107)', () {
+    test('reference at the line at infinity: undefined (zero carrier)', () {
+      final p = FreePoint(id: 'p', position: const Vec2(1, 5));
+      final ref = StubProjectiveLine(ProjLine.infinity);
+      final perp = PerpendicularLine(id: 'k', through: p, reference: ref);
+      expect(perp.isDefined, isFalse);
+      expect(perp.projLine, isNull);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of either parent',
+        (a, b, k) {
+      if (a.closeTo(b, 1e-3)) {
+        return;
+      }
+      final refLine = LineEq.throughPoints(a, b);
+      final plain = PerpendicularLine(
+        id: 'k1',
+        through: StubProjectivePoint(ProjPoint.real(-3, 7)),
+        reference: StubProjectiveLine(ProjLine.lift(refLine)),
+      );
+      final scaled = PerpendicularLine(
+        id: 'k2',
+        through: StubProjectivePoint(ProjPoint.real(-3, 7).scaledBy(k)),
+        reference: StubProjectiveLine(ProjLine.lift(refLine).scaledBy(k)),
+      );
+      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+      expect(scaled.line!.closeTo(plain.line!), isTrue);
     });
   });
 }

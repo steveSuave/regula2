@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 import 'line_through_two_points.dart';
 
@@ -10,6 +11,12 @@ import 'line_through_two_points.dart';
 /// the segment's extent is deferred — see `IntersectionPoint`; constrained
 /// points do clamp, via [parameterExtent]). Undefined while the endpoints
 /// coincide or a parent is undefined.
+///
+/// Migrated (Phase 107): the carrier is the projective join
+/// ([carrierThrough]), but unlike `LineThroughTwoPoints` a segment *is*
+/// its drawn extent, so it additionally requires both endpoints real and
+/// finite — an endpoint at infinity leaves the whole object undefined,
+/// carrier included, exactly as in V1.
 class Segment extends GeoLine {
   Segment({
     required super.id,
@@ -23,7 +30,11 @@ class Segment extends GeoLine {
   final GeoPoint point1;
   final GeoPoint point2;
 
+  ProjLine? _carrier;
   LineEq? _line;
+
+  @override
+  ProjLine? get projLine => _carrier;
 
   @override
   LineEq? get line => _line;
@@ -50,6 +61,14 @@ class Segment extends GeoLine {
 
   @override
   void recompute() {
-    _line = carrierLineThrough(point1, point2);
+    final p1 = point1.position;
+    final p2 = point2.position;
+    if (p1 == null || p2 == null) {
+      _carrier = null;
+      _line = null;
+      return;
+    }
+    _carrier = carrierThrough(point1, point2);
+    _line = orientedAlong(_carrier?.toLineEq(), p2 - p1);
   }
 }

@@ -1,5 +1,5 @@
-import '../../math/triangle_centers.dart' as tc;
-import '../../math/vec2.dart';
+import '../../projective/euclidean.dart';
+import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 
 /// The centroid (intersection of the medians) of three points.
@@ -16,5 +16,6 @@ class Centroid extends TriangleCenterPoint {
   });
 
   @override
-  Vec2? computeCenter(Vec2 a, Vec2 b, Vec2 c) => tc.centroid(a, b, c);
+  ProjPoint computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) =>
+      centroidOf(a, b, c);
 }
