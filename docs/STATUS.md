@@ -8,6 +8,26 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 104 (V2 Session 6) — 2026-08-12
+
+**Done**
+- **Phase 105 complete** on `phase-105-conic-conic`: production `intersectConicConic` in `lib/domain/projective/conic_intersection.dart` on the proper types, per the Spike-2 recipe; the Cardano cubic moved to `cubic.dart` (`solveCubic`/`solveQuadratic` public, tested); `tolerances.dart` rewritten as the layer's single documented eps policy (relative predicate tolerance vs named kernel cutoffs on balanced unit-Frobenius data). `pencil.dart` and its raw `CVec3`/`CMat3` deleted; `benchmark/pencil_stress.dart` re-pointed at the production API.
+- **Translation balancing closes the Spike-2 far-offset gap**: centroid (mean of the conics' adjugate poles of ℓ∞) → origin before `diag(σ,σ,1)` + Frobenius. Unit circles at offset 1e6 now solve to 1.2e-10 ≈ one ulp of the answer (prototype: 2.9e-5); ≤ 5e-48 through offset 1e4. Regression bounds tightened ~1000×.
+- **Canonical ordering implemented and glados-pinned**: real finite first in V1 `intersectCircleCircle` order (left of the directed center line; swapping arguments reverses), then real-infinite, then non-real by a rescaling-invariant Hermitian measure — conjugate mates negative-first, so circles end […, J, I]. Ordering is invariant under complex rescaling of either input (tested).
+- Coincident conics (within `coincidentConicEpsilon` = 1e-13) report no discrete intersection; degenerate inputs (line pairs, double lines) work as pencil members. Full suite 1754 green, analyze clean.
+
+**Next**
+- Merge `phase-105-conic-conic`; then Phase 106: bridge layer in the abstract kinds (`GeoPoint.projPoint` / `GeoLine.projLine` / `GeoCircle.conic` lift-from-affine defaults, zero behaviour change, exhaustive lift-agreement test over the codec's kind registry).
+
+**Gotchas**
+- The non-real ordering key must stay Hermitian (largest of Im(x̄y), Im(x̄w), Im(ȳw), norm-scaled). A key read off chart-normalized imaginary parts flips with which coordinate `normalized` divides by — noise-driven when two coordinates tie in magnitude (I/J!). This is classification, not kernel math, so Hermitian is allowed here (nowhere else).
+- Far-offset accuracy is now representation-limited, not solver-limited: beyond offset ~1e8 (unit radius) `ConicMatrix.lift` itself loses r² below ulp(cx²) and the input *is* a point circle. Phase 109's stored conics inherit this; if it ever matters, store conics pre-translated.
+- `coincidentConicEpsilon` sits at 1e-13 deliberately below the near-identical stress family — circles δ = 1e-12 apart must still solve (they do, to 1e-8 incidence); don't raise it toward `projectiveEpsilon`.
+- Double roots (tangencies) are inherently ~sqrt(machine-eps) accurate and the joint-Newton polish is rightly skipped there (singular normal equations, and a double line's gradient is exactly zero). Don't tighten the 1e-6 tangency test bounds.
+- Pencil cubic coefficients come from interpolating det(A+λB) at λ ∈ {0, ±1, ∞} — same absolute accuracy as column-substitution at unit Frobenius, much less code.
+
+---
+
 ## Session 103 (V2 Session 5) — 2026-08-12
 
 **Done**

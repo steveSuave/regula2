@@ -54,10 +54,10 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 105 — conic∩conic (production)
 
-- [ ] `intersectConicConic`: always 4 roots with multiplicities, per the Spike-2 recipe; canonical ordering (real roots first, old circle∩circle order among them, conjugate pairs pinned)
-- [ ] Single documented tolerance/eps policy for the projective layer
-- [ ] Glados: all 4 roots incident to both conics; any two distinct circles → exactly two of the four roots are I and J
-- [ ] Agreement with V1 `intersectCircleCircle` on real cases; Spike-2 stress corpus promoted to regression tests
+- [x] `intersectConicConic`: always 4 roots with multiplicities, per the Spike-2 recipe; canonical ordering (real roots first, old circle∩circle order among them, conjugate pairs pinned)
+- [x] Single documented tolerance/eps policy for the projective layer
+- [x] Glados: all 4 roots incident to both conics; any two distinct circles → exactly two of the four roots are I and J
+- [x] Agreement with V1 `intersectCircleCircle` on real cases; Spike-2 stress corpus promoted to regression tests
 
 ## Phase 106 — Bridge layer in the abstract kinds
 
