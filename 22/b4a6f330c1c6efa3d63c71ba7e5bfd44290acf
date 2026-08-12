@@ -1,0 +1,29 @@
+test/domain/projective/proj_point_test.dart
+  s_9813fe2569c84a::t_ebc5085dbb94f5 1-218
+test/domain/projective/proj_line_test.dart
+  s_9813fe2569c84a::t_b37d311f0f5fdf 1-175
+test/domain/projective/generators.dart
+  s_9813fe2569c84a::t_26f4823147db32 2,4-5,26-44
+lib/domain/projective/tolerances.dart
+  s_9813fe2569c84a::t_34499045c7cb48 1-14
+lib/domain/projective/proj_point.dart
+  s_9813fe2569c84a::t_1f44a23ff4ba12 1-129
+lib/domain/projective/proj_line.dart
+  s_9813fe2569c84a::t_2b15161a567c89 1-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "22b4a6f330c1c6efa3d63c71ba7e5bfd44290acf",
+  "prompts": {},
+  "sessions": {
+    "s_9813fe2569c84a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee4430d4-90ad-4fc2-b52d-ec68ac8890ef",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
