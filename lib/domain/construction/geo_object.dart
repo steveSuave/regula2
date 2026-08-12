@@ -2,6 +2,9 @@ import '../math/angle_geometry.dart';
 import '../math/circle_eq.dart';
 import '../math/line_eq.dart';
 import '../math/vec2.dart';
+import '../projective/conic_matrix.dart';
+import '../projective/proj_line.dart';
+import '../projective/proj_point.dart';
 import 'object_attributes.dart';
 
 /// Base of every object in the construction graph.
@@ -48,22 +51,54 @@ sealed class GeoObject {
   void recompute();
 }
 
-/// A point-valued object. [position] is null while undefined.
+/// A point-valued object. [position] is null while undefined — for a
+/// migrated kind that means "not real and finite": the projective value
+/// exists, but projects outside the affine chart (see [projPoint]).
 abstract class GeoPoint extends GeoObject {
   GeoPoint({required super.id, super.attributes});
 
   Vec2? get position;
+
+  /// The point in homogeneous coordinates — the canonical V2 view (PLAN
+  /// §Migration strategy). New domain code reads this, never [position].
+  ///
+  /// This default lifts the affine [position] to `[x, y, 1]`, null while
+  /// undefined — correct for unmigrated kinds, whose affine kernel only
+  /// produces real finite values. A migrated kind stores homogeneous
+  /// state, overrides this getter to return it, and reimplements
+  /// [position] as its projection ([ProjPoint.toVec2]), so [isDefined]
+  /// becomes the rendering question "real and finite?".
+  ProjPoint? get projPoint => switch (position) {
+        null => null,
+        final p => ProjPoint.lift(p),
+      };
 
   @override
   bool get isDefined => position != null;
 }
 
 /// A line-valued object (infinite lines, rays, segments share the carrier
-/// [line] for intersection math). [line] is null while undefined.
+/// [line] for intersection math). [line] is null while undefined — for a
+/// migrated kind that means "not real, or the line at infinity": the
+/// projective carrier exists but has no affine implicit form (see
+/// [projLine]).
 abstract class GeoLine extends GeoObject {
   GeoLine({required super.id, super.attributes});
 
   LineEq? get line;
+
+  /// The carrier in homogeneous coefficients — the canonical V2 view
+  /// (PLAN §Migration strategy). New domain code reads this, never [line].
+  ///
+  /// This default lifts the affine [line] coefficient-wise, null while
+  /// undefined — correct for unmigrated kinds. A migrated kind stores
+  /// homogeneous state, overrides this getter, and reimplements [line] as
+  /// its projection ([ProjLine.toLineEq]); real-extent metadata
+  /// ([parameterExtent]) stays affine either way.
+  ProjLine? get projLine => switch (line) {
+        null => null,
+        final l => ProjLine.lift(l),
+      };
 
   /// The parameter span of the carrier this object actually occupies, in
   /// the carrier's arc-length parameterization (`LineEq.parameterAt`), as
@@ -96,11 +131,26 @@ abstract class GeoLine extends GeoObject {
   bool get isDefined => line != null;
 }
 
-/// A circle-valued object. [circle] is null while undefined.
+/// A circle-valued object. [circle] is null while undefined — for a
+/// migrated kind that means "not a real circle": the conic exists but does
+/// not project to a center-and-radius form (see [conic]).
 abstract class GeoCircle extends GeoObject {
   GeoCircle({required super.id, super.attributes});
 
   CircleEq? get circle;
+
+  /// The carrier as a projective conic — the canonical V2 view (PLAN
+  /// §Migration strategy). New domain code reads this, never [circle].
+  ///
+  /// This default lifts the affine [circle] ([ConicMatrix.lift]), null
+  /// while undefined — correct for unmigrated kinds. A migrated kind
+  /// stores a [ConicMatrix], overrides this getter, and reimplements
+  /// [circle] as its projection ([ConicMatrix.toCircleEq]); angular-extent
+  /// metadata ([angularExtent]) stays affine either way.
+  ConicMatrix? get conic => switch (circle) {
+        null => null,
+        final c => ConicMatrix.lift(c),
+      };
 
   /// The angular span of the carrier this object actually occupies, as
   /// `(start, sweep)` with a counter-clockwise sweep in [0, 2π) — or null
