@@ -1,0 +1,27 @@
+benchmark/pencil_stress.dart
+  s_49399774e182aa::t_9e6ad8bac0e691 1-4,12-13,15-17,19-20,24-25,28-29,35,38-41,55,75,79-81,89,94,97-98,112,121,126,138,140-143
+lib/domain/projective/conic_intersection.dart
+  s_49399774e182aa::t_9456d1ebe27cab 76-82
+  s_49399774e182aa::t_bb942aac44f395 1-75,83-421,436-454
+  s_49399774e182aa::t_ae07e166cf18b2 422-435
+test/domain/projective/conic_intersection_test.dart
+  s_49399774e182aa::t_f6848a70631c81 387-393,399
+  s_49399774e182aa::t_e19d0135f43b96 1-257,261-386,394-398,400-407
+  s_49399774e182aa::t_0920f123635cd7 258-260
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6c3529b6ead15a03bb5283f5e0fe5a4f70223135",
+  "prompts": {},
+  "sessions": {
+    "s_49399774e182aa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "da488260-1961-472f-8b98-b680fae3a416",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
