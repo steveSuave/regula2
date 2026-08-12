@@ -1,0 +1,71 @@
+test/domain/construction/objects/rotated_point_test.dart
+  s_0246ce1aa6bd87::t_51ea6f1cb09874 3,7-10
+  s_0246ce1aa6bd87::t_f0d56c9eef7a7d 75-109
+lib/domain/construction/objects/homothetic_point.dart
+  s_0246ce1aa6bd87::t_bcb7bede4c56ee 2-3,14-18,39-42,45,52-59
+test/domain/construction/objects/homothetic_point_test.dart
+  s_0246ce1aa6bd87::t_2d598bdb8ba501 100-134
+  s_0246ce1aa6bd87::t_f23d67ef1ba468 1,7-10
+test/domain/projective/euclidean_test.dart
+  s_0246ce1aa6bd87::t_3f1ef9952573f2 140-176
+lib/domain/projective/proj_point.dart
+  s_0246ce1aa6bd87::t_652e07d12abff5 130-164
+lib/domain/projective/proj_transform.dart
+  s_0246ce1aa6bd87::t_94ae570d2a3b40 71-88
+lib/domain/construction/objects/projection_point.dart
+  s_0246ce1aa6bd87::t_22747dfce5ef32 2-3,13-19,33-36,39,46-53
+test/domain/construction/objects/central_reflection_point_test.dart
+  s_0246ce1aa6bd87::t_b90c6deed5f652 7-10
+  s_0246ce1aa6bd87::t_521ef563dce435 74-106
+  s_0246ce1aa6bd87::t_0c9496b2422058 1
+lib/domain/construction/objects/harmonic_conjugate_point.dart
+  s_0246ce1aa6bd87::t_b9eb78167a9f79 2,9-17,33-36,39,46-58
+test/domain/construction/objects/translated_point_test.dart
+  s_0246ce1aa6bd87::t_3510aeebe29a9d 1,7-10
+  s_0246ce1aa6bd87::t_dba788d914eb95 86-142
+test/domain/construction/objects/reflected_point_test.dart
+  s_0246ce1aa6bd87::t_1c545f0b30291e 92-145
+  s_0246ce1aa6bd87::t_44cb9afa51f67d 1,5,7-11
+test/domain/construction/objects/harmonic_conjugate_point_test.dart
+  s_0246ce1aa6bd87::t_ee9a8c09526266 1,5-8
+  s_0246ce1aa6bd87::t_9d7c61e765d1df 69-136
+test/domain/projective/proj_transform_test.dart
+  s_0246ce1aa6bd87::t_ce0be48bccadd6 46-62
+lib/domain/construction/objects/translated_point.dart
+  s_0246ce1aa6bd87::t_75015c3a697b89 2-3,11-17,33-36,39,46-54
+test/domain/construction/objects/projection_point_test.dart
+  s_0246ce1aa6bd87::t_fc0ba818716b8b 1,5,7-11
+  s_0246ce1aa6bd87::t_7218a5d0fa560b 89-154
+lib/domain/construction/objects/rotated_point.dart
+  s_0246ce1aa6bd87::t_f98dc9b064ab67 2-3,12-15,33-36,39,46-53
+test/domain/projective/proj_point_test.dart
+  s_0246ce1aa6bd87::t_ff098a30d5f665 219-288
+  s_0246ce1aa6bd87::t_8fa261b9d283f7 2
+test/domain/construction/objects/segment_ratio_point_test.dart
+  s_0246ce1aa6bd87::t_2e24e8e838a26c 1,7-10
+  s_0246ce1aa6bd87::t_995840a6cf76ea 91-138
+lib/domain/construction/objects/central_reflection_point.dart
+  s_0246ce1aa6bd87::t_7dbd93cb9898d2 2-3,11-15,29-32,35,42-49
+lib/domain/construction/objects/segment_ratio_point.dart
+  s_0246ce1aa6bd87::t_36d88218741542 2-3,14-18,37-40,43,50-57
+lib/domain/projective/euclidean.dart
+  s_0246ce1aa6bd87::t_052cd8d3d107c4 78-91
+lib/domain/construction/objects/reflected_point.dart
+  s_0246ce1aa6bd87::t_d199a1104b4a35 2-3,12-16,30-33,36,43-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d1b2dea6267aecc4ed1cc2596c6cfa168cfdf068",
+  "prompts": {},
+  "sessions": {
+    "s_0246ce1aa6bd87": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c71c5b21-878f-40c1-9aab-c6e9f9e0ed32",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
