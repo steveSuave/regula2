@@ -14,13 +14,6 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 106 — Bridge layer in the abstract kinds
-
-- [x] `geo_object.dart`: `GeoPoint.projPoint` / `GeoLine.projLine` / `GeoCircle.conic` nullable getters with lift-from-affine defaults; projection helpers; kind-level `isDefined` docs updated to the "real and finite" reading
-- [x] Zero behaviour change: full suite green untouched
-- [x] Exhaustive test: lift defaults agree with affine values for every concrete kind (loop over the codec's kind registry)
-- [x] PLAN documents the migrated/unmigrated contract + rule: new domain code reads projective accessors only
-
 ## Phase 107 — Object batch 1: incidence core
 
 - [x] Migrate: `FreePoint` (stores `ProjPoint`, drag sets it real), `Midpoint`, `LineThroughTwoPoints`, `Segment`, `Ray` (projective carrier, real-extent metadata unchanged), `ParallelLine` (meet with line at infinity → join), `PerpendicularLine` / `PerpendicularBisectorLine` (conjugate directions w.r.t. I,J), `Centroid`, `Orthocenter`, circumcenter-as-point
@@ -29,9 +22,9 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 108 — Object batch 2: transforms as projective maps
 
-- [ ] `proj_transform.dart`: 3×3 complex matrix; apply to point, line, conic (congruence)
-- [ ] Migrate: `ReflectedPoint`, `CentralReflectionPoint`, `RotatedPoint`, `TranslatedPoint`, `HomotheticPoint`, `ProjectionPoint`, `SegmentRatioPoint`, `HarmonicConjugatePoint` (cross-ratio, natively)
-- [ ] Glados: transform∘inverse = id; conic transforms consistently with its points (`pᵀAp=0` preserved); old-vs-new agreement on real inputs
+- [x] `proj_transform.dart`: 3×3 complex matrix; apply to point, line, conic (congruence)
+- [x] Migrate: `ReflectedPoint`, `CentralReflectionPoint`, `RotatedPoint`, `TranslatedPoint`, `HomotheticPoint`, `ProjectionPoint`, `SegmentRatioPoint`, `HarmonicConjugatePoint` (cross-ratio, natively)
+- [x] Glados: transform∘inverse = id; conic transforms consistently with its points (`pᵀAp=0` preserved); old-vs-new agreement on real inputs
 
 ## Phase 109 — Object batch 3: circles as conics
 

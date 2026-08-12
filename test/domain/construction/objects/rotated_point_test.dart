@@ -1,9 +1,13 @@
 import 'dart:math' as math;
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('RotatedPoint', () {
@@ -66,6 +70,41 @@ void main() {
       c.position = const Vec2(2, 0);
       r.recompute();
       expect(r.position!.closeTo(const Vec2(3, 0), 1e-12), isTrue);
+    });
+  });
+
+  group('projective semantics (Phase 108)', () {
+    test('a point at infinity rotates to the turned direction at infinity, '
+        'marked as such — the center does not matter there', () {
+      final r = RotatedPoint(
+        id: 'r',
+        point: StubProjectivePoint(ProjPoint.real(1, 0, 0)),
+        center: FreePoint(id: 'c', position: const Vec2(3, -1)),
+        angle: math.pi / 2,
+      );
+      expect(r.isDefined, isFalse);
+      expect(r.position, isNull);
+      final image = r.projPoint!;
+      expect(image.isReal(), isTrue);
+      expect(image.isFinite(), isFalse);
+      expect(image.closeTo(ProjPoint.real(0, 1, 0)), isTrue);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of a parent',
+        (p, c, k) {
+      RotatedPoint build(ProjPoint point, ProjPoint center) => RotatedPoint(
+            id: 'r',
+            point: StubProjectivePoint(point),
+            center: StubProjectivePoint(center),
+            angle: 0.7,
+          );
+      final plain = build(ProjPoint.lift(p), ProjPoint.lift(c));
+      final scaledPoint = build(ProjPoint.lift(p).scaledBy(k), ProjPoint.lift(c));
+      final scaledCenter =
+          build(ProjPoint.lift(p), ProjPoint.lift(c).scaledBy(k));
+      expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
+      expect(scaledCenter.projPoint!.closeTo(plain.projPoint!), isTrue);
     });
   });
 }

@@ -609,3 +609,10 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Single documented tolerance/eps policy for the projective layer
 - [x] Glados: all 4 roots incident to both conics; any two distinct circles → exactly two of the four roots are I and J
 - [x] Agreement with V1 `intersectCircleCircle` on real cases; Spike-2 stress corpus promoted to regression tests
+
+## Phase 106 — Bridge layer in the abstract kinds
+
+- [x] `geo_object.dart`: `GeoPoint.projPoint` / `GeoLine.projLine` / `GeoCircle.conic` nullable getters with lift-from-affine defaults; projection helpers; kind-level `isDefined` docs updated to the "real and finite" reading
+- [x] Zero behaviour change: full suite green untouched
+- [x] Exhaustive test: lift defaults agree with affine values for every concrete kind (loop over the codec's kind registry)
+- [x] PLAN documents the migrated/unmigrated contract + rule: new domain code reads projective accessors only

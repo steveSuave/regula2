@@ -1,4 +1,6 @@
 import '../../math/vec2.dart';
+import '../../projective/proj_point.dart';
+import '../../projective/proj_transform.dart';
 import '../geo_object.dart';
 
 /// [point] rotated around [center] by a fixed [angle].
@@ -7,6 +9,10 @@ import '../geo_object.dart';
 /// rotates to itself. The angle is world-space (counter-clockwise for
 /// positive values, like every angle in the math layer) and fixed for the
 /// object's lifetime, same as `SegmentRatioPoint.ratio`.
+///
+/// Migrated (Phase 108): [ProjTransform.rotation] on the parents'
+/// projective views. A point at infinity rotates to the turned direction
+/// at infinity, marked as such: [projPoint] real, [position] null.
 class RotatedPoint extends GeoPoint {
   RotatedPoint({
     required super.id,
@@ -24,18 +30,26 @@ class RotatedPoint extends GeoPoint {
   /// Rotation angle in radians, counter-clockwise.
   final double angle;
 
-  Vec2? _position;
+  ProjPoint? _point;
 
   @override
-  Vec2? get position => _position;
+  ProjPoint? get projPoint => _point;
+
+  @override
+  Vec2? get position => _point?.toVec2();
 
   @override
   List<GeoObject> get parents => [point, center];
 
   @override
   void recompute() {
-    final p = point.position;
-    final c = center.position;
-    _position = (p == null || c == null) ? null : c + (p - c).rotated(angle);
+    final p = point.projPoint;
+    final c = center.projPoint;
+    if (p == null || c == null) {
+      _point = null;
+      return;
+    }
+    final image = ProjTransform.rotation(c, angle).apply(p);
+    _point = image.isZero ? null : image;
   }
 }

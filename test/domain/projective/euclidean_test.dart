@@ -137,6 +137,43 @@ void main() {
     });
   });
 
+  group('lerpOf', () {
+    Glados3(any.vec2, any.vec2, any.component)
+        .test('agrees with the affine lerp (extrapolation included)', (p, q, t0) {
+      final t = t0 / 1000; // [-1, 1] grid
+      final r = lerpOf(ProjPoint.lift(p), ProjPoint.lift(q), t);
+      expect(r.toVec2()!.closeTo(p.lerp(q, t), 1e-6), isTrue);
+    });
+
+    test('t = 0 and t = 1 are the endpoints; t = 0.5 the midpoint', () {
+      final p = ProjPoint.real(1, 2);
+      final q = ProjPoint.real(-3, 4);
+      expect(lerpOf(p, q, 0).closeTo(p), isTrue);
+      expect(lerpOf(p, q, 1).closeTo(q), isTrue);
+      expect(lerpOf(p, q, 0.5).closeTo(midpointOf(p, q)), isTrue);
+    });
+
+    test('with the far endpoint at infinity: that point at infinity for '
+        't ≠ 0, the zero triple at t = 0', () {
+      final p = ProjPoint.real(1, 2);
+      final inf = ProjPoint.real(3, 4, 0);
+      expect(lerpOf(p, inf, 0.25).closeTo(inf), isTrue);
+      expect(lerpOf(p, inf, 0).isZero, isTrue);
+    });
+
+    Glados3(any.projPoint, any.projPoint, any.nonZeroComplex)
+        .test('is projectively invariant under rescaling an argument',
+            (p, q, k) {
+      const t = 0.375;
+      final r = lerpOf(p, q, t);
+      if (r.isZero) {
+        return;
+      }
+      expect(lerpOf(p.scaledBy(k), q, t).closeTo(r), isTrue);
+      expect(lerpOf(p, q.scaledBy(k), t).closeTo(r), isTrue);
+    });
+  });
+
   group('perpendicularBisectorOf', () {
     Glados2(any.vec2, any.vec2)
         .test('contains the midpoint, perpendicular to the join, equidistant',

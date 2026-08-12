@@ -127,3 +127,38 @@ class ProjPoint {
   @override
   String toString() => 'ProjPoint($x : $y : $w)';
 }
+
+/// The harmonic conjugate of [c] with respect to [a] and [b] — the fourth
+/// point `D` on the line AB with cross-ratio `(A,B;C,D) = −1`.
+///
+/// Division-free: writing `C = α·A + β·B`, the conjugate is
+/// `D = α·A − β·B`, and `α`, `β` are read off cross products against the
+/// join (`C×B = α·(A×B)`, `C×A = −β·(A×B)`) at the join's
+/// largest-magnitude coordinate. Polynomial in all three inputs, so the
+/// projective value is invariant under rescaling any of them.
+///
+/// `C` at the midpoint of AB conjugates to the join's point at infinity;
+/// `C` at an endpoint is its own conjugate. Only meaningful for [c] on the
+/// line AB — for other inputs the result is still *a* point of AB, and
+/// callers wanting V1's semantics must gate on incidence themselves.
+/// Degenerate inputs (projectively equal [a] and [b], zero triples) give
+/// unreliable output rather than an error; callers guard with
+/// [ProjPoint.closeTo] first, per the layer convention on coincidence.
+ProjPoint harmonicConjugateOf(ProjPoint a, ProjPoint b, ProjPoint c) {
+  final n = a.join(b);
+  final cb = c.join(b);
+  final ca = c.join(a);
+  final ns = [n.a, n.b, n.c];
+  final cbs = [cb.a, cb.b, cb.c];
+  final cas = [ca.a, ca.b, ca.c];
+  var i = 0;
+  if (ns[1].abs2 > ns[i].abs2) i = 1;
+  if (ns[2].abs2 > ns[i].abs2) i = 2;
+  final alpha = cbs[i];
+  final beta = cas[i];
+  return ProjPoint(
+    a.x * alpha + b.x * beta,
+    a.y * alpha + b.y * beta,
+    a.w * alpha + b.w * beta,
+  );
+}

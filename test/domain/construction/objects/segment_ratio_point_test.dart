@@ -1,9 +1,13 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('SegmentRatioPoint', () {
@@ -82,6 +86,54 @@ void main() {
       p.recompute();
       expect(p.isDefined, isTrue);
       expect(p.position, const Vec2(0.5, 1));
+    });
+  });
+
+  group('projective semantics (Phase 108)', () {
+    test('the far endpoint at infinity: that point at infinity for a '
+        'nonzero ratio, marked as such', () {
+      final r = SegmentRatioPoint(
+        id: 'r',
+        point1: FreePoint(id: 'a', position: const Vec2(1, 2)),
+        point2: StubProjectivePoint(ProjPoint.real(3, 4, 0)),
+        ratio: 0.25,
+      );
+      expect(r.isDefined, isFalse);
+      expect(r.position, isNull);
+      final image = r.projPoint!;
+      expect(image.isReal(), isTrue);
+      expect(image.isFinite(), isFalse);
+      expect(image.closeTo(ProjPoint.real(3, 4, 0)), isTrue);
+    });
+
+    test('the far endpoint at infinity with ratio 0: the bilinear form '
+        'degenerates to the zero triple, undefined', () {
+      final r = SegmentRatioPoint(
+        id: 'r',
+        point1: FreePoint(id: 'a', position: const Vec2(1, 2)),
+        point2: StubProjectivePoint(ProjPoint.real(3, 4, 0)),
+        ratio: 0,
+      );
+      expect(r.isDefined, isFalse);
+      expect(r.projPoint, isNull);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of a parent',
+        (p, q, k) {
+      SegmentRatioPoint build(ProjPoint p1, ProjPoint p2) => SegmentRatioPoint(
+            id: 'r',
+            point1: StubProjectivePoint(p1),
+            point2: StubProjectivePoint(p2),
+            ratio: 0.75,
+          );
+      final plain = build(ProjPoint.lift(p), ProjPoint.lift(q));
+      expect(build(ProjPoint.lift(p).scaledBy(k), ProjPoint.lift(q))
+          .projPoint!
+          .closeTo(plain.projPoint!), isTrue);
+      expect(build(ProjPoint.lift(p), ProjPoint.lift(q).scaledBy(k))
+          .projPoint!
+          .closeTo(plain.projPoint!), isTrue);
     });
   });
 }

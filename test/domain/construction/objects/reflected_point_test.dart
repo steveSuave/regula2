@@ -1,8 +1,14 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
+import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('ReflectedPoint', () {
@@ -81,6 +87,60 @@ void main() {
       r.recompute();
       expect(r.isDefined, isTrue);
       expect(r.position!.closeTo(const Vec2(1, -3)), isTrue);
+    });
+  });
+
+  group('projective semantics (Phase 108)', () {
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('agrees with the V1 affine formula through the object graph',
+            (v, p, q) {
+      if (p.closeTo(q, 1e-3)) {
+        return;
+      }
+      final a = FreePoint(id: 'a', position: p);
+      final b = FreePoint(id: 'b', position: q);
+      final mirror = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final r = ReflectedPoint(
+          id: 'r', point: FreePoint(id: 'p', position: v), mirror: mirror);
+      final expected = LineEq.throughPoints(p, q).reflect(v);
+      expect(r.position!.closeTo(expected, 1e-6 * (1 + expected.norm)),
+          isTrue);
+    });
+
+    test('a point at infinity reflects to the mirrored direction at '
+        'infinity, marked as such', () {
+      final mirror = StubProjectiveLine(ProjLine.real(0, 1, 0)); // x-axis
+      final r = ReflectedPoint(
+        id: 'r',
+        point: StubProjectivePoint(ProjPoint.real(1, 2, 0)),
+        mirror: mirror,
+      );
+      expect(r.isDefined, isFalse);
+      expect(r.position, isNull);
+      final image = r.projPoint!;
+      expect(image.isReal(), isTrue);
+      expect(image.isFinite(), isFalse);
+      expect(image.closeTo(ProjPoint.real(1, -2, 0)), isTrue);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of a parent',
+        (v, q, k) {
+      if (v.closeTo(q, 1e-3)) {
+        return;
+      }
+      final axis = ProjLine.lift(LineEq.throughPoints(v, q));
+      ReflectedPoint build(ProjPoint point, ProjLine mirror) => ReflectedPoint(
+            id: 'r',
+            point: StubProjectivePoint(point),
+            mirror: StubProjectiveLine(mirror),
+          );
+      final witness = ProjPoint.real(-3, 7);
+      final plain = build(witness, axis);
+      final scaledPoint = build(witness.scaledBy(k), axis);
+      final scaledMirror = build(witness, axis.scaledBy(k));
+      expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
+      expect(scaledMirror.projPoint!.closeTo(plain.projPoint!), isTrue);
     });
   });
 }

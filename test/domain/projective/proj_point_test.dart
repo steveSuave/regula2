@@ -1,4 +1,5 @@
 import 'package:glados/glados.dart';
+import 'package:regula/domain/math/harmonic.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/proj_point.dart';
@@ -213,6 +214,76 @@ void main() {
       final back = ProjPoint.lift(v).scaledBy(k).toVec2();
       expect(back, isNotNull);
       expect(back!.closeTo(v, 1e-6), isTrue);
+    });
+  });
+
+  group('harmonicConjugateOf', () {
+    Glados3(any.vec2, any.vec2, any.component)
+        .test('agrees with the V1 affine harmonicConjugate', (a, b, t0) {
+      final t = t0 / 1000; // [-1, 1] grid
+      if (a.closeTo(b, 1e-3) || (2 * t - 1).abs() < 1e-3) {
+        return;
+      }
+      final c = a.lerp(b, t);
+      final expected = harmonicConjugate(a, b, c);
+      if (expected == null) {
+        return; // V1's own degeneracy tolerance; boundary cases skipped.
+      }
+      final d = harmonicConjugateOf(
+          ProjPoint.lift(a), ProjPoint.lift(b), ProjPoint.lift(c));
+      final got = d.toVec2();
+      expect(got, isNotNull);
+      final tol = 1e-8 * (1 + expected.norm + got!.norm);
+      expect(got.distanceTo(expected), lessThanOrEqualTo(tol));
+    });
+
+    Glados3(any.vec2, any.vec2, any.component)
+        .test('is an involution (totally — through infinity included)',
+            (a, b, t0) {
+      final t = t0 / 1000;
+      if (a.closeTo(b, 1e-3)) {
+        return;
+      }
+      final pa = ProjPoint.lift(a);
+      final pb = ProjPoint.lift(b);
+      final pc = ProjPoint.lift(a.lerp(b, t));
+      final d = harmonicConjugateOf(pa, pb, pc);
+      if (d.isZero) {
+        return;
+      }
+      expect(harmonicConjugateOf(pa, pb, d).closeTo(pc), isTrue);
+    });
+
+    test('the midpoint conjugates to the join\'s point at infinity, '
+        'endpoints to themselves', () {
+      final a = ProjPoint.real(1, 1);
+      final b = ProjPoint.real(5, 3);
+      final mid = ProjPoint.real(3, 2);
+      final d = harmonicConjugateOf(a, b, mid);
+      expect(d.isReal(), isTrue);
+      expect(d.isFinite(), isFalse);
+      expect(d.closeTo(ProjPoint.real(4, 2, 0)), isTrue,
+          reason: 'the direction of AB');
+      expect(harmonicConjugateOf(a, b, a).closeTo(a), isTrue);
+      expect(harmonicConjugateOf(a, b, b).closeTo(b), isTrue);
+    });
+
+    Glados2(any.vec2, any.nonZeroComplex)
+        .test('is projectively invariant under rescaling any argument',
+            (v, k) {
+      final a = ProjPoint.lift(v);
+      final b = ProjPoint.real(4, -1);
+      final c = ProjPoint.lift(v.lerp(const Vec2(4, -1), 0.25));
+      if (a.closeTo(b)) {
+        return;
+      }
+      final d = harmonicConjugateOf(a, b, c);
+      if (d.isZero) {
+        return;
+      }
+      expect(harmonicConjugateOf(a.scaledBy(k), b, c).closeTo(d), isTrue);
+      expect(harmonicConjugateOf(a, b.scaledBy(k), c).closeTo(d), isTrue);
+      expect(harmonicConjugateOf(a, b, c.scaledBy(k)).closeTo(d), isTrue);
     });
   });
 }

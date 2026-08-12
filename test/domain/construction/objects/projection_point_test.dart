@@ -1,8 +1,14 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
+import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('ProjectionPoint', () {
@@ -78,6 +84,72 @@ void main() {
       foot.recompute();
       expect(foot.isDefined, isTrue);
       expect(foot.position!.closeTo(const Vec2(1, 0)), isTrue);
+    });
+  });
+
+  group('projective semantics (Phase 108)', () {
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('agrees with the V1 affine formula through the object graph',
+            (v, p, q) {
+      if (p.closeTo(q, 1e-3)) {
+        return;
+      }
+      final a = FreePoint(id: 'a', position: p);
+      final b = FreePoint(id: 'b', position: q);
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final foot = ProjectionPoint(
+          id: 'f', point: FreePoint(id: 'p', position: v), line: line);
+      final expected = LineEq.throughPoints(p, q).project(v);
+      expect(foot.position!.closeTo(expected, 1e-6 * (1 + expected.norm)),
+          isTrue);
+    });
+
+    test('a generic point at infinity projects to the carrier\'s point at '
+        'infinity, marked as such', () {
+      final foot = ProjectionPoint(
+        id: 'f',
+        point: StubProjectivePoint(ProjPoint.real(1, 2, 0)),
+        line: StubProjectiveLine(ProjLine.real(0, 1, 0)), // x-axis
+      );
+      expect(foot.isDefined, isFalse);
+      expect(foot.position, isNull);
+      final image = foot.projPoint!;
+      expect(image.isReal(), isTrue);
+      expect(image.isFinite(), isFalse);
+      expect(image.closeTo(ProjPoint.real(1, 0, 0)), isTrue);
+    });
+
+    test('the carrier\'s own normal direction has no unique foot: '
+        'undefined with a null projective view', () {
+      final foot = ProjectionPoint(
+        id: 'f',
+        point: StubProjectivePoint(ProjPoint.real(0, 1, 0)),
+        line: StubProjectiveLine(ProjLine.real(0, 1, 0)), // x-axis
+      );
+      expect(foot.isDefined, isFalse);
+      expect(foot.projPoint, isNull);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+        'recompute is invariant under complex rescaling of a parent',
+        (v, q, k) {
+      if (v.closeTo(q, 1e-3)) {
+        return;
+      }
+      final carrier = ProjLine.lift(LineEq.throughPoints(v, q));
+      ProjectionPoint build(ProjPoint point, ProjLine line) => ProjectionPoint(
+            id: 'f',
+            point: StubProjectivePoint(point),
+            line: StubProjectiveLine(line),
+          );
+      final witness = ProjPoint.real(-3, 7);
+      final plain = build(witness, carrier);
+      expect(build(witness.scaledBy(k), carrier)
+          .projPoint!
+          .closeTo(plain.projPoint!), isTrue);
+      expect(build(witness, carrier.scaledBy(k))
+          .projPoint!
+          .closeTo(plain.projPoint!), isTrue);
     });
   });
 }
