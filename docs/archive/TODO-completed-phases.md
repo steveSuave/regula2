@@ -565,3 +565,40 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Registration: codec (+ kitchen-sink round-trip), `object_kind_label.dart`, Lines flyout row *above* Radical axis (below Tangents — point-and-circle tools stay adjacent), `AppAction` + `G ⇧ P` shortcut row, `main.dart` switch, `linesActive` highlight
 - [x] Tests: math units + properties, object recompute/undefined units, tool funnel (slots, dedupe, new-point commit), toolbar row order + highlight, `G ⇧ P` chord — analyze clean, 1589 green
 
+## Phase 100 — Seed repo & docs reset (this bootstrap)
+
+- [x] Clone regula with full history into `regula2`; remove `origin` remote; tag branch point `v1-final`
+- [x] Archive `cl-V2.md` as `docs/V2-assessment.md`
+- [x] Rotate V1 docs: `PLAN-v1.md`, `STATUS-sessions-89-98.md`, `TODO-v1-final.md` into `docs/archive/`
+- [x] Write V2 `docs/PLAN.md` (migration strategy, milestones, risks, reuse contract)
+- [x] Write V2 `docs/TODO.md` (this file) and fresh `docs/STATUS.md`
+- [x] Update `CLAUDE.md` (V2 kernel invariants) and `README.md`
+- [x] Record deferred decisions: package rename, remote/CI/Pages
+- [x] Verify: analyze clean, suite green (1587 + 26 goldens), web-server smoke HTTP 200, blame traces to V1 phase commits
+
+## Phase 101 — SPIKE 1: `Complex` + benchmark harness
+
+- [x] `lib/domain/projective/complex.dart`: immutable `Complex` — `+ - * / conj abs arg`, principal `sqrt`, `polar`, `isRealWithin(eps)`
+- [x] Glados: field axioms up to eps; `sqrt(z)·sqrt(z) ≈ z`; conjugation/abs identities; branch-cut conventions pinned in tests
+- [x] `benchmark/`: boxed `Complex` vs `Float64List` struct-of-arrays on tracing-shaped workloads (quadratic/cubic roots in a tight loop), run on VM, dart2js, dart2wasm
+- [x] STATUS records: benchmark table, web compile-target policy, the SoA API shape the tracing loop uses from day one
+
+## Phase 102 — SPIKE 2: conic∩conic pencil prototype
+
+- [x] `lib/domain/projective/pencil.dart` prototype: complex cubic solver; degenerate-member split (rank-2 → two lines via adjugate, rank-1 → double line); one-Newton-step root polishing; matrix normalization
+- [x] Glados vs ground truth: random circle pairs against V1 `intersectCircleCircle`; conics through shared random points must intersect there
+- [x] Near-tangent / near-degenerate stress corpus with measured error bounds
+- [x] STATUS records the stability recipe (root choice for cleanest split, normalization, achieved tolerances) — Phase 105 implements to it
+
+## Phase 103 — `ProjPoint` / `ProjLine`
+
+- [x] `proj_point.dart` / `proj_line.dart`: cross-product `join`/`meet`, incidence `⟨p,l⟩`, normalization, equality-up-to-complex-scalar, `isReal`/`isFinite` (eps), lift from `Vec2`/`LineEq`, project to `Vec2?`/`LineEq?`
+- [x] Glados: join/meet duality; `p`,`q` incident to `join(p,q)`; all predicates/projections invariant under random complex scaling of homogeneous coords
+- [x] Glados: line∩line always one point; parallel lines meet at `[d.x, d.y, 0]`; lift∘project = id on real finite inputs
+
+## Phase 104 — `ConicMatrix`, circular points, line∩conic
+
+- [x] `conic_matrix.dart`: symmetric 3×3 complex matrix; evaluate `pᵀAp`; polar line `Ap`; lift from `CircleEq`; conic-from-five-points; degenerate-rank classification; `I=(1,i,0)`, `J=(1,−i,0)` constants
+- [x] `intersectLineConic`: always exactly 2 `ProjPoint`s (multiplicity at tangency), canonically ordered by real parameter along the line when both are real (old-ordering compatibility)
+- [x] Glados: every lifted circle passes through I and J; is-circle ⇔ passes through I,J; roots incident to both carriers
+- [x] Glados: agreement (positions *and order*) with V1 `intersectLineCircle` on real transverse/tangent/miss cases (miss = conjugate pair, projection non-real)

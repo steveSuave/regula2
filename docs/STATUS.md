@@ -8,6 +8,24 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 105 (V2 Session 7) — 2026-08-12
+
+**Done**
+- **Phase 106 complete** on `phase-106-bridge`: lift-from-affine projective bridge in the abstract kinds — `GeoPoint.projPoint` (`[x,y,1]`), `GeoLine.projLine` (coefficient-wise), `GeoCircle.conic` (`ConicMatrix.lift`), each null exactly while the affine view is; kind-level docs rewritten to the migrated reading (`isDefined` = "real and finite after projection"). Zero behaviour change: the pre-existing 1754 tests pass untouched.
+- `buildKitchenSink()`/`geometryOf()` extracted verbatim from the codec test into shared `test/kitchen_sink.dart` (domain-only imports); the new `geo_object_bridge_test.dart` loops it as the every-concrete-kind registry — lift∘project agrees with each affine view, plus null propagation on degenerate line/circle/point instances. Suite 1756 green, analyze clean.
+- PLAN §Migration now pins the standing rule in-document: **new domain code reads the projective accessors only**; affine getters exist for painter, hit-tester, codec, and unmigrated `recompute()` bodies.
+- TODO rotation: completed Phases 100–104 moved to `docs/archive/TODO-completed-phases.md` (105/106 remain as the recent-completed pair).
+
+**Next**
+- Merge `phase-106-bridge`; then Phase 107 — object batch 1 (incidence core): migrate `FreePoint`, `Midpoint`, `LineThroughTwoPoints`, `Segment`, `Ray`, `ParallelLine`, `PerpendicularLine`/`PerpendicularBisectorLine` (conjugate directions w.r.t. I,J), `Centroid`, `Orthocenter`, circumcenter-as-point to stored homogeneous state.
+
+**Gotchas**
+- `LineEq`'s constructor renormalizes to a unit normal and `ProjLine.toLineEq` may flip orientation (chart normalization divides by the largest-magnitude coordinate, sign included) — compare projected lines with `closeTo` (orientation-blind), never by coefficients.
+- The kitchen sink is the de-facto kind registry for exhaustive tests: the codec encoder throws `UnsupportedError` for a kind missing from it, so new kinds must be added there (the codec test enforces this; the bridge test rides the same guarantee).
+- No web smoke this session — zero-behaviour-change phase; the suite (incl. widget tests) is the evidence.
+
+---
+
 ## Session 104 (V2 Session 6) — 2026-08-12
 
 **Done**
