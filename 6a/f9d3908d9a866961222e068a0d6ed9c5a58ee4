@@ -1,0 +1,93 @@
+test/domain/construction/objects/orthocenter_test.dart
+  s_b0d4714a25c816::t_9cc732c70f3755 6
+  s_b0d4714a25c816::t_439a1f15ff7917 49-74
+test/domain/construction/objects/parallel_line_test.dart
+  s_b0d4714a25c816::t_59c4899302081e 1,6,8-12
+  s_b0d4714a25c816::t_8bf1d488a003bd 85-105,107,113-114,116-119,121-126
+  s_b0d4714a25c816::t_eaef89fb0c45f5 106,108-112,115,120
+lib/domain/construction/objects/midpoint.dart
+  s_b0d4714a25c816::t_cf41ae10a2db94 2-3,10-13,27-30,33,40-47
+test/domain/construction/objects/free_point_test.dart
+  s_b0d4714a25c816::t_0643be95849db3 4-5
+  s_b0d4714a25c816::t_299b9f23a3b751 23-43
+lib/domain/construction/objects/line_through_two_points.dart
+  s_b0d4714a25c816::t_3bd058cccab52d 2,7-12,26,29-31,40-46,50-52,54-58,62
+lib/domain/construction/objects/centroid.dart
+  s_b0d4714a25c816::t_3c5cc8106185c5 1-2,19-20
+lib/domain/construction/objects/relative_line.dart
+  s_b0d4714a25c816::t_5905324ee82809 3-4,8,14-21,38,41-43,50-56,61-74
+test/domain/construction/objects/centroid_test.dart
+  s_b0d4714a25c816::t_17acfc10be769b 53-88
+  s_b0d4714a25c816::t_001f5ef6cd18ca 1,6-9
+test/domain/construction/geo_object_bridge_test.dart
+  s_b0d4714a25c816::t_22fa1e49554d26 8
+  s_b0d4714a25c816::t_a540e66720bb2f 103-119
+lib/domain/construction/objects/ray.dart
+  s_b0d4714a25c816::t_56d1996c5f65dd 3,18-23,37,40-42,71-79
+lib/domain/construction/objects/free_point.dart
+  s_b0d4714a25c816::t_8fe954f65bc0c7 2,9-14,17-19,21-22,25,29
+lib/domain/construction/objects/perpendicular_line.dart
+  s_b0d4714a25c816::t_a1bf5082b70960 3-5,9-11,20-22
+  s_b0d4714a25c816::t_296958cffd1c88 23
+lib/domain/construction/objects/perpendicular_bisector_line.dart
+  s_b0d4714a25c816::t_55e021967f6641 2-3,12-17,31,34-36,45-59
+lib/domain/construction/objects/parallel_line.dart
+  s_b0d4714a25c816::t_1ba7b101a2615f 3-5,10-13,22-24
+  s_b0d4714a25c816::t_de400a5fcf153e 25
+test/domain/construction/objects/circumcenter_test.dart
+  s_b0d4714a25c816::t_ea35c15fa01468 80-121
+  s_b0d4714a25c816::t_42b42728228265 1,6,8-11
+lib/domain/construction/geo_object.dart
+  s_b0d4714a25c816::t_abdef3e66bf3b8 185-204
+test/domain/construction/objects/ray_test.dart
+  s_b0d4714a25c816::t_5805a84e79aa3a 1,6-9
+  s_b0d4714a25c816::t_b290136738a52c 74-105
+lib/domain/construction/objects/circumcenter.dart
+  s_b0d4714a25c816::t_0c847c3a0ead03 1-2,6-11,22-23
+test/domain/construction/objects/line_through_two_points_test.dart
+  s_b0d4714a25c816::t_a21487d45dde45 1,5-10
+  s_b0d4714a25c816::t_d6d88fe0e0d50e 49-101
+test/domain/construction/objects/perpendicular_bisector_line_test.dart
+  s_b0d4714a25c816::t_19ed527ea97895 105,107,109-111,114-126
+  s_b0d4714a25c816::t_f5027ac7237903 106,108,112-113
+  s_b0d4714a25c816::t_3be2cf933e48c0 8,10
+  s_b0d4714a25c816::t_78539cd2d72c5b 7
+lib/domain/construction/objects/segment.dart
+  s_b0d4714a25c816::t_eb5c25de5ebae3 3,14-19,33,36-38,64-72
+test/domain/construction/objects/midpoint_test.dart
+  s_b0d4714a25c816::t_05efe9b865333e 1,5-8
+  s_b0d4714a25c816::t_fca256e34230bc 37-68
+lib/domain/construction/objects/orthocenter.dart
+  s_b0d4714a25c816::t_38c5414b72369f 1-2,5-11,22-24
+lib/domain/construction/objects/triangle_center_point.dart
+  s_b0d4714a25c816::t_d37fdadeef033b 2,8-13,29,32-35,40-43,47-55
+lib/domain/construction/objects/incenter.dart
+  s_b0d4714a25c816::t_81655244ece63d 2,7-10,21-30
+test/domain/construction/objects/segment_test.dart
+  s_b0d4714a25c816::t_a57d28befe27a5 1,5-8
+  s_b0d4714a25c816::t_7dd008fa266354 63-94
+test/projective_stubs.dart
+  s_b0d4714a25c816::t_254ea8e55c40b2 32
+  s_b0d4714a25c816::t_daef401e47e2e3 13
+  s_b0d4714a25c816::t_23a13641401025 1-12,14-31,33-47
+test/domain/construction/objects/perpendicular_line_test.dart
+  s_b0d4714a25c816::t_700bbb1933a7ec 8,10-14
+  s_b0d4714a25c816::t_b53aab77aad9ad 121-151
+  s_b0d4714a25c816::t_bc8fc874fd956d 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6af9d3908d9a866961222e068a0d6ed9c5a58ee4",
+  "prompts": {},
+  "sessions": {
+    "s_b0d4714a25c816": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1204aff4-9a2d-42bd-8ef7-a88ec3ae3442",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
