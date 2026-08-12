@@ -1,9 +1,14 @@
-import '../../math/triangle_centers.dart' as tc;
-import '../../math/vec2.dart';
+import '../../projective/euclidean.dart';
+import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 
-/// The orthocenter (intersection of the altitudes) of three points.
-/// Undefined while the vertices are collinear or coincident.
+/// The orthocenter (intersection of the altitudes) of three points —
+/// projectively, the meet of two altitudes (perpendiculars through a
+/// vertex to the opposite side, via the circular points I, J).
+///
+/// Undefined while any two vertices coincide (the altitudes merge — zero
+/// meet); collinear vertices put it at infinity in the common line's
+/// normal direction (V1: undefined), so [position] still goes null there.
 class Orthocenter extends TriangleCenterPoint {
   Orthocenter({
     required super.id,
@@ -14,5 +19,7 @@ class Orthocenter extends TriangleCenterPoint {
   });
 
   @override
-  Vec2? computeCenter(Vec2 a, Vec2 b, Vec2 c) => tc.orthocenter(a, b, c);
+  ProjPoint computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) =>
+      perpendicularThrough(a, b.join(c))
+          .meet(perpendicularThrough(b, a.join(c)));
 }
