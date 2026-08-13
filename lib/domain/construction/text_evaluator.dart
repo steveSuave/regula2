@@ -14,6 +14,13 @@ import 'text_template.dart';
 /// sugar over their live geometry. Everything unknown, mistyped or
 /// currently undefined yields null — `TextTemplate.render` shows it as
 /// `?` — so `ExpressionText.recompute` can never throw.
+///
+/// Migrated (Phase 112): point and circle accessors read the referenced
+/// objects' projective views and project them into the chart here — every
+/// expression value is a chart quantity (the metric boundary). A
+/// reference that is complex or at infinity renders `?`, exactly like an
+/// undefined one. `Segment.start`/`end` sugar stays on the kind's own
+/// drawable-endpoint API (itself a projection of migrated parents).
 
 const double _degPerRad = 180 / math.pi;
 
@@ -78,29 +85,36 @@ class GeoObjectEnv implements ExpressionEnv {
       args.add(object);
     }
     return switch ((name, args)) {
-      ('dist', [GeoPoint(:final position?), GeoPoint(position: final q?)]) =>
-        position.distanceTo(q),
+      ('dist', [final GeoPoint p, final GeoPoint q]) =>
+        _distance(p.projPoint?.toVec2(), q.projPoint?.toVec2()),
       ('len', [Segment(:final start?, :final end?)]) => start.distanceTo(end),
       ('len', [final GeoCircle curve]) => _circleLength(curve),
       ('angle', [final GeoPoint a, final GeoPoint b, final GeoPoint c]) =>
-        _angleDegrees(a.position, b.position, c.position),
+        _angleDegrees(
+          a.projPoint?.toVec2(),
+          b.projPoint?.toVec2(),
+          c.projPoint?.toVec2(),
+        ),
       ('area', [GeoPolygon(:final polygonVertices?)]) =>
         polygonSignedArea(polygonVertices).abs(),
       ('area', [final GeoCircle curve]) => _circleArea(curve),
-      ('radius', [GeoCircle(:final circle?)]) => circle.radius,
+      ('radius', [GeoCircle(:final conic?)]) => conic.toCircleEq()?.radius,
       ('perimeter', [GeoPolygon(:final polygonVertices?)]) =>
         _polygonPerimeter(polygonVertices),
-      ('x', [GeoPoint(:final position?)]) => position.x,
-      ('y', [GeoPoint(:final position?)]) => position.y,
+      ('x', [final GeoPoint p]) => p.projPoint?.toVec2()?.x,
+      ('y', [final GeoPoint p]) => p.projPoint?.toVec2()?.y,
       _ => null,
     };
   }
 }
 
+double? _distance(Vec2? p, Vec2? q) =>
+    (p == null || q == null) ? null : p.distanceTo(q);
+
 /// `LengthMeasurement` semantics: circumference for a full circle, arc
 /// length for an arc, full perimeter (both radii) for a sector.
 double? _circleLength(GeoCircle curve) {
-  final circle = curve.circle;
+  final circle = curve.conic?.toCircleEq();
   if (circle == null) {
     return null;
   }
@@ -115,7 +129,7 @@ double? _circleLength(GeoCircle curve) {
 /// `AreaMeasurement` semantics: disc for a full circle, wedge for a
 /// sector, the chord's circular segment for an arc.
 double? _circleArea(GeoCircle curve) {
-  final circle = curve.circle;
+  final circle = curve.conic?.toCircleEq();
   if (circle == null) {
     return null;
   }

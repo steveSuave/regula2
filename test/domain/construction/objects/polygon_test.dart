@@ -5,6 +5,9 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
 
 void main() {
   group('Polygon', () {
@@ -106,6 +109,18 @@ void main() {
       mutable.removeLast();
       expect(polygon.vertices.length, 3, reason: 'the list is copied');
       expect(() => polygon.vertices.add(a), throwsUnsupportedError);
+    });
+  });
+
+  group('projective semantics (Phase 112)', () {
+    test('a vertex at infinity leaves the polygon undefined — no partial '
+        'outline', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(2, 0));
+      final inf = StubProjectivePoint(ProjPoint.real(1, 1, 0));
+      final polygon = Polygon(id: 'p', vertices: [a, b, inf]);
+      expect(polygon.isDefined, isFalse);
+      expect(polygon.polygonVertices, isNull);
     });
   });
 }

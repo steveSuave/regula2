@@ -634,3 +634,10 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Migrate all circle kinds to store `ConicMatrix`: `ThreePointCircle`, `CompassCircle`, `DiameterCircle`, `FixedRadiusCircle`, `ApolloniusCircle`, `TriangleCircle` (nine-point natively; incircle rides along project-compute-lift), `Arc`, `Sector` carriers; `CircleCenter` from polar structure (pole of ℓ∞); `circle` getter becomes projection (center/radius when the conic is a real circle)
 - [x] Glados: every migrated circle's conic passes through I,J; center/radius projection round-trips against old computation
 - [x] Three collinear points now yield the degenerate line-conic instead of undefined (isDefined projection handles rendering until Phase 119)
+
+## Phase 110 — `IntersectionPoint` v2 + tangency family
+
+- [x] `IntersectionPoint`: candidates always 2 or 4; `branchIndex` indexes canonical order with I/J filtered; `candidateCount` = real-candidate count (locus walker contract until 117)
+- [x] Migrate: `TangentLine` (polar-based, always 2), `PolarLine`, `RadicalAxisLine` (line through the two non-I/J common points — now a one-liner via `radicalAxisOf`), `AngleBisectorLine`, `TwoLineBisectorLine` (old ordering guarantee kept, anchored to affine orientations)
+- [x] `point_resolution.dart` snap-to-intersection re-pointed at real candidates
+- [x] All existing branch-ordering tests stay green; glados: intersection points incident to both parents always (in ℂ); tangency = double root

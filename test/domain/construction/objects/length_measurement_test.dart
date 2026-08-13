@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
@@ -9,7 +9,12 @@ import 'package:regula/domain/construction/objects/length_measurement.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('LengthMeasurement', () {
@@ -119,5 +124,41 @@ void main() {
         throwsArgumentError,
       );
     });
+  });
+
+  group('projective semantics (Phase 112)', () {
+    test('a degenerate line-pair carrier (collinear three-point circle) '
+        'leaves the length undefined', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 0));
+      final circle = ThreePointCircle(
+        id: 'k',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
+      expect(circle.conic, isNotNull);
+
+      final length = LengthMeasurement(id: 'len', subject: circle);
+      expect(length.isDefined, isFalse);
+      expect(length.value, isNull);
+    });
+
+    Glados(any.nonZeroComplex).test(
+      'circumference is invariant under complex rescaling of the conic',
+      (k) {
+        final center = StubProjectivePoint(ProjPoint.lift(const Vec2(1, 2)));
+        final rim = StubProjectivePoint(ProjPoint.lift(const Vec2(4, 2)));
+        final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+        final plain = LengthMeasurement(id: 'm1', subject: circle);
+
+        final scaled = LengthMeasurement(
+          id: 'm2',
+          subject: StubProjectiveCircle(circle.conic!.scaledBy(k)),
+        );
+        expect(scaled.value!, closeTo(plain.value!, 1e-9));
+      },
+    );
   });
 }

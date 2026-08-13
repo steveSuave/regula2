@@ -10,6 +10,11 @@ import '../geo_object.dart';
 /// compositions, while this is a single first-class region. Undefined
 /// while any vertex is; a collinear or self-intersecting loop stays
 /// defined (it is a drawable outline — area math handles it separately).
+///
+/// Migrated (Phase 112): reads the vertices' projective views and
+/// projects them into the chart itself — the outline is a chart drawable
+/// (the metric boundary). A vertex that is complex or at infinity leaves
+/// the polygon undefined; there is no partial outline.
 class Polygon extends GeoPolygon {
   Polygon({
     required super.id,
@@ -40,7 +45,7 @@ class Polygon extends GeoPolygon {
   void recompute() {
     final positions = <Vec2>[];
     for (final vertex in vertices) {
-      final position = vertex.position;
+      final position = vertex.projPoint?.toVec2();
       if (position == null) {
         _polygonVertices = null;
         return;

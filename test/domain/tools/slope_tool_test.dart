@@ -84,7 +84,7 @@ void main() {
     );
 
     test(
-      'a vertical line still commits — the measurement is just undefined',
+      'a vertical line commits an infinite slope (V2 semantics, Phase 112)',
       () {
         final top = FreePoint(id: 't', position: const Vec2(0, 3));
         final vertical = LineThroughTwoPoints(id: 'v', point1: a, point2: top);
@@ -93,7 +93,8 @@ void main() {
         expect(result, isA<ToolCommitted>());
         final object =
             ((result as ToolCommitted).command as AddObjectCommand).object;
-        expect((object as SlopeMeasurement).isDefined, isFalse);
+        expect((object as SlopeMeasurement).isDefined, isTrue);
+        expect(object.value, double.infinity);
       },
     );
   });

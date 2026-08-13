@@ -7,6 +7,10 @@ import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/slope_measurement.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+
+import '../../../projective_stubs.dart';
 
 void main() {
   group('SlopeMeasurement', () {
@@ -64,14 +68,15 @@ void main() {
       expect(slope.value, 0);
     });
 
-    test('vertical line is undefined, recovers when tilted', () {
+    test('vertical line reports an infinite slope — defined, rendered "—" '
+        '(V2 semantics, Phase 112)', () {
       final a = FreePoint(id: 'a', position: const Vec2(1, 0));
       final b = FreePoint(id: 'b', position: const Vec2(1, 4));
       final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       final slope = SlopeMeasurement(id: 'm', subject: line);
-      expect(slope.isDefined, isFalse);
-      expect(slope.value, isNull);
-      expect(slope.anchor, isNull);
+      expect(slope.isDefined, isTrue);
+      expect(slope.value, double.infinity);
+      expect(slope.anchor, isNotNull);
 
       b.position = const Vec2(5, 4);
       line.recompute();
@@ -132,6 +137,28 @@ void main() {
         ),
         throwsArgumentError,
       );
+    });
+  });
+
+  group('projective semantics (Phase 112)', () {
+    test('the line at infinity has no slope — undefined, unlike vertical', () {
+      final slope = SlopeMeasurement(
+        id: 'm',
+        subject: StubProjectiveLine(ProjLine.infinity),
+      );
+      expect(slope.isDefined, isFalse);
+      expect(slope.value, isNull);
+    });
+
+    test('a complex carrier leaves the measurement undefined', () {
+      final slope = SlopeMeasurement(
+        id: 'm',
+        subject: StubProjectiveLine(
+          ProjLine(Complex.one, const Complex(0, 1), Complex.zero),
+        ),
+      );
+      expect(slope.isDefined, isFalse);
+      expect(slope.value, isNull);
     });
   });
 }

@@ -1,12 +1,17 @@
 import 'dart:math' as math;
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('LineAngle', () {
@@ -230,8 +235,10 @@ void main() {
       }
     });
 
-    test('falls back to +1/+1 while the carriers are parallel', () {
-      construction.moveFreePoint('d', const Vec2(4, 1e-12));
+    test('falls back to +1/+1 while the carriers are coincident', () {
+      // d onto the x-axis: `sixty` collapses onto `xAxis`, the meet is
+      // the zero triple — no vertex to take a tap side from.
+      construction.moveFreePoint('d', const Vec2(4, 0));
       final angle = near('g', const Vec2(-3, 0.1), const Vec2(-1, -1));
       construction.add(angle);
 
@@ -244,11 +251,71 @@ void main() {
       expect(angle.angle!.measure, closeTo(math.pi / 3, 1e-9));
     });
 
+    test('nearly parallel carriers mark their genuine tiny wedge '
+        '(V2 semantics, Phase 112: the V1 direction band is gone)', () {
+      // Both lines pass through the origin; tilting `sixty` down to
+      // 2.5e-13 rad leaves a genuine crossing there. V1's absolute
+      // 1e-9 direction band called this "parallel" and went undefined;
+      // the projective meet finds the vertex.
+      construction.moveFreePoint('d', const Vec2(4, 1e-12));
+      final angle = near('g', const Vec2(-3, 0.1), const Vec2(-1, -1));
+      construction.add(angle);
+
+      expect(angle.sign1, -1, reason: 'taps sit on the −x / −d halves');
+      expect(angle.sign2, -1);
+      expect(angle.isDefined, isTrue);
+      expect(angle.angle!.vertex.closeTo(Vec2.zero), isTrue);
+      expect(angle.angle!.measure, closeTo(2.5e-13, 1e-14));
+    });
+
     test('null signs keep the legacy acute fold under every tap side', () {
       final legacy = LineAngle(id: 'g', line1: xAxis, line2: sixty);
       expect(legacy.sign1, isNull);
       expect(legacy.sign2, isNull);
       expect(legacy.angle!.measure, closeTo(math.pi / 3, 1e-9));
     });
+  });
+
+  group('projective semantics (Phase 112)', () {
+    test('distinct exact parallels meet at infinity — undefined', () {
+      // y = 0 and y = 1: the meet is [1 : 0 : 0], real but not finite.
+      final l1 = StubProjectiveLine(ProjLine.real(0, 1, 0));
+      final l2 = StubProjectiveLine(ProjLine.real(0, 1, -1));
+      final angle = LineAngle(id: 'g', line1: l1, line2: l2);
+      expect(angle.isDefined, isFalse);
+      expect(angle.angle, isNull);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+      'the legacy fold is invariant under complex rescaling of a carrier',
+      (p, q, k) {
+        if (ProjPoint.lift(p).closeTo(ProjPoint.lift(q))) return;
+        // A real line through p and q against the x-axis; the legacy
+        // fold is orientation-free, so the un-anchored stub serves.
+        final carrier = ProjPoint.lift(p).join(ProjPoint.lift(q));
+        final xAxis = ProjLine.real(0, 1, 0);
+        final plain = LineAngle(
+          id: 'g1',
+          line1: StubProjectiveLine(carrier),
+          line2: StubProjectiveLine(xAxis),
+        );
+        final scaled = LineAngle(
+          id: 'g2',
+          line1: StubProjectiveLine(carrier.scaledBy(k)),
+          line2: StubProjectiveLine(xAxis),
+        );
+        expect(plain.isDefined, scaled.isDefined);
+        if (plain.isDefined) {
+          expect(
+            scaled.angle!.measure,
+            closeTo(plain.angle!.measure, 1e-6),
+          );
+          expect(
+            scaled.angle!.vertex.closeTo(plain.angle!.vertex, 1e-6),
+            isTrue,
+          );
+        }
+      },
+    );
   });
 }

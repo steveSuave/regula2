@@ -16,6 +16,12 @@ import 'sector.dart';
 /// constructor — the `AreaMeasurement.subject` precedent, so an ill-typed
 /// save normalizes to `FormatException` through the codec's ArgumentError
 /// handler.
+///
+/// Migrated (Phase 112): reads the subject's conic and projects it to
+/// center-and-radius form itself — circumference and arc length are chart
+/// quantities (the metric boundary). A carrier that is not a real circle
+/// (degenerate line pair, complex) leaves the measurement undefined; the
+/// angular extent stays affine metadata per PLAN §Parameterization.
 class LengthMeasurement extends GeoMeasurement {
   LengthMeasurement({
     required super.id,
@@ -49,7 +55,7 @@ class LengthMeasurement extends GeoMeasurement {
   @override
   void recompute() {
     final curve = subject as GeoCircle;
-    final circle = curve.circle;
+    final circle = curve.conic?.toCircleEq();
     if (circle == null) {
       _value = null;
       _anchor = null;

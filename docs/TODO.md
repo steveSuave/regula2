@@ -14,13 +14,6 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 110 — `IntersectionPoint` v2 + tangency family
-
-- [x] `IntersectionPoint`: candidates always 2 or 4; `branchIndex` indexes canonical order with I/J filtered; `candidateCount` = real-candidate count (locus walker contract until 117)
-- [x] Migrate: `TangentLine` (polar-based, always 2), `PolarLine`, `RadicalAxisLine` (line through the two non-I/J common points — now a one-liner via `radicalAxisOf`), `AngleBisectorLine`, `TwoLineBisectorLine` (old ordering guarantee kept, anchored to affine orientations)
-- [x] `point_resolution.dart` snap-to-intersection re-pointed at real candidates
-- [x] All existing branch-ordering tests stay green; glados: intersection points incident to both parents always (in ℂ); tangency = double root
-
 ## Phase 111 — `PointOnObject` + parameterization on projective carriers
 
 - [x] Decision recorded in PLAN: parameters stay real in the affine chart (arc-length on real lines, angle on real circles — gluing is a UI concept on the rendered curve); general real conics via stereographic parameterization; hyperbola-at-infinity as clamped extents
@@ -29,9 +22,9 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 112 — Object batch 4: consumers
 
-- [ ] Migrate: `VertexAngle`, `LineAngle`, `Polygon`, `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `SlopeMeasurement` (slope through infinity renders "—"), `ExpressionText`
-- [ ] `Locus` deliberately untouched (rewritten in 117)
-- [ ] Grep gate: no object file imports `intersections.dart` except `locus.dart`; every concrete kind except `Locus` reads projective accessors
+- [x] Migrate: `VertexAngle`, `LineAngle`, `Polygon`, `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `SlopeMeasurement` (slope through infinity renders "—"), `ExpressionText`
+- [x] `Locus` deliberately untouched (rewritten in 117)
+- [x] Grep gate: no object file imports `intersections.dart` except `locus.dart` — exceeded: zero importers left in all of `lib/` (even `locus.dart` never imported it directly; Phase 121's deletion is test-side only). Every concrete kind except `Locus` reads projective accessors; remaining affine reads are the documented `orientedAlong` anchor derivations, extent metadata, and §Parameterization chart reads
 
 ## Phase 113 — SPIKE 3 / Tracing I: scaffolding
 
