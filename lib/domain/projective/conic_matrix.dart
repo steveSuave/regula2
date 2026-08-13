@@ -13,11 +13,18 @@ import 'tolerances.dart';
 /// conversely a real conic through both has a circle's coefficient shape
 /// (`xx = yy`, `xy = 0`). They are exchanged by complex conjugation and lie
 /// on the line at infinity.
-const ProjPoint circularPointI = ProjPoint(Complex.one, Complex.i, Complex.zero);
+const ProjPoint circularPointI = ProjPoint(
+  Complex.one,
+  Complex.i,
+  Complex.zero,
+);
 
 /// The circular point `J = [1 : −i : 0]`, conjugate of [circularPointI].
-const ProjPoint circularPointJ =
-    ProjPoint(Complex.one, Complex(0, -1), Complex.zero);
+const ProjPoint circularPointJ = ProjPoint(
+  Complex.one,
+  Complex(0, -1),
+  Complex.zero,
+);
 
 /// A conic of the complex projective plane, as the symmetric 3×3 matrix
 ///
@@ -51,42 +58,42 @@ class ConicMatrix {
     double e,
     double f,
   ) : this(
-          Complex(a),
-          Complex(b / 2),
-          Complex(c),
-          Complex(d / 2),
-          Complex(e / 2),
-          Complex(f),
-        );
+        Complex(a),
+        Complex(b / 2),
+        Complex(c),
+        Complex(d / 2),
+        Complex(e / 2),
+        Complex(f),
+      );
 
   /// Lifts the circle `(x−cx)² + (y−cy)² = r²` to its conic matrix
   /// (unit quadratic part: `xx = yy = 1`).
   ConicMatrix.lift(CircleEq circle)
-      : this(
-          Complex.one,
-          Complex.zero,
-          Complex.one,
-          Complex(-circle.center.x),
-          Complex(-circle.center.y),
-          Complex(
-            circle.center.x * circle.center.x +
-                circle.center.y * circle.center.y -
-                circle.radius * circle.radius,
-          ),
-        );
+    : this(
+        Complex.one,
+        Complex.zero,
+        Complex.one,
+        Complex(-circle.center.x),
+        Complex(-circle.center.y),
+        Complex(
+          circle.center.x * circle.center.x +
+              circle.center.y * circle.center.y -
+              circle.radius * circle.radius,
+        ),
+      );
 
   /// The degenerate conic `ghᵀ + hgᵀ` whose zero set is the two lines [g]
   /// and [h] — rank 2 when they are distinct, rank 1 when `g = h` (a double
   /// line).
   ConicMatrix.linePair(ProjLine g, ProjLine h)
-      : this(
-          (g.a * h.a).scale(2),
-          g.a * h.b + g.b * h.a,
-          (g.b * h.b).scale(2),
-          g.a * h.c + g.c * h.a,
-          g.b * h.c + g.c * h.b,
-          (g.c * h.c).scale(2),
-        );
+    : this(
+        (g.a * h.a).scale(2),
+        g.a * h.b + g.b * h.a,
+        (g.b * h.b).scale(2),
+        g.a * h.c + g.c * h.a,
+        g.b * h.c + g.c * h.b,
+        (g.c * h.c).scale(2),
+      );
 
   /// The unique conic through five points, or null when they do not
   /// determine one (linear system rank < 5: repeated points, four or more
@@ -164,8 +171,8 @@ class ConicMatrix {
 
   /// The same conic with every entry multiplied by [k] — the projective
   /// identity when `k ≠ 0`.
-  ConicMatrix scaledBy(Complex k) => ConicMatrix(
-      xx * k, xy * k, yy * k, xw * k, yw * k, ww * k);
+  ConicMatrix scaledBy(Complex k) =>
+      ConicMatrix(xx * k, xy * k, yy * k, xw * k, yw * k, ww * k);
 
   /// Chart normalization: divides by the largest-magnitude entry, so that
   /// entry becomes exactly 1 and the others have magnitude ≤ 1. Removes
@@ -191,10 +198,34 @@ class ConicMatrix {
   /// The polar line `Ap` of [p] — for `p` on the conic, its tangent line
   /// there; for the center of a circle, the line at infinity.
   ProjLine polarLine(ProjPoint p) => ProjLine(
-        xx * p.x + xy * p.y + xw * p.w,
-        xy * p.x + yy * p.y + yw * p.w,
-        xw * p.x + yw * p.y + ww * p.w,
-      );
+    xx * p.x + xy * p.y + xw * p.w,
+    xy * p.x + yy * p.y + yw * p.w,
+    xw * p.x + yw * p.y + ww * p.w,
+  );
+
+  /// The pole of [l] — the adjugate applied to the line, `adj(A)·l` —
+  /// the point whose [polarLine] is [l] (up to scale) when the conic is
+  /// nondegenerate. Division-free, so total: for a rank-2 conic the
+  /// adjugate collapses to `p·pᵀ` on the singular point and the pole is a
+  /// multiple of it (possibly the zero triple, e.g. ℓ∞ against a line
+  /// pair whose singular point is at infinity); rank ≤ 1 gives the zero
+  /// triple always.
+  ///
+  /// The pole of the line at infinity is the *center* of the conic —
+  /// for a lifted circle, exactly its center.
+  ProjPoint poleOf(ProjLine l) {
+    final a11 = yy * ww - yw * yw;
+    final a12 = yw * xw - xy * ww;
+    final a13 = xy * yw - yy * xw;
+    final a22 = xx * ww - xw * xw;
+    final a23 = xy * xw - xx * yw;
+    final a33 = xx * yy - xy * xy;
+    return ProjPoint(
+      a11 * l.a + a12 * l.b + a13 * l.c,
+      a12 * l.a + a22 * l.b + a23 * l.c,
+      a13 * l.a + a23 * l.b + a33 * l.c,
+    );
+  }
 
   /// Whether [p] lies on the conic, relatively:
   /// `|pᵀAp| ≤ eps·‖A‖_F·|p|²`. False when either side is zero.
@@ -289,19 +320,23 @@ class ConicMatrix {
   /// squared radius; else null (non-circles, imaginary circles).
   CircleEq? toCircleEq([double eps = projectiveEpsilon]) {
     if (!isReal(eps)) return null;
+    // Normalized entries have magnitude ≤ 1, so the shape checks are
+    // relative; the center/radius arithmetic below uses ratios of the
+    // *raw* entries instead (equally scale- and phase-free), because
+    // dividing through by an arbitrary largest entry first costs an ulp —
+    // the circle constructors put `xx` at a product of unit `w`s, and the
+    // raw ratios keep integer centers and radii bit-exact for them.
     final n = normalized;
-    final a = n.xx.re;
-    final b = n.xy.re;
-    final c = n.yy.re;
-    final d = n.xw.re;
-    final e = n.yw.re;
-    final f = n.ww.re;
-    // Normalized entries have magnitude ≤ 1, so these checks are relative.
-    if ((a - c).abs() > eps || b.abs() > eps || a.abs() <= eps) return null;
-    final cx = -d / a;
-    final cy = -e / a;
-    final r2 = cx * cx + cy * cy - f / a;
-    final r2Scale = math.max(1.0, cx * cx + cy * cy + (f / a).abs());
+    if ((n.xx.re - n.yy.re).abs() > eps ||
+        n.xy.re.abs() > eps ||
+        n.xx.re.abs() <= eps) {
+      return null;
+    }
+    final cx = -(xw / xx).re;
+    final cy = -(yw / xx).re;
+    final f = (ww / xx).re;
+    final r2 = cx * cx + cy * cy - f;
+    final r2Scale = math.max(1.0, cx * cx + cy * cy + f.abs());
     if (r2 < -eps * r2Scale) return null;
     return CircleEq(Vec2(cx, cy), math.sqrt(math.max(0, r2)));
   }
@@ -356,10 +391,10 @@ List<ProjPoint> intersectLineConic(
   }
   // l × e_i for the two basis vectors other than axis k.
   ProjPoint spanPoint(int i) => switch (i) {
-        0 => ProjPoint(Complex.zero, l.c, -l.b),
-        1 => ProjPoint(-l.c, Complex.zero, l.a),
-        _ => ProjPoint(l.b, -l.a, Complex.zero),
-      };
+    0 => ProjPoint(Complex.zero, l.c, -l.b),
+    1 => ProjPoint(-l.c, Complex.zero, l.a),
+    _ => ProjPoint(l.b, -l.a, Complex.zero),
+  };
   final p1 = spanPoint((k + 1) % 3);
   final p2 = spanPoint((k + 2) % 3);
 
@@ -379,16 +414,15 @@ List<ProjPoint> intersectLineConic(
   final q = (qb + s).scale(-0.5);
   // Roots (α:β) = (q : qa) and (qc : q); x = α·p1 + β·p2.
   ProjPoint combine(Complex alpha, Complex beta) => ProjPoint(
-        p1.x * alpha + p2.x * beta,
-        p1.y * alpha + p2.y * beta,
-        p1.w * alpha + p2.w * beta,
-      );
+    p1.x * alpha + p2.x * beta,
+    p1.y * alpha + p2.y * beta,
+    p1.w * alpha + p2.w * beta,
+  );
   var x1 = combine(q, qa);
   var x2 = combine(qc, q);
   // q = qa = 0 (or q = qc = 0) collapses a root vector to ~0: the root is a
   // double root at p1 (resp. p2) — fall back to the span point itself.
-  final spanScale =
-      math.max(p1.norm2, p2.norm2) * coeffScale * coeffScale;
+  final spanScale = math.max(p1.norm2, p2.norm2) * coeffScale * coeffScale;
   if (x1.norm2 <= 1e-24 * spanScale) x1 = p1;
   if (x2.norm2 <= 1e-24 * spanScale) x2 = p2;
   return _canonicallyOrdered(l, x1.normalized, x2.normalized, eps);
