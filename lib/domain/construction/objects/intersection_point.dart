@@ -189,10 +189,32 @@ List<ProjPoint> _lineConicCandidates(GeoLine line, GeoCircle circle) {
   if (l == null || c == null) {
     return const [];
   }
-  return [
+  final candidates = [
     for (final p in intersectLineConic(l, c))
       if (!p.isZero && !isCircularPoint(p)) _realSnapped(p),
   ];
+  // `intersectLineConic` orders along the *representative's* direction,
+  // but no kind contract pins the stored carrier's sign — a join through
+  // a chart-normalized parent can flip it. V1 defined the branch order
+  // along the line's oriented affine direction, so re-anchor the pair to
+  // it, exactly as `orientedAlong` re-anchors the projection. (Reversing
+  // also flips the conjugate-pair order — consistent: V1 order was a
+  // property of the direction, and flipping the direction flips both.)
+  final affine = line.line;
+  if (candidates.length == 2 && affine != null) {
+    final d = affine.direction;
+    // The representative direction, by the kernel's own rule (real parts,
+    // falling back to imaginary parts for complex-phase representatives).
+    final reNorm = l.a.re * l.a.re + l.b.re * l.b.re;
+    final imNorm = l.a.im * l.a.im + l.b.im * l.b.im;
+    final along = reNorm >= imNorm
+        ? d.x * l.b.re - d.y * l.a.re
+        : d.x * l.b.im - d.y * l.a.im;
+    if (along < 0) {
+      return [candidates[1], candidates[0]];
+    }
+  }
+  return candidates;
 }
 
 /// [p] with its imaginary noise stripped when it is real within

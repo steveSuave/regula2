@@ -1,12 +1,21 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polar_line.dart';
+import 'package:regula/domain/math/circle_eq.dart';
+import 'package:regula/domain/math/circle_relations.dart' as v1;
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../math/generators.dart';
 
 void main() {
   group('PolarLine', () {
@@ -86,5 +95,78 @@ void main() {
       construction.moveFreePoint('l2', const Vec2(0.5, 1));
       expect(polar.isDefined, isTrue);
     });
+  });
+
+  group('projective semantics (Phase 110)', () {
+    Glados2(any.vec2, any.circleEq).test(
+      'agrees with V1 polarLine in line and orientation',
+      (pole, c) {
+        if (pole.distanceTo(c.center) < 1e-3 * (1 + c.center.norm)) {
+          return;
+        }
+        final p = FreePoint(id: 'p', position: pole);
+        final circle = CircleCenterPoint(
+          id: 'circ',
+          center: FreePoint(id: 'o', position: c.center),
+          onCircle: FreePoint(
+            id: 'r',
+            position: c.center + Vec2(c.radius, 0),
+          ),
+        );
+        final polar = PolarLine(id: 'x', point: p, circle: circle);
+        final expected = v1.polarLine(pole, circle.circle!)!;
+        expect(polar.line, isNotNull);
+        expect(
+          polar.line!.closeTo(expected),
+          isTrue,
+          reason: '${polar.line} vs $expected',
+        );
+        expect(polar.line!.direction.dot(expected.direction), greaterThan(0));
+      },
+    );
+
+    test('the pole at the center carries ℓ∞: projective value, no affine '
+        'view', () {
+      final o = FreePoint(id: 'o', position: Vec2.zero);
+      final circle = CircleCenterPoint(
+        id: 'circ',
+        center: o,
+        onCircle: FreePoint(id: 'r', position: const Vec2(1, 0)),
+      );
+      final polar = PolarLine(id: 'x', point: o, circle: circle);
+      expect(polar.isDefined, isFalse);
+      expect(polar.line, isNull);
+      expect(polar.projLine, isNotNull);
+      expect(polar.projLine!.closeTo(ProjLine.infinity), isTrue);
+    });
+
+    Glados2(any.coordinate, any.coordinate).test(
+      'complex rescaling of the parent views leaves the polar invariant',
+      (re, im) {
+        var k = Complex(re, im);
+        if (k.abs2 < 1) {
+          k = k + const Complex(2, 1);
+        }
+        final pole = ProjPoint.real(3, 1);
+        final conic = ConicMatrix.lift(CircleEq(const Vec2(1, -1), 2));
+        final baseline = PolarLine(
+          id: 'x',
+          point: StubProjectivePoint(pole),
+          circle: StubProjectiveCircle(conic),
+        );
+        final scaled = PolarLine(
+          id: 'y',
+          point: StubProjectivePoint(pole.scaledBy(k)),
+          circle: StubProjectiveCircle(conic.scaledBy(k)),
+        );
+        expect(scaled.projLine!.closeTo(baseline.projLine!), isTrue);
+        expect(scaled.line!.closeTo(baseline.line!), isTrue);
+        expect(
+          scaled.line!.direction.dot(baseline.line!.direction),
+          greaterThan(0),
+          reason: 'orientation is anchored affinely, not to the carrier',
+        );
+      },
+    );
   });
 }

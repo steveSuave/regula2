@@ -21,6 +21,7 @@ library;
 
 import 'complex.dart';
 import 'conic_matrix.dart';
+import 'proj_line.dart';
 import 'proj_point.dart';
 
 /// The zero-radius circle at [a]: the (complex) pair of isotropic lines
@@ -215,3 +216,26 @@ Complex _squaredDistanceNumerator(ProjPoint p, ProjPoint q) {
   final dy = p.y * q.w - q.y * p.w;
   return dx * dx + dy * dy;
 }
+
+/// The radical axis of the circle-shaped conics [a] and [b] — the line of
+/// points with equal power to both circles, carrying their common chord
+/// when they cross.
+///
+/// It is the linear part of the unique pencil member `b.xx·A − a.xx·B`
+/// whose quadratic block cancels (exactly, when both inputs have a
+/// circle's exact coefficient shape — which every constructor in this
+/// file emits): that member is the degenerate line pair (axis, ℓ∞).
+/// Bilinear in the two matrices, so the projective value is invariant
+/// under rescaling either. On unit-quadratic lifts the coefficients match
+/// V1 `radicalAxis` exactly, orientation included.
+///
+/// Total, with the continuous limits: concentric circles give ℓ∞ (equal
+/// radii and equal centers only cancel to the zero triple when the
+/// matrices are exactly proportional); a degenerate line-conic input
+/// (zero quadratic block) gives that conic's own linear part — the limit
+/// of the axis as a circle flattens onto its line.
+ProjLine radicalAxisOf(ConicMatrix a, ConicMatrix b) => ProjLine(
+  (b.xx * a.xw - a.xx * b.xw).scale(2),
+  (b.xx * a.yw - a.xx * b.yw).scale(2),
+  b.xx * a.ww - a.xx * b.ww,
+);

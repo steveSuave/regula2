@@ -534,6 +534,35 @@ void main() {
       expect(x.candidateCount, 2);
     });
 
+    test('branch order is anchored to the affine direction, not the '
+        'carrier representative sign', () {
+      // Two parents with identical positions (−2, 0) → (2, 0), but the
+      // first stored at w = −1, flipping the join's representative. The
+      // affine view is orientation-anchored either way, and the branch
+      // order must follow it.
+      final flipped = StubProjectivePoint(ProjPoint.real(2, 0, -1));
+      final plain = StubProjectivePoint(ProjPoint.real(2, 0, 1));
+      final l = LineThroughTwoPoints(id: 'l', point1: flipped, point2: plain);
+      expect(l.line!.direction.dot(const Vec2(1, 0)), greaterThan(0));
+      final k = StubProjectiveCircle(
+        ConicMatrix.lift(CircleEq(Vec2.zero, 1)),
+      );
+      final x0 = IntersectionPoint(
+        id: 'x0',
+        curve1: l,
+        curve2: k,
+        branchIndex: 0,
+      );
+      final x1 = IntersectionPoint(
+        id: 'x1',
+        curve1: l,
+        curve2: k,
+        branchIndex: 1,
+      );
+      expect(x0.position!.closeTo(const Vec2(-1, 0)), isTrue);
+      expect(x1.position!.closeTo(const Vec2(1, 0)), isTrue);
+    });
+
     Glados2(any.coordinate, any.coordinate).test(
       'complex rescaling of the parent views leaves the candidate set '
       'and count invariant',
