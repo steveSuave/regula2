@@ -146,13 +146,24 @@ class IntersectionPoint extends GeoPoint {
 /// world-unit epsilon band around tangency with a relative,
 /// root-noise-sized one.)
 ///
+/// A *non-real* parent carrier yields no candidates at all. A complex
+/// carrier (an undefined intersection's conjugate branch, the bisector
+/// over it) still passes through real points — its own vertex, say — and
+/// intersecting it would fabricate real geometry V1 rightly left
+/// undefined. Until tracing (Phase 113+) owns cross-complex
+/// continuation, static candidates exist only between real carriers;
+/// points at infinity and degenerate real conics are real and take part.
+///
 /// Consumed by [IntersectionPoint] and the snap-to-intersection ladder.
 List<ProjPoint> intersectionCandidates(GeoObject curve1, GeoObject curve2) {
   switch ((curve1, curve2)) {
     case (final GeoLine a, final GeoLine b):
       final l1 = a.projLine;
       final l2 = b.projLine;
-      if (l1 == null || l2 == null || l1.closeTo(l2)) {
+      if (l1 == null || l2 == null || !l1.isReal() || !l2.isReal()) {
+        return const [];
+      }
+      if (l1.closeTo(l2)) {
         return const [];
       }
       final p = l1.meet(l2);
@@ -164,7 +175,7 @@ List<ProjPoint> intersectionCandidates(GeoObject curve1, GeoObject curve2) {
     case (final GeoCircle a, final GeoCircle b):
       final c1 = a.conic;
       final c2 = b.conic;
-      if (c1 == null || c2 == null) {
+      if (c1 == null || c2 == null || !c1.isReal() || !c2.isReal()) {
         return const [];
       }
       return [
@@ -186,7 +197,7 @@ List<ProjPoint> intersectionCandidates(GeoObject curve1, GeoObject curve2) {
 List<ProjPoint> _lineConicCandidates(GeoLine line, GeoCircle circle) {
   final l = line.projLine;
   final c = circle.conic;
-  if (l == null || c == null) {
+  if (l == null || c == null || !l.isReal() || !c.isReal()) {
     return const [];
   }
   final candidates = [

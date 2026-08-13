@@ -2,8 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
+import 'package:regula/domain/math/angle_bisector.dart' as v1;
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
 
 void main() {
   late FreePoint o;
@@ -168,6 +173,73 @@ void main() {
         xAxis.line!.distanceTo(probe),
         closeTo(yAxis.line!.distanceTo(probe), 1e-9),
       );
+    });
+  });
+
+  group('projective semantics (Phase 110)', () {
+    test('branch semantics anchor to the affine orientation, not the '
+        'carrier representative sign', () {
+      // A line whose stored representative is flipped (one parent held at
+      // w = −1) while its affine view keeps the V1 orientation. Both
+      // branches must match V1 computed on the affine views.
+      final flipped = StubProjectivePoint(ProjPoint.real(-4, 0, -1));
+      final plain = StubProjectivePoint(ProjPoint.real(0, 0, 1));
+      final l1 = LineThroughTwoPoints(id: 'h', point1: plain, point2: flipped);
+      expect(l1.line!.direction.dot(const Vec2(1, 0)), greaterThan(0));
+      final l2 = LineThroughTwoPoints(
+        id: 'v',
+        point1: FreePoint(id: 'o', position: Vec2.zero),
+        point2: FreePoint(id: 'y', position: const Vec2(0, 4)),
+      );
+      for (final branch in [0, 1]) {
+        final bisector = TwoLineBisectorLine(
+          id: 'b$branch',
+          line1: l1,
+          line2: l2,
+          branch: branch,
+        );
+        final expected = v1.twoLineBisector(l1.line!, l2.line!, branch)!;
+        expect(
+          bisector.line!.closeTo(expected),
+          isTrue,
+          reason: 'branch $branch: ${bisector.line} vs $expected',
+        );
+        expect(
+          bisector.line!.direction.dot(expected.direction),
+          greaterThan(0),
+        );
+      }
+    });
+
+    test('nearly parallel lines bisect to the mid-parallel (V1 band gone)',
+        () {
+      // Sine ≈ 1e-10 between the carriers — inside V1's parallel epsilon,
+      // where it returned nothing. The genuine bisector is ≈ y = 0.5.
+      final l1 = StubProjectiveLine(ProjLine.real(0, 1, 0));
+      final l2 = StubProjectiveLine(ProjLine.real(1e-10, 1, -1));
+      final bisector = TwoLineBisectorLine(
+        id: 'b',
+        line1: l1,
+        line2: l2,
+        branch: 0,
+      );
+      expect(bisector.isDefined, isTrue);
+      expect(bisector.line!.closeTo(LineEq(0, 1, -0.5), 1e-6), isTrue);
+    });
+
+    test('exactly parallel or coincident carriers stay undefined', () {
+      final l1 = StubProjectiveLine(ProjLine.real(0, 1, 0));
+      final l2 = StubProjectiveLine(ProjLine.real(0, 1, -1));
+      for (final branch in [0, 1]) {
+        final bisector = TwoLineBisectorLine(
+          id: 'b$branch',
+          line1: l1,
+          line2: l2,
+          branch: branch,
+        );
+        expect(bisector.isDefined, isFalse);
+        expect(bisector.projLine, isNull);
+      }
     });
   });
 }

@@ -59,7 +59,10 @@ class TangentLine extends GeoLine {
   void recompute() {
     final p = point.projPoint;
     final a = circle.conic;
-    if (p == null || a == null) {
+    // Non-real parents yield nothing: tangency from a complex pole is an
+    // intersection-shaped operation and would fabricate real touch
+    // points V1 left undefined (see `intersectionCandidates`).
+    if (p == null || a == null || !p.isReal() || !a.isReal()) {
       _carrier = null;
       _line = null;
       return;
