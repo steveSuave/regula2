@@ -33,6 +33,17 @@ Rejected alternatives: an affine-canonical bridge (projective computed lazily fr
 - **Numeric throughput / compile target (Phase 101).** Dart has no complex type; every boxed complex op allocates, and tracing runs thousands of steps × dozens of objects per drag frame. The tracing inner loop is planned on `Float64List` struct-of-arrays from the start, and dart2js vs dart2wasm is benchmarked before any kernel code depends on the answer.
 - **Web threading (before any prover code, M-P0).** No isolates on web. The prover engine is written as a resumable state machine with an explicit work queue from day one — cooperatively chunked on web, `Isolate.run`-wrapped on native, Worker-portable later. A straight-line fixpoint loop cannot be retrofitted.
 
+### Parameterization (pinned in Phase 111)
+
+**Carrier parameters stay real, read in the affine chart.** A constrained point's parameter (`PointOnObject.parameter`, arc/sector angular extents, segment/ray parameter extents, locus sweep variables) remains a real number against the carrier's *projected* affine view: signed arc-length along the oriented direction for lines (the `orientedAlong` anchor keeps direction V1-compatible), polar angle for circles. The parameter is a UI and persistence quantity — it is what a drag gesture sets, what the codec stores, and what extent clamping compares — so it must be real, invariant under rescaling of the carrier's homogeneous state, and meaningful to the user. Complexification happens on the *value* path only: tracing (Phase 113+) continues the constrained point's homogeneous coordinates along the drag path; it never continues a carrier parameter. When the carrier's projection is undefined (complex or fully at infinity), the constrained point has no chart to evaluate in and goes undefined with it.
+
+- **Lines**: signed arc-length from `pointOnLine` along `direction` — unchanged. Bounded hosts (segments, rays, arcs, sectors) clamp into their extents on every recompute; gluing a point to the drawn extent is a UI concept on the rendered curve, not projective structure.
+- **Circles**: polar angle — unchanged.
+- **General real conics** (needed by Phase 119 rendering and Phase 120 five-point conics): stereographic parameterization — project from a chosen real point on the conic; rational in t, so evaluation is polynomial in homogeneous coordinates. Ellipses close up (t ∈ ℝ ∪ {∞}, one glue point), parabolas touch infinity once, hyperbolas twice.
+- **Hyperbola at infinity**: no gluing through the asymptotic parameter values — each branch is a clamped real extent, like a segment. The UI never walks a parameter across infinity.
+
+Rejected: projective parameters (RP¹ homogeneous pairs) or complex parameters. They make extent clamping, drag-to-parameter mapping, and persistence ambiguous for no payoff — analytic continuation operates on object values along the drag path, not on carrier parameters.
+
 ## Kernel track (Phases 100–122)
 
 Full checklists live in `docs/TODO.md`. The arc, with the three de-risking spikes marked:
@@ -86,7 +97,7 @@ Three spikes are scheduled first in their tracks, each killing the biggest unkno
 2. **Phase 102** — conic∩conic numerical stability in doubles. Risk: the pencil/cubic/degenerate-split route is numerically treacherous. Killed by prototyping against ground truth (V1 `intersectCircleCircle`, conics through constructed points) and recording the normalization / root-choice / polishing recipe before Phase 105 productionizes it.
 3. **Phase 113** — continuation robustness. Risk: the tracing long tail (root-matching failures, step starvation) — the assessment's "hardest per line, budget generously". Contained by proving the skeleton on toys behind a feature flag with a graceful static-solve bail that ships in every phase, so tracing hardens incrementally (114–116) without the app ever depending on an unfinished engine.
 
-Standing risks: test-suite coupling to old branch orderings (mitigated by the canonical-order compatibility rule; dynamic-behaviour breaks quarantined to Phases 116–117 with STATUS notes); parameterization at infinity (decision pinned in Phase 111: parameters stay real in the affine chart; stereographic parameterization for general conics; hyperbola branches as clamped extents); scope creep from CK/prover/3D (milestone-gated; never started mid-kernel-track).
+Standing risks: test-suite coupling to old branch orderings (mitigated by the canonical-order compatibility rule; dynamic-behaviour breaks quarantined to Phases 116–117 with STATUS notes); parameterization at infinity (pinned — see §Parameterization: parameters stay real in the affine chart; stereographic parameterization for general conics; hyperbola branches as clamped extents); scope creep from CK/prover/3D (milestone-gated; never started mid-kernel-track).
 
 ## Reuse contract — what does NOT change
 
