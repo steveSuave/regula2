@@ -1,0 +1,19 @@
+lib/domain/tools/point_resolution.dart
+  s_3e0054677c6d28::t_edfcf8c16bd8cc 102-103,105-109,115-129,132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0d03933339c685ce218f3a8eb1d9a2cadc3e0a8e",
+  "prompts": {},
+  "sessions": {
+    "s_3e0054677c6d28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac7877ab-3784-4ac5-b1ee-c3569e705d35",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
