@@ -1,0 +1,83 @@
+lib/domain/construction/objects/expression_text.dart
+  s_6e4fd3601c7927::t_5d456c8b5cc443 18-22
+lib/domain/construction/objects/slope_measurement.dart
+  s_6e4fd3601c7927::t_ea4ccb8bc2fc98 63,68-71
+  s_6e4fd3601c7927::t_ac49e851fd6c5f 13-23
+  s_6e4fd3601c7927::t_1f5fc0c7404805 24
+test/domain/construction/objects/slope_measurement_test.dart
+  s_6e4fd3601c7927::t_003d1d4cad5041 71-72,77-79
+  s_6e4fd3601c7927::t_80f6dc15f9fd53 142-163
+  s_6e4fd3601c7927::t_7a7c53958245ea 10-13
+test/presentation/canvas/measure_format_test.dart
+  s_6e4fd3601c7927::t_0dca9ab146a61c 21-26
+lib/domain/construction/objects/vertex_angle.dart
+  s_6e4fd3601c7927::t_5e0ea8989807a2 43-45
+  s_6e4fd3601c7927::t_315900b868aff0 10-17
+test/domain/construction/text_evaluator_test.dart
+  s_6e4fd3601c7927::t_ed8e880d0fd446 196-225
+  s_6e4fd3601c7927::t_ca86a4a5b99a7f 14,19-21
+lib/domain/construction/objects/line_angle.dart
+  s_6e4fd3601c7927::t_211d23c46f7232 74-77
+  s_6e4fd3601c7927::t_71c0505d9efede 25-36
+  s_6e4fd3601c7927::t_5fbb590d323fce 114-116,120-123,130,132
+  s_6e4fd3601c7927::t_c27e07e7de5027 78
+test/domain/construction/objects/vertex_angle_test.dart
+  s_6e4fd3601c7927::t_07e6b39c05d5b3 3,8-11
+  s_6e4fd3601c7927::t_96d60c17562be0 73-122
+lib/presentation/canvas/measure_format.dart
+  s_6e4fd3601c7927::t_bc40f013a4394f 16-20
+lib/domain/construction/objects/area_measurement.dart
+  s_6e4fd3601c7927::t_ba4e96089cd7ab 61-62,73-75,81-83,93-95,99
+  s_6e4fd3601c7927::t_6365880984de8c 23-29
+lib/domain/construction/objects/polygon.dart
+  s_6e4fd3601c7927::t_2470f9cf518d22 48
+  s_6e4fd3601c7927::t_0ccf628ec1e7ff 13-17
+test/domain/construction/objects/polygon_test.dart
+  s_6e4fd3601c7927::t_1543d5e06e8ab6 8-10
+  s_6e4fd3601c7927::t_0a76f9a513a3b5 114-125
+test/domain/construction/objects/length_measurement_test.dart
+  s_6e4fd3601c7927::t_276f9efa893ef8 3,12,14-17
+  s_6e4fd3601c7927::t_541542b5229320 128-163
+test/domain/tools/slope_tool_test.dart
+  s_6e4fd3601c7927::t_00aafc4286f5a7 87,96-97
+test/domain/construction/objects/area_measurement_test.dart
+  s_6e4fd3601c7927::t_b9ee2665f85bbe 162-181
+  s_6e4fd3601c7927::t_0fb9d64a270a39 14
+lib/domain/construction/objects/distance_measurement.dart
+  s_6e4fd3601c7927::t_5f29772f2169a3 40-41
+  s_6e4fd3601c7927::t_fbabc26898dacb 7-12
+lib/domain/construction/objects/length_measurement.dart
+  s_6e4fd3601c7927::t_f23d8984b68afe 58
+  s_6e4fd3601c7927::t_26fd549821cf14 19-24
+test/domain/construction/objects/line_angle_test.dart
+  s_6e4fd3601c7927::t_5f55c60b2e4d5a 269,278-288,290,297-298,301-303,306-320
+  s_6e4fd3601c7927::t_18f236ea684260 238-241,254-268
+  s_6e4fd3601c7927::t_41ae64727eed9b 289,291-296,299-300,304-305
+  s_6e4fd3601c7927::t_39620d3a39c95d 3,10-14
+  s_6e4fd3601c7927::t_a497445d03dbe4 270
+test/domain/construction/objects/distance_measurement_test.dart
+  s_6e4fd3601c7927::t_134425cd19c98d 1,8-11
+  s_6e4fd3601c7927::t_45b4a5d6448f7f 83-111
+lib/domain/construction/text_evaluator.dart
+  s_6e4fd3601c7927::t_93f61096d5497c 17-23
+  s_6e4fd3601c7927::t_76f0309e4cf97c 88-89,93-97,101,104-105,111-112
+  s_6e4fd3601c7927::t_8c164e62aa6728 117
+  s_6e4fd3601c7927::t_2272932e3226a1 132
+  s_6e4fd3601c7927::t_a876c2ba1be850 113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1672c831aad8bbf67e255f5bb726a15aed44b92b",
+  "prompts": {},
+  "sessions": {
+    "s_6e4fd3601c7927": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e8ba383c-1957-455c-852c-01f4f50dec45",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
