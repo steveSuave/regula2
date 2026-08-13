@@ -62,3 +62,14 @@ const double coincidentConicEpsilon = 1e-13;
 /// fraction of its scale — the gradients are nearly dependent (tangency)
 /// and the system is singular (`conic_intersection.dart`).
 const double tangentPolishEpsilon = 1e-12;
+
+/// Classification tolerance for *solver root coincidence*: two roots of an
+/// intersection count as the same point (a tangency's double root, the
+/// doubled circular points of concentric circles) when `closeTo` within
+/// this. A double root is inherently only ~√(machine eps) ≈ 1e-8 accurate —
+/// its polish is rightly skipped on singular normal equations — so root
+/// coincidence must be judged well above 1e-8, yet far below any genuine
+/// root separation. Deliberately looser than [projectiveEpsilon]: this
+/// never enters a computed value, only how solver output is counted and
+/// filtered (`IntersectionPoint.candidateCount`, the I/J filter).
+const double doubleRootEpsilon = 1e-6;

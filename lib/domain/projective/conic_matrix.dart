@@ -26,6 +26,17 @@ const ProjPoint circularPointJ = ProjPoint(
   Complex.zero,
 );
 
+/// Whether [p] is one of the circular points I, J, within [eps].
+///
+/// Consumers use this to filter I and J out of *solver output* — two real
+/// circles always meet in them ([intersectConicConic] returns them as two
+/// of the four points), and they carry no branch information. The default
+/// tolerance is [doubleRootEpsilon], not [projectiveEpsilon]: near-
+/// concentric circles deliver I and J as doubled roots carrying ~1e-8
+/// tilt, which a predicate-tight comparison would fail to recognize.
+bool isCircularPoint(ProjPoint p, [double eps = doubleRootEpsilon]) =>
+    p.closeTo(circularPointI, eps) || p.closeTo(circularPointJ, eps);
+
 /// A conic of the complex projective plane, as the symmetric 3×3 matrix
 ///
 /// ```
