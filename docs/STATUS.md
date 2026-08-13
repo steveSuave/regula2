@@ -8,6 +8,31 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 109 (V2 Session 11) — 2026-08-13
+
+**Done**
+- **Phase 110 complete** on `phase-110-intersection-tangency`, three commits:
+- **`IntersectionPoint` migrated** to projective candidates: `intersectionCandidates(curve1, curve2)` (public, shared with snap-to-intersection) — line∩line one `meet` (empty on coincident carriers), line∩conic two via `intersectLineConic` (line role by type), conic∩conic four via `intersectConicConic` with I/J filtered (new `isCircularPoint`, kernel). `branchIndex` addresses canonical order; `projPoint` = tracked candidate (complex conjugate mates through a miss, real-at-infinity for parallel lines); `candidateCount` = *distinct* real finite candidates (double root counts once — the locus walker contract). New `doubleRootEpsilon = 1e-6` classification tolerance: candidates real within it snap exactly real (`_realSnapped`) — replaces V1's world-unit tangency band with a root-noise-sized relative one (the `provoleas2.json` constructed tangency carries Im ≈ 6.6e-9 from rounding; a genuine miss grows as √|miss| and stays complex).
+- **Polar-structure kinds migrated**: `PolarLine` = `A·p` verbatim (pole at center → ℓ∞ carrier, `line` null); `TangentLine` polar-based (touch points = polar ∩ conic, carrier = polar *of the touch point* — La Hire puts it through the pole; V1 left/right branch order re-derived affinely; complex conjugate carriers from inside); `RadicalAxisLine` on new `circles.dart` kernel `radicalAxisOf` = the pencil member `b.xx·A − a.xx·B` (exact for circle-shaped inputs; concentric → ℓ∞; coincident → zero triple; degenerate line-conic input → its own line, the flattening limit).
+- **Bisector kinds migrated** on new holomorphic `euclidean.dart` kernels `angleBisectorOf` / `twoLineBisectorOf` (principal-√ unitization, V1's sum-vs-diff conditioning mirrored exactly). Internal/external selection is a *ray* concept, not projective: `AngleBisectorLine` feeds chart-canonical (w = 1) representatives; `TwoLineBisectorLine` anchors representatives to the affine orientations first (`.near` factory re-pointed off `intersections.dart`). V1's parallel band gone: nearly parallel lines bisect to the genuine mid-parallel.
+- **Two standing rules pinned this phase** (both in `intersectionCandidates`' doc):
+  1. **Ordering re-anchor**: `intersectLineConic` orders along the *representative's* direction, but no kind contract pins stored carrier signs (a join through a chart-normalized parent flips) — the line∩conic pair is re-ordered along the parent's oriented affine `line.direction`, exactly as `orientedAlong` re-anchors projections. Pinned by a stub test with a deliberately flipped representative.
+  2. **Realness gate**: static intersection-shaped operations (`intersectionCandidates`, `TangentLine`'s polar construction) consume only *real* carriers. A complex carrier still passes through real points — an undefined intersection's bisector passes through its real vertex, which sat on the very conic being intersected — and mining it fabricates real geometry V1 left undefined (the locus-miss phantom: G popped up at B/626-land inside the |AD| < |AB| gap). Cross-complex continuation belongs to tracing (Phase 113+).
+- `point_resolution.dart`'s `nearestIntersectionBranch` re-pointed at `intersectionCandidates` (canonical index = `branchIndex`, real candidates only, no throwaway probe objects).
+- Locus goldens regenerated (2 px antialiasing shift from ~1e-10 kernel-arithmetic differences); suite 1962 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Merge `phase-110-intersection-tangency`; then Phase 111 — `PointOnObject` + parameterization on projective carriers (decision to record in PLAN first: parameters stay real in the affine chart; stereographic parameterization for general conics; hyperbola branches as clamped extents).
+
+**Gotchas**
+- `doubleRootEpsilon` (1e-6) is a third kind of tolerance: classification of *solver root coincidence* (tangency doubles, concentric I/J tilt ~1e-8). It never enters computed values. Don't tighten it below ~1e-7: double roots are inherently √machine-eps ≈ 1e-8 accurate.
+- The realness gate means an `IntersectionPoint` chain member reading a complex parent yields **no candidates** (`projPoint` null), not a stored complex value — only intersections of *real* carriers store their complex misses. Phase 113+ revisits when continuation owns complex paths; don't "fix" the gate away before then.
+- `radicalAxisOf` relies on the circle constructors' *exact* coefficient shape (`xx == yy` bitwise, `xy == 0`) — every Phase 109 constructor and `ConicMatrix.lift` emit it; a future constructor that doesn't will silently leave quadratic residue in the axis.
+- V1 epsilon bands removed this phase (all documented in kind docs): line∩circle tangency band (|d−r| ≤ 1e-9 world), `PolarLine`'s pole-on-center guard, `RadicalAxisLine`'s concentricity guard, `TwoLineBisectorLine`'s parallel gate. Near-degenerate configs now produce genuine faraway geometry; exact degeneracy carries ℓ∞ (or zero → undefined). The V1-agreement glados tests skip 1e-3-relative margins around the old boundaries, per the Phase 102 convention.
+- `TwoLineBisectorLine`'s parallel-degeneracy is *naturally* total: with parallel carriers one branch's direction vanishes and the other joins the meet-at-infinity with itself — both exact zero triples. No guard needed; don't add one.
+
+---
+
 ## Session 108 (V2 Session 10) — 2026-08-13
 
 **Done**

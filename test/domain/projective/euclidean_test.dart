@@ -1,8 +1,10 @@
 import 'package:glados/glados.dart';
+import 'package:regula/domain/math/angle_bisector.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/triangle_centers.dart' as tc;
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/euclidean.dart';
 import 'package:regula/domain/projective/proj_line.dart';
@@ -275,5 +277,108 @@ void main() {
         expect(centroidOf(a, b, c.scaledBy(k)).closeTo(g), isTrue);
       },
     );
+  });
+
+  group('angleBisectorOf', () {
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'agrees with V1 angleBisector on chart lifts, orientation included',
+      (a, v, b) {
+        if (a.closeTo(v, 1e-3) || b.closeTo(v, 1e-3)) {
+          return;
+        }
+        final expected = angleBisector(a, v, b)!;
+        final line = angleBisectorOf(
+          ProjPoint.lift(a),
+          ProjPoint.lift(v),
+          ProjPoint.lift(b),
+        );
+        final projected = line.toLineEq();
+        expect(projected, isNotNull, reason: '$a $v $b → $line');
+        expect(
+          projected!.closeTo(expected, 1e-6),
+          isTrue,
+          reason: '$projected vs $expected',
+        );
+        // The raw representative's direction carries V1's orientation
+        // when the vertex is chart-canonical.
+        expect(
+          Vec2(line.b.re, -line.a.re).dot(expected.direction),
+          greaterThan(0),
+        );
+      },
+    );
+
+    test('arms toward opposite rays bisect to the perpendicular', () {
+      final line = angleBisectorOf(
+        ProjPoint.real(1, 0),
+        ProjPoint.real(0, 0),
+        ProjPoint.real(-2, 0),
+      );
+      // x = 0, oriented upward like V1's diff.perpendicular.
+      expect(line.toLineEq()!.closeTo(LineEq(1, 0, 0)), isTrue);
+      expect(Vec2(line.b.re, -line.a.re).dot(const Vec2(0, 1)), greaterThan(0));
+    });
+
+    test('an arm at infinity contributes its direction', () {
+      // Ray toward +x at infinity, ray toward (0, 3): bisector at 45°.
+      final line = angleBisectorOf(
+        ProjPoint.real(1, 0, 0),
+        ProjPoint.real(0, 0),
+        ProjPoint.real(0, 3),
+      );
+      expect(line.toLineEq()!.closeTo(LineEq(1, -1, 0)), isTrue);
+    });
+
+    test('coincident or zero inputs give the zero line', () {
+      final v = ProjPoint.real(1, 2);
+      expect(angleBisectorOf(v, v, ProjPoint.real(4, 5)).isZero, isTrue);
+      expect(
+        angleBisectorOf(
+          const ProjPoint(Complex.zero, Complex.zero, Complex.zero),
+          v,
+          ProjPoint.real(4, 5),
+        ).isZero,
+        isTrue,
+      );
+    });
+  });
+
+  group('twoLineBisectorOf', () {
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'agrees with V1 twoLineBisector on lifts, both branches',
+      (p, q, r) {
+        if (p.closeTo(q, 1e-3) || p.closeTo(r, 1e-3) || q.closeTo(r, 1e-3)) {
+          return;
+        }
+        final l1 = LineEq.throughPoints(p, q);
+        final l2 = LineEq.throughPoints(p, r);
+        for (final branch in [0, 1]) {
+          final expected = twoLineBisector(l1, l2, branch);
+          if (expected == null) {
+            return; // near-parallel: V1's band, no agreement contract
+          }
+          final line = twoLineBisectorOf(
+            ProjLine.lift(l1),
+            ProjLine.lift(l2),
+            branch,
+          );
+          final projected = line.toLineEq();
+          expect(projected, isNotNull);
+          expect(
+            projected!.closeTo(expected, 1e-6),
+            isTrue,
+            reason: 'branch $branch of $l1 / $l2: $projected vs $expected',
+          );
+        }
+      },
+    );
+
+    test('parallel and coincident carriers give the zero line', () {
+      final l1 = ProjLine.real(0, 1, 0); // y = 0
+      final l2 = ProjLine.real(0, 1, -1); // y = 1
+      expect(twoLineBisectorOf(l1, l2, 0).isZero, isTrue);
+      expect(twoLineBisectorOf(l1, l2, 1).isZero, isTrue);
+      expect(twoLineBisectorOf(l1, l1, 0).isZero, isTrue);
+    });
   });
 }

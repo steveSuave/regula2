@@ -6,6 +6,7 @@ import 'package:regula/domain/math/triangle_centers.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/circles.dart';
 import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/conic_intersection.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
@@ -442,6 +443,94 @@ void main() {
         return;
       }
       expect(k.polarLine(pole).closeTo(l, 1e-9), isTrue);
+    });
+  });
+
+  group('radicalAxisOf', () {
+    (CircleEq, CircleEq)? circles(Vec2 c1, Vec2 c2, double r) {
+      // Two circles with positive radii, kept away from concentricity
+      // (where V1 nulls).
+      if (c1.distanceTo(c2) < 1e-3 * (1 + c1.norm + c2.norm)) {
+        return null;
+      }
+      return (CircleEq(c1, 1 + r.abs() / 100), CircleEq(c2, 2 + r * r / 500));
+    }
+
+    Glados3(any.vec2, any.vec2, any.component).test(
+      'agrees with V1 radicalAxis, raw orientation included',
+      (p, q, r) {
+        final pair = circles(p, q, r);
+        if (pair == null) {
+          return;
+        }
+        final (c1, c2) = pair;
+        final axis = radicalAxisOf(ConicMatrix.lift(c1), ConicMatrix.lift(c2));
+        final v1 = radicalAxis(c1, c2)!;
+        final projected = axis.toLineEq();
+        expect(projected, isNotNull, reason: '$c1 $c2 → $axis');
+        expect(projected!.closeTo(v1), isTrue, reason: '$projected vs $v1');
+        // The raw representative carries V1's orientation (its direction
+        // is (b, −a)) — on unit lifts the coefficients match exactly.
+        expect(
+          Vec2(axis.b.re, -axis.a.re).dot(v1.direction),
+          greaterThan(0),
+        );
+      },
+    );
+
+    Glados3(any.vec2, any.vec2, any.component).test(
+      'carries the common chord and equal-power structure: every non-I/J '
+      'intersection of the circles lies on it',
+      (p, q, r) {
+        final pair = circles(p, q, r);
+        if (pair == null) {
+          return;
+        }
+        final (c1, c2) = pair;
+        final a = ConicMatrix.lift(c1);
+        final b = ConicMatrix.lift(c2);
+        final axis = radicalAxisOf(a, b);
+        for (final x in intersectConicConic(a, b)) {
+          if (isCircularPoint(x)) {
+            continue;
+          }
+          expect(
+            x.isIncidentTo(axis, 1e-6),
+            isTrue,
+            reason: '$c1 ∩ $c2 → $x off $axis',
+          );
+        }
+      },
+    );
+
+    Glados2(any.nonZeroComplex, any.nonZeroComplex).test(
+      'rescaling either matrix leaves the axis invariant',
+      (k1, k2) {
+        final a = ConicMatrix.lift(CircleEq(const Vec2(1, 2), 2));
+        final b = ConicMatrix.lift(CircleEq(const Vec2(4, -1), 1));
+        final baseline = radicalAxisOf(a, b);
+        expect(
+          radicalAxisOf(a.scaledBy(k1), b.scaledBy(k2)).closeTo(baseline),
+          isTrue,
+        );
+      },
+    );
+
+    test('concentric circles give ℓ∞, coincident matrices the zero triple',
+        () {
+      final a = ConicMatrix.lift(CircleEq(const Vec2(1, 2), 1));
+      final b = ConicMatrix.lift(CircleEq(const Vec2(1, 2), 2));
+      expect(radicalAxisOf(a, b).closeTo(ProjLine.infinity), isTrue);
+      expect(radicalAxisOf(a, a.scaledBy(const Complex(2, 1))).isZero, isTrue);
+    });
+
+    test('a degenerate line-conic input degenerates the axis onto its line',
+        () {
+      final line = ProjLine.real(3, -1, 2);
+      final flattened = ConicMatrix.linePair(line, ProjLine.infinity);
+      final k = ConicMatrix.lift(CircleEq(const Vec2(1, -2), 2));
+      expect(radicalAxisOf(flattened, k).closeTo(line), isTrue);
+      expect(radicalAxisOf(k, flattened).closeTo(line), isTrue);
     });
   });
 }

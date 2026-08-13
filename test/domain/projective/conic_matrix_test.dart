@@ -86,6 +86,35 @@ void main() {
       expect(conic.containsPoint(circularPointJ), isTrue);
     });
 
+    test('isCircularPoint recognizes I and J at solver-noise tilt', () {
+      expect(isCircularPoint(circularPointI), isTrue);
+      expect(isCircularPoint(circularPointJ), isTrue);
+      expect(isCircularPoint(circularPointI.scaledBy(const Complex(3, -2))),
+          isTrue);
+      // The doubled I/J of near-concentric circles arrive with ~1e-8 tilt.
+      expect(
+        isCircularPoint(
+          const ProjPoint(Complex.one, Complex(1e-8, 1), Complex(1e-8, 1e-8)),
+        ),
+        isTrue,
+      );
+    });
+
+    test('isCircularPoint rejects everything else', () {
+      expect(isCircularPoint(ProjPoint.real(1, 1, 1)), isFalse);
+      expect(isCircularPoint(ProjPoint.real(1, 1, 0)), isFalse);
+      expect(
+        isCircularPoint(const ProjPoint(Complex.one, Complex.i, Complex.one)),
+        isFalse,
+      );
+      expect(
+        isCircularPoint(
+          const ProjPoint(Complex.zero, Complex.zero, Complex.zero),
+        ),
+        isFalse,
+      );
+    });
+
     Glados(any.conicCoeffInts).test(
       'a real conic passes through I and J iff it has circle shape',
       (k) {

@@ -1,26 +1,46 @@
 import 'dart:math' as math;
 
-import '../../math/intersections.dart';
 import '../../math/vec2.dart';
+import '../../projective/complex.dart';
+import '../../projective/conic_intersection.dart';
+import '../../projective/conic_matrix.dart';
+import '../../projective/proj_point.dart';
+import '../../projective/tolerances.dart';
 import '../geo_object.dart';
 
 /// One intersection point of two curves (lines and/or circles).
 ///
-/// [branchIndex] (0 or 1) picks which point of a two-point intersection
-/// this object tracks, against the deterministic ordering documented in
-/// `intersections.dart`:
+/// Migrated (Phase 110): candidates come from the projective kernel
+/// ([intersectionCandidates]) and are *total* — line ∩ conic always has
+/// two, conic ∩ conic four with the circular points I, J filtered out,
+/// line ∩ line one. A candidate can be complex or at infinity;
+/// [branchIndex] picks one by its place in the canonical order, and
+/// [position] is its projection — null exactly while the tracked
+/// candidate is not real and finite, which is when this object reads
+/// undefined. Through a real miss both branches go complex (conjugate
+/// mates) and each returns on its own side when the curves touch again.
 ///
-/// - line ∩ line: at most one point, index 0.
+/// [branchIndex] (0 or 1) addresses the canonical order, which agrees
+/// with the old deterministic orderings on real transverse cases (PLAN
+/// §Migration):
+///
+/// - line ∩ line: one point, the index clamps to it.
 /// - line ∩ circle: ordered along the line's direction. The line parent's
 ///   role is fixed by *type*, not argument order, so the branch is stable
 ///   however the user picked the two curves.
 /// - circle ∩ circle: branch 0 is left of the directed center line
 ///   `curve1 → curve2`; here parent order matters and is preserved.
 ///
-/// At tangency the two branches coincide: the index is clamped to the
-/// single returned point, so both branch objects sit on the tangency and
-/// separate again when two intersections return. No intersection (or an
-/// undefined parent) makes this point undefined.
+/// At tangency the double root repeats the point, so both branch objects
+/// sit on the tangency and separate again as the root pair does — V1's
+/// index clamp falls out of the representation. Note V1's *epsilon band*
+/// around tangency (a world-unit distance test) is gone, like every band
+/// the migration removes: candidates classify real or complex by the
+/// relative realness predicate alone.
+///
+/// Canonical ordering is still re-derived every recompute, so a branch
+/// can swap sides through a degeneracy mid-drag — branch identity held by
+/// continuation arrives with tracing (Phases 113–116).
 ///
 /// Segments intersect via their infinite carrier line for now — clipping
 /// to the segment's extent is a later refinement (tracked in PLAN).
@@ -58,16 +78,22 @@ class IntersectionPoint extends GeoPoint {
   /// value. Everything else must treat it as fixed at creation.
   int branchIndex;
 
-  Vec2? _position;
+  ProjPoint? _point;
   int _candidateCount = 0;
 
   @override
-  Vec2? get position => _position;
+  ProjPoint? get projPoint => _point;
 
-  /// How many real intersection points the parent curves currently have
-  /// (0, 1 or 2), as of the last [recompute]. Two candidates collapsing
-  /// to one and then none is a tangency — the signal the locus sweep's
-  /// linkage continuation branches on.
+  @override
+  Vec2? get position => _point?.toVec2();
+
+  /// How many *distinct* real finite intersection points the parent curves
+  /// currently have (0, 1 or 2), as of the last [recompute] — a double
+  /// root's coincident copies count once (`closeTo` within
+  /// `doubleRootEpsilon`). Two candidates collapsing to one and then none
+  /// is a tangency — the signal the locus sweep's linkage continuation
+  /// branches on (the walker contract, until Phase 117 rewrites it on
+  /// tracing).
   int get candidateCount => _candidateCount;
 
   @override
@@ -75,43 +101,142 @@ class IntersectionPoint extends GeoPoint {
 
   @override
   void recompute() {
-    final candidates = _intersect();
-    _candidateCount = candidates.length;
-    _position = candidates.isEmpty
+    final candidates = intersectionCandidates(curve1, curve2);
+    _candidateCount = _distinctRealCount(candidates);
+    _point = candidates.isEmpty
         ? null
         : candidates[math.min(branchIndex, candidates.length - 1)];
   }
 
-  List<Vec2> _intersect() {
-    switch ((curve1, curve2)) {
-      case (final GeoLine a, final GeoLine b):
-        final l1 = a.line;
-        final l2 = b.line;
-        return (l1 == null || l2 == null)
-            ? const []
-            : intersectLineLine(l1, l2);
-      case (final GeoLine a, final GeoCircle b):
-        final l = a.line;
-        final c = b.circle;
-        return (l == null || c == null) ? const [] : intersectLineCircle(l, c);
-      case (final GeoCircle a, final GeoLine b):
-        final l = b.line;
-        final c = a.circle;
-        return (l == null || c == null) ? const [] : intersectLineCircle(l, c);
-      case (final GeoCircle a, final GeoCircle b):
-        final c1 = a.circle;
-        final c2 = b.circle;
-        return (c1 == null || c2 == null)
-            ? const []
-            : intersectCircleCircle(c1, c2);
-      // Unreachable: the constructor rejects non-curve parents.
-      case ((GeoPoint(), _) || (_, GeoPoint())):
-      case ((GeoAngle(), _) || (_, GeoAngle())):
-      case ((GeoPolygon(), _) || (_, GeoPolygon())):
-      case ((GeoMeasurement(), _) || (_, GeoMeasurement())):
-      case ((GeoLocus(), _) || (_, GeoLocus())):
-      case ((GeoText(), _) || (_, GeoText())):
-        throw StateError('IntersectionPoint parents must be curves');
+  static int _distinctRealCount(List<ProjPoint> candidates) {
+    var count = 0;
+    for (var i = 0; i < candidates.length; i++) {
+      if (candidates[i].toVec2() == null) continue;
+      var repeated = false;
+      for (var j = 0; j < i && !repeated; j++) {
+        repeated = candidates[j].toVec2() != null &&
+            candidates[i].closeTo(candidates[j], doubleRootEpsilon);
+      }
+      if (!repeated) count++;
+    }
+    return count;
+  }
+}
+
+/// The intersection candidates of two curve objects (each a [GeoLine] or
+/// [GeoCircle]), in canonical order, zero triples dropped and the circular
+/// points I, J filtered out ([isCircularPoint]). Empty while a parent's
+/// projective view is null.
+///
+/// - Line ∩ line: the single meet — empty when the carriers projectively
+///   coincide (no discrete intersection, matching [intersectConicConic]'s
+///   coincident-input convention).
+/// - Line ∩ conic: always two ([intersectLineConic]), whichever argument
+///   is the line.
+/// - Conic ∩ conic: the four pencil points ([intersectConicConic]); for
+///   two real circles I and J are always two of them, leaving the two
+///   branch-carrying candidates in V1 order.
+///
+/// Candidates real within `doubleRootEpsilon` but not within the predicate
+/// default are snapped exactly real: a *constructed* tangency's double
+/// root splits into a conjugate pair whose imaginary part is the square
+/// root of the construction's rounding error — far above the realness
+/// predicate, pure noise all the same. A genuine near-miss stays complex,
+/// its imaginary measure growing as sqrt(|miss|). (This replaces V1's
+/// world-unit epsilon band around tangency with a relative,
+/// root-noise-sized one.)
+///
+/// A *non-real* parent carrier yields no candidates at all. A complex
+/// carrier (an undefined intersection's conjugate branch, the bisector
+/// over it) still passes through real points — its own vertex, say — and
+/// intersecting it would fabricate real geometry V1 rightly left
+/// undefined. Until tracing (Phase 113+) owns cross-complex
+/// continuation, static candidates exist only between real carriers;
+/// points at infinity and degenerate real conics are real and take part.
+///
+/// Consumed by [IntersectionPoint] and the snap-to-intersection ladder.
+List<ProjPoint> intersectionCandidates(GeoObject curve1, GeoObject curve2) {
+  switch ((curve1, curve2)) {
+    case (final GeoLine a, final GeoLine b):
+      final l1 = a.projLine;
+      final l2 = b.projLine;
+      if (l1 == null || l2 == null || !l1.isReal() || !l2.isReal()) {
+        return const [];
+      }
+      if (l1.closeTo(l2)) {
+        return const [];
+      }
+      final p = l1.meet(l2);
+      return p.isZero ? const [] : [p];
+    case (final GeoLine a, final GeoCircle b):
+      return _lineConicCandidates(a, b);
+    case (final GeoCircle a, final GeoLine b):
+      return _lineConicCandidates(b, a);
+    case (final GeoCircle a, final GeoCircle b):
+      final c1 = a.conic;
+      final c2 = b.conic;
+      if (c1 == null || c2 == null || !c1.isReal() || !c2.isReal()) {
+        return const [];
+      }
+      return [
+        for (final p in intersectConicConic(c1, c2))
+          if (!p.isZero && !isCircularPoint(p)) _realSnapped(p),
+      ];
+    // Unreachable from IntersectionPoint: its constructor rejects
+    // non-curve parents.
+    case ((GeoPoint(), _) || (_, GeoPoint())):
+    case ((GeoAngle(), _) || (_, GeoAngle())):
+    case ((GeoPolygon(), _) || (_, GeoPolygon())):
+    case ((GeoMeasurement(), _) || (_, GeoMeasurement())):
+    case ((GeoLocus(), _) || (_, GeoLocus())):
+    case ((GeoText(), _) || (_, GeoText())):
+      throw ArgumentError('intersection candidates need two curves');
+  }
+}
+
+List<ProjPoint> _lineConicCandidates(GeoLine line, GeoCircle circle) {
+  final l = line.projLine;
+  final c = circle.conic;
+  if (l == null || c == null || !l.isReal() || !c.isReal()) {
+    return const [];
+  }
+  final candidates = [
+    for (final p in intersectLineConic(l, c))
+      if (!p.isZero && !isCircularPoint(p)) _realSnapped(p),
+  ];
+  // `intersectLineConic` orders along the *representative's* direction,
+  // but no kind contract pins the stored carrier's sign — a join through
+  // a chart-normalized parent can flip it. V1 defined the branch order
+  // along the line's oriented affine direction, so re-anchor the pair to
+  // it, exactly as `orientedAlong` re-anchors the projection. (Reversing
+  // also flips the conjugate-pair order — consistent: V1 order was a
+  // property of the direction, and flipping the direction flips both.)
+  final affine = line.line;
+  if (candidates.length == 2 && affine != null) {
+    final d = affine.direction;
+    // The representative direction, by the kernel's own rule (real parts,
+    // falling back to imaginary parts for complex-phase representatives).
+    final reNorm = l.a.re * l.a.re + l.b.re * l.b.re;
+    final imNorm = l.a.im * l.a.im + l.b.im * l.b.im;
+    final along = reNorm >= imNorm
+        ? d.x * l.b.re - d.y * l.a.re
+        : d.x * l.b.im - d.y * l.a.im;
+    if (along < 0) {
+      return [candidates[1], candidates[0]];
     }
   }
+  return candidates;
+}
+
+/// [p] with its imaginary noise stripped when it is real within
+/// `doubleRootEpsilon` but not within the predicate default (see
+/// [intersectionCandidates]); [p] itself otherwise. Snapping normalizes
+/// first (chart normalization removes complex phase), so the result is
+/// exactly real and projectively within `doubleRootEpsilon` of the input.
+ProjPoint _realSnapped(ProjPoint p) {
+  if (p.isReal() || !p.isReal(doubleRootEpsilon)) {
+    return p;
+  }
+  final n = p.normalized;
+  return ProjPoint(Complex(n.x.re), Complex(n.y.re), Complex(n.w.re));
 }

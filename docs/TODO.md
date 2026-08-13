@@ -28,10 +28,10 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 110 — `IntersectionPoint` v2 + tangency family
 
-- [ ] `IntersectionPoint`: candidates always 2 or 4; `branchIndex` indexes canonical order with I/J filtered; `candidateCount` = real-candidate count (locus walker contract until 117)
-- [ ] Migrate: `TangentLine` (polar-based, always 2), `PolarLine`, `RadicalAxisLine` (line through the two non-I/J common points — now a one-liner), `AngleBisectorLine`, `TwoLineBisectorLine` (old ordering guarantee kept)
-- [ ] `point_resolution.dart` snap-to-intersection re-pointed at real candidates
-- [ ] All existing branch-ordering tests stay green; glados: intersection points incident to both parents always (in ℂ); tangency = double root
+- [x] `IntersectionPoint`: candidates always 2 or 4; `branchIndex` indexes canonical order with I/J filtered; `candidateCount` = real-candidate count (locus walker contract until 117)
+- [x] Migrate: `TangentLine` (polar-based, always 2), `PolarLine`, `RadicalAxisLine` (line through the two non-I/J common points — now a one-liner via `radicalAxisOf`), `AngleBisectorLine`, `TwoLineBisectorLine` (old ordering guarantee kept, anchored to affine orientations)
+- [x] `point_resolution.dart` snap-to-intersection re-pointed at real candidates
+- [x] All existing branch-ordering tests stay green; glados: intersection points incident to both parents always (in ℂ); tangency = double root
 
 ## Phase 111 — `PointOnObject` + parameterization on projective carriers
 
