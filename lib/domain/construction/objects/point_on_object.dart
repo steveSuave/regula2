@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
 /// A point constrained to a curve (a [GeoLine] or [GeoCircle]).
@@ -7,7 +8,20 @@ import '../geo_object.dart';
 /// parameterization — signed arc-length along `LineEq.direction` from
 /// `LineEq.pointOnLine`, or the polar angle for a circle — and recomputes
 /// its position from the curve's current geometry, so it rides along when
-/// the curve moves. Undefined exactly while the curve is.
+/// the curve moves. Undefined exactly while the curve's *chart projection*
+/// is: per PLAN §Parameterization the parameter is a real number of the
+/// affine chart, so a carrier that is complex or wholly at infinity has no
+/// chart to evaluate in and takes the point down with it.
+///
+/// Migrated (Phase 111): stores the homogeneous lift of the chart
+/// evaluation. The `line`/`circle` reads in [recompute] are the sanctioned
+/// chart reads of the pinned parameterization decision (parameters are
+/// chart quantities; the migrated carriers' projections carry the
+/// `orientedAlong` anchor this parameterization depends on) — not bridge
+/// leftovers. Until tracing (Phase 113+) continues the point's homogeneous
+/// value, the stored lift always has `w` exactly one, so [position] reads
+/// the chart coordinates back exactly at any magnitude — no at-infinity
+/// cutoff, which locus sweeps along diverging line arms rely on.
 ///
 /// Because the parameter is tied to the *analytic* form, the point tracks
 /// the curve but does not stick to the points that defined it (e.g.
@@ -73,23 +87,33 @@ class PointOnObject extends GeoPoint {
   final GeoObject curve;
 
   /// Position on the curve: arc-length along a line's direction, polar
-  /// angle (radians) on a circle. See the class doc for stability caveats.
+  /// angle (radians) on a circle. Always real, read in the affine chart
+  /// (PLAN §Parameterization). See the class doc for stability caveats.
   ///
   /// Mutated only by `Construction.setPointOnObjectParameter` (via
   /// commands) so every change goes through dependent recomputation.
   double parameter;
 
-  Vec2? _position;
+  ProjPoint? _point;
 
   @override
-  Vec2? get position => _position;
+  ProjPoint? get projPoint => _point;
+
+  @override
+  Vec2? get position => switch (_point) {
+    null => null,
+    // `w` is exactly one (the lift of a chart evaluation) — read the chart
+    // coordinates back directly; `toVec2` would impose a relative
+    // at-infinity cutoff V1 never had.
+    final p => Vec2(p.x.re, p.y.re),
+  };
 
   @override
   List<GeoObject> get parents => [curve];
 
   @override
   void recompute() {
-    _position = switch (curve) {
+    final chartPoint = switch (curve) {
       GeoLine(:final line) && final GeoLine host => line?.pointAt(
         host.clampParameter(parameter),
       ),
@@ -102,6 +126,10 @@ class PointOnObject extends GeoPoint {
       GeoMeasurement() ||
       GeoLocus() ||
       GeoText() => throw StateError('PointOnObject parent must be a curve'),
+    };
+    _point = switch (chartPoint) {
+      null => null,
+      final p => ProjPoint.lift(p),
     };
   }
 }

@@ -8,7 +8,23 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
-## Session 109 (V2 Session 11) — 2026-08-13
+## Session 110 (V2 Session 12) — 2026-08-13
+
+**Done**
+- Merged `phase-110-intersection-tangency` to `main`.
+- **Phase 111 complete** on `phase-111-point-on-object`, two commits:
+- **PLAN §Parameterization pinned** (new subsection beside the two early-pinned decisions): carrier parameters stay *real, in the affine chart* — signed arc-length on lines (through the `orientedAlong` anchor), polar angle on circles; tracing (113+) continues homogeneous *values*, never parameters; general real conics get stereographic parameterization when Phases 119/120 need it (rational → polynomial in homogeneous coordinates; ellipses close up, parabolas touch infinity once, hyperbolas twice); hyperbola branches are clamped real extents, no gluing through infinity; projective/complex parameters rejected.
+- **`PointOnObject` migrated**: stores the homogeneous lift of the chart evaluation, `projPoint` override + `position` reading `x.re/y.re` directly (`w` exactly 1 until tracing — no `toVec2` at-infinity cutoff, which locus sweeps along diverging line arms rely on; pinned by a 1e12-parameter test). The `line`/`circle` reads in `recompute` are the *sanctioned chart reads* of §Parameterization, not bridge leftovers. Chart-less carriers (ℓ∞, complex, degenerate line-pair conic) → undefined with `projPoint` null, consistent with the Phase 110 realness gate. New glados: rescaling invariance through the object graph (line + circle hosts), `pointAt(parameterAt(p))` round-trip stability, glued point stays projectively incident under parent perturbation.
+- **TODO correction**: Phase 111's migrate line listed `Arc`/`Sector` extents and `TriangleCenterPoint`, but both landed earlier (extents stayed affine metadata in Phase 109; `TriangleCenterPoint` migrated in Phase 107) — checklist annotated, only `PointOnObject` actually migrated this phase. TODO rotation: completed Phases 108/109 moved to archive.
+- Suite 1972 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Merge `phase-111-point-on-object`; then Phase 112 — object batch 4: consumers (`VertexAngle`, `LineAngle`, `Polygon`, the measurement kinds, `ExpressionText`); `Locus` deliberately untouched until 117; grep gate: no object file imports `intersections.dart` except `locus.dart`.
+
+**Gotchas**
+- `PointOnObject.position` deliberately does NOT go through `toVec2()` — the stored lift has `w` exactly 1 and reads back totally at any magnitude. Switching it to `toVec2()` would impose the ~1e9 relative at-infinity cutoff and break locus infinity tails; don't "simplify" it (same trap as `FreePoint.position`, session 106).
+- The stereographic-conic and hyperbola-extent parts of §Parameterization are *decision only* — no code exists until conics become carriers (Phases 119/120). `PointOnObject` still rejects non-line/circle parents.
+- `PointOnObject.recompute` reading `curve.line`/`curve.circle` is sanctioned by PLAN §Parameterization (parameters are chart quantities; projections carry the orientation anchor). The Phase 112 grep gate should treat it as the documented exception alongside painter/hit-tester/codec.
 
 **Done**
 - **Phase 110 complete** on `phase-110-intersection-tangency`, three commits:

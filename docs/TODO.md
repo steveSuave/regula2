@@ -14,18 +14,6 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 108 — Object batch 2: transforms as projective maps
-
-- [x] `proj_transform.dart`: 3×3 complex matrix; apply to point, line, conic (congruence)
-- [x] Migrate: `ReflectedPoint`, `CentralReflectionPoint`, `RotatedPoint`, `TranslatedPoint`, `HomotheticPoint`, `ProjectionPoint`, `SegmentRatioPoint`, `HarmonicConjugatePoint` (cross-ratio, natively)
-- [x] Glados: transform∘inverse = id; conic transforms consistently with its points (`pᵀAp=0` preserved); old-vs-new agreement on real inputs
-
-## Phase 109 — Object batch 3: circles as conics
-
-- [x] Migrate all circle kinds to store `ConicMatrix`: `ThreePointCircle`, `CompassCircle`, `DiameterCircle`, `FixedRadiusCircle`, `ApolloniusCircle`, `TriangleCircle` (nine-point natively; incircle rides along project-compute-lift), `Arc`, `Sector` carriers; `CircleCenter` from polar structure (pole of ℓ∞); `circle` getter becomes projection (center/radius when the conic is a real circle)
-- [x] Glados: every migrated circle's conic passes through I,J; center/radius projection round-trips against old computation
-- [x] Three collinear points now yield the degenerate line-conic instead of undefined (isDefined projection handles rendering until Phase 119)
-
 ## Phase 110 — `IntersectionPoint` v2 + tangency family
 
 - [x] `IntersectionPoint`: candidates always 2 or 4; `branchIndex` indexes canonical order with I/J filtered; `candidateCount` = real-candidate count (locus walker contract until 117)
@@ -35,9 +23,9 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 111 — `PointOnObject` + parameterization on projective carriers
 
-- [ ] Decision recorded in PLAN: parameters stay real in the affine chart (arc-length on real lines, angle on real circles — gluing is a UI concept on the rendered curve); general real conics via stereographic parameterization; hyperbola-at-infinity as clamped extents
-- [ ] Migrate: `PointOnObject`, `Arc`/`Sector` extents, `TriangleCenterPoint`
-- [ ] Glados: `pointAt(parameterAt(p))` projections stable; glued point stays on carrier under parent perturbation
+- [x] Decision recorded in PLAN: parameters stay real in the affine chart (arc-length on real lines, angle on real circles — gluing is a UI concept on the rendered curve); general real conics via stereographic parameterization; hyperbola-at-infinity as clamped extents
+- [x] Migrate: `PointOnObject` (stores the lifted chart evaluation; chart-less carriers → undefined). The other two items on this line were already done when the phase opened: `Arc`/`Sector` extents stayed affine metadata in Phase 109, `TriangleCenterPoint` migrated in Phase 107
+- [x] Glados: `pointAt(parameterAt(p))` projections stable; glued point stays on carrier under parent perturbation
 
 ## Phase 112 — Object batch 4: consumers
 

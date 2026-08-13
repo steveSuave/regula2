@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
@@ -9,7 +9,14 @@ import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('PointOnObject', () {
@@ -262,5 +269,207 @@ void main() {
         reason: 'a stored parameter survives construction while undefined',
       );
     });
+  });
+
+  group('projective semantics (Phase 111)', () {
+    test('stores the lifted chart evaluation', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final p = PointOnObject(id: 'p', curve: line, parameter: 3);
+
+      expect(p.projPoint!.closeTo(ProjPoint.real(3, 0)), isTrue);
+      expect(p.projPoint!.isIncidentTo(line.projLine!), isTrue);
+    });
+
+    test('a huge parameter stays defined — the chart read-back has no '
+        'at-infinity cutoff', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final p = PointOnObject(id: 'p', curve: line, parameter: 1e12);
+
+      expect(p.isDefined, isTrue);
+      expect(p.position, const Vec2(1e12, 0));
+    });
+
+    test('a carrier with no chart projection leaves the point undefined, '
+        'projPoint null', () {
+      // Wholly at infinity: projLine exists, the chart view does not.
+      final atInfinity = StubProjectiveLine(ProjLine.infinity);
+      final onInfinity = PointOnObject(id: 'p', curve: atInfinity, parameter: 2);
+      expect(atInfinity.projLine, isNotNull);
+      expect(onInfinity.isDefined, isFalse);
+      expect(onInfinity.projPoint, isNull);
+
+      // Complex carrier: same — parameters live in the affine chart.
+      final complexLine = StubProjectiveLine(
+        ProjLine(Complex.one, const Complex(0, 1), Complex.zero),
+      );
+      final onComplex = PointOnObject(id: 'q', curve: complexLine, parameter: 2);
+      expect(onComplex.isDefined, isFalse);
+      expect(onComplex.projPoint, isNull);
+    });
+
+    test('a degenerate line-pair carrier (collinear three-point circle) '
+        'leaves the point undefined', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 0));
+      final circle = ThreePointCircle(
+        id: 'k',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
+      expect(circle.conic, isNotNull);
+      expect(circle.circle, isNull);
+
+      final p = PointOnObject(id: 'p', curve: circle, parameter: 1);
+      expect(p.isDefined, isFalse);
+      expect(p.projPoint, isNull);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+      'line host: recompute is invariant under complex rescaling of a '
+      'carrier parent',
+      (p, q, k) {
+        if (ProjPoint.lift(p).closeTo(ProjPoint.lift(q))) return;
+        final plain = PointOnObject(
+          id: 'p1',
+          curve: LineThroughTwoPoints(
+            id: 'l1',
+            point1: StubProjectivePoint(ProjPoint.lift(p)),
+            point2: StubProjectivePoint(ProjPoint.lift(q)),
+          ),
+          parameter: 1.5,
+        );
+        final scaled = PointOnObject(
+          id: 'p2',
+          curve: LineThroughTwoPoints(
+            id: 'l2',
+            point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+            point2: StubProjectivePoint(ProjPoint.lift(q)),
+          ),
+          parameter: 1.5,
+        );
+        expect(scaled.projPoint!.closeTo(plain.projPoint!, 1e-6), isTrue);
+        expect(scaled.position!.closeTo(plain.position!, 1e-6), isTrue);
+      },
+    );
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+      'circle host: recompute is invariant under complex rescaling of a '
+      'carrier parent',
+      (c, r, k) {
+        if (ProjPoint.lift(c).closeTo(ProjPoint.lift(r))) return;
+        final plain = PointOnObject(
+          id: 'p1',
+          curve: CircleCenterPoint(
+            id: 'k1',
+            center: StubProjectivePoint(ProjPoint.lift(c)),
+            onCircle: StubProjectivePoint(ProjPoint.lift(r)),
+          ),
+          parameter: 0.7,
+        );
+        final scaled = PointOnObject(
+          id: 'p2',
+          curve: CircleCenterPoint(
+            id: 'k2',
+            center: StubProjectivePoint(ProjPoint.lift(c).scaledBy(k)),
+            onCircle: StubProjectivePoint(ProjPoint.lift(r)),
+          ),
+          parameter: 0.7,
+        );
+        expect(scaled.position!.closeTo(plain.position!, 1e-6), isTrue);
+      },
+    );
+
+    Glados3(any.vec2, any.vec2, any.component).test(
+      'line host: pointAt(parameterAt(p)) projections are stable',
+      (a, b, t) {
+        if (ProjPoint.lift(a).closeTo(ProjPoint.lift(b))) return;
+        final line = LineThroughTwoPoints(
+          id: 'l',
+          point1: FreePoint(id: 'a', position: a),
+          point2: FreePoint(id: 'b', position: b),
+        );
+        final p = PointOnObject(id: 'p', curve: line, parameter: t);
+        final carrier = line.line!;
+        final recovered = carrier.parameterAt(p.position!);
+        expect(recovered, closeTo(t, 1e-6 * (1 + t.abs())));
+        expect(
+          carrier.pointAt(recovered).closeTo(p.position!, 1e-6),
+          isTrue,
+        );
+      },
+    );
+
+    Glados3(any.vec2, any.vec2, any.component).test(
+      'circle host: pointAt(angleAt(p)) projections are stable',
+      (c, r, t) {
+        if (ProjPoint.lift(c).closeTo(ProjPoint.lift(r))) return;
+        final circle = CircleCenterPoint(
+          id: 'k',
+          center: FreePoint(id: 'c', position: c),
+          onCircle: FreePoint(id: 'r', position: r),
+        );
+        final p = PointOnObject(id: 'p', curve: circle, parameter: t);
+        final carrier = circle.circle!;
+        final recovered = carrier.angleAt(p.position!);
+        expect(
+          carrier.pointAt(recovered).closeTo(p.position!, 1e-6),
+          isTrue,
+        );
+      },
+    );
+
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'glued point stays on a line carrier under parent perturbation',
+      (a, b, delta) {
+        if (ProjPoint.lift(a).closeTo(ProjPoint.lift(b))) return;
+        final construction = Construction();
+        final pa = FreePoint(id: 'a', position: a);
+        final pb = FreePoint(id: 'b', position: b);
+        final line = LineThroughTwoPoints(id: 'l', point1: pa, point2: pb);
+        final p = PointOnObject(id: 'p', curve: line, parameter: 2.5);
+        construction
+          ..add(pa)
+          ..add(pb)
+          ..add(line)
+          ..add(p);
+
+        final moved = b + delta;
+        if (ProjPoint.lift(a).closeTo(ProjPoint.lift(moved))) return;
+        construction.moveFreePoint('b', moved);
+        expect(line.isDefined, isTrue);
+        expect(p.isDefined, isTrue);
+        expect(p.projPoint!.isIncidentTo(line.projLine!, 1e-9), isTrue);
+      },
+    );
+
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'glued point stays on a circle carrier under parent perturbation',
+      (c, r, delta) {
+        if (ProjPoint.lift(c).closeTo(ProjPoint.lift(r))) return;
+        final construction = Construction();
+        final pc = FreePoint(id: 'c', position: c);
+        final pr = FreePoint(id: 'r', position: r);
+        final circle = CircleCenterPoint(id: 'k', center: pc, onCircle: pr);
+        final p = PointOnObject(id: 'p', curve: circle, parameter: 1.2);
+        construction
+          ..add(pc)
+          ..add(pr)
+          ..add(circle)
+          ..add(p);
+
+        final moved = r + delta;
+        if (ProjPoint.lift(c).closeTo(ProjPoint.lift(moved))) return;
+        construction.moveFreePoint('r', moved);
+        expect(circle.isDefined, isTrue);
+        expect(p.isDefined, isTrue);
+        expect(circle.conic!.containsPoint(p.projPoint!, 1e-9), isTrue);
+      },
+    );
   });
 }
