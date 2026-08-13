@@ -66,12 +66,12 @@ class _FakeFilePicker extends FilePickerPlatform {
 }
 
 FilePickerResult _fileWithBytes(List<int> bytes) => FilePickerResult([
-      PlatformFile(
-        name: 'construction.rgl',
-        size: bytes.length,
-        bytes: Uint8List.fromList(bytes),
-      ),
-    ]);
+  PlatformFile(
+    name: 'construction.rgl',
+    size: bytes.length,
+    bytes: Uint8List.fromList(bytes),
+  ),
+]);
 
 void main() {
   late ProviderContainer container;
@@ -110,14 +110,13 @@ void main() {
     final b = FreePoint(id: 'b', position: const Vec2(4, 2));
     stack.execute(AddObjectCommand(a));
     stack.execute(AddObjectCommand(b));
-    stack.execute(
-      AddObjectCommand(Midpoint(id: 'm', point1: a, point2: b)),
-    );
+    stack.execute(AddObjectCommand(Midpoint(id: 'm', point1: a, point2: b)));
     expect(construction.length, 3);
   }
 
-  testWidgets('Save hands the encoded document to the platform',
-      (tester) async {
+  testWidgets('Save hands the encoded document to the platform', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
     const viewport = ViewportState(pan: Vec2(-3, 4), scale: 2);
@@ -139,8 +138,9 @@ void main() {
     expect(saved.settings, settings);
   });
 
-  testWidgets('Open replaces the construction and viewport, drops undo',
-      (tester) async {
+  testWidgets('Open replaces the construction and viewport, drops undo', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
 
@@ -150,11 +150,13 @@ void main() {
     const incomingSettings = DocumentSettings(showGrid: true);
     picker.openResult = _fileWithBytes(
       utf8.encode(
-        jsonEncode(encodeDocument(
-          incoming,
-          viewport: incomingViewport,
-          settings: incomingSettings,
-        )),
+        jsonEncode(
+          encodeDocument(
+            incoming,
+            viewport: incomingViewport,
+            settings: incomingSettings,
+          ),
+        ),
       ),
     );
 
@@ -178,8 +180,9 @@ void main() {
     expect(container.read(commandStackProvider).canUndo, isTrue);
   });
 
-  testWidgets('a malformed file shows one error dialog and changes nothing',
-      (tester) async {
+  testWidgets('a malformed file shows one error dialog and changes nothing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
     picker.openResult = _fileWithBytes(utf8.encode('not json at all'));
@@ -193,32 +196,35 @@ void main() {
   });
 
   testWidgets(
-      'a file with an unknown object type shows the offending id in the '
-      'error dialog', (tester) async {
-    await pumpEditor(tester);
-    picker.openResult = _fileWithBytes(
-      utf8.encode(
-        jsonEncode(<String, dynamic>{
-          'version': 1,
-          'objects': [
-            <String, dynamic>{
-              'id': 'weird',
-              'type': 'KleinBottle',
-              'parents': <String>[],
-            },
-          ],
-        }),
-      ),
-    );
+    'a file with an unknown object type shows the offending id in the '
+    'error dialog',
+    (tester) async {
+      await pumpEditor(tester);
+      picker.openResult = _fileWithBytes(
+        utf8.encode(
+          jsonEncode(<String, dynamic>{
+            'version': 1,
+            'objects': [
+              <String, dynamic>{
+                'id': 'weird',
+                'type': 'KleinBottle',
+                'parents': <String>[],
+              },
+            ],
+          }),
+        ),
+      );
 
-    await tapFileMenu(tester, 'Open…');
+      await tapFileMenu(tester, 'Open…');
 
-    expect(find.text('Could not open file'), findsOneWidget);
-    expect(find.textContaining('weird'), findsOneWidget);
-  });
+      expect(find.text('Could not open file'), findsOneWidget);
+      expect(find.textContaining('weird'), findsOneWidget);
+    },
+  );
 
-  testWidgets('New on a non-empty construction asks first; Cancel keeps it',
-      (tester) async {
+  testWidgets('New on a non-empty construction asks first; Cancel keeps it', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
 
@@ -230,8 +236,9 @@ void main() {
     expect(container.read(constructionProvider).construction.length, 3);
   });
 
-  testWidgets('New > Discard clears and centers the world origin',
-      (tester) async {
+  testWidgets('New > Discard clears and centers the world origin', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
     container
@@ -254,8 +261,9 @@ void main() {
     expect(originOnScreen.dy, moreOrLessEquals(canvasSize.height / 2));
   });
 
-  testWidgets('New on an empty construction skips the confirmation',
-      (tester) async {
+  testWidgets('New on an empty construction skips the confirmation', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tapFileMenu(tester, 'New');

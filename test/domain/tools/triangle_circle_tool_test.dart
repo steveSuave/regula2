@@ -39,27 +39,32 @@ void main() {
       expect(circle.circle!.center.closeTo(const Vec2(1, 0.75)), isTrue);
     });
 
-    test('taps on empty canvas create free points, grouped in a MacroCommand',
-        () {
-      final construction = Construction();
+    test(
+      'taps on empty canvas create free points, grouped in a MacroCommand',
+      () {
+        final construction = Construction();
 
-      tool.onInput(const ToolInput(Vec2(0, 0)));
-      tool.onInput(const ToolInput(Vec2(4, 0)));
-      final result = tool.onInput(const ToolInput(Vec2(0, 3)));
+        tool.onInput(const ToolInput(Vec2(0, 0)));
+        tool.onInput(const ToolInput(Vec2(4, 0)));
+        final result = tool.onInput(const ToolInput(Vec2(0, 3)));
 
-      expect(result, isA<ToolCommitted>());
-      final command = (result as ToolCommitted).command;
-      expect(command, isA<MacroCommand>());
+        expect(result, isA<ToolCommitted>());
+        final command = (result as ToolCommitted).command;
+        expect(command, isA<MacroCommand>());
 
-      command.apply(construction);
-      expect(construction.length, 4, reason: '3 free points + the circle');
-      final circle = construction.objects.last as NinePointCircle;
-      expect(circle.circle!.radius, closeTo(1.25, 1e-9));
+        command.apply(construction);
+        expect(construction.length, 4, reason: '3 free points + the circle');
+        final circle = construction.objects.last as NinePointCircle;
+        expect(circle.circle!.radius, closeTo(1.25, 1e-9));
 
-      command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole step is one undo unit');
-    });
+        command.undo(construction);
+        expect(
+          construction.isEmpty,
+          isTrue,
+          reason: 'the whole step is one undo unit',
+        );
+      },
+    );
 
     test('works for the incircle via the constructor tear-off', () {
       final inTool = TriangleCircleTool(
@@ -97,7 +102,8 @@ void main() {
     });
 
     ToolResult tap(TriangleCircleTool t, FreePoint point) => t.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects));
+      ToolInput(point.position, hit: point, objects: construction.objects),
+    );
 
     test('the same circle twice refuses the completing tap', () {
       tap(tool, a);
@@ -107,8 +113,11 @@ void main() {
 
       tap(tool, a);
       tap(tool, b);
-      expect(tap(tool, c), isA<ToolIgnored>(),
-          reason: 'the identical nine-point circle already exists');
+      expect(
+        tap(tool, c),
+        isA<ToolIgnored>(),
+        reason: 'the identical nine-point circle already exists',
+      );
       expect(construction.objects.whereType<NinePointCircle>(), hasLength(1));
     });
 
@@ -119,8 +128,11 @@ void main() {
 
       tap(tool, c);
       tap(tool, a);
-      expect(tap(tool, b), isA<ToolIgnored>(),
-          reason: 'the circle is symmetric in its vertices');
+      expect(
+        tap(tool, b),
+        isA<ToolIgnored>(),
+        reason: 'the circle is symmetric in its vertices',
+      );
       expect(construction.objects.whereType<NinePointCircle>(), hasLength(1));
     });
 
@@ -136,9 +148,13 @@ void main() {
       tap(inTool, a);
       tap(inTool, b);
       final result = tap(inTool, c);
-      expect(result, isA<ToolCommitted>(),
-          reason: 'the incircle is a different object than the nine-point '
-              'circle over the same vertices');
+      expect(
+        result,
+        isA<ToolCommitted>(),
+        reason:
+            'the incircle is a different object than the nine-point '
+            'circle over the same vertices',
+      );
     });
   });
 }

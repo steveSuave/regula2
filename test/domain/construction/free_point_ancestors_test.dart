@@ -8,8 +8,9 @@ import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 void main() {
-  Set<String> idsOf(Iterable<FreePoint> points) =>
-      {for (final point in points) point.id};
+  Set<String> idsOf(Iterable<FreePoint> points) => {
+    for (final point in points) point.id,
+  };
 
   group('freePointAncestors', () {
     test('a free point is its own singleton ancestor set', () {
@@ -24,8 +25,7 @@ void main() {
       expect(idsOf(freePointAncestors(m)), {'a', 'b'});
     });
 
-    test('deep chains reach the roots; diamonds count shared roots once',
-        () {
+    test('deep chains reach the roots; diamonds count shared roots once', () {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(2, 3));

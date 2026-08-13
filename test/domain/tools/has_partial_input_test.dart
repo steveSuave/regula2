@@ -35,8 +35,11 @@ void main() {
       expect(tool.hasPartialInput, isTrue);
 
       tool.onInput(ToolInput(b.position, hit: b));
-      expect(tool.hasPartialInput, isFalse,
-          reason: 'the commit self-resets the tool');
+      expect(
+        tool.hasPartialInput,
+        isFalse,
+        reason: 'the commit self-resets the tool',
+      );
 
       tool.onInput(ToolInput(a.position, hit: a));
       tool.reset();
@@ -68,13 +71,17 @@ void main() {
 
     test('PointAndLineTool: either slot alone counts as partial', () {
       final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
-      final pointFirst =
-          PointAndLineTool(newId: newId, build: PerpendicularLine.new);
+      final pointFirst = PointAndLineTool(
+        newId: newId,
+        build: PerpendicularLine.new,
+      );
       pointFirst.onInput(ToolInput(a.position, hit: a));
       expect(pointFirst.hasPartialInput, isTrue);
 
-      final lineFirst =
-          PointAndLineTool(newId: newId, build: PerpendicularLine.new);
+      final lineFirst = PointAndLineTool(
+        newId: newId,
+        build: PerpendicularLine.new,
+      );
       lineFirst.onInput(ToolInput(const Vec2(1, 0.5), hit: line));
       expect(lineFirst.hasPartialInput, isTrue);
     });

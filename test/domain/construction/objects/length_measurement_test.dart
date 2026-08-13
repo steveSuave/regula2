@@ -13,8 +13,7 @@ import 'package:regula/domain/math/vec2.dart';
 
 void main() {
   group('LengthMeasurement', () {
-    test('circle subject: circumference, anchored at the top of the rim',
-        () {
+    test('circle subject: circumference, anchored at the top of the rim', () {
       final center = FreePoint(id: 'o', position: const Vec2(1, 2));
       final circle = FixedRadiusCircle(id: 'k', center: center, radius: 2.5);
       final length = LengthMeasurement(id: 'len', subject: circle);
@@ -51,8 +50,11 @@ void main() {
       final e = FreePoint(id: 'e', position: const Vec2(0, 5));
       final sector = Sector(id: 'sec', center: o, start: s, end: e);
       final length = LengthMeasurement(id: 'len', subject: sector);
-      expect(length.value, closeTo(4 + math.pi, 1e-12),
-          reason: 'radius 2 quarter wedge — end fixes only the angle');
+      expect(
+        length.value,
+        closeTo(4 + math.pi, 1e-12),
+        reason: 'radius 2 quarter wedge — end fixes only the angle',
+      );
       expect(
         length.anchor!.closeTo(Vec2(math.sqrt2, math.sqrt2)),
         isTrue,

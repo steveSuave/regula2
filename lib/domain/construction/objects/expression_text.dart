@@ -22,8 +22,8 @@ class ExpressionText extends GeoText {
     required this.anchor,
     required List<GeoObject> references,
     super.attributes,
-  })  : _template = TextTemplate.parse(content),
-        _references = List.unmodifiable(references) {
+  }) : _template = TextTemplate.parse(content),
+       _references = List.unmodifiable(references) {
     if (_template.referenceNames.length != _references.length) {
       throw ArgumentError(
         'content references ${_template.referenceNames.length} objects, '

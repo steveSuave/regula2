@@ -32,8 +32,7 @@ void main() {
       expect(tool.onInput(tap(const Vec2(0, 0))), isA<ToolAccepted>());
       expect(tool.onInput(tap(const Vec2(4, 0))), isA<ToolAccepted>());
       expect(tool.onInput(tap(const Vec2(2, 3))), isA<ToolAccepted>());
-      final result =
-          tool.onInput(tap(const Vec2(0.1, -0.1))) as ToolCommitted;
+      final result = tool.onInput(tap(const Vec2(0.1, -0.1))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
@@ -49,25 +48,37 @@ void main() {
       expect(polygon.attributes.visible, isTrue);
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole polygon is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole polygon is one undo unit',
+      );
     });
 
     test('a close tap with fewer than 3 vertices is ignored', () {
       expect(tool.onInput(tap(const Vec2(0, 0))), isA<ToolAccepted>());
       expect(tool.onInput(tap(const Vec2(4, 0))), isA<ToolAccepted>());
-      expect(tool.onInput(tap(const Vec2(0, 0))), isA<ToolIgnored>(),
-          reason: 'two vertices cannot close');
-      expect(tool.previewPositions, hasLength(2),
-          reason: 'the refused tap collected nothing');
+      expect(
+        tool.onInput(tap(const Vec2(0, 0))),
+        isA<ToolIgnored>(),
+        reason: 'two vertices cannot close',
+      );
+      expect(
+        tool.previewPositions,
+        hasLength(2),
+        reason: 'the refused tap collected nothing',
+      );
     });
 
     test('a tap on a collected non-first vertex is ignored', () {
       expect(tool.onInput(tap(const Vec2(0, 0))), isA<ToolAccepted>());
       expect(tool.onInput(tap(const Vec2(4, 0))), isA<ToolAccepted>());
       expect(tool.onInput(tap(const Vec2(2, 3))), isA<ToolAccepted>());
-      expect(tool.onInput(tap(const Vec2(4.1, 0.1))), isA<ToolIgnored>(),
-          reason: 'no self-touching rings');
+      expect(
+        tool.onInput(tap(const Vec2(4.1, 0.1))),
+        isA<ToolIgnored>(),
+        reason: 'no self-touching rings',
+      );
       expect(tool.previewPositions, hasLength(3));
     });
 
@@ -100,8 +111,7 @@ void main() {
       expect(construction.objects, [a, b, c, d]);
     });
 
-    test('a tap on a collected existing vertex (not the first) is ignored',
-        () {
+    test('a tap on a collected existing vertex (not the first) is ignored', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       tool.onInput(tap(a.position, hit: a));
@@ -115,14 +125,19 @@ void main() {
     test('an existing point right next to a new vertex is still a new '
         'vertex, not a close', () {
       final a = FreePoint(id: 'a', position: const Vec2(0.2, 0));
-      expect(tool.onInput(tap(const Vec2(0, 0))), isA<ToolAccepted>(),
-          reason: 'first vertex: a private free point');
+      expect(
+        tool.onInput(tap(const Vec2(0, 0))),
+        isA<ToolAccepted>(),
+        reason: 'first vertex: a private free point',
+      );
       expect(tool.onInput(tap(const Vec2(4, 0))), isA<ToolAccepted>());
       expect(tool.onInput(tap(const Vec2(2, 3))), isA<ToolAccepted>());
 
-      expect(tool.onInput(tap(const Vec2(0.2, 0), hit: a)),
-          isA<ToolAccepted>(),
-          reason: 'a point hit means that point, even near vertex 1');
+      expect(
+        tool.onInput(tap(const Vec2(0.2, 0), hit: a)),
+        isA<ToolAccepted>(),
+        reason: 'a point hit means that point, even near vertex 1',
+      );
       expect(tool.collectedVertices, hasLength(4));
     });
 
@@ -131,10 +146,15 @@ void main() {
       final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
       final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
 
-      expect(tool.onInput(tap(const Vec2(0.1, 2.1), hit: circle)),
-          isA<ToolAccepted>());
-      expect(tool.collectedVertices.single, isA<PointOnObject>(),
-          reason: 'the ladder glues near-curve taps, macros keep that');
+      expect(
+        tool.onInput(tap(const Vec2(0.1, 2.1), hit: circle)),
+        isA<ToolAccepted>(),
+      );
+      expect(
+        tool.collectedVertices.single,
+        isA<PointOnObject>(),
+        reason: 'the ladder glues near-curve taps, macros keep that',
+      );
     });
 
     test('reset drops the collection', () {
@@ -142,8 +162,11 @@ void main() {
       tool.onInput(tap(const Vec2(4, 0)));
       tool.reset();
       expect(tool.previewPositions, isEmpty);
-      expect(tool.onInput(tap(const Vec2(0, 0))), isA<ToolAccepted>(),
-          reason: 'the old first vertex is gone — this collects anew');
+      expect(
+        tool.onInput(tap(const Vec2(0, 0))),
+        isA<ToolAccepted>(),
+        reason: 'the old first vertex is gone — this collects anew',
+      );
     });
   });
 }

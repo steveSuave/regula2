@@ -51,39 +51,41 @@ void main() {
     });
   });
 
-  group('lines, circles, polygons and measurements share one lowercase pool',
-      () {
-    test('lines draw from a…', () {
-      expect(nextAutoName({}, line), 'a');
-      expect(nextAutoName({'a'}, segment), 'b');
-    });
+  group(
+    'lines, circles, polygons and measurements share one lowercase pool',
+    () {
+      test('lines draw from a…', () {
+        expect(nextAutoName({}, line), 'a');
+        expect(nextAutoName({'a'}, segment), 'b');
+      });
 
-    test('circles draw from the same pool', () {
-      expect(nextAutoName({}, circle), 'a');
-      expect(nextAutoName({'a', 'b'}, circle), 'c');
-    });
+      test('circles draw from the same pool', () {
+        expect(nextAutoName({}, circle), 'a');
+        expect(nextAutoName({'a', 'b'}, circle), 'c');
+      });
 
-    test('polygons draw from the same pool', () {
-      expect(nextAutoName({}, polygon), 'a');
-      expect(nextAutoName({'a', 'b'}, polygon), 'c');
-    });
+      test('polygons draw from the same pool', () {
+        expect(nextAutoName({}, polygon), 'a');
+        expect(nextAutoName({'a', 'b'}, polygon), 'c');
+      });
 
-    test('measurements draw from the same pool', () {
-      expect(nextAutoName({}, distance), 'a');
-      expect(nextAutoName({'a'}, area), 'b');
-    });
+      test('measurements draw from the same pool', () {
+        expect(nextAutoName({}, distance), 'a');
+        expect(nextAutoName({'a'}, area), 'b');
+      });
 
-    test('pool is case-sensitive: point names do not block it', () {
-      expect(nextAutoName({'A', 'B'}, line), 'a');
-    });
+      test('pool is case-sensitive: point names do not block it', () {
+        expect(nextAutoName({'A', 'B'}, line), 'a');
+      });
 
-    test('overflow past z', () {
-      final used = <String>{
-        for (var i = 0; i < 26; i++) String.fromCharCode(0x61 + i),
-      };
-      expect(nextAutoName(used, circle), 'a1');
-    });
-  });
+      test('overflow past z', () {
+        final used = <String>{
+          for (var i = 0; i < 26; i++) String.fromCharCode(0x61 + i),
+        };
+        expect(nextAutoName(used, circle), 'a1');
+      });
+    },
+  );
 
   group('nextNameFrom', () {
     test('a free start letter is returned as-is', () {

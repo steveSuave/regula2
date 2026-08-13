@@ -91,21 +91,27 @@ void main() {
   });
 
   group('projective semantics (Phase 108)', () {
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('agrees with the V1 affine formula through the object graph',
-            (v, p, q) {
-      if (p.closeTo(q, 1e-3)) {
-        return;
-      }
-      final a = FreePoint(id: 'a', position: p);
-      final b = FreePoint(id: 'b', position: q);
-      final mirror = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
-      final r = ReflectedPoint(
-          id: 'r', point: FreePoint(id: 'p', position: v), mirror: mirror);
-      final expected = LineEq.throughPoints(p, q).reflect(v);
-      expect(r.position!.closeTo(expected, 1e-6 * (1 + expected.norm)),
-          isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'agrees with the V1 affine formula through the object graph',
+      (v, p, q) {
+        if (p.closeTo(q, 1e-3)) {
+          return;
+        }
+        final a = FreePoint(id: 'a', position: p);
+        final b = FreePoint(id: 'b', position: q);
+        final mirror = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+        final r = ReflectedPoint(
+          id: 'r',
+          point: FreePoint(id: 'p', position: v),
+          mirror: mirror,
+        );
+        final expected = LineEq.throughPoints(p, q).reflect(v);
+        expect(
+          r.position!.closeTo(expected, 1e-6 * (1 + expected.norm)),
+          isTrue,
+        );
+      },
+    );
 
     test('a point at infinity reflects to the mirrored direction at '
         'infinity, marked as such', () {
@@ -124,23 +130,25 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (v, q, k) {
-      if (v.closeTo(q, 1e-3)) {
-        return;
-      }
-      final axis = ProjLine.lift(LineEq.throughPoints(v, q));
-      ReflectedPoint build(ProjPoint point, ProjLine mirror) => ReflectedPoint(
-            id: 'r',
-            point: StubProjectivePoint(point),
-            mirror: StubProjectiveLine(mirror),
-          );
-      final witness = ProjPoint.real(-3, 7);
-      final plain = build(witness, axis);
-      final scaledPoint = build(witness.scaledBy(k), axis);
-      final scaledMirror = build(witness, axis.scaledBy(k));
-      expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
-      expect(scaledMirror.projPoint!.closeTo(plain.projPoint!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (v, q, k) {
+        if (v.closeTo(q, 1e-3)) {
+          return;
+        }
+        final axis = ProjLine.lift(LineEq.throughPoints(v, q));
+        ReflectedPoint build(ProjPoint point, ProjLine mirror) =>
+            ReflectedPoint(
+              id: 'r',
+              point: StubProjectivePoint(point),
+              mirror: StubProjectiveLine(mirror),
+            );
+        final witness = ProjPoint.real(-3, 7);
+        final plain = build(witness, axis);
+        final scaledPoint = build(witness.scaledBy(k), axis);
+        final scaledMirror = build(witness, axis.scaledBy(k));
+        expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
+        expect(scaledMirror.projPoint!.closeTo(plain.projPoint!), isTrue);
+      },
+    );
   });
 }

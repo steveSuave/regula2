@@ -82,7 +82,12 @@ Construction buildKitchenSink() {
     point2: b,
     attributes: const ObjectAttributes(lineClip: 1),
   );
-  final ratio = SegmentRatioPoint(id: 'ratio', point1: a, point2: b, ratio: 2.25);
+  final ratio = SegmentRatioPoint(
+    id: 'ratio',
+    point1: a,
+    point2: b,
+    ratio: 2.25,
+  );
   construction
     ..add(Midpoint(id: 'mid', point1: a, point2: b))
     ..add(ratio)
@@ -126,7 +131,9 @@ Construction buildKitchenSink() {
     ..add(PerpendicularBisectorLine(id: 'pbis', point1: a, point2: c))
     ..add(circle)
     ..add(CircleCenter(id: 'ccen', circle: circle))
-    ..add(TwoLineBisectorLine(id: 'llbis', line1: lineAb, line2: perp, branch: 1))
+    ..add(
+      TwoLineBisectorLine(id: 'llbis', line1: lineAb, line2: perp, branch: 1),
+    )
     // The ratio point sits at (9, 0), outside the radius-4 circle, so the
     // tangent is defined and its geometry participates in the round-trip.
     ..add(TangentLine(id: 'tan', point: ratio, circle: circle, branch: 1))
@@ -149,8 +156,10 @@ Construction buildKitchenSink() {
         arm1: a,
         vertex: b,
         arm2: c,
-        attributes:
-            const ObjectAttributes(angleMarkerRadius: 28, fillAlpha: 0.25),
+        attributes: const ObjectAttributes(
+          angleMarkerRadius: 28,
+          fillAlpha: 0.25,
+        ),
       ),
     )
     // One legacy (null signs — must encode with no params and decode back
@@ -241,12 +250,12 @@ Construction buildKitchenSink() {
 /// The current geometry of [object], by kind — what a round-trip must
 /// reproduce exactly (same parent doubles → same recompute output).
 Object? geometryOf(GeoObject object) => switch (object) {
-      GeoPoint(:final position) => position,
-      GeoLine(:final line) => line,
-      GeoCircle(:final circle) => circle,
-      GeoAngle(:final angle) => angle,
-      GeoPolygon(:final polygonVertices) => polygonVertices,
-      GeoMeasurement(:final value, :final anchor) => (value, anchor),
-      GeoLocus(:final samples) => samples,
-      GeoText(:final renderedText, :final anchor) => (renderedText, anchor),
-    };
+  GeoPoint(:final position) => position,
+  GeoLine(:final line) => line,
+  GeoCircle(:final circle) => circle,
+  GeoAngle(:final angle) => angle,
+  GeoPolygon(:final polygonVertices) => polygonVertices,
+  GeoMeasurement(:final value, :final anchor) => (value, anchor),
+  GeoLocus(:final samples) => samples,
+  GeoText(:final renderedText, :final anchor) => (renderedText, anchor),
+};

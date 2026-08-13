@@ -8,6 +8,26 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 108 (V2 Session 10) — 2026-08-13
+
+**Done**
+- **Phase 109 complete** on `phase-109-circles-as-conics`: `lib/domain/projective/circles.dart` — circle constructions as conics, all polynomial/holomorphic in homogeneous inputs: `pointCircleAt` (isotropic line pair), `circleWithRadius`, `circleThrough`, `compassCircleOf`, `diameterCircleOf` (bilinear `(X−p)·(X−q)` form), `circumcircleOf` (classical determinant, minors expansion), `apolloniusCircleOf` (`|PA|²|CB|² = |PB|²|CA|²`). Plus `ConicMatrix.poleOf` (adjugate·line; pole of ℓ∞ = center, exact for lifted circles).
+- Migrated the circle kinds to stored `ConicMatrix`: `CircleCenterPoint`, `CompassCircle`, `DiameterCircle`, `FixedRadiusCircle` (`circle` pairs the projected center with its exact stored radius), `ThreePointCircle`, `ApolloniusCircle`, `TriangleCircle` base + `NinePointCircle` (circumcircle of the side midpoints, natively projective) + `InscribedCircle` (rides along project→incenter→lift, like Phase 107's `Incenter`), `Arc`/`Sector` carriers (angular extents stay affine metadata off the projection), `CircleCenter` (pole of ℓ∞). **V2 semantics**: collinear parents / equidistant Apollonius C now carry the degenerate line-pair conic (`conic` non-null, `circle` null, `isDefined` false) instead of no value; at-infinity parents give double-ℓ∞ / Thales-limit pairs.
+- `toCircleEq` reworked twice, both deliberate: (1) center/radius arithmetic from **raw-entry ratios** (not chart-normalized entries), keeping integer centers/radii bit-exact — the pre-existing `expect(radius, 5)`-grade tests pass untouched; (2) the circle-shape check is judged against the **quadratic block's own scale**, not the full matrix norm — a whole-matrix relative check rejected genuine circles beyond |center| ≈ √(1/eps) ≈ 6e4 and broke the `locus-miss.json` infinity-tail regression (Thales circle over A and a driver running to infinity). Degenerate line-conics are no risk: the constructors produce their vanishing quadratic entries exactly.
+- New `StubProjectiveCircle` in `test/projective_stubs.dart`; per-kind glados (rescaling invariance through the object graph, I/J membership, midpoint incidence) + V2-semantics tests; bridge test updated for the sanctioned collinear-conic change. Suite 1919 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Merge `phase-109-circles-as-conics`; then Phase 110 — `IntersectionPoint` v2 (candidates always 2 or 4, `branchIndex` on canonical order with I/J filtered) + tangency family (`TangentLine`, `PolarLine`, `RadicalAxisLine`, bisector lines), `point_resolution.dart` re-pointed at real candidates.
+
+**Gotchas**
+- TODO's Phase 109 line said "`CircleCenterPoint` from polar structure" — the polar-structure kind is `CircleCenter` (the center *point*); `CircleCenterPoint` is the circle from center + rim. Fixed in the ticked checklist.
+- `toCircleEq`'s huge-circle acceptance means near-collinear `ThreePointCircle` configurations now produce enormous circles where V1's `circumcenter` epsilon might have nulled slightly earlier; the exactly-degenerate cases are exact zeros from the constructors, so tests stay deterministic. Same for `ApolloniusCircle`: V1's `1 − ratio²` epsilon band is gone — near-equidistant C gives a very large circle (continuity across the bisector; only exact equidistance degenerates).
+- `Sector`'s start/end-on-center guard is now relative (`ProjPoint.closeTo`, 1e-9) where V1 compared `Vec2`s exactly — same policy shift as Phase 107's coincidence guards, pinned by a test.
+- `Midpoint.position` (and every migrated point's `toVec2`) reads at-infinity beyond ~1e9 relative — the Sector/Arc chains in the locus fixture die there (t ≈ 4e9), comfortably past the tail-convergence threshold; V1 had no cutoff at all. If a future fixture needs more range, that cutoff is the next wall.
+- `circumcircleOf` with one point at infinity is the line pair (line through the finite two, ℓ∞) — three of the conic's five defining points (it, I, J) sit on ℓ∞, so ℓ∞ is a component. Handy for tests; don't "fix" it to a null.
+
+---
+
 ## Session 107 (V2 Session 9) — 2026-08-13
 
 **Done**

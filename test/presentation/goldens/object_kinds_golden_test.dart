@@ -63,7 +63,8 @@ void main() {
     bool showGrid = false,
     ViewportState? viewport,
   }) async {
-    final viewportState = viewport ??
+    final viewportState =
+        viewport ??
         fittedViewport(construction.objects, canvasSize) ??
         const ViewportState();
     final canvasColors = theme.extension<CanvasColors>()!;
@@ -115,13 +116,29 @@ void main() {
     final a = FreePoint(id: 'a', position: Vec2.zero);
     final b = FreePoint(id: 'b', position: const Vec2(8, 0));
     final c = FreePoint(id: 'c', position: const Vec2(2, 6));
-    final d = FreePoint(id: 'd', position: const Vec2(8, 4), attributes: hidden);
-    final lineAd =
-        LineThroughTwoPoints(id: 'lad', point1: a, point2: d, attributes: hidden);
-    final lineBc =
-        LineThroughTwoPoints(id: 'lbc', point1: b, point2: c, attributes: hidden);
-    final circle =
-        CircleCenterPoint(id: 'k', center: d, onCircle: b, attributes: hidden);
+    final d = FreePoint(
+      id: 'd',
+      position: const Vec2(8, 4),
+      attributes: hidden,
+    );
+    final lineAd = LineThroughTwoPoints(
+      id: 'lad',
+      point1: a,
+      point2: d,
+      attributes: hidden,
+    );
+    final lineBc = LineThroughTwoPoints(
+      id: 'lbc',
+      point1: b,
+      point2: c,
+      attributes: hidden,
+    );
+    final circle = CircleCenterPoint(
+      id: 'k',
+      center: d,
+      onCircle: b,
+      attributes: hidden,
+    );
     construction
       ..add(a)
       ..add(b)
@@ -136,8 +153,14 @@ void main() {
       ..add(Orthocenter(id: 'or', vertex1: a, vertex2: b, vertex3: c))
       ..add(Incenter(id: 'ic', vertex1: a, vertex2: b, vertex3: c))
       ..add(Circumcenter(id: 'cc', vertex1: a, vertex2: b, vertex3: c))
-      ..add(IntersectionPoint(
-          id: 'x', curve1: lineAd, curve2: lineBc, branchIndex: 0))
+      ..add(
+        IntersectionPoint(
+          id: 'x',
+          curve1: lineAd,
+          curve2: lineBc,
+          branchIndex: 0,
+        ),
+      )
       ..add(PointOnObject(id: 'po', curve: circle, parameter: 0.7));
     return construction;
   }
@@ -197,8 +220,9 @@ void main() {
       ..add(v)
       ..add(CircleCenterPoint(id: 'c1', center: o, onCircle: p))
       ..add(ThreePointCircle(id: 'c2', point1: p1, point2: p2, point3: p3))
-      ..add(CompassCircle(
-          id: 'c3', radiusPoint1: r1, radiusPoint2: r2, center: k))
+      ..add(
+        CompassCircle(id: 'c3', radiusPoint1: r1, radiusPoint2: r2, center: k),
+      )
       ..add(Arc(id: 'arc', start: s1, via: s2, end: s3))
       ..add(Sector(id: 'sec', center: t, start: u, end: v));
     return construction;
@@ -253,41 +277,53 @@ void main() {
       ..add(center)
       ..add(rim)
       ..add(secEnd)
-      ..add(Segment(
-        id: 's',
-        point1: b,
-        point2: c,
-        attributes: const ObjectAttributes(
-          colorArgb: 0xFFE64A19,
-          strokeWidth: 4,
-          tickMarks: 2,
+      ..add(
+        Segment(
+          id: 's',
+          point1: b,
+          point2: c,
+          attributes: const ObjectAttributes(
+            colorArgb: 0xFFE64A19,
+            strokeWidth: 4,
+            tickMarks: 2,
+          ),
         ),
-      ))
-      ..add(Segment(
-        id: 'dash',
-        point1: a,
-        point2: c,
-        attributes: const ObjectAttributes(dashPeriod: 8, tickMarks: 1),
-      ))
-      ..add(FreePoint(
-        id: 'big',
-        position: const Vec2(2, 3),
-        attributes:
-            const ObjectAttributes(colorArgb: 0xFF2E7D32, pointSize: 8),
-      ))
-      ..add(CircleCenterPoint(
-        id: 'circ',
-        center: center,
-        onCircle: rim,
-        attributes: const ObjectAttributes(dashPeriod: 12),
-      ))
-      ..add(Sector(
-        id: 'fill',
-        center: center,
-        start: rim,
-        end: secEnd,
-        attributes: const ObjectAttributes(fillAlpha: 0.25),
-      ));
+      )
+      ..add(
+        Segment(
+          id: 'dash',
+          point1: a,
+          point2: c,
+          attributes: const ObjectAttributes(dashPeriod: 8, tickMarks: 1),
+        ),
+      )
+      ..add(
+        FreePoint(
+          id: 'big',
+          position: const Vec2(2, 3),
+          attributes: const ObjectAttributes(
+            colorArgb: 0xFF2E7D32,
+            pointSize: 8,
+          ),
+        ),
+      )
+      ..add(
+        CircleCenterPoint(
+          id: 'circ',
+          center: center,
+          onCircle: rim,
+          attributes: const ObjectAttributes(dashPeriod: 12),
+        ),
+      )
+      ..add(
+        Sector(
+          id: 'fill',
+          center: center,
+          start: rim,
+          end: secEnd,
+          attributes: const ObjectAttributes(fillAlpha: 0.25),
+        ),
+      );
     return construction;
   }
 
@@ -332,36 +368,46 @@ void main() {
       ..add(secEnd)
       // Perpendicular arms → sweep exactly π/2 → the automatic square.
       ..add(VertexAngle(id: 'right', arm1: a1, vertex: v1, arm2: b1))
-      ..add(VertexAngle(
-        id: 'filled',
-        arm1: a2,
-        vertex: v2,
-        arm2: b2,
-        attributes: const ObjectAttributes(fillAlpha: 0.25),
-      ))
-      ..add(VertexAngle(
-        id: 'xl',
-        arm1: a3,
-        vertex: v3,
-        arm2: b3,
-        attributes: const ObjectAttributes(angleMarkerRadius: 36),
-      ))
+      ..add(
+        VertexAngle(
+          id: 'filled',
+          arm1: a2,
+          vertex: v2,
+          arm2: b2,
+          attributes: const ObjectAttributes(fillAlpha: 0.25),
+        ),
+      )
+      ..add(
+        VertexAngle(
+          id: 'xl',
+          arm1: a3,
+          vertex: v3,
+          arm2: b3,
+          attributes: const ObjectAttributes(angleMarkerRadius: 36),
+        ),
+      )
       // A right angle from a real perpendicular construction, filled and
       // resized: square + fill + radius in one marker.
-      ..add(LineAngle(
-        id: 'lright',
-        line1: baseline,
-        line2: perp,
-        attributes:
-            const ObjectAttributes(angleMarkerRadius: 28, fillAlpha: 0.25),
-      ))
-      ..add(Sector(
-        id: 'fillsec',
-        center: center,
-        start: rim,
-        end: secEnd,
-        attributes: const ObjectAttributes(fillAlpha: 0.4),
-      ));
+      ..add(
+        LineAngle(
+          id: 'lright',
+          line1: baseline,
+          line2: perp,
+          attributes: const ObjectAttributes(
+            angleMarkerRadius: 28,
+            fillAlpha: 0.25,
+          ),
+        ),
+      )
+      ..add(
+        Sector(
+          id: 'fillsec',
+          center: center,
+          start: rim,
+          end: secEnd,
+          attributes: const ObjectAttributes(fillAlpha: 0.4),
+        ),
+      );
     return construction;
   }
 
@@ -391,23 +437,31 @@ void main() {
       ..add(r)
       ..add(center)
       ..add(rim)
-      ..add(Polygon(
-        id: 'pent',
-        vertices: [a, b, c, d, e],
-        attributes: const ObjectAttributes(fillAlpha: 0.25),
-      ))
-      ..add(Polygon(
-        id: 'tri',
-        vertices: [p, q, r],
-        attributes:
-            const ObjectAttributes(dashPeriod: 8, colorArgb: 0xFF2E7D32),
-      ))
-      ..add(CircleCenterPoint(
-        id: 'disc',
-        center: center,
-        onCircle: rim,
-        attributes: const ObjectAttributes(fillAlpha: 0.25),
-      ));
+      ..add(
+        Polygon(
+          id: 'pent',
+          vertices: [a, b, c, d, e],
+          attributes: const ObjectAttributes(fillAlpha: 0.25),
+        ),
+      )
+      ..add(
+        Polygon(
+          id: 'tri',
+          vertices: [p, q, r],
+          attributes: const ObjectAttributes(
+            dashPeriod: 8,
+            colorArgb: 0xFF2E7D32,
+          ),
+        ),
+      )
+      ..add(
+        CircleCenterPoint(
+          id: 'disc',
+          center: center,
+          onCircle: rim,
+          attributes: const ObjectAttributes(fillAlpha: 0.25),
+        ),
+      );
     return construction;
   }
 
@@ -436,34 +490,42 @@ void main() {
       ..add(vertex)
       ..add(arm2)
       // A 3–4–5 hypotenuse: 'c = 5.00'.
-      ..add(Segment(
-        id: 'named',
-        point1: a,
-        point2: b,
-        attributes: const ObjectAttributes(name: 'c', showValue: true),
-      ))
+      ..add(
+        Segment(
+          id: 'named',
+          point1: a,
+          point2: b,
+          attributes: const ObjectAttributes(name: 'c', showValue: true),
+        ),
+      )
       // Unnamed: the bare value '4.00'.
-      ..add(Segment(
-        id: 'bare',
-        point1: c,
-        point2: d,
-        attributes: const ObjectAttributes(showValue: true),
-      ))
+      ..add(
+        Segment(
+          id: 'bare',
+          point1: c,
+          point2: d,
+          attributes: const ObjectAttributes(showValue: true),
+        ),
+      )
       // Name only — pre-35 rendering for contrast.
-      ..add(Segment(
-        id: 'plain',
-        point1: e,
-        point2: f,
-        attributes: const ObjectAttributes(name: 'g'),
-      ))
+      ..add(
+        Segment(
+          id: 'plain',
+          point1: e,
+          point2: f,
+          attributes: const ObjectAttributes(name: 'g'),
+        ),
+      )
       // Perpendicular arms: the right-angle square plus '90.0°'.
-      ..add(VertexAngle(
-        id: 'ang',
-        arm1: arm1,
-        vertex: vertex,
-        arm2: arm2,
-        attributes: const ObjectAttributes(showValue: true),
-      ));
+      ..add(
+        VertexAngle(
+          id: 'ang',
+          arm1: arm1,
+          vertex: vertex,
+          arm2: arm2,
+          attributes: const ObjectAttributes(showValue: true),
+        ),
+      );
     return construction;
   }
 
@@ -503,21 +565,25 @@ void main() {
       ..add(polygon)
       ..add(circle)
       // A 3–4–5 pair: 'a = 5.00'.
-      ..add(DistanceMeasurement(
-        id: 'named',
-        point1: a,
-        point2: b,
-        attributes: const ObjectAttributes(name: 'a'),
-      ))
+      ..add(
+        DistanceMeasurement(
+          id: 'named',
+          point1: a,
+          point2: b,
+          attributes: const ObjectAttributes(name: 'a'),
+        ),
+      )
       // Unnamed: the bare '3.00'.
       ..add(DistanceMeasurement(id: 'bare', point1: c, point2: d))
       // '12.00' at the rectangle's vertex average, 'πr² ≈ 12.57' at the
       // circle center.
-      ..add(AreaMeasurement(
-        id: 'parea',
-        subject: polygon,
-        attributes: const ObjectAttributes(name: 'b'),
-      ))
+      ..add(
+        AreaMeasurement(
+          id: 'parea',
+          subject: polygon,
+          attributes: const ObjectAttributes(name: 'b'),
+        ),
+      )
       ..add(AreaMeasurement(id: 'carea', subject: circle))
       // '2πr ≈ 12.57' hanging from the top of the same circle's rim.
       ..add(LengthMeasurement(id: 'clen', subject: circle));
@@ -536,8 +602,11 @@ void main() {
     final b = FreePoint(id: 'b', position: const Vec2(6, 0));
     final axis = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
     final driver = PointOnObject(id: 'drv', curve: axis, parameter: 1);
-    final perpendicular =
-        PerpendicularLine(id: 'perp', through: driver, reference: axis);
+    final perpendicular = PerpendicularLine(
+      id: 'perp',
+      through: driver,
+      reference: axis,
+    );
     final center = FreePoint(id: 'o', position: Vec2.zero);
     final rim = FreePoint(id: 'rim', position: const Vec2(0, 4));
     final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
@@ -550,12 +619,18 @@ void main() {
     final traced = Midpoint(id: 'tr', point1: driver, point2: crossing);
     final loopCenter = FreePoint(id: 'o2', position: const Vec2(12, 2));
     final loopRim = FreePoint(id: 'r2', position: const Vec2(14, 2));
-    final loopHost =
-        CircleCenterPoint(id: 'k2', center: loopCenter, onCircle: loopRim);
+    final loopHost = CircleCenterPoint(
+      id: 'k2',
+      center: loopCenter,
+      onCircle: loopRim,
+    );
     final loopDriver = PointOnObject(id: 'drv2', curve: loopHost, parameter: 0);
     final loopAnchor = FreePoint(id: 'p2', position: const Vec2(16, 2));
-    final loopTraced =
-        Midpoint(id: 'tr2', point1: loopDriver, point2: loopAnchor);
+    final loopTraced = Midpoint(
+      id: 'tr2',
+      point1: loopDriver,
+      point2: loopAnchor,
+    );
     construction
       ..add(a)
       ..add(b)
@@ -568,14 +643,16 @@ void main() {
       ..add(crossing)
       ..add(traced)
       // Defined only while |x| <= 4: null runs at both ends of the sweep.
-      ..add(Locus(
-        id: 'loc',
-        driver: driver,
-        traced: traced,
-        sampleCount: 64,
-        center: 0,
-        halfSpan: 6,
-      ))
+      ..add(
+        Locus(
+          id: 'loc',
+          driver: driver,
+          traced: traced,
+          sampleCount: 64,
+          center: 0,
+          halfSpan: 6,
+        ),
+      )
       ..add(loopCenter)
       ..add(loopRim)
       ..add(loopHost)
@@ -584,13 +661,15 @@ void main() {
       ..add(loopTraced)
       // Gapless circle host: the polyline closes; dashed to exercise the
       // dash-capable stroke.
-      ..add(Locus(
-        id: 'loop',
-        driver: loopDriver,
-        traced: loopTraced,
-        sampleCount: 48,
-        attributes: const ObjectAttributes(dashPeriod: 8),
-      ));
+      ..add(
+        Locus(
+          id: 'loop',
+          driver: loopDriver,
+          traced: loopTraced,
+          sampleCount: 48,
+          attributes: const ObjectAttributes(dashPeriod: 8),
+        ),
+      );
     return construction;
   }
 
@@ -623,24 +702,30 @@ void main() {
       ..add(f)
       ..add(g)
       ..add(h)
-      ..add(LineThroughTwoPoints(
-        id: 'l1',
-        point1: a,
-        point2: b,
-        attributes: const ObjectAttributes(lineClip: 1, dashPeriod: 8),
-      ))
+      ..add(
+        LineThroughTwoPoints(
+          id: 'l1',
+          point1: a,
+          point2: b,
+          attributes: const ObjectAttributes(lineClip: 1, dashPeriod: 8),
+        ),
+      )
       ..add(mode2)
-      ..add(PointOnObject.near(
-        id: 'glue',
-        curve: mode2,
-        position: const Vec2(7, 3),
-      ))
-      ..add(Ray(
-        id: 'ray',
-        origin: e,
-        through: f,
-        attributes: const ObjectAttributes(lineClip: 2),
-      ))
+      ..add(
+        PointOnObject.near(
+          id: 'glue',
+          curve: mode2,
+          position: const Vec2(7, 3),
+        ),
+      )
+      ..add(
+        Ray(
+          id: 'ray',
+          origin: e,
+          through: f,
+          attributes: const ObjectAttributes(lineClip: 2),
+        ),
+      )
       ..add(LineThroughTwoPoints(id: 'l0', point1: g, point2: h));
     return construction;
   }
@@ -714,13 +799,15 @@ void main() {
         ..add(Segment(id: 's', point1: vertex, point2: arm1))
         // Perpendicular arms → the automatic right-angle square.
         ..add(VertexAngle(id: 'ra', arm1: arm1, vertex: vertex, arm2: arm2))
-        ..add(Sector(
-          id: 'sec',
-          center: center,
-          start: rim,
-          end: secEnd,
-          attributes: const ObjectAttributes(fillAlpha: 0.25),
-        ));
+        ..add(
+          Sector(
+            id: 'sec',
+            center: center,
+            start: rim,
+            end: secEnd,
+            attributes: const ObjectAttributes(fillAlpha: 0.25),
+          ),
+        );
       await expectSceneGolden(
         tester,
         construction: construction,
@@ -728,8 +815,11 @@ void main() {
         golden: 'rotated_$themeName',
         showAxes: true,
         showGrid: true,
-        viewport:
-            const ViewportState(pan: Vec2(-8, 6), scale: 40, rotation: 0.5),
+        viewport: const ViewportState(
+          pan: Vec2(-8, 6),
+          scale: 40,
+          rotation: 0.5,
+        ),
       );
     });
 

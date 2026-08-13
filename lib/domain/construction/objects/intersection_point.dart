@@ -93,15 +93,11 @@ class IntersectionPoint extends GeoPoint {
       case (final GeoLine a, final GeoCircle b):
         final l = a.line;
         final c = b.circle;
-        return (l == null || c == null)
-            ? const []
-            : intersectLineCircle(l, c);
+        return (l == null || c == null) ? const [] : intersectLineCircle(l, c);
       case (final GeoCircle a, final GeoLine b):
         final l = b.line;
         final c = a.circle;
-        return (l == null || c == null)
-            ? const []
-            : intersectLineCircle(l, c);
+        return (l == null || c == null) ? const [] : intersectLineCircle(l, c);
       case (final GeoCircle a, final GeoCircle b):
         final c1 = a.circle;
         final c2 = b.circle;

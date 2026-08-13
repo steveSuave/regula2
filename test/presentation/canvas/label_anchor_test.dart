@@ -19,8 +19,11 @@ void main() {
   final north = FreePoint(id: 'n', position: const Vec2(0, 4));
 
   void expectAnchor(Vec2 actual, Vec2 expected) {
-    expect(actual.closeTo(expected), isTrue,
-        reason: 'expected $expected, got $actual');
+    expect(
+      actual.closeTo(expected),
+      isTrue,
+      reason: 'expected $expected, got $actual',
+    );
   }
 
   group('labelAnchor', () {
@@ -66,8 +69,12 @@ void main() {
     });
 
     test('angle: the vertex', () {
-      final angle =
-          VertexAngle(id: 'g', arm1: east, vertex: origin, arm2: north);
+      final angle = VertexAngle(
+        id: 'g',
+        arm1: east,
+        vertex: origin,
+        arm2: north,
+      );
       expectAnchor(labelAnchor(angle), Vec2.zero);
     });
 
@@ -93,12 +100,10 @@ void main() {
 /// A [GeoLocus] with hand-picked samples and core samples: the anchor
 /// consumes the kind accessors only.
 class _StubLocus extends GeoLocus {
-  _StubLocus({
-    required List<Vec2?>? samples,
-    required List<Vec2> coreSamples,
-  })  : _samples = samples,
-        _coreSamples = coreSamples,
-        super(id: 'loc');
+  _StubLocus({required List<Vec2?>? samples, required List<Vec2> coreSamples})
+    : _samples = samples,
+      _coreSamples = coreSamples,
+      super(id: 'loc');
 
   final List<Vec2?>? _samples;
   final List<Vec2> _coreSamples;

@@ -37,8 +37,7 @@ void main() {
       expect(ba.angle!.measure, closeTo(math.pi / 3, 1e-6));
     });
 
-    test('segments work through their carriers, vertex beyond the extents',
-        () {
+    test('segments work through their carriers, vertex beyond the extents', () {
       final a = FreePoint(id: 'a', position: const Vec2(1, 1));
       final b = FreePoint(id: 'b', position: const Vec2(2, 2));
       final c = FreePoint(id: 'c', position: const Vec2(1, -1));
@@ -140,20 +139,23 @@ void main() {
     });
 
     LineAngle near(String id, Vec2 tap1, Vec2 tap2) => LineAngle.near(
-          id: id,
-          line1: xAxis,
-          line2: sixty,
-          tap1: tap1,
-          tap2: tap2,
-        );
+      id: id,
+      line1: xAxis,
+      line2: sixty,
+      tap1: tap1,
+      tap2: tap2,
+    );
 
     void expectWedge(LineAngle angle, double sweep, double startAngle) {
       expect(angle.angle!.measure, closeTo(sweep, 1e-9));
       expect(
-        angle.angle!.startDirection
-            .closeTo(Vec2(math.cos(startAngle), math.sin(startAngle)), 1e-9),
+        angle.angle!.startDirection.closeTo(
+          Vec2(math.cos(startAngle), math.sin(startAngle)),
+          1e-9,
+        ),
         isTrue,
-        reason: 'start arm should point at ${startAngle * 180 / math.pi}°, '
+        reason:
+            'start arm should point at ${startAngle * 180 / math.pi}°, '
             'got ${angle.angle!.startDirection}',
       );
     }
@@ -219,8 +221,11 @@ void main() {
         );
         final geometry = angle.angle!;
         expect(geometry.measure, closeTo(math.pi - radians, 1e-9));
-        expect(geometry.startDirection.dot(previousStart), greaterThan(0.9),
-            reason: 'start arm flipped at $degrees°');
+        expect(
+          geometry.startDirection.dot(previousStart),
+          greaterThan(0.9),
+          reason: 'start arm flipped at $degrees°',
+        );
         previousStart = geometry.startDirection;
       }
     });

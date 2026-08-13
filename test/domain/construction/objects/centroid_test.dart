@@ -67,23 +67,24 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a vertex',
-        (a, b, k) {
-      const c = Vec2(-2, 3);
-      final plain = Centroid(
-        id: 'g1',
-        vertex1: StubProjectivePoint(ProjPoint.lift(a)),
-        vertex2: StubProjectivePoint(ProjPoint.lift(b)),
-        vertex3: StubProjectivePoint(ProjPoint.lift(c)),
-      );
-      final scaled = Centroid(
-        id: 'g2',
-        vertex1: StubProjectivePoint(ProjPoint.lift(a).scaledBy(k)),
-        vertex2: StubProjectivePoint(ProjPoint.lift(b)),
-        vertex3: StubProjectivePoint(ProjPoint.lift(c)),
-      );
-      expect(scaled.projPoint!.closeTo(plain.projPoint!), isTrue);
-      expect(scaled.position!.closeTo(plain.position!, 1e-6), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a vertex',
+      (a, b, k) {
+        const c = Vec2(-2, 3);
+        final plain = Centroid(
+          id: 'g1',
+          vertex1: StubProjectivePoint(ProjPoint.lift(a)),
+          vertex2: StubProjectivePoint(ProjPoint.lift(b)),
+          vertex3: StubProjectivePoint(ProjPoint.lift(c)),
+        );
+        final scaled = Centroid(
+          id: 'g2',
+          vertex1: StubProjectivePoint(ProjPoint.lift(a).scaledBy(k)),
+          vertex2: StubProjectivePoint(ProjPoint.lift(b)),
+          vertex3: StubProjectivePoint(ProjPoint.lift(c)),
+        );
+        expect(scaled.projPoint!.closeTo(plain.projPoint!), isTrue);
+        expect(scaled.position!.closeTo(plain.position!, 1e-6), isTrue);
+      },
+    );
   });
 }

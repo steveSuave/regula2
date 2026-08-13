@@ -32,8 +32,9 @@ void main() {
 
     // Replay the taps that produced the stacked D and E, on the document
     // without them: both must now be refused.
-    final clean =
-        objects.where((o) => !{'D', 'E'}.contains(o.attributes.name)).toList();
+    final clean = objects
+        .where((o) => !{'D', 'E'}.contains(o.attributes.name))
+        .toList();
     var n = 0;
     final t = IntersectionTool(newId: () => 'n${n++}')
       ..onInput(ToolInput(a.position!, hit: bisector, objects: clean));

@@ -71,8 +71,7 @@ void main() {
       );
     });
 
-    test('draws the object at its screen position in its own color',
-        () async {
+    test('draws the object at its screen position in its own color', () async {
       final image = await renderConstructionImage(
         pointScene(),
         viewport: pointViewport,
@@ -84,38 +83,42 @@ void main() {
       image.dispose();
     });
 
-    test('hidden objects never render — not even dimmed (the Show/Hide '
-        'view is tool-scoped and the exporter builds its own painter)',
-        () async {
-      final construction = pointScene();
-      construction.setAttributes(
-        'p',
-        const ObjectAttributes(colorArgb: 0xFFFF0000, visible: false),
-      );
-      final image = await renderConstructionImage(
-        construction,
-        viewport: pointViewport,
-        logicalSize: const ui.Size(20, 16),
-        background: white,
-        defaultColor: blue,
-      );
-      expect(await pixelAt(image, 5, 5), white);
-      image.dispose();
-    });
+    test(
+      'hidden objects never render — not even dimmed (the Show/Hide '
+      'view is tool-scoped and the exporter builds its own painter)',
+      () async {
+        final construction = pointScene();
+        construction.setAttributes(
+          'p',
+          const ObjectAttributes(colorArgb: 0xFFFF0000, visible: false),
+        );
+        final image = await renderConstructionImage(
+          construction,
+          viewport: pointViewport,
+          logicalSize: const ui.Size(20, 16),
+          background: white,
+          defaultColor: blue,
+        );
+        expect(await pixelAt(image, 5, 5), white);
+        image.dispose();
+      },
+    );
 
-    test('no background leaves everything off the geometry transparent',
-        () async {
-      final image = await renderConstructionImage(
-        pointScene(),
-        viewport: pointViewport,
-        logicalSize: const ui.Size(20, 16),
-        defaultColor: blue,
-      );
-      expect((await pixelAt(image, 18, 14)).a, 0);
-      // The geometry itself still renders over the transparent ground.
-      expect(await pixelAt(image, 5, 5), red);
-      image.dispose();
-    });
+    test(
+      'no background leaves everything off the geometry transparent',
+      () async {
+        final image = await renderConstructionImage(
+          pointScene(),
+          viewport: pointViewport,
+          logicalSize: const ui.Size(20, 16),
+          defaultColor: blue,
+        );
+        expect((await pixelAt(image, 18, 14)).a, 0);
+        // The geometry itself still renders over the transparent ground.
+        expect(await pixelAt(image, 5, 5), red);
+        image.dispose();
+      },
+    );
 
     test('background fills every non-geometry pixel', () async {
       final image = await renderConstructionImage(
@@ -176,23 +179,27 @@ void main() {
     group('axes & grid layer', () {
       const probeSize = ui.Size(20, 16);
 
-      test('off by default: the export is untouched by document toggles',
-          () async {
-        final image = await renderConstructionImage(
-          pointScene(),
-          viewport: pointViewport,
-          logicalSize: probeSize,
-          background: white,
-          defaultColor: blue,
-        );
-        expect(await pixelAt(image, 5, 0), white,
-            reason: 'no vertical grid line/axis without the flags');
-        expect(await pixelAt(image, 0, 5), white);
-        image.dispose();
-      });
+      test(
+        'off by default: the export is untouched by document toggles',
+        () async {
+          final image = await renderConstructionImage(
+            pointScene(),
+            viewport: pointViewport,
+            logicalSize: probeSize,
+            background: white,
+            defaultColor: blue,
+          );
+          expect(
+            await pixelAt(image, 5, 0),
+            white,
+            reason: 'no vertical grid line/axis without the flags',
+          );
+          expect(await pixelAt(image, 0, 5), white);
+          image.dispose();
+        },
+      );
 
-      test('showGrid paints grid lines, showAxes paints the axes',
-          () async {
+      test('showGrid paints grid lines, showAxes paints the axes', () async {
         for (final flags in const [
           (showAxes: false, showGrid: true),
           (showAxes: true, showGrid: false),
@@ -206,14 +213,25 @@ void main() {
             showAxes: flags.showAxes,
             showGrid: flags.showGrid,
           );
-          expect((await pixelAt(image, 5, 0)) == white, isFalse,
-              reason: 'the vertical line through the origin must paint '
-                  'under $flags');
-          expect((await pixelAt(image, 0, 5)) == white, isFalse,
-              reason: 'the horizontal line through the origin must paint '
-                  'under $flags');
-          expect(await pixelAt(image, 0, 0), white,
-              reason: 'pixels off both lines stay background under $flags');
+          expect(
+            (await pixelAt(image, 5, 0)) == white,
+            isFalse,
+            reason:
+                'the vertical line through the origin must paint '
+                'under $flags',
+          );
+          expect(
+            (await pixelAt(image, 0, 5)) == white,
+            isFalse,
+            reason:
+                'the horizontal line through the origin must paint '
+                'under $flags',
+          );
+          expect(
+            await pixelAt(image, 0, 0),
+            white,
+            reason: 'pixels off both lines stay background under $flags',
+          );
           image.dispose();
         }
       });
@@ -243,10 +261,7 @@ void main() {
     });
 
     test('fitConstructionFraming is null with nothing visible', () {
-      expect(
-        fitConstructionFraming(const [], const ui.Size(100, 50)),
-        isNull,
-      );
+      expect(fitConstructionFraming(const [], const ui.Size(100, 50)), isNull);
     });
 
     test('fitConstructionFraming frames at the canvas size', () {
@@ -261,10 +276,7 @@ void main() {
     test('regionFraming keeps the scale and re-anchors the pan', () {
       // World (10, -20) sits at screen (10, 20) under the identity view.
       const state = ViewportState();
-      final framing = regionFraming(
-        state,
-        const ui.Rect.fromLTWH(8, 18, 6, 6),
-      );
+      final framing = regionFraming(state, const ui.Rect.fromLTWH(8, 18, 6, 6));
       expect(framing.viewport.scale, 1);
       expect(framing.viewport.pan, const Vec2(8, -18));
       expect(framing.logicalSize, const ui.Size(6, 6));
@@ -285,9 +297,9 @@ void main() {
       expect(region.viewport.scale, 2);
       // The pan solve holds at any angle: the marquee corner's world
       // point must sit at the output origin.
-      final corner = CanvasViewport(region.viewport)
-          .worldToScreen(CanvasViewport(rotated)
-              .screenToWorld(const ui.Offset(8, 18)));
+      final corner = CanvasViewport(region.viewport).worldToScreen(
+        CanvasViewport(rotated).screenToWorld(const ui.Offset(8, 18)),
+      );
       expect(corner.dx, closeTo(0, 1e-9));
       expect(corner.dy, closeTo(0, 1e-9));
 
@@ -295,8 +307,11 @@ void main() {
         pointScene().objects,
         const ui.Size(100, 50),
       );
-      expect(fit!.viewport.rotation, 0,
-          reason: 'fit framing always exports level');
+      expect(
+        fit!.viewport.rotation,
+        0,
+        reason: 'fit framing always exports level',
+      );
     });
 
     test('regionFraming exports exactly the marquee contents', () async {

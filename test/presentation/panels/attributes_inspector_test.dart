@@ -44,41 +44,56 @@ void main() {
     return point;
   }
 
-  testWidgets(
-      'texts and measurements hide the stroke rows; texts also hide '
+  testWidgets('texts and measurements hide the stroke rows; texts also hide '
       'the dead show-label toggle', (tester) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     final b = addPoint('b', const Vec2(3, 4));
     container.read(constructionProvider).construction
-      ..add(ExpressionText(
-        id: 't',
-        content: 'note',
-        anchor: const Vec2(1, 1),
-        references: const [],
-      ))
+      ..add(
+        ExpressionText(
+          id: 't',
+          content: 'note',
+          anchor: const Vec2(1, 1),
+          references: const [],
+        ),
+      )
       ..add(DistanceMeasurement(id: 'd', point1: a, point2: b));
 
     container.read(selectionProvider.notifier).select('t');
     await tester.pump();
     expect(find.text('Text'), findsOneWidget);
-    expect(find.byKey(const ValueKey('stroke-width')), findsNothing,
-        reason: 'a text is pure label — stroke width is a silent no-op');
+    expect(
+      find.byKey(const ValueKey('stroke-width')),
+      findsNothing,
+      reason: 'a text is pure label — stroke width is a silent no-op',
+    );
     expect(find.byKey(const ValueKey('dash-style')), findsNothing);
-    expect(find.widgetWithText(CheckboxListTile, 'Show label'), findsNothing,
-        reason: 'a text never composes name = content');
+    expect(
+      find.widgetWithText(CheckboxListTile, 'Show label'),
+      findsNothing,
+      reason: 'a text never composes name = content',
+    );
     expect(find.widgetWithText(CheckboxListTile, 'Visible'), findsOneWidget);
 
     container.read(selectionProvider.notifier).select('d');
     await tester.pump();
-    expect(find.byKey(const ValueKey('stroke-width')), findsNothing,
-        reason: 'measurements are pure label text too');
+    expect(
+      find.byKey(const ValueKey('stroke-width')),
+      findsNothing,
+      reason: 'measurements are pure label text too',
+    );
     expect(find.byKey(const ValueKey('dash-style')), findsNothing);
-    expect(find.widgetWithText(CheckboxListTile, 'Show label'), findsOneWidget,
-        reason: 'a measurement still composes name = value');
+    expect(
+      find.widgetWithText(CheckboxListTile, 'Show label'),
+      findsOneWidget,
+      reason: 'a measurement still composes name = value',
+    );
 
     // A mixed selection brings the stroke rows back for the segment.
-    container.read(constructionProvider).construction
+    container
+        .read(constructionProvider)
+        .construction
         .add(Segment(id: 's', point1: a, point2: b));
     container.read(selectionProvider.notifier).selectMany(['t', 's']);
     await tester.pump();
@@ -113,12 +128,16 @@ void main() {
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(a.attributes.name, '');
-    expect(find.widgetWithText(TextField, 'A'), findsNothing,
-        reason: 'undo swaps the field for one showing the restored name');
+    expect(
+      find.widgetWithText(TextField, 'A'),
+      findsNothing,
+      reason: 'undo swaps the field for one showing the restored name',
+    );
   });
 
-  testWidgets('single selection of a named object shows name + kind',
-      (tester) async {
+  testWidgets('single selection of a named object shows name + kind', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final point = FreePoint(
       id: 'a',
@@ -130,8 +149,11 @@ void main() {
     await tester.pump();
 
     expect(find.text('A — Point'), findsOneWidget);
-    expect(find.text('Point'), findsNothing,
-        reason: 'the kind-only header appears only for unnamed objects');
+    expect(
+      find.text('Point'),
+      findsNothing,
+      reason: 'the kind-only header appears only for unnamed objects',
+    );
   });
 
   testWidgets('renaming to a taken name evicts the old holder, one undo '
@@ -161,8 +183,11 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(b.attributes.name, 'B',
-        reason: 'both renames ride one command = one undo step');
+    expect(
+      b.attributes.name,
+      'B',
+      reason: 'both renames ride one command = one undo step',
+    );
     expect(a.attributes.name, 'A');
     expect(container.read(commandStackProvider).canUndo, isFalse);
   });
@@ -187,8 +212,9 @@ void main() {
     expect(container.read(commandStackProvider).canUndo, isFalse);
   });
 
-  testWidgets('submitting an unchanged name adds nothing to the undo stack',
-      (tester) async {
+  testWidgets('submitting an unchanged name adds nothing to the undo stack', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     container.read(selectionProvider.notifier).select('a');
@@ -229,8 +255,11 @@ void main() {
     await tester.tap(find.widgetWithText(CheckboxListTile, 'Show label'));
     await tester.pump();
     expect(a.attributes.labelVisible, isFalse);
-    expect(a.attributes.visible, isTrue,
-        reason: 'the two toggles must not bleed into each other');
+    expect(
+      a.attributes.visible,
+      isTrue,
+      reason: 'the two toggles must not bleed into each other',
+    );
 
     await tester.tap(find.widgetWithText(CheckboxListTile, 'Show label'));
     await tester.pump();
@@ -291,14 +320,21 @@ void main() {
 
     await tester.tap(find.byTooltip('Auto'));
     await tester.pump();
-    expect(a.attributes.colorArgb, isNull,
-        reason: 'Auto must set the color back to the theme-default null, '
-            'not leave the previous explicit color in place');
+    expect(
+      a.attributes.colorArgb,
+      isNull,
+      reason:
+          'Auto must set the color back to the theme-default null, '
+          'not leave the previous explicit color in place',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(a.attributes.colorArgb, 0xFFE53935,
-        reason: 'each swatch tap is its own undo step');
+    expect(
+      a.attributes.colorArgb,
+      0xFFE53935,
+      reason: 'each swatch tap is its own undo step',
+    );
   });
 
   testWidgets('re-tapping the color the whole selection already has adds '
@@ -313,8 +349,9 @@ void main() {
     expect(container.read(commandStackProvider).canUndo, isFalse);
   });
 
-  testWidgets('point size selector: points get it, strokes do not',
-      (tester) async {
+  testWidgets('point size selector: points get it, strokes do not', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     container.read(selectionProvider.notifier).select('a');
@@ -322,11 +359,13 @@ void main() {
 
     final pointSize = find.byKey(const ValueKey('point-size'));
     expect(pointSize, findsOneWidget);
-    expect(find.byKey(const ValueKey('stroke-width')), findsNothing,
-        reason: 'stroke width means nothing for a point-only selection');
+    expect(
+      find.byKey(const ValueKey('stroke-width')),
+      findsNothing,
+      reason: 'stroke width means nothing for a point-only selection',
+    );
 
-    await tester
-        .tap(find.descendant(of: pointSize, matching: find.text('8')));
+    await tester.tap(find.descendant(of: pointSize, matching: find.text('8')));
     await tester.pump();
     expect(a.attributes.pointSize, 8.0);
 
@@ -349,13 +388,18 @@ void main() {
     expect(strokeWidth, findsOneWidget);
     expect(find.byKey(const ValueKey('point-size')), findsOneWidget);
 
-    await tester
-        .tap(find.descendant(of: strokeWidth, matching: find.text('6')));
+    await tester.tap(
+      find.descendant(of: strokeWidth, matching: find.text('6')),
+    );
     await tester.pump();
     expect(s.attributes.strokeWidth, 6.0);
-    expect(a.attributes.strokeWidth, 2.0,
-        reason: 'points keep their (unused) stroke width — the command '
-            'covers only the slice the control targets');
+    expect(
+      a.attributes.strokeWidth,
+      2.0,
+      reason:
+          'points keep their (unused) stroke width — the command '
+          'covers only the slice the control targets',
+    );
     expect(a.attributes.pointSize, 4.0);
   });
 
@@ -369,8 +413,11 @@ void main() {
 
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
-    expect(find.byKey(const ValueKey('dash-style')), findsNothing,
-        reason: 'dashing means nothing for a point-only selection');
+    expect(
+      find.byKey(const ValueKey('dash-style')),
+      findsNothing,
+      reason: 'dashing means nothing for a point-only selection',
+    );
 
     container.read(selectionProvider.notifier).select('s');
     await tester.pump();
@@ -388,8 +435,7 @@ void main() {
 
     // Single-letter labels (Phase 25): 'M' is Medium, tooltip carries
     // the word.
-    await tester
-        .tap(find.descendant(of: dashStyle, matching: find.text('M')));
+    await tester.tap(find.descendant(of: dashStyle, matching: find.text('M')));
     await tester.pump();
     expect(s.attributes.dashPeriod, 8.0);
 
@@ -411,20 +457,25 @@ void main() {
 
     container.read(selectionProvider.notifier).select('l');
     await tester.pump();
-    expect(find.byKey(const ValueKey('tick-marks')), findsNothing,
-        reason: 'equal marks are congruence notation for segments alone');
+    expect(
+      find.byKey(const ValueKey('tick-marks')),
+      findsNothing,
+      reason: 'equal marks are congruence notation for segments alone',
+    );
 
     container.read(selectionProvider.notifier).selectMany(['l', 's']);
     await tester.pump();
     final tickMarks = find.byKey(const ValueKey('tick-marks'));
     expect(tickMarks, findsOneWidget);
 
-    await tester
-        .tap(find.descendant(of: tickMarks, matching: find.text('2')));
+    await tester.tap(find.descendant(of: tickMarks, matching: find.text('2')));
     await tester.pump();
     expect(s.attributes.tickMarks, 2);
-    expect(line.attributes.tickMarks, 0,
-        reason: 'the command covers only the segment slice');
+    expect(
+      line.attributes.tickMarks,
+      0,
+      reason: 'the command covers only the segment slice',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
@@ -445,15 +496,24 @@ void main() {
 
     container.read(selectionProvider.notifier).select('s');
     await tester.pump();
-    expect(find.byKey(const ValueKey('marker-radius')), findsNothing,
-        reason: 'a marker radius means nothing without an angle selected');
+    expect(
+      find.byKey(const ValueKey('marker-radius')),
+      findsNothing,
+      reason: 'a marker radius means nothing without an angle selected',
+    );
 
     container.read(selectionProvider.notifier).select('ang');
     await tester.pump();
-    expect(find.byKey(const ValueKey('dash-style')), findsNothing,
-        reason: 'angle markers never dash — no silent no-op row');
-    expect(find.byKey(const ValueKey('stroke-width')), findsOneWidget,
-        reason: 'stroke width does apply to the marker outline');
+    expect(
+      find.byKey(const ValueKey('dash-style')),
+      findsNothing,
+      reason: 'angle markers never dash — no silent no-op row',
+    );
+    expect(
+      find.byKey(const ValueKey('stroke-width')),
+      findsOneWidget,
+      reason: 'stroke width does apply to the marker outline',
+    );
 
     container.read(selectionProvider.notifier).selectMany(['s', 'ang']);
     await tester.pump();
@@ -469,12 +529,16 @@ void main() {
 
     // 'XL' is scoped to the radius row anyway, matching the label-size
     // test's precaution.
-    await tester
-        .tap(find.descendant(of: markerRadius, matching: find.text('XL')));
+    await tester.tap(
+      find.descendant(of: markerRadius, matching: find.text('XL')),
+    );
     await tester.pump();
     expect(angle.attributes.angleMarkerRadius, 36.0);
-    expect(s.attributes.angleMarkerRadius, 28.0,
-        reason: 'the command covers only the angle slice');
+    expect(
+      s.attributes.angleMarkerRadius,
+      28.0,
+      reason: 'the command covers only the angle slice',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
@@ -494,13 +558,19 @@ void main() {
 
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
-    expect(find.byKey(const ValueKey('line-extent')), findsNothing,
-        reason: 'an extent means nothing for a point-only selection');
+    expect(
+      find.byKey(const ValueKey('line-extent')),
+      findsNothing,
+      reason: 'an extent means nothing for a point-only selection',
+    );
 
     container.read(selectionProvider.notifier).select('s');
     await tester.pump();
-    expect(find.byKey(const ValueKey('line-extent')), findsNothing,
-        reason: 'a segment is already its own clip');
+    expect(
+      find.byKey(const ValueKey('line-extent')),
+      findsNothing,
+      reason: 'a segment is already its own clip',
+    );
 
     container.read(selectionProvider.notifier).selectMany(['a', 's', 'l']);
     await tester.pump();
@@ -517,8 +587,11 @@ void main() {
     await tester.tap(find.descendant(of: extent, matching: find.text('P')));
     await tester.pump();
     expect(l.attributes.lineClip, 2);
-    expect(s.attributes.lineClip, 0,
-        reason: 'the command covers only the clippable slice');
+    expect(
+      s.attributes.lineClip,
+      0,
+      reason: 'the command covers only the clippable slice',
+    );
     expect(a.attributes.lineClip, 0);
 
     await tester.tap(find.byIcon(Icons.undo));
@@ -542,9 +615,11 @@ void main() {
     await tester.pump();
     final extent = find.byKey(const ValueKey('line-extent'));
     expect(extent, findsOneWidget);
-    expect(find.descendant(of: extent, matching: find.text('D')),
-        findsNothing,
-        reason: 'a perpendicular has no defining pair on its carrier');
+    expect(
+      find.descendant(of: extent, matching: find.text('D')),
+      findsNothing,
+      reason: 'a perpendicular has no defining pair on its carrier',
+    );
 
     await tester.tap(find.descendant(of: extent, matching: find.text('P')));
     await tester.pump();
@@ -552,9 +627,11 @@ void main() {
 
     container.read(selectionProvider.notifier).selectMany(['l', 'pp']);
     await tester.pump();
-    expect(find.descendant(of: extent, matching: find.text('D')),
-        findsOneWidget,
-        reason: 'the line in the selection brings the mode back');
+    expect(
+      find.descendant(of: extent, matching: find.text('D')),
+      findsOneWidget,
+      reason: 'the line in the selection brings the mode back',
+    );
   });
 
   testWidgets('label-size selector: whole selection, one command, undo '
@@ -583,12 +660,14 @@ void main() {
 
     // 'XL' is unique to this row today, but scope the tap anyway (the
     // marker-radius row shares it when an angle is selected).
-    await tester
-        .tap(find.descendant(of: labelSize, matching: find.text('XL')));
+    await tester.tap(find.descendant(of: labelSize, matching: find.text('XL')));
     await tester.pump();
     expect(a.attributes.labelFontSize, 22.0);
-    expect(s.attributes.labelFontSize, 22.0,
-        reason: 'every kind carries a label — one command over all of it');
+    expect(
+      s.attributes.labelFontSize,
+      22.0,
+      reason: 'every kind carries a label — one command over all of it',
+    );
     expect(d.attributes.labelFontSize, 22.0);
 
     await tester.tap(find.byIcon(Icons.undo));
@@ -596,8 +675,11 @@ void main() {
     expect(a.attributes.labelFontSize, 16.0);
     expect(s.attributes.labelFontSize, 16.0);
     expect(d.attributes.labelFontSize, 16.0);
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'both updates rode a single command');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'both updates rode a single command',
+    );
   });
 
   testWidgets('fill checkbox: angles + sectors, tristate over a mixed '
@@ -620,8 +702,11 @@ void main() {
 
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
-    expect(find.widgetWithText(CheckboxListTile, 'Fill'), findsNothing,
-        reason: 'points have no filled form');
+    expect(
+      find.widgetWithText(CheckboxListTile, 'Fill'),
+      findsNothing,
+      reason: 'points have no filled form',
+    );
 
     container.read(selectionProvider.notifier).selectMany(['ang', 'sec']);
     await tester.pump();
@@ -639,8 +724,11 @@ void main() {
     // fully in before tapping.
     await tester.ensureVisible(fill);
     await tester.pump();
-    expect(tester.widget<CheckboxListTile>(fill).value, isNull,
-        reason: 'one filled, one unfilled — the tristate dash');
+    expect(
+      tester.widget<CheckboxListTile>(fill).value,
+      isNull,
+      reason: 'one filled, one unfilled — the tristate dash',
+    );
 
     // Anything but all-on turns everything on…
     await tester.tap(fill);
@@ -657,8 +745,11 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(angle.attributes.fillAlpha, 0.25,
-        reason: 'the all-off toggle was one command over both kinds');
+    expect(
+      angle.attributes.fillAlpha,
+      0.25,
+      reason: 'the all-off toggle was one command over both kinds',
+    );
     expect(sector.attributes.fillAlpha, 0.25);
   });
 
@@ -678,8 +769,11 @@ void main() {
 
     container.read(selectionProvider.notifier).select('arc');
     await tester.pump();
-    expect(find.widgetWithText(CheckboxListTile, 'Fill'), findsNothing,
-        reason: 'an arc has no fill shape — the painter skips it');
+    expect(
+      find.widgetWithText(CheckboxListTile, 'Fill'),
+      findsNothing,
+      reason: 'an arc has no fill shape — the painter skips it',
+    );
 
     container.read(selectionProvider.notifier).selectMany(['circ', 'poly']);
     await tester.pump();
@@ -694,8 +788,11 @@ void main() {
     );
     await tester.ensureVisible(fill);
     await tester.pump();
-    expect(tester.widget<CheckboxListTile>(fill).value, isFalse,
-        reason: 'neither is filled yet');
+    expect(
+      tester.widget<CheckboxListTile>(fill).value,
+      isFalse,
+      reason: 'neither is filled yet',
+    );
 
     await tester.tap(fill);
     await tester.pump();
@@ -705,8 +802,11 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(circle.attributes.fillAlpha, isNull,
-        reason: 'both updates rode a single command');
+    expect(
+      circle.attributes.fillAlpha,
+      isNull,
+      reason: 'both updates rode a single command',
+    );
     expect(polygon.attributes.fillAlpha, isNull);
   });
 
@@ -730,29 +830,41 @@ void main() {
 
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
-    expect(find.widgetWithText(CheckboxListTile, 'Show value'), findsNothing,
-        reason: 'points have no measurable value');
+    expect(
+      find.widgetWithText(CheckboxListTile, 'Show value'),
+      findsNothing,
+      reason: 'points have no measurable value',
+    );
 
     // Point + segment + angle: the row shows and targets the measurables.
     container.read(selectionProvider.notifier).selectMany(['a', 's', 'ang']);
     await tester.pump();
     final showValue = find.widgetWithText(CheckboxListTile, 'Show value');
     expect(showValue, findsOneWidget);
-    expect(tester.widget<CheckboxListTile>(showValue).value, isNull,
-        reason: 'segment off, angle on — the tristate dash');
+    expect(
+      tester.widget<CheckboxListTile>(showValue).value,
+      isNull,
+      reason: 'segment off, angle on — the tristate dash',
+    );
 
     // Anything but all-on turns everything on…
     await tester.tap(showValue);
     await tester.pump();
     expect(s.attributes.showValue, isTrue);
     expect(angle.attributes.showValue, isTrue);
-    expect(a.attributes.showValue, isFalse,
-        reason: 'the point is outside the measurable slice');
+    expect(
+      a.attributes.showValue,
+      isFalse,
+      reason: 'the point is outside the measurable slice',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(s.attributes.showValue, isFalse,
-        reason: 'the toggle was one command over both measurables');
+    expect(
+      s.attributes.showValue,
+      isFalse,
+      reason: 'the toggle was one command over both measurables',
+    );
     expect(angle.attributes.showValue, isTrue);
 
     // …and all-on turns everything off.
@@ -764,8 +876,9 @@ void main() {
     expect(angle.attributes.showValue, isFalse);
   });
 
-  testWidgets('multi-selection: count header and a read-only list',
-      (tester) async {
+  testWidgets('multi-selection: count header and a read-only list', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     final b = addPoint('b', const Vec2(4, 0));
@@ -814,8 +927,9 @@ void main() {
     expect(find.byKey(const ValueKey('delete-button')), findsNothing);
   });
 
-  testWidgets('clearing the selection collapses the panel again',
-      (tester) async {
+  testWidgets('clearing the selection collapses the panel again', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     final selection = container.read(selectionProvider.notifier);

@@ -27,35 +27,48 @@ void main() {
     test('endpoint tap plus a direction tap commit one macro', () {
       final construction = Construction();
 
-      expect(tool.onInput(const ToolInput(Vec2(1, 1))), isA<ToolAccepted>(),
-          reason: 'the endpoint does not commit — the direction is pending');
-      final result =
-          tool.onInput(const ToolInput(Vec2(5, 1))) as ToolCommitted;
+      expect(
+        tool.onInput(const ToolInput(Vec2(1, 1))),
+        isA<ToolAccepted>(),
+        reason: 'the endpoint does not commit — the direction is pending',
+      );
+      final result = tool.onInput(const ToolInput(Vec2(5, 1))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(construction.length, 4,
-          reason: 'free endpoint + hidden circle + B + segment');
+      expect(
+        construction.length,
+        4,
+        reason: 'free endpoint + hidden circle + B + segment',
+      );
 
       final circle = construction.objects.whereType<FixedRadiusCircle>().single;
-      expect(circle.attributes.visible, isFalse,
-          reason: 'the circle is scaffolding');
+      expect(
+        circle.attributes.visible,
+        isFalse,
+        reason: 'the circle is scaffolding',
+      );
       final b = construction.objects.whereType<PointOnObject>().single;
       expect(b.attributes.visible, isTrue);
-      expect(b.position, const Vec2(4, 1),
-          reason: 'B sits toward the direction tap at distance 3');
+      expect(
+        b.position,
+        const Vec2(4, 1),
+        reason: 'B sits toward the direction tap at distance 3',
+      );
       expect(segmentLength(construction), closeTo(3, 1e-12));
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole segment is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole segment is one undo unit',
+      );
     });
 
     test('the length is pinned under dragging A and sliding B', () {
       final construction = Construction();
       tool.onInput(const ToolInput(Vec2(1, 1)));
-      (tool.onInput(const ToolInput(Vec2(5, 1))) as ToolCommitted)
-          .command
+      (tool.onInput(const ToolInput(Vec2(5, 1))) as ToolCommitted).command
           .apply(construction);
 
       final a = construction.objects.whereType<FreePoint>().single;
@@ -81,23 +94,30 @@ void main() {
       result.command.apply(construction);
 
       final b = construction.objects.whereType<PointOnObject>().single;
-      expect(b.position!.distanceTo(const Vec2(1, 4)), closeTo(0, 1e-12),
-          reason: 'the hit point only donates its position');
-      expect(b.parents,
-          [construction.objects.whereType<FixedRadiusCircle>().single],
-          reason: 'B is constrained to the circle, not to the tapped point');
+      expect(
+        b.position!.distanceTo(const Vec2(1, 4)),
+        closeTo(0, 1e-12),
+        reason: 'the hit point only donates its position',
+      );
+      expect(
+        b.parents,
+        [construction.objects.whereType<FixedRadiusCircle>().single],
+        reason: 'B is constrained to the circle, not to the tapped point',
+      );
     });
 
     test('a direction tap exactly on the endpoint falls back to angle 0', () {
       final construction = Construction();
       tool.onInput(const ToolInput(Vec2(1, 1)));
-      (tool.onInput(const ToolInput(Vec2(1, 1))) as ToolCommitted)
-          .command
+      (tool.onInput(const ToolInput(Vec2(1, 1))) as ToolCommitted).command
           .apply(construction);
 
       final b = construction.objects.whereType<PointOnObject>().single;
-      expect(b.position, const Vec2(4, 1),
-          reason: 'no direction — angleAt of the center is 0, B due east');
+      expect(
+        b.position,
+        const Vec2(4, 1),
+        reason: 'no direction — angleAt of the center is 0, B due east',
+      );
       expect(segmentLength(construction), closeTo(3, 1e-12));
     });
   });

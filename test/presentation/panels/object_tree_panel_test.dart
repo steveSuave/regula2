@@ -51,8 +51,9 @@ void main() {
     return point;
   }
 
-  testWidgets('hidden by default; the app-bar toggle shows and hides it',
-      (tester) async {
+  testWidgets('hidden by default; the app-bar toggle shows and hides it', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     expect(find.byType(ObjectTreePanel), findsNothing);
 
@@ -65,8 +66,9 @@ void main() {
     expect(find.byType(ObjectTreePanel), findsNothing);
   });
 
-  testWidgets('groups objects by kind, names win over kind labels',
-      (tester) async {
+  testWidgets('groups objects by kind, names win over kind labels', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = FreePoint(
       id: 'a',
@@ -82,25 +84,36 @@ void main() {
     await openTree(tester);
 
     final tree = find.byType(ObjectTreePanel);
-    expect(find.descendant(of: tree, matching: find.text('Points')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('Lines')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('Circles')),
-        findsNothing, reason: 'empty groups are skipped');
+    expect(
+      find.descendant(of: tree, matching: find.text('Points')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Lines')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Circles')),
+      findsNothing,
+      reason: 'empty groups are skipped',
+    );
     await expandGroup(tester, 'points');
     await expandGroup(tester, 'lines');
     // Named point: name as title, kind as subtitle. Unnamed: kind only.
-    expect(find.descendant(of: tree, matching: find.text('A')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('Segment')),
-        findsOneWidget);
+    expect(find.descendant(of: tree, matching: find.text('A')), findsOneWidget);
+    expect(
+      find.descendant(of: tree, matching: find.text('Segment')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('text objects land in a Texts group (regression: missing '
       'bucket threw and greyed the panel)', (tester) async {
     await pumpEditor(tester);
-    container.read(constructionProvider).construction.add(
+    container
+        .read(constructionProvider)
+        .construction
+        .add(
           ExpressionText(
             id: 't',
             content: 'note',
@@ -111,15 +124,20 @@ void main() {
     await openTree(tester);
 
     final tree = find.byType(ObjectTreePanel);
-    expect(find.descendant(of: tree, matching: find.text('Texts')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: tree, matching: find.text('Texts')),
+      findsOneWidget,
+    );
     await expandGroup(tester, 'texts');
-    expect(find.descendant(of: tree, matching: find.text('Text')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: tree, matching: find.text('Text')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('tap selects exactly that object; shift-tap toggles',
-      (tester) async {
+  testWidgets('tap selects exactly that object; shift-tap toggles', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     final b = addPoint('b', const Vec2(2, 0));
@@ -132,8 +150,7 @@ void main() {
     await expandGroup(tester, 'lines');
 
     final tree = find.byType(ObjectTreePanel);
-    await tester
-        .tap(find.descendant(of: tree, matching: find.text('Segment')));
+    await tester.tap(find.descendant(of: tree, matching: find.text('Segment')));
     await tester.pump();
     expect(container.read(selectionProvider), {'s'});
 
@@ -154,8 +171,9 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
   });
 
-  testWidgets('header tap selects every object of the kind, hidden included',
-      (tester) async {
+  testWidgets('header tap selects every object of the kind, hidden included', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     final hidden = FreePoint(
@@ -173,12 +191,15 @@ void main() {
 
     expect(find.byTooltip('Select all points'), findsOneWidget);
     final tree = find.byType(ObjectTreePanel);
-    await tester
-        .tap(find.descendant(of: tree, matching: find.text('Points')));
+    await tester.tap(find.descendant(of: tree, matching: find.text('Points')));
     await tester.pump();
-    expect(container.read(selectionProvider), {'a', 'h'},
-        reason: 'replaces the selection with exactly the kind, hidden and '
-            'all — reaching hidden objects is the tree\'s raison d\'être');
+    expect(
+      container.read(selectionProvider),
+      {'a', 'h'},
+      reason:
+          'replaces the selection with exactly the kind, hidden and '
+          'all — reaching hidden objects is the tree\'s raison d\'être',
+    );
   });
 
   testWidgets('header shift-tap and long-press union with a cross-kind '
@@ -208,8 +229,9 @@ void main() {
     expect(container.read(selectionProvider), {'s', 'a', 'b'});
   });
 
-  testWidgets('eye toggle hides as one undoable command and shows again',
-      (tester) async {
+  testWidgets('eye toggle hides as one undoable command and shows again', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     await openTree(tester);
@@ -228,12 +250,16 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(a.attributes.visible, isFalse,
-        reason: 'each eye tap is its own undo step');
+    expect(
+      a.attributes.visible,
+      isFalse,
+      reason: 'each eye tap is its own undo step',
+    );
   });
 
-  testWidgets('selecting a hidden object from the tree opens the inspector',
-      (tester) async {
+  testWidgets('selecting a hidden object from the tree opens the inspector', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final hidden = FreePoint(
       id: 'h',
@@ -245,8 +271,7 @@ void main() {
     await expandGroup(tester, 'points');
 
     final tree = find.byType(ObjectTreePanel);
-    await tester
-        .tap(find.descendant(of: tree, matching: find.text('Point')));
+    await tester.tap(find.descendant(of: tree, matching: find.text('Point')));
     await tester.pump();
 
     expect(container.read(selectionProvider), {'h'});
@@ -262,8 +287,9 @@ void main() {
     );
   });
 
-  testWidgets('row long-press toggles the object in and out of the selection',
-      (tester) async {
+  testWidgets('row long-press toggles the object in and out of the selection', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = FreePoint(
       id: 'a',
@@ -300,32 +326,49 @@ void main() {
     await openTree(tester);
 
     final tree = find.byType(ObjectTreePanel);
-    expect(find.descendant(of: tree, matching: find.text('Point')),
-        findsNothing, reason: 'a fresh panel shows headers only');
-    expect(find.descendant(of: tree, matching: find.text('Points')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('2')),
-        findsOneWidget, reason: 'a count stands in for the hidden rows');
-    expect(find.descendant(of: tree, matching: find.text('Segment')),
-        findsNothing, reason: 'every group starts folded');
+    expect(
+      find.descendant(of: tree, matching: find.text('Point')),
+      findsNothing,
+      reason: 'a fresh panel shows headers only',
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Points')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('2')),
+      findsOneWidget,
+      reason: 'a count stands in for the hidden rows',
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Segment')),
+      findsNothing,
+      reason: 'every group starts folded',
+    );
 
     // The fold hides rows, it doesn't disown them: select-by-kind still
     // acts on the whole group.
-    await tester
-        .tap(find.descendant(of: tree, matching: find.text('Points')));
+    await tester.tap(find.descendant(of: tree, matching: find.text('Points')));
     await tester.pump();
     expect(container.read(selectionProvider), {'a', 'b'});
 
     await expandGroup(tester, 'points');
-    expect(find.descendant(of: tree, matching: find.text('Point')),
-        findsNWidgets(2));
-    expect(find.descendant(of: tree, matching: find.text('Segment')),
-        findsNothing, reason: 'expanding one group leaves the rest folded');
+    expect(
+      find.descendant(of: tree, matching: find.text('Point')),
+      findsNWidgets(2),
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Segment')),
+      findsNothing,
+      reason: 'expanding one group leaves the rest folded',
+    );
 
     await tester.tap(find.byTooltip('Collapse points'));
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('Point')),
-        findsNothing);
+    expect(
+      find.descendant(of: tree, matching: find.text('Point')),
+      findsNothing,
+    );
   });
 
   testWidgets('an active search overrides folding; clearing it restores '
@@ -340,36 +383,49 @@ void main() {
     await openTree(tester);
 
     final tree = find.byType(ObjectTreePanel);
-    expect(find.descendant(of: tree, matching: find.text('A1')),
-        findsNothing, reason: 'groups start folded');
+    expect(
+      find.descendant(of: tree, matching: find.text('A1')),
+      findsNothing,
+      reason: 'groups start folded',
+    );
 
     // A match inside a folded group must not read as "no matches".
     await tester.enterText(
-        find.byKey(const ValueKey('tree-search-field')), 'a1');
+      find.byKey(const ValueKey('tree-search-field')),
+      'a1',
+    );
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('A1')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: tree, matching: find.text('A1')),
+      findsOneWidget,
+    );
     // While searching the chevron is disabled — everything is forced
     // open, so it reads expanded, not folded.
     expect(find.byTooltip('Expand points'), findsNothing);
     expect(
       tester
-          .widget<IconButton>(find.ancestor(
-            of: find.byTooltip('Collapse points'),
-            matching: find.byType(IconButton),
-          ))
+          .widget<IconButton>(
+            find.ancestor(
+              of: find.byTooltip('Collapse points'),
+              matching: find.byType(IconButton),
+            ),
+          )
           .onPressed,
       isNull,
     );
 
     await tester.tap(find.byTooltip('Clear search'));
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('A1')),
-        findsNothing, reason: 'the fold survives the search');
+    expect(
+      find.descendant(of: tree, matching: find.text('A1')),
+      findsNothing,
+      reason: 'the fold survives the search',
+    );
   });
 
-  testWidgets('search filters rows by display label and hides empty groups',
-      (tester) async {
+  testWidgets('search filters rows by display label and hides empty groups', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = FreePoint(
       id: 'a',
@@ -395,42 +451,58 @@ void main() {
     // label when unnamed — the unnamed segment shows as 'Segment').
     await tester.enterText(searchField, 'a1');
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('A1')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('B2')),
-        findsNothing);
-    expect(find.descendant(of: tree, matching: find.text('Points')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('Lines')),
-        findsNothing, reason: 'a group with no matching rows is hidden');
+    expect(
+      find.descendant(of: tree, matching: find.text('A1')),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: tree, matching: find.text('B2')), findsNothing);
+    expect(
+      find.descendant(of: tree, matching: find.text('Points')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Lines')),
+      findsNothing,
+      reason: 'a group with no matching rows is hidden',
+    );
 
     // The unnamed segment matches on its kind label.
     await tester.enterText(searchField, 'segm');
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('Segment')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('Points')),
-        findsNothing);
+    expect(
+      find.descendant(of: tree, matching: find.text('Segment')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Points')),
+      findsNothing,
+    );
 
     await tester.enterText(searchField, 'zzz');
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('No matches')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: tree, matching: find.text('No matches')),
+      findsOneWidget,
+    );
 
     // The × clears the query; the groups return to their folded state,
     // headers only.
     await tester.tap(find.byTooltip('Clear search'));
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('Points')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('Lines')),
-        findsOneWidget);
-    expect(find.descendant(of: tree, matching: find.text('A1')),
-        findsNothing);
+    expect(
+      find.descendant(of: tree, matching: find.text('Points')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Lines')),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: tree, matching: find.text('A1')), findsNothing);
   });
 
-  testWidgets('header tap under an active filter selects the matches only',
-      (tester) async {
+  testWidgets('header tap under an active filter selects the matches only', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = FreePoint(
       id: 'a',
@@ -448,18 +520,24 @@ void main() {
 
     final tree = find.byType(ObjectTreePanel);
     await tester.enterText(
-        find.byKey(const ValueKey('tree-search-field')), 'a1');
+      find.byKey(const ValueKey('tree-search-field')),
+      'a1',
+    );
     await tester.pump();
-    await tester
-        .tap(find.descendant(of: tree, matching: find.text('Points')));
+    await tester.tap(find.descendant(of: tree, matching: find.text('Points')));
     await tester.pump();
-    expect(container.read(selectionProvider), {'a'},
-        reason: 'the header acts on the rows it is heading — the filtered '
-            'matches, not the whole kind');
+    expect(
+      container.read(selectionProvider),
+      {'a'},
+      reason:
+          'the header acts on the rows it is heading — the filtered '
+          'matches, not the whole kind',
+    );
   });
 
-  testWidgets('typing in the search field fires no tool shortcut',
-      (tester) async {
+  testWidgets('typing in the search field fires no tool shortcut', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     await openTree(tester);
@@ -468,8 +546,11 @@ void main() {
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     await tester.pump();
-    expect(container.read(toolProvider).tool, isNull,
-        reason: 'the EditableText focus guard must cover the search field');
+    expect(
+      container.read(toolProvider).tool,
+      isNull,
+      reason: 'the EditableText focus guard must cover the search field',
+    );
   });
 
   testWidgets('rows track construction changes: delete via undo removes the '
@@ -480,13 +561,17 @@ void main() {
     await expandGroup(tester, 'points');
 
     final tree = find.byType(ObjectTreePanel);
-    expect(find.descendant(of: tree, matching: find.text('Point')),
-        findsOneWidget);
+    expect(
+      find.descendant(of: tree, matching: find.text('Point')),
+      findsOneWidget,
+    );
 
     container.read(constructionProvider).construction.removeWithDependents('a');
     await tester.pump();
-    expect(find.descendant(of: tree, matching: find.text('Point')),
-        findsNothing);
+    expect(
+      find.descendant(of: tree, matching: find.text('Point')),
+      findsNothing,
+    );
     expect(find.text('No objects yet'), findsOneWidget);
   });
 }

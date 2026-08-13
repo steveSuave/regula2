@@ -51,12 +51,21 @@ void main() {
           [for (final p in before.parents) p.id],
           reason: 'parents of ${before.id}',
         );
-        expect(after.attributes, before.attributes,
-            reason: 'attributes of ${before.id}');
-        expect(after.isDefined, before.isDefined,
-            reason: 'definedness of ${before.id}');
-        expect(geometryOf(after), geometryOf(before),
-            reason: 'geometry of ${before.id}');
+        expect(
+          after.attributes,
+          before.attributes,
+          reason: 'attributes of ${before.id}',
+        );
+        expect(
+          after.isDefined,
+          before.isDefined,
+          reason: 'definedness of ${before.id}',
+        );
+        expect(
+          geometryOf(after),
+          geometryOf(before),
+          reason: 'geometry of ${before.id}',
+        );
       }
     });
 
@@ -93,8 +102,8 @@ void main() {
       );
       final objects = encoded['objects'] as List;
       objects.cast<Map<String, dynamic>>().singleWhere(
-            (json) => json['id'] == 'locus',
-          )['params'] = <String, dynamic>{};
+        (json) => json['id'] == 'locus',
+      )['params'] = <String, dynamic>{};
       final decoded = decodeDocument(
         jsonDecode(jsonEncode(encoded)) as Map<String, dynamic>,
       ).construction;
@@ -113,10 +122,13 @@ void main() {
       );
       final objects = encoded['objects'] as List;
       final lang = objects.cast<Map<String, dynamic>>().singleWhere(
-            (json) => json['id'] == 'lang',
-          );
-      expect(lang['params'], isEmpty,
-          reason: 'a pre-31 save must round-trip byte-identically');
+        (json) => json['id'] == 'lang',
+      );
+      expect(
+        lang['params'],
+        isEmpty,
+        reason: 'a pre-31 save must round-trip byte-identically',
+      );
 
       final decoded = roundTrip(buildKitchenSink()).construction;
       final legacy = decoded.byId('lang')! as LineAngle;
@@ -135,18 +147,14 @@ void main() {
       expect(decoded.viewport, viewport);
     });
 
-    test('a viewport without a rotation key reads as level (pre-43 files)',
-        () {
+    test('a viewport without a rotation key reads as level (pre-43 files)', () {
       final json = encodeDocument(
         Construction(),
         viewport: const ViewportState(pan: Vec2(1, 2), scale: 2),
       );
       (json['viewport'] as Map<String, dynamic>).remove('rotation');
       final decoded = decodeDocument(json);
-      expect(
-        decoded.viewport,
-        const ViewportState(pan: Vec2(1, 2), scale: 2),
-      );
+      expect(decoded.viewport, const ViewportState(pan: Vec2(1, 2), scale: 2));
       expect(decoded.viewport.rotation, 0);
     });
 
@@ -160,21 +168,24 @@ void main() {
       expect(decoded.settings, settings);
       // …and each flag independently.
       expect(
-        roundTrip(Construction(),
-                settings: const DocumentSettings(showAxes: true))
-            .settings,
+        roundTrip(
+          Construction(),
+          settings: const DocumentSettings(showAxes: true),
+        ).settings,
         const DocumentSettings(showAxes: true),
       );
       expect(
-        roundTrip(Construction(),
-                settings: const DocumentSettings(showGrid: true))
-            .settings,
+        roundTrip(
+          Construction(),
+          settings: const DocumentSettings(showGrid: true),
+        ).settings,
         const DocumentSettings(showGrid: true),
       );
       expect(
-        roundTrip(Construction(),
-                settings: const DocumentSettings(snapToGrid: true))
-            .settings,
+        roundTrip(
+          Construction(),
+          settings: const DocumentSettings(snapToGrid: true),
+        ).settings,
         const DocumentSettings(snapToGrid: true),
       );
     });
@@ -215,14 +226,19 @@ void main() {
     });
 
     test('writes objects in insertion (= topological) order', () {
-      final json =
-          encodeDocument(buildKitchenSink(), viewport: const ViewportState());
+      final json = encodeDocument(
+        buildKitchenSink(),
+        viewport: const ViewportState(),
+      );
       final objects = (json['objects'] as List).cast<Map<String, dynamic>>();
       final seen = <Object?>{};
       for (final object in objects) {
         for (final parent in object['parents'] as List) {
-          expect(seen, contains(parent),
-              reason: '${object['id']} appears before its parent $parent');
+          expect(
+            seen,
+            contains(parent),
+            reason: '${object['id']} appears before its parent $parent',
+          );
         }
         seen.add(object['id']);
       }
@@ -234,11 +250,11 @@ void main() {
         <String, dynamic>{'version': 1, 'objects': objects};
 
     Map<String, dynamic> freePoint(String id) => <String, dynamic>{
-          'id': id,
-          'type': 'FreePoint',
-          'parents': <String>[],
-          'params': <String, dynamic>{'x': 0, 'y': 0},
-        };
+      'id': id,
+      'type': 'FreePoint',
+      'parents': <String>[],
+      'params': <String, dynamic>{'x': 0, 'y': 0},
+    };
 
     test('rejects a missing version', () {
       expect(
@@ -259,28 +275,32 @@ void main() {
 
     test('rejects an unknown object type', () {
       expect(
-        () => decodeDocument(document([
-          <String, dynamic>{
-            'id': 'x',
-            'type': 'KleinBottle',
-            'parents': <String>[],
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            <String, dynamic>{
+              'id': 'x',
+              'type': 'KleinBottle',
+              'parents': <String>[],
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });
 
     test('rejects an unknown parent id (includes forward references)', () {
       expect(
-        () => decodeDocument(document([
-          <String, dynamic>{
-            'id': 'm',
-            'type': 'Midpoint',
-            'parents': ['a', 'b'],
-          },
-          freePoint('a'),
-          freePoint('b'),
-        ])),
+        () => decodeDocument(
+          document([
+            <String, dynamic>{
+              'id': 'm',
+              'type': 'Midpoint',
+              'parents': ['a', 'b'],
+            },
+            freePoint('a'),
+            freePoint('b'),
+          ]),
+        ),
         throwsFormatException,
       );
     });
@@ -294,140 +314,165 @@ void main() {
 
     test('rejects an ill-kinded parent', () {
       expect(
-        () => decodeDocument(document([
-          freePoint('a'),
-          freePoint('b'),
-          <String, dynamic>{
-            'id': 'l',
-            'type': 'LineThroughTwoPoints',
-            'parents': ['a', 'b'],
-          },
-          <String, dynamic>{
-            'id': 'm',
-            'type': 'Midpoint',
-            'parents': ['a', 'l'],
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            freePoint('a'),
+            freePoint('b'),
+            <String, dynamic>{
+              'id': 'l',
+              'type': 'LineThroughTwoPoints',
+              'parents': ['a', 'b'],
+            },
+            <String, dynamic>{
+              'id': 'm',
+              'type': 'Midpoint',
+              'parents': ['a', 'l'],
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });
 
-    test('rejects constructor-level validation failures as FormatException',
-        () {
-      expect(
-        () => decodeDocument(document([
-          freePoint('a'),
-          freePoint('b'),
-          <String, dynamic>{
-            'id': 'l',
-            'type': 'LineThroughTwoPoints',
-            'parents': ['a', 'b'],
-          },
-          <String, dynamic>{
-            'id': 'c',
-            'type': 'CircleCenterPoint',
-            'parents': ['a', 'b'],
-          },
-          <String, dynamic>{
-            'id': 'i',
-            'type': 'IntersectionPoint',
-            'parents': ['l', 'c'],
-            'params': <String, dynamic>{'branchIndex': 5},
-          },
-        ])),
-        throwsFormatException,
-      );
-    });
+    test(
+      'rejects constructor-level validation failures as FormatException',
+      () {
+        expect(
+          () => decodeDocument(
+            document([
+              freePoint('a'),
+              freePoint('b'),
+              <String, dynamic>{
+                'id': 'l',
+                'type': 'LineThroughTwoPoints',
+                'parents': ['a', 'b'],
+              },
+              <String, dynamic>{
+                'id': 'c',
+                'type': 'CircleCenterPoint',
+                'parents': ['a', 'b'],
+              },
+              <String, dynamic>{
+                'id': 'i',
+                'type': 'IntersectionPoint',
+                'parents': ['l', 'c'],
+                'params': <String, dynamic>{'branchIndex': 5},
+              },
+            ]),
+          ),
+          throwsFormatException,
+        );
+      },
+    );
 
     test('rejects a polygon with fewer than 3 parents', () {
       expect(
-        () => decodeDocument(document([
-          freePoint('a'),
-          freePoint('b'),
-          <String, dynamic>{
-            'id': 'poly',
-            'type': 'Polygon',
-            'parents': ['a', 'b'],
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            freePoint('a'),
+            freePoint('b'),
+            <String, dynamic>{
+              'id': 'poly',
+              'type': 'Polygon',
+              'parents': ['a', 'b'],
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });
 
     test('rejects a text whose parents mismatch its references', () {
       Map<String, dynamic> text(List<String> parents) => <String, dynamic>{
-            'id': 'txt',
-            'type': 'ExpressionText',
-            'parents': parents,
-            'params': <String, dynamic>{
-              'content': '{dist(A, B)}',
-              'x': 0.0,
-              'y': 0.0,
-            },
-          };
+        'id': 'txt',
+        'type': 'ExpressionText',
+        'parents': parents,
+        'params': <String, dynamic>{
+          'content': '{dist(A, B)}',
+          'x': 0.0,
+          'y': 0.0,
+        },
+      };
       // Two references in the content, one parent in the (tampered) file.
       expect(
-        () => decodeDocument(document([freePoint('a'), text(['a'])])),
+        () => decodeDocument(
+          document([
+            freePoint('a'),
+            text(['a']),
+          ]),
+        ),
         throwsFormatException,
       );
       // Malformed slot expression.
       expect(
-        () => decodeDocument(document([
-          <String, dynamic>{
-            'id': 'txt',
-            'type': 'ExpressionText',
-            'parents': const <String>[],
-            'params': <String, dynamic>{'content': '{1 +}', 'x': 0.0, 'y': 0.0},
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            <String, dynamic>{
+              'id': 'txt',
+              'type': 'ExpressionText',
+              'parents': const <String>[],
+              'params': <String, dynamic>{
+                'content': '{1 +}',
+                'x': 0.0,
+                'y': 0.0,
+              },
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });
 
     test('rejects an ill-typed area subject', () {
       expect(
-        () => decodeDocument(document([
-          freePoint('a'),
-          freePoint('b'),
-          <String, dynamic>{
-            'id': 'l',
-            'type': 'LineThroughTwoPoints',
-            'parents': ['a', 'b'],
-          },
-          <String, dynamic>{
-            'id': 'ar',
-            'type': 'AreaMeasurement',
-            'parents': ['l'],
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            freePoint('a'),
+            freePoint('b'),
+            <String, dynamic>{
+              'id': 'l',
+              'type': 'LineThroughTwoPoints',
+              'parents': ['a', 'b'],
+            },
+            <String, dynamic>{
+              'id': 'ar',
+              'type': 'AreaMeasurement',
+              'parents': ['l'],
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });
 
     test('rejects an ill-typed slope subject', () {
       expect(
-        () => decodeDocument(document([
-          freePoint('a'),
-          <String, dynamic>{
-            'id': 'sl',
-            'type': 'SlopeMeasurement',
-            'parents': ['a'],
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            freePoint('a'),
+            <String, dynamic>{
+              'id': 'sl',
+              'type': 'SlopeMeasurement',
+              'parents': ['a'],
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });
 
     test('rejects missing params', () {
       expect(
-        () => decodeDocument(document([
-          <String, dynamic>{
-            'id': 'a',
-            'type': 'FreePoint',
-            'parents': <String>[],
-            'params': <String, dynamic>{'x': 0},
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            <String, dynamic>{
+              'id': 'a',
+              'type': 'FreePoint',
+              'parents': <String>[],
+              'params': <String, dynamic>{'x': 0},
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });
@@ -474,8 +519,7 @@ void main() {
       expect(decoded.viewport, const ViewportState());
     });
 
-    test('a pre-36/45 document without settings keys gets every flag off',
-        () {
+    test('a pre-36/45 document without settings keys gets every flag off', () {
       final decoded = decodeDocument(document([freePoint('a')]));
       expect(decoded.settings, const DocumentSettings());
     });
@@ -498,15 +542,17 @@ void main() {
 
     test('rejects malformed attributes', () {
       expect(
-        () => decodeDocument(document([
-          <String, dynamic>{
-            'id': 'a',
-            'type': 'FreePoint',
-            'parents': <String>[],
-            'params': <String, dynamic>{'x': 0, 'y': 0},
-            'attributes': <String, dynamic>{'strokeWidth': 'wide'},
-          },
-        ])),
+        () => decodeDocument(
+          document([
+            <String, dynamic>{
+              'id': 'a',
+              'type': 'FreePoint',
+              'parents': <String>[],
+              'params': <String, dynamic>{'x': 0, 'y': 0},
+              'attributes': <String, dynamic>{'strokeWidth': 'wide'},
+            },
+          ]),
+        ),
         throwsFormatException,
       );
     });

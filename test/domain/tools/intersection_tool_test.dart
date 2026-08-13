@@ -65,12 +65,14 @@ void main() {
       final circle = circleAtOrigin();
 
       final near = committedPoint(
-        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal)))
-            .onInput(ToolInput(const Vec2(3.5, 0.2), hit: circle)),
+        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal))).onInput(
+          ToolInput(const Vec2(3.5, 0.2), hit: circle),
+        ),
       );
       final far = committedPoint(
-        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal)))
-            .onInput(ToolInput(const Vec2(-3.5, 0.2), hit: circle)),
+        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal))).onInput(
+          ToolInput(const Vec2(-3.5, 0.2), hit: circle),
+        ),
       );
 
       expect(near.position!.closeTo(const Vec2(4, 0)), isTrue);
@@ -151,12 +153,14 @@ void main() {
 
     test('the first curve is reported for haloing, with no marker', () {
       final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
-      final t = tool()
-        ..onInput(ToolInput(const Vec2(2, 0.4), hit: horizontal));
+      final t = tool()..onInput(ToolInput(const Vec2(2, 0.4), hit: horizontal));
 
       expect(t.previewObjectIds, ['h']);
-      expect(t.previewPositions, isEmpty,
-          reason: 'an existing curve is haloed, never marked');
+      expect(
+        t.previewPositions,
+        isEmpty,
+        reason: 'an existing curve is haloed, never marked',
+      );
     });
 
     test('a first-tapped circle is haloed too', () {
@@ -207,11 +211,9 @@ void main() {
         t.onInput(ToolInput(const Vec2(3, 0.1), hit: ab, objects: objects)),
         isA<ToolIgnored>(),
       );
-      expect(
-        t.previewObjectIds,
-        ['bi'],
-        reason: 'the refused tap keeps the first curve armed',
-      );
+      expect(t.previewObjectIds, [
+        'bi',
+      ], reason: 'the refused tap keeps the first curve armed');
     });
 
     test('bisector of two segments off one vertex reuses that vertex', () {
@@ -271,30 +273,29 @@ void main() {
       final circle = circleAtOrigin();
       var objects = <GeoObject>[o, x, horizontal, circle];
       final existing = committedPoint(
-        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal)))
-            .onInput(ToolInput(const Vec2(3.9, 0.1), hit: circle)),
+        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal))).onInput(
+          ToolInput(const Vec2(3.9, 0.1), hit: circle),
+        ),
       );
       objects = [...objects, existing];
 
       expect(
-        (tool()
-              ..onInput(
-                ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
-              ))
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
+            ))
             .onInput(
-          ToolInput(const Vec2(3.9, 0.1), hit: circle, objects: objects),
-        ),
+              ToolInput(const Vec2(3.9, 0.1), hit: circle, objects: objects),
+            ),
         isA<ToolIgnored>(),
         reason: 'the (4, 0) branch already exists',
       );
       final other = committedPoint(
-        (tool()
-              ..onInput(
-                ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
-              ))
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
+            ))
             .onInput(
-          ToolInput(const Vec2(-3.9, 0.1), hit: circle, objects: objects),
-        ),
+              ToolInput(const Vec2(-3.9, 0.1), hit: circle, objects: objects),
+            ),
       );
       expect(other.position!.closeTo(const Vec2(-4, 0)), isTrue);
     });
@@ -334,9 +335,7 @@ void main() {
         );
 
       final point = committedPoint(
-        t.onInput(
-          ToolInput(const Vec2(2, 1), hit: vertical, objects: objects),
-        ),
+        t.onInput(ToolInput(const Vec2(2, 1), hit: vertical, objects: objects)),
       );
       expect(point.position!.closeTo(const Vec2(2, 0)), isTrue);
     });
@@ -376,7 +375,16 @@ void main() {
         branchIndex: 0,
       );
       final objects = <GeoObject>[
-        a, b, c, midAB, midBC, midAC, median1, median2, median3, crossing,
+        a,
+        b,
+        c,
+        midAB,
+        midBC,
+        midAC,
+        median1,
+        median2,
+        median3,
+        crossing,
       ];
       final t = tool();
 

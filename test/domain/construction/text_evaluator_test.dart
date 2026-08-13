@@ -17,11 +17,10 @@ import 'package:regula/domain/math/expression.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 FreePoint point(String id, double x, double y, {String? name}) => FreePoint(
-      id: id,
-      position: Vec2(x, y),
-      attributes:
-          name == null ? null : ObjectAttributes(name: name),
-    );
+  id: id,
+  position: Vec2(x, y),
+  attributes: name == null ? null : ObjectAttributes(name: name),
+);
 
 double? eval(String source, Map<String, GeoObject> bindings) =>
     evaluateExpression(parseExpression(source), GeoObjectEnv(bindings));
@@ -55,12 +54,15 @@ void main() {
       expect(eval('len(k)', {'k': circle}), closeTo(6 * math.pi, 1e-12));
     });
 
-    test('angle(A, B, C) is the angle at the middle point, degrees, 0-180',
-        () {
-      expect(eval('angle(P, V, Q)', {'P': b, 'V': a, 'Q': c}),
-          closeTo(53.13010235, 1e-6));
-      expect(eval('angle(Q, V, P)', {'P': b, 'V': a, 'Q': c}),
-          closeTo(53.13010235, 1e-6)); // symmetric, never reflex
+    test('angle(A, B, C) is the angle at the middle point, degrees, 0-180', () {
+      expect(
+        eval('angle(P, V, Q)', {'P': b, 'V': a, 'Q': c}),
+        closeTo(53.13010235, 1e-6),
+      );
+      expect(
+        eval('angle(Q, V, P)', {'P': b, 'V': a, 'Q': c}),
+        closeTo(53.13010235, 1e-6),
+      ); // symmetric, never reflex
     });
 
     test('area of a polygon and a circle', () {
@@ -135,7 +137,12 @@ void main() {
   });
 
   group('bindReferences', () {
-    final named = [a, b, c, segment..attributes = segment.attributes.copyWith(name: 's')];
+    final named = [
+      a,
+      b,
+      c,
+      segment..attributes = segment.attributes.copyWith(name: 's'),
+    ];
 
     test('resolves names in order', () {
       expect(bindReferences(['C', 'A'], named), [c, a]);
@@ -144,8 +151,13 @@ void main() {
     test('unknown name throws FormatException naming it', () {
       expect(
         () => bindReferences(['A', 'ghost'], named),
-        throwsA(isA<FormatException>()
-            .having((e) => e.message, 'message', contains("'ghost'"))),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains("'ghost'"),
+          ),
+        ),
       );
     });
 
@@ -159,8 +171,13 @@ void main() {
       );
       expect(
         () => bindReferences(['t'], [...named, text]),
-        throwsA(isA<FormatException>()
-            .having((e) => e.message, 'message', contains('reference'))),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('reference'),
+          ),
+        ),
       );
     });
 

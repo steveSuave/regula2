@@ -30,15 +30,21 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(4, 2));
       final c = FreePoint(id: 'c', position: const Vec2(1, -1));
       expect(
-        HomotheticPoint(id: 'h1', point: p, center: c, ratio: 1)
-            .position!
-            .closeTo(p.position),
+        HomotheticPoint(
+          id: 'h1',
+          point: p,
+          center: c,
+          ratio: 1,
+        ).position!.closeTo(p.position),
         isTrue,
       );
       expect(
-        HomotheticPoint(id: 'h0', point: p, center: c, ratio: 0)
-            .position!
-            .closeTo(c.position),
+        HomotheticPoint(
+          id: 'h0',
+          point: p,
+          center: c,
+          ratio: 0,
+        ).position!.closeTo(c.position),
         isTrue,
       );
     });
@@ -61,8 +67,11 @@ void main() {
 
       c.position = const Vec2(0, 3);
       h.recompute();
-      expect(h.position!.closeTo(const Vec2(0, 3)), isTrue,
-          reason: 'point on the center maps to itself');
+      expect(
+        h.position!.closeTo(const Vec2(0, 3)),
+        isTrue,
+        reason: 'point on the center maps to itself',
+      );
     });
 
     test('undefined while a parent is, recovers after', () {
@@ -86,13 +95,16 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(3, 0));
       final c = FreePoint(id: 'c', position: Vec2.zero);
       expect(
-        () => HomotheticPoint(
-            id: 'h', point: p, center: c, ratio: double.nan),
+        () => HomotheticPoint(id: 'h', point: p, center: c, ratio: double.nan),
         throwsArgumentError,
       );
       expect(
         () => HomotheticPoint(
-            id: 'h', point: p, center: c, ratio: double.infinity),
+          id: 'h',
+          point: p,
+          center: c,
+          ratio: double.infinity,
+        ),
         throwsArgumentError,
       );
     });
@@ -115,21 +127,27 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (p, c, k) {
-      HomotheticPoint build(ProjPoint point, ProjPoint center) =>
-          HomotheticPoint(
-            id: 'r',
-            point: StubProjectivePoint(point),
-            center: StubProjectivePoint(center),
-            ratio: -1.5,
-          );
-      final plain = build(ProjPoint.lift(p), ProjPoint.lift(c));
-      final scaledPoint = build(ProjPoint.lift(p).scaledBy(k), ProjPoint.lift(c));
-      final scaledCenter =
-          build(ProjPoint.lift(p), ProjPoint.lift(c).scaledBy(k));
-      expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
-      expect(scaledCenter.projPoint!.closeTo(plain.projPoint!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (p, c, k) {
+        HomotheticPoint build(ProjPoint point, ProjPoint center) =>
+            HomotheticPoint(
+              id: 'r',
+              point: StubProjectivePoint(point),
+              center: StubProjectivePoint(center),
+              ratio: -1.5,
+            );
+        final plain = build(ProjPoint.lift(p), ProjPoint.lift(c));
+        final scaledPoint = build(
+          ProjPoint.lift(p).scaledBy(k),
+          ProjPoint.lift(c),
+        );
+        final scaledCenter = build(
+          ProjPoint.lift(p),
+          ProjPoint.lift(c).scaledBy(k),
+        );
+        expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
+        expect(scaledCenter.projPoint!.closeTo(plain.projPoint!), isTrue);
+      },
+    );
   });
 }

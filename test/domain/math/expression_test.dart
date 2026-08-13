@@ -62,8 +62,10 @@ void main() {
       expect(eval('8÷2'), 4);
       expect(eval('5−2'), 3); // U+2212
       // Implicit multiplication stays a parse error.
-      expect(() => parseExpression('2π'),
-          throwsA(isA<ExpressionFormatException>()));
+      expect(
+        () => parseExpression('2π'),
+        throwsA(isA<ExpressionFormatException>()),
+      );
       expect(eval('2*π'), closeTo(2 * math.pi, 1e-12));
     });
   });
@@ -200,19 +202,23 @@ void main() {
     });
 
     Glados<String>(any.stringOf(r'01a+-*/^(), .{}@πe$')).test(
-        'random strings only ever throw ExpressionFormatException', (source) {
-      try {
-        final expr = parseExpression(source);
-        evaluateExpression(expr, const _TableEnv({'a': 1.0}));
-      } on ExpressionFormatException {
-        // The only permitted exception.
-      }
-    });
+      'random strings only ever throw ExpressionFormatException',
+      (source) {
+        try {
+          final expr = parseExpression(source);
+          evaluateExpression(expr, const _TableEnv({'a': 1.0}));
+        } on ExpressionFormatException {
+          // The only permitted exception.
+        }
+      },
+    );
   });
 
   group('referenceNamesIn', () {
     List<String> refs(String source) => referenceNamesIn(
-        parseExpression(source), (name) => name == 'dist' || name == 'len');
+      parseExpression(source),
+      (name) => name == 'dist' || name == 'len',
+    );
 
     test('collects bare names and accessor arguments, in order, deduped', () {
       expect(refs('dist(A, B) + a * len(c) + a'), ['A', 'B', 'a', 'c']);
@@ -230,18 +236,19 @@ void main() {
 
   group('random AST round-trip (glados)', () {
     Glados(any.int, ExploreConfig(numRuns: 60)).test(
-        'generated arithmetic ASTs evaluate to the directly computed value',
-        (seed) {
-      final random = math.Random(seed);
-      final (expr, expected) = _randomArithmetic(random, 0);
-      final actual = evaluateExpression(expr, const EmptyExpressionEnv());
-      if (expected == null || !expected.isFinite) {
-        expect(actual, isNull);
-      } else {
-        expect(actual, isNotNull);
-        expect(actual, closeTo(expected, expected.abs() * 1e-9 + 1e-9));
-      }
-    });
+      'generated arithmetic ASTs evaluate to the directly computed value',
+      (seed) {
+        final random = math.Random(seed);
+        final (expr, expected) = _randomArithmetic(random, 0);
+        final actual = evaluateExpression(expr, const EmptyExpressionEnv());
+        if (expected == null || !expected.isFinite) {
+          expect(actual, isNull);
+        } else {
+          expect(actual, isNotNull);
+          expect(actual, closeTo(expected, expected.abs() * 1e-9 + 1e-9));
+        }
+      },
+    );
   });
 }
 
@@ -277,21 +284,21 @@ class _RecordingEnv implements ExpressionEnv {
       final (r, rv) = _randomArithmetic(random, depth + 1);
       return (
         BinaryOp(BinOp.add, l, r),
-        lv == null || rv == null ? null : lv + rv
+        lv == null || rv == null ? null : lv + rv,
       );
     case 2:
       final (l, lv) = _randomArithmetic(random, depth + 1);
       final (r, rv) = _randomArithmetic(random, depth + 1);
       return (
         BinaryOp(BinOp.subtract, l, r),
-        lv == null || rv == null ? null : lv - rv
+        lv == null || rv == null ? null : lv - rv,
       );
     default:
       final (l, lv) = _randomArithmetic(random, depth + 1);
       final (r, rv) = _randomArithmetic(random, depth + 1);
       return (
         BinaryOp(BinOp.multiply, l, r),
-        lv == null || rv == null ? null : lv * rv
+        lv == null || rv == null ? null : lv * rv,
       );
   }
 }

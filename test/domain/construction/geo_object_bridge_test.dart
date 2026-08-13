@@ -7,6 +7,8 @@ import 'package:regula/domain/construction/objects/line_through_two_points.dart'
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
+import 'package:regula/domain/projective/proj_line.dart';
 
 import '../../kitchen_sink.dart';
 
@@ -16,8 +18,7 @@ void main() {
     // encoder throws UnsupportedError for a kind missing from it, and the
     // codec round-trip test would fail) — so looping over it is the
     // exhaustive per-kind check the phase calls for.
-    test(
-        'projective getters agree with the affine views '
+    test('projective getters agree with the affine views '
         'for every concrete kind', () {
       final construction = buildKitchenSink();
       var points = 0;
@@ -29,20 +30,29 @@ void main() {
             points++;
             final projected = object.projPoint?.toVec2();
             expect(projected, isNotNull, reason: 'projPoint of ${object.id}');
-            expect(projected!.distanceTo(position), lessThan(1e-12),
-                reason: 'lift∘project of ${object.id}');
+            expect(
+              projected!.distanceTo(position),
+              lessThan(1e-12),
+              reason: 'lift∘project of ${object.id}',
+            );
           case GeoLine(:final line?):
             lines++;
             final projected = object.projLine?.toLineEq();
             expect(projected, isNotNull, reason: 'projLine of ${object.id}');
-            expect(projected!.closeTo(line), isTrue,
-                reason: 'lift∘project of ${object.id}');
+            expect(
+              projected!.closeTo(line),
+              isTrue,
+              reason: 'lift∘project of ${object.id}',
+            );
           case GeoCircle(:final circle?):
             circles++;
             final projected = object.conic?.toCircleEq();
             expect(projected, isNotNull, reason: 'conic of ${object.id}');
-            expect(projected!.closeTo(circle), isTrue,
-                reason: 'lift∘project of ${object.id}');
+            expect(
+              projected!.closeTo(circle),
+              isTrue,
+              reason: 'lift∘project of ${object.id}',
+            );
           default:
             // Angles, polygons, measurements, loci, texts have no
             // projective view; undefined point/line/circle instances are
@@ -94,8 +104,25 @@ void main() {
 
       expect(degenerateLine.line, isNull);
       expect(degenerateLine.projLine, isNull);
+      // Migrated circles (Phase 109) keep a projective value through this
+      // degeneracy: collinear points yield the degenerate line pair of
+      // their line with the line at infinity — [circle] null (undefined
+      // for rendering) while [conic] is not.
       expect(degenerateCircle.circle, isNull);
-      expect(degenerateCircle.conic, isNull);
+      expect(degenerateCircle.isDefined, isFalse);
+      final lineConic = degenerateCircle.conic;
+      expect(lineConic, isNotNull);
+      expect(
+        lineConic!.closeTo(
+          ConicMatrix.linePair(
+            ProjLine.lift(
+              LineEq.throughPoints(const Vec2(1, 2), const Vec2(9, 2)),
+            ),
+            ProjLine.infinity,
+          ),
+        ),
+        isTrue,
+      );
       expect(degeneratePoint.position, isNull);
       expect(degeneratePoint.projPoint, isNull);
     });
@@ -107,8 +134,11 @@ void main() {
       final flipped = orientedAlong(l, const Vec2(-1, -1))!;
       expect(flipped.closeTo(l), isTrue, reason: 'same geometric line');
       expect(flipped.direction.dot(const Vec2(-1, -1)), greaterThan(0));
-      expect(orientedAlong(l, const Vec2(1, 1)), same(l),
-          reason: 'already aligned: unchanged');
+      expect(
+        orientedAlong(l, const Vec2(1, 1)),
+        same(l),
+        reason: 'already aligned: unchanged',
+      );
     });
 
     test('passes null projections and null anchors through', () {

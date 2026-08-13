@@ -83,12 +83,14 @@ void main() {
         ..add(Segment(id: 's', point1: a, point2: b));
 
       expect(hit(construction, const Vec2(0.5, 0.3))?.id, 's');
-      expect(hit(construction, const Vec2(3, 0.3)), isNull,
-          reason: 'past the endpoint the carrier line must not count');
+      expect(
+        hit(construction, const Vec2(3, 0.3)),
+        isNull,
+        reason: 'past the endpoint the carrier line must not count',
+      );
     });
 
-    test('ray is hit beyond its through point but not behind its origin',
-        () {
+    test('ray is hit beyond its through point but not behind its origin', () {
       final construction = Construction();
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(1, 0));
@@ -97,10 +99,16 @@ void main() {
         ..add(b)
         ..add(Ray(id: 'r', origin: a, through: b));
 
-      expect(hit(construction, const Vec2(100, 0.3))?.id, 'r',
-          reason: 'a ray extends past its through point');
-      expect(hit(construction, const Vec2(-3, 0.3)), isNull,
-          reason: 'behind the origin the carrier line must not count');
+      expect(
+        hit(construction, const Vec2(100, 0.3))?.id,
+        'r',
+        reason: 'a ray extends past its through point',
+      );
+      expect(
+        hit(construction, const Vec2(-3, 0.3)),
+        isNull,
+        reason: 'behind the origin the carrier line must not count',
+      );
     });
 
     test('arc is only hit on its branch of the carrier', () {
@@ -108,9 +116,21 @@ void main() {
       // this test is about the arc's own distance logic.
       const hidden = ObjectAttributes(visible: false);
       final construction = Construction();
-      final s = FreePoint(id: 's', position: const Vec2(1, 0), attributes: hidden);
-      final v = FreePoint(id: 'v', position: const Vec2(0, 1), attributes: hidden);
-      final e = FreePoint(id: 'e', position: const Vec2(-1, 0), attributes: hidden);
+      final s = FreePoint(
+        id: 's',
+        position: const Vec2(1, 0),
+        attributes: hidden,
+      );
+      final v = FreePoint(
+        id: 'v',
+        position: const Vec2(0, 1),
+        attributes: hidden,
+      );
+      final e = FreePoint(
+        id: 'e',
+        position: const Vec2(-1, 0),
+        attributes: hidden,
+      );
       construction
         ..add(s)
         ..add(v)
@@ -118,25 +138,38 @@ void main() {
         ..add(Arc(id: 'arc', start: s, via: v, end: e));
 
       expect(hit(construction, const Vec2(0, 1.3))?.id, 'arc');
-      expect(hit(construction, const Vec2(0, -1.3)), isNull,
-          reason: 'the far branch of the carrier must not count');
-      expect(hit(construction, const Vec2(-1, -0.4))?.id, 'arc',
-          reason: 'just past an endpoint the endpoint distance rules');
-      expect(hit(construction, const Vec2(-1.2, -1.2)), isNull,
-          reason: 'far from both the branch and the endpoints');
+      expect(
+        hit(construction, const Vec2(0, -1.3)),
+        isNull,
+        reason: 'the far branch of the carrier must not count',
+      );
+      expect(
+        hit(construction, const Vec2(-1, -0.4))?.id,
+        'arc',
+        reason: 'just past an endpoint the endpoint distance rules',
+      );
+      expect(
+        hit(construction, const Vec2(-1.2, -1.2)),
+        isNull,
+        reason: 'far from both the branch and the endpoints',
+      );
     });
 
-    test('sector is hit on its outline: arc branch and both radius edges',
-        () {
+    test('sector is hit on its outline: arc branch and both radius edges', () {
       // Hidden defining points, as in the arc test: outline logic only.
       const hidden = ObjectAttributes(visible: false);
       final construction = Construction();
-      final c =
-          FreePoint(id: 'c', position: Vec2.zero, attributes: hidden);
-      final s =
-          FreePoint(id: 's', position: const Vec2(2, 0), attributes: hidden);
-      final e =
-          FreePoint(id: 'e', position: const Vec2(0, 5), attributes: hidden);
+      final c = FreePoint(id: 'c', position: Vec2.zero, attributes: hidden);
+      final s = FreePoint(
+        id: 's',
+        position: const Vec2(2, 0),
+        attributes: hidden,
+      );
+      final e = FreePoint(
+        id: 'e',
+        position: const Vec2(0, 5),
+        attributes: hidden,
+      );
       construction
         ..add(c)
         ..add(s)
@@ -144,16 +177,31 @@ void main() {
         // Quarter wedge of radius 2 in the first quadrant.
         ..add(Sector(id: 'w', center: c, start: s, end: e));
 
-      expect(hit(construction, const Vec2(1.7, 1.7))?.id, 'w',
-          reason: 'near the arc branch');
-      expect(hit(construction, const Vec2(1, 0.3))?.id, 'w',
-          reason: 'near the start radius edge');
-      expect(hit(construction, const Vec2(0.3, 1))?.id, 'w',
-          reason: 'near the end radius edge — at radius 2, not at end');
-      expect(hit(construction, const Vec2(0.7, 0.7)), isNull,
-          reason: 'inside the pie but far from the outline');
-      expect(hit(construction, const Vec2(1.4, -1.4)), isNull,
-          reason: 'on the carrier but outside the sweep');
+      expect(
+        hit(construction, const Vec2(1.7, 1.7))?.id,
+        'w',
+        reason: 'near the arc branch',
+      );
+      expect(
+        hit(construction, const Vec2(1, 0.3))?.id,
+        'w',
+        reason: 'near the start radius edge',
+      );
+      expect(
+        hit(construction, const Vec2(0.3, 1))?.id,
+        'w',
+        reason: 'near the end radius edge — at radius 2, not at end',
+      );
+      expect(
+        hit(construction, const Vec2(0.7, 0.7)),
+        isNull,
+        reason: 'inside the pie but far from the outline',
+      );
+      expect(
+        hit(construction, const Vec2(1.4, -1.4)),
+        isNull,
+        reason: 'on the carrier but outside the sweep',
+      );
     });
 
     test('circle is hit near its boundary, not near its center', () {
@@ -166,18 +214,27 @@ void main() {
         ..add(CircleCenterPoint(id: 'k', center: center, onCircle: rim));
 
       expect(hit(construction, const Vec2(0, 5.2))?.id, 'k');
-      expect(hit(construction, const Vec2(2, 2)), isNull,
-          reason: 'inside the disc but far from the boundary');
+      expect(
+        hit(construction, const Vec2(2, 2)),
+        isNull,
+        reason: 'inside the disc but far from the boundary',
+      );
     });
 
     test('angle is picked at its vertex, and anything else there wins', () {
       const hidden = ObjectAttributes(visible: false);
       final construction = Construction();
-      final a =
-          FreePoint(id: 'a', position: const Vec2(3, 0), attributes: hidden);
+      final a = FreePoint(
+        id: 'a',
+        position: const Vec2(3, 0),
+        attributes: hidden,
+      );
       final v = FreePoint(id: 'v', position: Vec2.zero, attributes: hidden);
-      final b =
-          FreePoint(id: 'b', position: const Vec2(0, 3), attributes: hidden);
+      final b = FreePoint(
+        id: 'b',
+        position: const Vec2(0, 3),
+        attributes: hidden,
+      );
       construction
         ..add(a)
         ..add(v)
@@ -185,22 +242,34 @@ void main() {
         ..add(VertexAngle(id: 'g', arm1: a, vertex: v, arm2: b));
 
       expect(hit(construction, const Vec2(0.2, 0.2))?.id, 'g');
-      expect(hit(construction, const Vec2(1.5, 1.5)), isNull,
-          reason: 'only the vertex is pickable');
+      expect(
+        hit(construction, const Vec2(1.5, 1.5)),
+        isNull,
+        reason: 'only the vertex is pickable',
+      );
 
       construction.add(FreePoint(id: 'p', position: Vec2.zero));
-      expect(hit(construction, const Vec2(0.2, 0.2))?.id, 'p',
-          reason: 'angles have the lowest priority');
+      expect(
+        hit(construction, const Vec2(0.2, 0.2))?.id,
+        'p',
+        reason: 'angles have the lowest priority',
+      );
     });
 
     test('with worldPerPx the angle is picked on its marker wedge', () {
       const hidden = ObjectAttributes(visible: false);
       final construction = Construction();
-      final a =
-          FreePoint(id: 'a', position: const Vec2(3, 0), attributes: hidden);
+      final a = FreePoint(
+        id: 'a',
+        position: const Vec2(3, 0),
+        attributes: hidden,
+      );
       final v = FreePoint(id: 'v', position: Vec2.zero, attributes: hidden);
-      final b =
-          FreePoint(id: 'b', position: const Vec2(0, 3), attributes: hidden);
+      final b = FreePoint(
+        id: 'b',
+        position: const Vec2(0, 3),
+        attributes: hidden,
+      );
       final angle = VertexAngle(
         id: 'g',
         arm1: a,
@@ -215,28 +284,44 @@ void main() {
         ..add(angle);
 
       // Marker radius pinned to 20 px at 0.1 world/px = 2 world units.
-      GeoObject? wedgeHit(Vec2 p) => tester
-          .hitTest(construction.objects, p, threshold, worldPerPx: 0.1);
+      GeoObject? wedgeHit(Vec2 p) =>
+          tester.hitTest(construction.objects, p, threshold, worldPerPx: 0.1);
 
-      expect(wedgeHit(const Vec2(1.4, 1.4))?.id, 'g',
-          reason: 'on the arc mid-sweep (|p| ≈ 1.98 vs radius 2)');
-      expect(wedgeHit(const Vec2(1, 0))?.id, 'g',
-          reason: 'on a straight wedge edge inside the marker');
-      expect(wedgeHit(const Vec2(0.2, 0.2))?.id, 'g',
-          reason: 'the vertex stays pickable — the edges start there');
-      expect(wedgeHit(const Vec2(1.4, -1.4)), isNull,
-          reason: 'same distance from the vertex but outside the sweep');
-      expect(wedgeHit(const Vec2(0.9, 0.9)), isNull,
-          reason: 'the wedge interior is not the outline');
+      expect(
+        wedgeHit(const Vec2(1.4, 1.4))?.id,
+        'g',
+        reason: 'on the arc mid-sweep (|p| ≈ 1.98 vs radius 2)',
+      );
+      expect(
+        wedgeHit(const Vec2(1, 0))?.id,
+        'g',
+        reason: 'on a straight wedge edge inside the marker',
+      );
+      expect(
+        wedgeHit(const Vec2(0.2, 0.2))?.id,
+        'g',
+        reason: 'the vertex stays pickable — the edges start there',
+      );
+      expect(
+        wedgeHit(const Vec2(1.4, -1.4)),
+        isNull,
+        reason: 'same distance from the vertex but outside the sweep',
+      );
+      expect(
+        wedgeHit(const Vec2(0.9, 0.9)),
+        isNull,
+        reason: 'the wedge interior is not the outline',
+      );
 
-      angle.attributes =
-          angle.attributes.copyWith(angleMarkerRadius: 36);
-      expect(wedgeHit(const Vec2(2.5, 2.5))?.id, 'g',
-          reason: 'the wedge tracks the per-object marker radius (3.6)');
+      angle.attributes = angle.attributes.copyWith(angleMarkerRadius: 36);
+      expect(
+        wedgeHit(const Vec2(2.5, 2.5))?.id,
+        'g',
+        reason: 'the wedge tracks the per-object marker radius (3.6)',
+      );
     });
 
-    test('polygon: empty interior selects it, anything drawn inside wins',
-        () {
+    test('polygon: empty interior selects it, anything drawn inside wins', () {
       final construction = Construction();
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(8, 0));
@@ -250,16 +335,31 @@ void main() {
         ..add(Polygon(id: 'poly', vertices: [a, b, c, d]))
         ..add(FreePoint(id: 'p', position: const Vec2(4, 3)));
 
-      expect(hit(construction, const Vec2(2, 2))?.id, 'poly',
-          reason: 'an empty interior tap selects the region (distance 0)');
-      expect(hit(construction, const Vec2(4, 3.2))?.id, 'p',
-          reason: 'a point inside the region wins on priority');
-      expect(hit(construction, Vec2.zero)?.id, 'a',
-          reason: 'the vertex point wins at the vertex');
-      expect(hit(construction, const Vec2(4, -0.3))?.id, 'poly',
-          reason: 'outside, the nearest edge decides within the threshold');
-      expect(hit(construction, const Vec2(4, -0.7)), isNull,
-          reason: 'outside and beyond the threshold');
+      expect(
+        hit(construction, const Vec2(2, 2))?.id,
+        'poly',
+        reason: 'an empty interior tap selects the region (distance 0)',
+      );
+      expect(
+        hit(construction, const Vec2(4, 3.2))?.id,
+        'p',
+        reason: 'a point inside the region wins on priority',
+      );
+      expect(
+        hit(construction, Vec2.zero)?.id,
+        'a',
+        reason: 'the vertex point wins at the vertex',
+      );
+      expect(
+        hit(construction, const Vec2(4, -0.3))?.id,
+        'poly',
+        reason: 'outside, the nearest edge decides within the threshold',
+      );
+      expect(
+        hit(construction, const Vec2(4, -0.7)),
+        isNull,
+        reason: 'outside and beyond the threshold',
+      );
     });
 
     test('polygon: a contained angle marker beats the interior', () {
@@ -269,12 +369,21 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(8, 0));
       final c = FreePoint(id: 'c', position: const Vec2(8, 6));
       final d = FreePoint(id: 'd', position: const Vec2(0, 6));
-      final arm1 =
-          FreePoint(id: 'm', position: const Vec2(7, 3), attributes: hidden);
-      final v =
-          FreePoint(id: 'v', position: const Vec2(4, 3), attributes: hidden);
-      final arm2 =
-          FreePoint(id: 'n', position: const Vec2(4, 6), attributes: hidden);
+      final arm1 = FreePoint(
+        id: 'm',
+        position: const Vec2(7, 3),
+        attributes: hidden,
+      );
+      final v = FreePoint(
+        id: 'v',
+        position: const Vec2(4, 3),
+        attributes: hidden,
+      );
+      final arm2 = FreePoint(
+        id: 'n',
+        position: const Vec2(4, 6),
+        attributes: hidden,
+      );
       construction
         ..add(a)
         ..add(b)
@@ -284,13 +393,15 @@ void main() {
         ..add(arm1)
         ..add(v)
         ..add(arm2)
-        ..add(VertexAngle(
-          id: 'g',
-          arm1: arm1,
-          vertex: v,
-          arm2: arm2,
-          attributes: const ObjectAttributes(angleMarkerRadius: 20),
-        ));
+        ..add(
+          VertexAngle(
+            id: 'g',
+            arm1: arm1,
+            vertex: v,
+            arm2: arm2,
+            attributes: const ObjectAttributes(angleMarkerRadius: 20),
+          ),
+        );
 
       // Marker radius pinned to 20 px at 0.1 world/px = 2 world units: the
       // tap sits on the marker arc, inside the polygon, away from points.
@@ -300,8 +411,11 @@ void main() {
         threshold,
         worldPerPx: 0.1,
       );
-      expect(onWedge?.id, 'g',
-          reason: 'the angle marker outranks the interior it sits in');
+      expect(
+        onWedge?.id,
+        'g',
+        reason: 'the angle marker outranks the interior it sits in',
+      );
     });
 
     test('invisible and undefined objects are never hit', () {
@@ -337,22 +451,30 @@ void main() {
         ..add(a)
         ..add(b)
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
-        ..add(FreePoint(
-          id: 'h',
-          position: const Vec2(3, 3),
-          attributes: const ObjectAttributes(visible: false),
-        ));
+        ..add(
+          FreePoint(
+            id: 'h',
+            position: const Vec2(3, 3),
+            attributes: const ObjectAttributes(visible: false),
+          ),
+        );
 
       GeoObject? hitIncludingHidden(Vec2 point) => tester.hitTest(
-            construction.objects,
-            point,
-            threshold,
-            includeHidden: true,
-          );
-      expect(hitIncludingHidden(const Vec2(3, 3))?.id, 'h',
-          reason: 'the Show/Hide tool must reach hidden objects');
-      expect(hitIncludingHidden(const Vec2(0.2, 0)), isNot(hasId('l')),
-          reason: 'undefined stays unhittable regardless');
+        construction.objects,
+        point,
+        threshold,
+        includeHidden: true,
+      );
+      expect(
+        hitIncludingHidden(const Vec2(3, 3))?.id,
+        'h',
+        reason: 'the Show/Hide tool must reach hidden objects',
+      );
+      expect(
+        hitIncludingHidden(const Vec2(0.2, 0)),
+        isNot(hasId('l')),
+        reason: 'undefined stays unhittable regardless',
+      );
     });
 
     test('coincident points: the later (topmost) one wins', () {
@@ -366,10 +488,13 @@ void main() {
 
   group('hitTestAll', () {
     List<String> allIds(Construction construction, Vec2 point) => [
-          for (final object
-              in tester.hitTestAll(construction.objects, point, threshold))
-            object.id,
-        ];
+      for (final object in tester.hitTestAll(
+        construction.objects,
+        point,
+        threshold,
+      ))
+        object.id,
+    ];
 
     test('returns every in-threshold object, best first', () {
       final construction = Construction();
@@ -394,11 +519,13 @@ void main() {
 
     test('excludes invisible and undefined objects', () {
       final construction = Construction()
-        ..add(FreePoint(
-          id: 'h',
-          position: Vec2.zero,
-          attributes: const ObjectAttributes(visible: false),
-        ));
+        ..add(
+          FreePoint(
+            id: 'h',
+            position: Vec2.zero,
+            attributes: const ObjectAttributes(visible: false),
+          ),
+        );
 
       expect(allIds(construction, Vec2.zero), isEmpty);
     });
@@ -414,8 +541,10 @@ void main() {
 
       for (final tap in const [Vec2(5, 0.2), Vec2(0.1, 0), Vec2(20, 20)]) {
         final all = tester.hitTestAll(construction.objects, tap, threshold);
-        expect(tester.hitTest(construction.objects, tap, threshold),
-            all.firstOrNull);
+        expect(
+          tester.hitTest(construction.objects, tap, threshold),
+          all.firstOrNull,
+        );
       }
     });
 
@@ -430,9 +559,9 @@ void main() {
 
   group('objectsInRect', () {
     List<String> inRect(Construction construction, Vec2 c1, Vec2 c2) => [
-          for (final object in tester.objectsInRect(construction.objects, c1, c2))
-            object.id,
-        ];
+      for (final object in tester.objectsInRect(construction.objects, c1, c2))
+        object.id,
+    ];
 
     test('points: wholly-inside rule, corners in either order', () {
       final construction = Construction()
@@ -440,8 +569,11 @@ void main() {
         ..add(FreePoint(id: 'out', position: const Vec2(5, 5)));
 
       expect(inRect(construction, Vec2.zero, const Vec2(2, 2)), ['in']);
-      expect(inRect(construction, const Vec2(2, 2), Vec2.zero), ['in'],
-          reason: 'a band dragged up-left spans the same rect');
+      expect(
+        inRect(construction, const Vec2(2, 2), Vec2.zero),
+        ['in'],
+        reason: 'a band dragged up-left spans the same rect',
+      );
     });
 
     test('segment needs both endpoints inside; lines and rays never fit', () {
@@ -460,8 +592,11 @@ void main() {
         ['a', 'b', 's'],
         reason: 'the infinite carriers escape any finite band',
       );
-      expect(inRect(construction, Vec2.zero, const Vec2(2, 2)), ['a'],
-          reason: 'a band crossing the segment does not take it');
+      expect(
+        inRect(construction, Vec2.zero, const Vec2(2, 2)),
+        ['a'],
+        reason: 'a band crossing the segment does not take it',
+      );
     });
 
     test('circle needs its full disc bounds inside', () {
@@ -480,7 +615,8 @@ void main() {
       expect(
         inRect(construction, const Vec2(-1, -2.1), const Vec2(2.1, 2.1)),
         ['c', 'p'],
-        reason: 'the disc pokes past x = -1 even though no defining '
+        reason:
+            'the disc pokes past x = -1 even though no defining '
             'point does',
       );
     });
@@ -562,10 +698,13 @@ void main() {
         ..add(Polygon(id: 'poly', vertices: [a, b, c]));
 
       List<String> banded(Vec2 corner1, Vec2 corner2) => [
-            for (final object
-                in tester.objectsInRect(construction.objects, corner1, corner2))
-              object.id,
-          ];
+        for (final object in tester.objectsInRect(
+          construction.objects,
+          corner1,
+          corner2,
+        ))
+          object.id,
+      ];
 
       expect(
         banded(const Vec2(-1, -1), const Vec2(5, 4)),
@@ -587,16 +726,18 @@ void main() {
         ..add(a)
         ..add(b)
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
-        ..add(FreePoint(
-          id: 'h',
-          position: const Vec2(1, 1),
-          attributes: const ObjectAttributes(visible: false),
-        ));
+        ..add(
+          FreePoint(
+            id: 'h',
+            position: const Vec2(1, 1),
+            attributes: const ObjectAttributes(visible: false),
+          ),
+        );
 
-      expect(
-        inRect(construction, const Vec2(-2, -2), const Vec2(2, 2)),
-        ['a', 'b'],
-      );
+      expect(inRect(construction, const Vec2(-2, -2), const Vec2(2, 2)), [
+        'a',
+        'b',
+      ]);
     });
   });
 
@@ -618,28 +759,32 @@ void main() {
     }
 
     List<String> banded(Construction construction) => [
-          for (final object in tester.objectsContainedIn(
-            construction.objects,
-            within,
-            cardinalAngle: -rotation,
-          ))
-            object.id,
-        ];
+      for (final object in tester.objectsContainedIn(
+        construction.objects,
+        within,
+        cardinalAngle: -rotation,
+      ))
+        object.id,
+    ];
 
     test('a point is judged by the band, not the band corners\' world '
         'bounds', () {
       final construction = Construction()
-        ..add(FreePoint(
-          id: 'in',
-          position: viewport.screenToWorld(const Offset(50, 0)),
-        ))
+        ..add(
+          FreePoint(
+            id: 'in',
+            position: viewport.screenToWorld(const Offset(50, 0)),
+          ),
+        )
         // 40 px off the strip on screen — outside the band, but well
         // inside the axis-aligned world box its corners span, which is
         // what a world-rect test would wrongly use.
-        ..add(FreePoint(
-          id: 'out',
-          position: viewport.screenToWorld(const Offset(50, 40)),
-        ));
+        ..add(
+          FreePoint(
+            id: 'out',
+            position: viewport.screenToWorld(const Offset(50, 40)),
+          ),
+        );
 
       expect(banded(construction), ['in']);
     });
@@ -649,35 +794,39 @@ void main() {
         final construction = Construction();
         final centerWorld = viewport.screenToWorld(const Offset(50, 0));
         final center = FreePoint(id: 'c', position: centerWorld);
-        final rim = FreePoint(
-          id: 'r',
-          position: centerWorld + Vec2(radius, 0),
-        );
+        final rim = FreePoint(id: 'r', position: centerWorld + Vec2(radius, 0));
         return construction
           ..add(center)
           ..add(rim)
           ..add(CircleCenterPoint(id: 'k', center: center, onCircle: rim));
       }
 
-      expect(banded(circleOfRadius(9.5)), contains('k'),
-          reason: 'a 9.5-radius disc fits the 20-px strip');
+      expect(
+        banded(circleOfRadius(9.5)),
+        contains('k'),
+        reason: 'a 9.5-radius disc fits the 20-px strip',
+      );
       // The touching points lie along the band's normal — at *world*
       // cardinals the extremes sit only ~7.4 px off-axis and would
       // wrongly pass.
-      expect(banded(circleOfRadius(10.5)), isNot(contains('k')),
-          reason: 'a 10.5-radius disc pokes through both strip edges');
+      expect(
+        banded(circleOfRadius(10.5)),
+        isNot(contains('k')),
+        reason: 'a 10.5-radius disc pokes through both strip edges',
+      );
     });
   });
 
   group('locus hits (Phase 39)', () {
     test('the polyline of consecutive samples is hit, gaps are not', () {
-      final locus = _StubLocus(id: 'loc', samples: const [
-        Vec2(0, 0), Vec2(4, 0), null, Vec2(8, 0), Vec2(12, 0), //
-      ]);
-      expect(tester.hitTest([locus], const Vec2(2, 0.3), threshold)?.id,
-          'loc');
-      expect(tester.hitTest([locus], const Vec2(9, 0.3), threshold)?.id,
-          'loc');
+      final locus = _StubLocus(
+        id: 'loc',
+        samples: const [
+          Vec2(0, 0), Vec2(4, 0), null, Vec2(8, 0), Vec2(12, 0), //
+        ],
+      );
+      expect(tester.hitTest([locus], const Vec2(2, 0.3), threshold)?.id, 'loc');
+      expect(tester.hitTest([locus], const Vec2(9, 0.3), threshold)?.id, 'loc');
       expect(
         tester.hitTest([locus], const Vec2(6, 0), threshold),
         isNull,
@@ -686,11 +835,16 @@ void main() {
     });
 
     test('an isolated sample and an all-gap locus are unreachable', () {
-      final isolated =
-          _StubLocus(id: 'iso', samples: const [null, Vec2(4, 0), null]);
+      final isolated = _StubLocus(
+        id: 'iso',
+        samples: const [null, Vec2(4, 0), null],
+      );
       final allGap = _StubLocus(id: 'gap', samples: const [null, null]);
-      expect(tester.hitTest([isolated], const Vec2(4, 0), threshold), isNull,
-          reason: 'a lone sample draws no ink to hit');
+      expect(
+        tester.hitTest([isolated], const Vec2(4, 0), threshold),
+        isNull,
+        reason: 'a lone sample draws no ink to hit',
+      );
       expect(tester.hitTest([allGap], Vec2.zero, threshold), isNull);
     });
 
@@ -708,19 +862,27 @@ void main() {
     });
 
     test('band-select needs every recorded sample inside, and some ink', () {
-      final withGap = _StubLocus(id: 'loc', samples: const [
-        Vec2(1, 1), Vec2(2, 1), null, Vec2(3, 1), //
-      ]);
+      final withGap = _StubLocus(
+        id: 'loc',
+        samples: const [
+          Vec2(1, 1), Vec2(2, 1), null, Vec2(3, 1), //
+        ],
+      );
       final allGap = _StubLocus(id: 'gap', samples: const [null, null]);
       List<String> banded(Vec2 c1, Vec2 c2) => [
-            for (final object
-                in tester.objectsInRect([withGap, allGap], c1, c2))
-              object.id,
-          ];
-      expect(banded(Vec2.zero, const Vec2(4, 2)), ['loc'],
-          reason: 'gaps are fine, an all-gap locus is never banded');
-      expect(banded(Vec2.zero, const Vec2(2.5, 2)), isEmpty,
-          reason: 'one sample outside and the locus is merely crossed');
+        for (final object in tester.objectsInRect([withGap, allGap], c1, c2))
+          object.id,
+      ];
+      expect(
+        banded(Vec2.zero, const Vec2(4, 2)),
+        ['loc'],
+        reason: 'gaps are fine, an all-gap locus is never banded',
+      );
+      expect(
+        banded(Vec2.zero, const Vec2(2.5, 2)),
+        isEmpty,
+        reason: 'one sample outside and the locus is merely crossed',
+      );
     });
   });
 
@@ -732,12 +894,14 @@ void main() {
       construction
         ..add(a)
         ..add(b)
-        ..add(LineThroughTwoPoints(
-          id: 'l',
-          point1: a,
-          point2: b,
-          attributes: ObjectAttributes(lineClip: lineClip),
-        ));
+        ..add(
+          LineThroughTwoPoints(
+            id: 'l',
+            point1: a,
+            point2: b,
+            attributes: ObjectAttributes(lineClip: lineClip),
+          ),
+        );
       return construction;
     }
 
@@ -748,15 +912,24 @@ void main() {
     test('a tap beyond the clipped extent misses', () {
       for (final mode in [1, 2]) {
         final construction = clippedLine(mode);
-        expect(hit(construction, const Vec2(50, 0.2)), isNull,
-            reason: 'mode $mode: beyond the span is not drawn');
-        expect(hit(construction, const Vec2(2, 0.2))?.id, 'l',
-            reason: 'mode $mode: within the span still hits');
+        expect(
+          hit(construction, const Vec2(50, 0.2)),
+          isNull,
+          reason: 'mode $mode: beyond the span is not drawn',
+        );
+        expect(
+          hit(construction, const Vec2(2, 0.2))?.id,
+          'l',
+          reason: 'mode $mode: within the span still hits',
+        );
         // Just past an endpoint the clamp measures to the endpoint —
         // segment semantics — but the defining point sits there and wins
         // on priority, exactly like tapping a segment's end.
-        expect(hit(construction, const Vec2(4.3, 0))?.id, 'b',
-            reason: 'mode $mode: the endpoint point wins at the clip edge');
+        expect(
+          hit(construction, const Vec2(4.3, 0))?.id,
+          'b',
+          reason: 'mode $mode: the endpoint point wins at the clip edge',
+        );
       }
     });
 
@@ -786,15 +959,20 @@ void main() {
       construction
         ..add(a)
         ..add(b)
-        ..add(Ray(
-          id: 'r',
-          origin: a,
-          through: b,
-          attributes: const ObjectAttributes(lineClip: 2),
-        ));
+        ..add(
+          Ray(
+            id: 'r',
+            origin: a,
+            through: b,
+            attributes: const ObjectAttributes(lineClip: 2),
+          ),
+        );
       expect(hit(construction, const Vec2(2, 0.2))?.id, 'r');
-      expect(hit(construction, const Vec2(50, 0.2)), isNull,
-          reason: 'the far end clamps at the through point');
+      expect(
+        hit(construction, const Vec2(50, 0.2)),
+        isNull,
+        reason: 'the far end clamps at the through point',
+      );
     });
 
     test('intersections beyond the clipped extent are still computed', () {
@@ -824,15 +1002,14 @@ void main() {
   });
 }
 
-Matcher hasId(String id) =>
-    isA<GeoObject>().having((o) => o.id, 'id', id);
+Matcher hasId(String id) => isA<GeoObject>().having((o) => o.id, 'id', id);
 
 /// A [GeoLocus] with hand-picked samples: the hit tester consumes the
 /// kind accessor only, so tests can spell out runs and gaps directly
 /// instead of arranging a construction that produces them.
 class _StubLocus extends GeoLocus {
   _StubLocus({required super.id, required List<Vec2?>? samples})
-      : _samples = samples;
+    : _samples = samples;
 
   final List<Vec2?>? _samples;
 

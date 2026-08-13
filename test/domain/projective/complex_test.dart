@@ -13,9 +13,9 @@ const eps = 1e-12;
 const looseEps = 1e-9;
 
 Matcher closeToComplex(Complex expected, [double tolerance = eps]) => predicate(
-      (Complex z) => z.closeTo(expected, tolerance),
-      'is within $tolerance of $expected',
-    );
+  (Complex z) => z.closeTo(expected, tolerance),
+  'is within $tolerance of $expected',
+);
 
 void main() {
   group('Complex unit tests', () {
@@ -39,7 +39,10 @@ void main() {
         const Complex(3, 4) / const Complex(1, 2),
         closeToComplex(const Complex(2.2, -0.4)),
       );
-      expect(const Complex(1) / Complex.i, closeToComplex(const Complex(0, -1)));
+      expect(
+        const Complex(1) / Complex.i,
+        closeToComplex(const Complex(0, -1)),
+      );
     });
 
     test('division by zero yields non-finite components, not a throw', () {
@@ -64,7 +67,10 @@ void main() {
 
     test('polar constructor on known values', () {
       expect(Complex.polar(2, 0), closeToComplex(const Complex(2)));
-      expect(Complex.polar(2, math.pi / 2), closeToComplex(const Complex(0, 2)));
+      expect(
+        Complex.polar(2, math.pi / 2),
+        closeToComplex(const Complex(0, 2)),
+      );
       expect(Complex.polar(1, math.pi), closeToComplex(const Complex(-1)));
     });
 
@@ -113,8 +119,11 @@ void main() {
       expect(a + b, closeToComplex(b + a));
     });
 
-    Glados3(any.complex, any.complex, any.complex)
-        .test('addition associates', (a, b, c) {
+    Glados3(any.complex, any.complex, any.complex).test('addition associates', (
+      a,
+      b,
+      c,
+    ) {
       expect((a + b) + c, closeToComplex(a + (b + c)));
     });
 
@@ -127,10 +136,12 @@ void main() {
       expect(a * b, closeToComplex(b * a));
     });
 
-    Glados3(any.complex, any.complex, any.complex)
-        .test('multiplication associates', (a, b, c) {
-      expect((a * b) * c, closeToComplex(a * (b * c), looseEps));
-    });
+    Glados3(any.complex, any.complex, any.complex).test(
+      'multiplication associates',
+      (a, b, c) {
+        expect((a * b) * c, closeToComplex(a * (b * c), looseEps));
+      },
+    );
 
     Glados(any.complex).test('multiplicative identity', (a) {
       expect(a * Complex.one, a);
@@ -140,15 +151,19 @@ void main() {
       expect(a * (Complex.one / a), closeToComplex(Complex.one));
     });
 
-    Glados3(any.complex, any.complex, any.complex)
-        .test('multiplication distributes over addition', (a, b, c) {
-      expect(a * (b + c), closeToComplex(a * b + a * c, looseEps));
-    });
+    Glados3(any.complex, any.complex, any.complex).test(
+      'multiplication distributes over addition',
+      (a, b, c) {
+        expect(a * (b + c), closeToComplex(a * b + a * c, looseEps));
+      },
+    );
 
-    Glados2(any.complex, any.nonZeroComplex)
-        .test('division inverts multiplication', (a, b) {
-      expect((a * b) / b, closeToComplex(a, looseEps));
-    });
+    Glados2(any.complex, any.nonZeroComplex).test(
+      'division inverts multiplication',
+      (a, b) {
+        expect((a * b) / b, closeToComplex(a, looseEps));
+      },
+    );
   });
 
   group('conjugation and modulus identities', () {
@@ -156,11 +171,13 @@ void main() {
       expect(z.conj.conj, z);
     });
 
-    Glados2(any.complex, any.complex)
-        .test('conjugation distributes over + and *', (z, w) {
-      expect((z + w).conj, closeToComplex(z.conj + w.conj));
-      expect((z * w).conj, closeToComplex(z.conj * w.conj));
-    });
+    Glados2(any.complex, any.complex).test(
+      'conjugation distributes over + and *',
+      (z, w) {
+        expect((z + w).conj, closeToComplex(z.conj + w.conj));
+        expect((z * w).conj, closeToComplex(z.conj * w.conj));
+      },
+    );
 
     Glados(any.complex).test('z·conj(z) is real and equals |z|²', (z) {
       final p = z * z.conj;

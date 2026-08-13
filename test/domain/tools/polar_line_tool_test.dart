@@ -41,8 +41,11 @@ void main() {
 
         expect(tool.onInput(inputs[0]), isA<ToolAccepted>());
         final result = tool.onInput(inputs[1]);
-        expect(result, isA<ToolCommitted>(),
-            reason: 'circleFirst: $circleFirst');
+        expect(
+          result,
+          isA<ToolCommitted>(),
+          reason: 'circleFirst: $circleFirst',
+        );
         final command = (result as ToolCommitted).command as AddObjectCommand;
         final polar = command.object as PolarLine;
         expect(polar.parents, [p, circle]);
@@ -60,14 +63,12 @@ void main() {
       final tool = newTool();
 
       tool.onInput(ToolInput(const Vec2(1, 0.05), hit: circle));
-      final result =
-          tool.onInput(const ToolInput(Vec2(5, 0))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(5, 0))) as ToolCommitted;
 
       final command = result.command as MacroCommand;
       expect(command.commands, hasLength(2));
       command.apply(construction);
-      expect(construction.length, 5,
-          reason: 'new free point + the polar line');
+      expect(construction.length, 5, reason: 'new free point + the polar line');
       command.undo(construction);
       expect(construction.length, 3);
     });
@@ -107,11 +108,15 @@ void main() {
         expect(
           tool.onInput(ordered[1]),
           isA<ToolIgnored>(),
-          reason: 'polar of (p, circ) already exists — circleFirst: '
+          reason:
+              'polar of (p, circ) already exists — circleFirst: '
               '$circleFirst',
         );
-        expect(tool.hasPartialInput, isTrue,
-            reason: 'the collected slot stays armed');
+        expect(
+          tool.hasPartialInput,
+          isTrue,
+          reason: 'the collected slot stays armed',
+        );
       }
     });
 

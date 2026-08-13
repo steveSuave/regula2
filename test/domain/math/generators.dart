@@ -29,11 +29,11 @@ extension MathAnys on Any {
   /// A line through two generated points; when the points coincide the
   /// second is nudged so the generator never produces a degenerate line.
   Generator<LineEq> get lineEq => combine2(
-        vec2,
-        vec2,
-        (Vec2 p, Vec2 q) =>
-            LineEq.throughPoints(p, p == q ? q + const Vec2(1, 0) : q),
-      );
+    vec2,
+    vec2,
+    (Vec2 p, Vec2 q) =>
+        LineEq.throughPoints(p, p == q ? q + const Vec2(1, 0) : q),
+  );
 
   Generator<CircleEq> get circleEq =>
       combine2(vec2, positiveRadius, CircleEq.new);

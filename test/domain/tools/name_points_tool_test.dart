@@ -50,8 +50,11 @@ void main() {
 
       expect(p.attributes.name, 'A');
       expect(p.attributes.labelVisible, isTrue);
-      expect(command.newAttributes.keys, ['p'],
-          reason: 'exactly the tapped point, nothing batched');
+      expect(
+        command.newAttributes.keys,
+        ['p'],
+        reason: 'exactly the tapped point, nothing batched',
+      );
     });
 
     test('successive taps walk the alphabet', () {
@@ -83,8 +86,11 @@ void main() {
 
       final lower = NamePointsTool.alphabet(startLetter: 'm');
       tapAndApply(lower, tapOn(r));
-      expect(r.attributes.name, 'm',
-          reason: 'lowercase pool is disjoint from the taken uppercase M');
+      expect(
+        r.attributes.name,
+        'm',
+        reason: 'lowercase pool is disjoint from the taken uppercase M',
+      );
     });
 
     test('the lowercase walk skips names held by curves', () {
@@ -109,11 +115,14 @@ void main() {
       final tool = NamePointsTool.alphabet();
       expect(
         tool.onInput(
-            ToolInput(const Vec2(2, 0), hit: s, objects: construction.objects)),
+          ToolInput(const Vec2(2, 0), hit: s, objects: construction.objects),
+        ),
         isA<ToolIgnored>(),
       );
       expect(
-        tool.onInput(ToolInput(const Vec2(9, 9), objects: construction.objects)),
+        tool.onInput(
+          ToolInput(const Vec2(9, 9), objects: construction.objects),
+        ),
         isA<ToolIgnored>(),
       );
     });
@@ -138,8 +147,7 @@ void main() {
     });
 
     test('undo restores the previous name and label visibility', () {
-      p.attributes =
-          p.attributes.copyWith(name: 'old', labelVisible: false);
+      p.attributes = p.attributes.copyWith(name: 'old', labelVisible: false);
       final tool = NamePointsTool.alphabet();
       final command = tapAndApply(tool, tapOn(p));
 
@@ -195,8 +203,11 @@ void main() {
 
       expect(r.attributes.name, 'I');
       expect(q.attributes.name, 'I1');
-      expect(command.newAttributes.keys, unorderedEquals(['r', 'q']),
-          reason: 'assignment and eviction are one undo step');
+      expect(
+        command.newAttributes.keys,
+        unorderedEquals(['r', 'q']),
+        reason: 'assignment and eviction are one undo step',
+      );
 
       command.undo(construction);
       expect(r.attributes.name, isEmpty);
@@ -217,7 +228,8 @@ void main() {
       final tool = NamePointsTool.string('MI');
       tapAndApply(tool, tapOn(p));
       tool.onInput(
-          ToolInput(const Vec2(2, 0), hit: s, objects: construction.objects));
+        ToolInput(const Vec2(2, 0), hit: s, objects: construction.objects),
+      );
       tapAndApply(tool, tapOn(q));
 
       expect(q.attributes.name, 'I');

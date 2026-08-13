@@ -1,12 +1,19 @@
 import '../../math/circle_eq.dart';
-import '../../math/triangle_centers.dart';
+import '../../projective/circles.dart';
+import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
 /// The circle through three points (their circumcircle).
 ///
-/// Undefined while the points are collinear — including any two
-/// coincident — since no (finite) circle passes through them; recovers
-/// when a drag breaks the degeneracy.
+/// Migrated (Phase 109): stores [circumcircleOf] of the parents'
+/// projective views; [circle] is its projection. Collinear (distinct)
+/// points now yield the degenerate line pair of their line with the line
+/// at infinity instead of no value at all — [conic] non-null, [circle]
+/// null, so [isDefined] still reads false and rendering skips it until
+/// Phase 119 draws degenerate conics. Coincident points (within
+/// `projectiveEpsilon`, guarded before the kernel call per the
+/// `carrierThrough` convention) stay fully undefined; recovery on drag is
+/// unchanged.
 class ThreePointCircle extends GeoCircle {
   ThreePointCircle({
     required super.id,
@@ -22,7 +29,11 @@ class ThreePointCircle extends GeoCircle {
   final GeoPoint point2;
   final GeoPoint point3;
 
+  ConicMatrix? _conic;
   CircleEq? _circle;
+
+  @override
+  ConicMatrix? get conic => _conic;
 
   @override
   CircleEq? get circle => _circle;
@@ -32,14 +43,21 @@ class ThreePointCircle extends GeoCircle {
 
   @override
   void recompute() {
-    final p1 = point1.position;
-    final p2 = point2.position;
-    final p3 = point3.position;
-    if (p1 == null || p2 == null || p3 == null) {
+    final p1 = point1.projPoint;
+    final p2 = point2.projPoint;
+    final p3 = point3.projPoint;
+    if (p1 == null ||
+        p2 == null ||
+        p3 == null ||
+        p1.closeTo(p2) ||
+        p2.closeTo(p3) ||
+        p1.closeTo(p3)) {
+      _conic = null;
       _circle = null;
       return;
     }
-    final center = circumcenter(p1, p2, p3);
-    _circle = center == null ? null : CircleEq.centerAndPoint(center, p1);
+    final k = circumcircleOf(p1, p2, p3);
+    _conic = k.isZero ? null : k;
+    _circle = _conic?.toCircleEq();
   }
 }

@@ -120,9 +120,7 @@ void main() {
     final labels = [label('a'), label('b')];
     final moved = solve(labels: labels);
     expect(moved, isNotEmpty);
-    final rects = [
-      for (final l in labels) l.rectAt(moved[l.id] ?? l.offset),
-    ];
+    final rects = [for (final l in labels) l.rectAt(moved[l.id] ?? l.offset)];
     final overlap = rects[0].intersect(rects[1]);
     expect(
       overlap.width <= 0 || overlap.height <= 0,
@@ -139,8 +137,12 @@ void main() {
     // A dense grid of strokes with no clear pocket within reach.
     final grid = [
       for (var y = 0; y <= 600; y += 10)
-        Capsule(Offset(0, y.toDouble()), Offset(800, y.toDouble()), 2,
-            ownerId: 'x'),
+        Capsule(
+          Offset(0, y.toDouble()),
+          Offset(800, y.toDouble()),
+          2,
+          ownerId: 'x',
+        ),
     ];
     final moved = solve(labels: [label('a')], capsules: grid);
     for (final offset in moved.values) {
@@ -150,10 +152,7 @@ void main() {
   });
 
   test('rect obstacle overlap triggers a move', () {
-    const obstacle = RectObstacle(
-      Rect.fromLTWH(100, 70, 60, 40),
-      ownerId: 'x',
-    );
+    const obstacle = RectObstacle(Rect.fromLTWH(100, 70, 60, 40), ownerId: 'x');
     final moved = solve(labels: [label('a')], rects: const [obstacle]);
     expect(moved, contains('a'));
     final rect = label('a').rectAt(moved['a']!);

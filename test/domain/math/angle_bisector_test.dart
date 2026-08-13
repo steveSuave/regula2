@@ -62,22 +62,23 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.vec2).test(
-        'contains the vertex and is equidistant from equal-length arm marks',
-        (arm1, vertex, arm2) {
-      final bisector = angleBisector(arm1, vertex, arm2);
-      if (bisector == null) {
-        return; // an arm sat (nearly) on the vertex — nothing to check
-      }
-      expect(bisector.distanceTo(vertex), lessThan(1e-6));
-      // The defining property: points at equal arc length along either arm
-      // are equidistant from the bisector.
-      final u = (arm1 - vertex).normalized();
-      final v = (arm2 - vertex).normalized();
-      expect(
-        bisector.distanceTo(vertex + u),
-        closeTo(bisector.distanceTo(vertex + v), 1e-6),
-      );
-    });
+      'contains the vertex and is equidistant from equal-length arm marks',
+      (arm1, vertex, arm2) {
+        final bisector = angleBisector(arm1, vertex, arm2);
+        if (bisector == null) {
+          return; // an arm sat (nearly) on the vertex — nothing to check
+        }
+        expect(bisector.distanceTo(vertex), lessThan(1e-6));
+        // The defining property: points at equal arc length along either arm
+        // are equidistant from the bisector.
+        final u = (arm1 - vertex).normalized();
+        final v = (arm2 - vertex).normalized();
+        expect(
+          bisector.distanceTo(vertex + u),
+          closeTo(bisector.distanceTo(vertex + v), 1e-6),
+        );
+      },
+    );
 
     Glados2(any.vec2, any.vec2).test('symmetric in its arms', (arm1, arm2) {
       final forward = angleBisector(arm1, Vec2.zero, arm2);
@@ -115,8 +116,10 @@ void main() {
       expect(twoLineBisector(xAxis, reversed, 1), isNull);
     });
 
-    Glados2(any.vec2, any.vec2).test(
-        'both branches pass the crossing, are perpendicular to each other '
+    Glados2(
+      any.vec2,
+      any.vec2,
+    ).test('both branches pass the crossing, are perpendicular to each other '
         'and equidistant from the two lines', (p, q) {
       final line1 = LineEq.pointDirection(Vec2.zero, const Vec2(1, 0.5));
       if (p.closeTo(q)) {
@@ -137,15 +140,15 @@ void main() {
       final crossing = intersectLineLine(line1, line2).single;
       expect(b0.distanceTo(crossing), lessThan(1e-6));
       expect(b1.distanceTo(crossing), lessThan(1e-6));
-      expect(b0.direction.dot(b1.direction).abs(), lessThan(1e-6),
-          reason: 'the two bisectors are a perpendicular pair');
+      expect(
+        b0.direction.dot(b1.direction).abs(),
+        lessThan(1e-6),
+        reason: 'the two bisectors are a perpendicular pair',
+      );
       // The defining property: any point on a bisector is equidistant
       // from both lines.
       for (final probe in [b0.pointAt(3), b1.pointAt(-2)]) {
-        expect(
-          line1.distanceTo(probe),
-          closeTo(line2.distanceTo(probe), 1e-6),
-        );
+        expect(line1.distanceTo(probe), closeTo(line2.distanceTo(probe), 1e-6));
       }
     });
   });

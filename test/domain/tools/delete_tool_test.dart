@@ -40,8 +40,11 @@ void main() {
 
     command.apply(construction);
     expect(construction.contains('a'), isFalse);
-    expect(construction.contains('s'), isFalse,
-        reason: 'the segment depends on the deleted endpoint');
+    expect(
+      construction.contains('s'),
+      isFalse,
+      reason: 'the segment depends on the deleted endpoint',
+    );
     expect(construction.contains('b'), isTrue);
 
     command.undo(construction);

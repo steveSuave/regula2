@@ -32,8 +32,11 @@ void main() {
       expect(circle.center, isA<FreePoint>());
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'center and circle are one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'center and circle are one undo unit',
+      );
     });
 
     test('a tap on an existing point reuses it as the center', () {
@@ -43,8 +46,11 @@ void main() {
 
       final result =
           tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
-      expect(result.command, isA<AddObjectCommand>(),
-          reason: 'nothing but the circle is added');
+      expect(
+        result.command,
+        isA<AddObjectCommand>(),
+        reason: 'nothing but the circle is added',
+      );
       result.command.apply(construction);
 
       final circle = construction.objects.whereType<FixedRadiusCircle>().single;

@@ -20,8 +20,7 @@ void main() {
   });
 
   group('PointTool', () {
-    test('tap on empty canvas commits an AddObjectCommand for a FreePoint',
-        () {
+    test('tap on empty canvas commits an AddObjectCommand for a FreePoint', () {
       final result = tool.onInput(const ToolInput(Vec2(3, -2)));
 
       expect(result, isA<ToolCommitted>());
@@ -35,8 +34,7 @@ void main() {
 
     test('committed command adds the point to a construction', () {
       final construction = Construction();
-      final result =
-          tool.onInput(const ToolInput(Vec2(1, 1))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(1, 1))) as ToolCommitted;
 
       result.command.apply(construction);
 
@@ -46,10 +44,8 @@ void main() {
     });
 
     test('successive taps produce distinct ids', () {
-      final first =
-          tool.onInput(const ToolInput(Vec2.zero)) as ToolCommitted;
-      final second =
-          tool.onInput(const ToolInput(Vec2(1, 0))) as ToolCommitted;
+      final first = tool.onInput(const ToolInput(Vec2.zero)) as ToolCommitted;
+      final second = tool.onInput(const ToolInput(Vec2(1, 0))) as ToolCommitted;
 
       final firstId = (first.command as AddObjectCommand).object.id;
       final secondId = (second.command as AddObjectCommand).object.id;

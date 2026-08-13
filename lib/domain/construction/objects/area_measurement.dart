@@ -54,7 +54,8 @@ class AreaMeasurement extends GeoMeasurement {
     switch (subject) {
       case GeoPolygon(:final polygonVertices?):
         _value = polygonSignedArea(polygonVertices).abs();
-        _anchor = polygonVertices.reduce((sum, vertex) => sum + vertex) /
+        _anchor =
+            polygonVertices.reduce((sum, vertex) => sum + vertex) /
             polygonVertices.length.toDouble();
       // Sector and Arc are GeoCircles, so they must match before the
       // full-circle case. Both centroids sit on the extent's bisector at

@@ -88,20 +88,26 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (p, c, k) {
-      CentralReflectionPoint build(ProjPoint point, ProjPoint center) =>
-          CentralReflectionPoint(
-            id: 'r',
-            point: StubProjectivePoint(point),
-            center: StubProjectivePoint(center),
-          );
-      final plain = build(ProjPoint.lift(p), ProjPoint.lift(c));
-      final scaledPoint = build(ProjPoint.lift(p).scaledBy(k), ProjPoint.lift(c));
-      final scaledCenter =
-          build(ProjPoint.lift(p), ProjPoint.lift(c).scaledBy(k));
-      expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
-      expect(scaledCenter.projPoint!.closeTo(plain.projPoint!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (p, c, k) {
+        CentralReflectionPoint build(ProjPoint point, ProjPoint center) =>
+            CentralReflectionPoint(
+              id: 'r',
+              point: StubProjectivePoint(point),
+              center: StubProjectivePoint(center),
+            );
+        final plain = build(ProjPoint.lift(p), ProjPoint.lift(c));
+        final scaledPoint = build(
+          ProjPoint.lift(p).scaledBy(k),
+          ProjPoint.lift(c),
+        );
+        final scaledCenter = build(
+          ProjPoint.lift(p),
+          ProjPoint.lift(c).scaledBy(k),
+        );
+        expect(scaledPoint.projPoint!.closeTo(plain.projPoint!), isTrue);
+        expect(scaledCenter.projPoint!.closeTo(plain.projPoint!), isTrue);
+      },
+    );
   });
 }

@@ -13,10 +13,7 @@ void main() {
     });
 
     test('clockwise loop negates the sign', () {
-      expect(
-        polygonSignedArea(unitSquareCcw.reversed.toList()),
-        -1,
-      );
+      expect(polygonSignedArea(unitSquareCcw.reversed.toList()), -1);
     });
 
     test('triangle area matches the closed form', () {
@@ -45,20 +42,18 @@ void main() {
       expect(polygonSignedArea(bowtie), 0);
     });
 
-    Glados(any.vec2).test('translation leaves the area unchanged',
-        (offset) {
+    Glados(any.vec2).test('translation leaves the area unchanged', (offset) {
       final translated = [for (final v in unitSquareCcw) v + offset];
-      expect(
-        polygonSignedArea(translated),
-        closeTo(1, 1e-6),
-      );
+      expect(polygonSignedArea(translated), closeTo(1, 1e-6));
     });
 
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('reversing any triangle negates its signed area', (a, b, c) {
-      final forward = polygonSignedArea([a, b, c]);
-      final backward = polygonSignedArea([c, b, a]);
-      expect(backward, closeTo(-forward, 1e-6));
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'reversing any triangle negates its signed area',
+      (a, b, c) {
+        final forward = polygonSignedArea([a, b, c]);
+        final backward = polygonSignedArea([c, b, a]);
+        expect(backward, closeTo(-forward, 1e-6));
+      },
+    );
   });
 }

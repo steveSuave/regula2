@@ -1,6 +1,8 @@
 import '../../math/angle_geometry.dart';
 import '../../math/circle_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/circles.dart';
+import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
 /// The circular sector (pie wedge) around [center]: [start] fixes the
@@ -9,8 +11,14 @@ import '../geo_object.dart';
 /// counter-clockwise from start to end.
 ///
 /// A [GeoCircle] via its carrier [circle], like `Arc`. Undefined while
-/// [start] or [end] coincides with [center] (no direction → no angle) or
-/// a parent is undefined; recovers when the degeneracy passes.
+/// [start] or [end] coincides with [center] (no direction → no angle;
+/// now within `projectiveEpsilon` rather than V1's exact equality) or a
+/// parent is undefined or not real and finite (the angles need real
+/// positions); recovers when the degeneracy passes.
+///
+/// Migrated (Phase 109): the carrier is [circleThrough] on the projective
+/// views of [center] and [start]; [circle] is its projection and the
+/// angular extent stays affine metadata read off that projection.
 ///
 /// Painter and hit tester must use [startAngle]/[sweep] and the two rim
 /// points — the carrier alone is the full circle.
@@ -29,9 +37,13 @@ class Sector extends GeoCircle {
   final GeoPoint start;
   final GeoPoint end;
 
+  ConicMatrix? _conic;
   CircleEq? _circle;
   double? _startAngle;
   double? _sweep;
+
+  @override
+  ConicMatrix? get conic => _conic;
 
   @override
   CircleEq? get circle => _circle;
@@ -83,19 +95,38 @@ class Sector extends GeoCircle {
 
   @override
   void recompute() {
-    final c = center.position;
-    final s = start.position;
-    final e = end.position;
-    if (c == null || s == null || e == null || s == c || e == c) {
+    final c = center.projPoint;
+    final s = start.projPoint;
+    final e = end.projPoint;
+    final cp = center.position;
+    final sp = start.position;
+    final ep = end.position;
+    // The wedge's angles need real finite positions with directions from
+    // the center — a sector, unlike an arc, has no meaning without them.
+    if (c == null ||
+        s == null ||
+        e == null ||
+        cp == null ||
+        sp == null ||
+        ep == null ||
+        s.closeTo(c) ||
+        e.closeTo(c)) {
+      _conic = null;
       _circle = null;
       _startAngle = null;
       _sweep = null;
       return;
     }
-    final circle = CircleEq.centerAndPoint(c, s);
-    _circle = circle;
-    final startAngle = circle.angleAt(s);
+    final k = circleThrough(c, s);
+    _conic = k.isZero ? null : k;
+    final circle = _circle = _conic?.toCircleEq();
+    if (circle == null) {
+      _startAngle = null;
+      _sweep = null;
+      return;
+    }
+    final startAngle = circle.angleAt(sp);
     _startAngle = startAngle;
-    _sweep = ccwSweep(startAngle, circle.angleAt(e));
+    _sweep = ccwSweep(startAngle, circle.angleAt(ep));
   }
 }

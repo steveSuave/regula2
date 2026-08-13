@@ -52,17 +52,26 @@ void main() {
       );
       construction.add(text);
 
-      final session =
-          DragSession.start(construction, text, const Vec2(11, 10))!;
+      final session = DragSession.start(
+        construction,
+        text,
+        const Vec2(11, 10),
+      )!;
       session.update(const Vec2(211, 60)); // way past any 40 px clamp
-      expect(text.anchor, const Vec2(210, 60),
-          reason: 'anchor rides the pointer delta, unclamped');
+      expect(
+        text.anchor,
+        const Vec2(210, 60),
+        reason: 'anchor rides the pointer delta, unclamped',
+      );
       expect(a.position, Vec2.zero);
       expect(b.position, const Vec2(4, 0));
 
       final command = session.end()! as MoveTextAnchorCommand;
-      expect(text.anchor, const Vec2(10, 10),
-          reason: 'end rolls the preview back');
+      expect(
+        text.anchor,
+        const Vec2(10, 10),
+        reason: 'end rolls the preview back',
+      );
       expect(command.textId, 't');
       expect(command.from, const Vec2(10, 10));
       expect(command.to, const Vec2(210, 60));
@@ -117,14 +126,20 @@ void main() {
 
       session.update(const Vec2(1, 1));
       expect(a.position, const Vec2(1, 1));
-      expect(midpoint.position, const Vec2(2.5, 0.5),
-          reason: 'dependents recompute per preview frame');
+      expect(
+        midpoint.position,
+        const Vec2(2.5, 0.5),
+        reason: 'dependents recompute per preview frame',
+      );
 
       session.update(const Vec2(2, 3));
       final command = session.end()!;
 
-      expect(a.position, Vec2.zero,
-          reason: 'end rolls the preview back — the command replays it');
+      expect(
+        a.position,
+        Vec2.zero,
+        reason: 'end rolls the preview back — the command replays it',
+      );
       expect(command, isA<MoveFreePointCommand>());
       command.apply(construction);
       expect(a.position, const Vec2(2, 3));
@@ -136,8 +151,7 @@ void main() {
     test('the delta rides the pointer, not the grab point', () {
       // Grabbed 0.5 away from the point's center: the point must move by
       // the pointer's delta, not jump under the cursor.
-      final session =
-          DragSession.start(construction, a, const Vec2(0.5, 0))!;
+      final session = DragSession.start(construction, a, const Vec2(0.5, 0))!;
       session.update(const Vec2(1.5, 2));
       expect(a.position, const Vec2(1, 2));
       session.cancel();
@@ -157,29 +171,45 @@ void main() {
   });
 
   group('free-point drag with gridSnapStep (Phase 45)', () {
-    test('preview quantizes per frame, the one command commits snapped',
-        () {
-      final session =
-          DragSession.start(construction, a, Vec2.zero, gridSnapStep: 2)!;
+    test('preview quantizes per frame, the one command commits snapped', () {
+      final session = DragSession.start(
+        construction,
+        a,
+        Vec2.zero,
+        gridSnapStep: 2,
+      )!;
 
       session.update(const Vec2(2.7, 1.2));
-      expect(a.position, const Vec2(2, 2),
-          reason: 'the preview frame lands on a grid crossing');
-      expect(midpoint.position, const Vec2(3, 1),
-          reason: 'dependents recompute from the snapped preview');
+      expect(
+        a.position,
+        const Vec2(2, 2),
+        reason: 'the preview frame lands on a grid crossing',
+      );
+      expect(
+        midpoint.position,
+        const Vec2(3, 1),
+        reason: 'dependents recompute from the snapped preview',
+      );
 
       session.update(const Vec2(5.1, 0.8));
       final command = session.end()!;
       expect(a.position, Vec2.zero, reason: 'end rolls the preview back');
       expect(command, isA<MoveFreePointCommand>());
       command.apply(construction);
-      expect(a.position, const Vec2(6, 0),
-          reason: 'the command carries the snapped end position');
+      expect(
+        a.position,
+        const Vec2(6, 0),
+        reason: 'the command carries the snapped end position',
+      );
     });
 
     test('a drag that quantizes back onto its start commits nothing', () {
-      final session =
-          DragSession.start(construction, a, Vec2.zero, gridSnapStep: 2)!;
+      final session = DragSession.start(
+        construction,
+        a,
+        Vec2.zero,
+        gridSnapStep: 2,
+      )!;
       session.update(const Vec2(0.6, -0.9)); // rounds to (0, 0) — a's start
       expect(a.position, Vec2.zero);
       expect(session.end(), isNull);
@@ -190,23 +220,35 @@ void main() {
       construction.add(offGrid);
 
       final session = DragSession.start(
-          construction, offGrid, const Vec2(0.3, 0.4),
-          gridSnapStep: 1)!;
+        construction,
+        offGrid,
+        const Vec2(0.3, 0.4),
+        gridSnapStep: 1,
+      )!;
       session.update(const Vec2(0.5, 0.4)); // delta (0.2, 0) → (0.5, 0.4)
       expect(offGrid.position, const Vec2(1, 0));
       session.cancel();
-      expect(offGrid.position, const Vec2(0.3, 0.4),
-          reason: 'cancel restores the off-grid start verbatim');
+      expect(
+        offGrid.position,
+        const Vec2(0.3, 0.4),
+        reason: 'cancel restores the off-grid start verbatim',
+      );
     });
 
     test('rigid translations ignore the step — shapes never distort', () {
       final session = DragSession.start(
-          construction, segment, const Vec2(2, 0),
-          gridSnapStep: 2)!;
+        construction,
+        segment,
+        const Vec2(2, 0),
+        gridSnapStep: 2,
+      )!;
 
       session.update(const Vec2(3, 1.2));
-      expect(a.position, const Vec2(1, 1.2),
-          reason: 'ancestors move by the raw delta, never quantized');
+      expect(
+        a.position,
+        const Vec2(1, 1.2),
+        reason: 'ancestors move by the raw delta, never quantized',
+      );
       expect(b.position, const Vec2(5, 1.2));
 
       final command = session.end()!;
@@ -218,8 +260,12 @@ void main() {
     });
 
     test('a step of 0 is byte-identical to the unsnapped drag', () {
-      final session =
-          DragSession.start(construction, a, Vec2.zero, gridSnapStep: 0)!;
+      final session = DragSession.start(
+        construction,
+        a,
+        Vec2.zero,
+        gridSnapStep: 0,
+      )!;
       session.update(const Vec2(2.7, 1.2));
       expect(a.position, const Vec2(2.7, 1.2));
       final command = session.end()! as MoveFreePointCommand;
@@ -231,14 +277,20 @@ void main() {
 
   group('derived-object drag', () {
     test('rigidly translates the free ancestors, one command', () {
-      final session =
-          DragSession.start(construction, segment, const Vec2(2, 0))!;
+      final session = DragSession.start(
+        construction,
+        segment,
+        const Vec2(2, 0),
+      )!;
 
       session.update(const Vec2(3, 2));
       expect(a.position, const Vec2(1, 2));
       expect(b.position, const Vec2(5, 2));
-      expect(midpoint.position, const Vec2(3, 2),
-          reason: 'the whole configuration translates rigidly');
+      expect(
+        midpoint.position,
+        const Vec2(3, 2),
+        reason: 'the whole configuration translates rigidly',
+      );
 
       final command = session.end()!;
       expect(a.position, Vec2.zero);
@@ -254,26 +306,34 @@ void main() {
     });
 
     test('cancel rolls the preview back', () {
-      final session =
-          DragSession.start(construction, segment, const Vec2(2, 0))!;
+      final session = DragSession.start(
+        construction,
+        segment,
+        const Vec2(2, 0),
+      )!;
       session.update(const Vec2(7, -3));
       session.cancel();
       expect(a.position, Vec2.zero);
       expect(b.position, const Vec2(4, 0));
     });
 
-    test('rollback skips points removed mid-session instead of throwing',
-        () {
-      final session =
-          DragSession.start(construction, segment, const Vec2(2, 0))!;
+    test('rollback skips points removed mid-session instead of throwing', () {
+      final session = DragSession.start(
+        construction,
+        segment,
+        const Vec2(2, 0),
+      )!;
       session.update(const Vec2(3, 1));
 
       // An undo mid-drag can delete a dragged point (and its dependents).
       construction.removeWithDependents('a');
 
       session.cancel();
-      expect(b.position, const Vec2(4, 0),
-          reason: 'the surviving point still rolls back');
+      expect(
+        b.position,
+        const Vec2(4, 0),
+        reason: 'the surviving point still rolls back',
+      );
     });
   });
 
@@ -291,15 +351,20 @@ void main() {
         ..add(compass);
       expect(compass.circle!.radius, 4);
 
-      final session =
-          DragSession.start(construction, compass, const Vec2(14, 10))!;
+      final session = DragSession.start(
+        construction,
+        compass,
+        const Vec2(14, 10),
+      )!;
       session.update(const Vec2(15, 12));
       expect(center.position, const Vec2(11, 12));
-      expect(a.position, Vec2.zero,
-          reason: 'radius-defining points stay put');
+      expect(a.position, Vec2.zero, reason: 'radius-defining points stay put');
       expect(b.position, const Vec2(4, 0));
-      expect(compass.circle!.radius, 4,
-          reason: 'the measured radius is unchanged');
+      expect(
+        compass.circle!.radius,
+        4,
+        reason: 'the measured radius is unchanged',
+      );
 
       final command = session.end()!;
       expect(center.position, const Vec2(10, 10));
@@ -323,8 +388,11 @@ void main() {
       );
       construction.add(compass);
 
-      final session =
-          DragSession.start(construction, compass, const Vec2(2, 4))!;
+      final session = DragSession.start(
+        construction,
+        compass,
+        const Vec2(2, 4),
+      )!;
       session.update(const Vec2(3, 4));
       expect(a.position, const Vec2(1, 0));
       expect(b.position, const Vec2(5, 0));
@@ -333,8 +401,7 @@ void main() {
       expect(b.position, const Vec2(4, 0));
     });
 
-    test("a constrained center drags its host curve's free points only",
-        () {
+    test("a constrained center drags its host curve's free points only", () {
       // Center rides a line through two points unrelated to the radius
       // pair: dragging the compass translates the line's points, while a
       // and b (the measurement) stay put.
@@ -355,8 +422,11 @@ void main() {
       );
       construction.add(compass);
 
-      final session =
-          DragSession.start(construction, compass, const Vec2(9, 10))!;
+      final session = DragSession.start(
+        construction,
+        compass,
+        const Vec2(9, 10),
+      )!;
       session.update(const Vec2(9, 13));
       expect(d.position, const Vec2(0, 13));
       expect(e.position, const Vec2(10, 13));
@@ -379,17 +449,26 @@ void main() {
     });
 
     test('slides along the host line, ends with one parameter command', () {
-      final session =
-          DragSession.start(construction, onSegment, const Vec2(1, 0))!;
+      final session = DragSession.start(
+        construction,
+        onSegment,
+        const Vec2(1, 0),
+      )!;
 
       session.update(const Vec2(3, 2));
-      expect(onSegment.position, const Vec2(3, 0),
-          reason: 'the pointer projects onto the carrier per frame');
+      expect(
+        onSegment.position,
+        const Vec2(3, 0),
+        reason: 'the pointer projects onto the carrier per frame',
+      );
       expect(onSegment.parameter, 3);
 
       final command = session.end()!;
-      expect(onSegment.parameter, 1,
-          reason: 'end rolls the preview back — the command replays it');
+      expect(
+        onSegment.parameter,
+        1,
+        reason: 'end rolls the preview back — the command replays it',
+      );
       expect(command, isA<SetPointOnObjectParameterCommand>());
       command.apply(construction);
       expect(onSegment.position, const Vec2(3, 0));
@@ -400,8 +479,11 @@ void main() {
     test('the parameter rides the pointer, not the grab point', () {
       // Grabbed 0.5 short of the point (hit threshold): the point must
       // follow the pointer's motion, not jump under the cursor.
-      final session =
-          DragSession.start(construction, onSegment, const Vec2(0.5, 0))!;
+      final session = DragSession.start(
+        construction,
+        onSegment,
+        const Vec2(0.5, 0),
+      )!;
       session.update(const Vec2(2.5, 0));
       expect(onSegment.position, const Vec2(3, 0));
       session.cancel();
@@ -411,8 +493,11 @@ void main() {
 
     test('slide on a segment stops at its endpoints instead of leaving '
         'it', () {
-      final session =
-          DragSession.start(construction, onSegment, const Vec2(1, 0))!;
+      final session = DragSession.start(
+        construction,
+        onSegment,
+        const Vec2(1, 0),
+      )!;
       // Drag far past b: the point must stop on the endpoint, not slide
       // onto the infinite carrier.
       session.update(const Vec2(9, 2));
@@ -425,13 +510,19 @@ void main() {
       expect(onSegment.position, const Vec2(0, 0));
 
       final command = session.end()! as SetPointOnObjectParameterCommand;
-      expect(command.to, 0,
-          reason: 'the committed parameter is the clamped one');
+      expect(
+        command.to,
+        0,
+        reason: 'the committed parameter is the clamped one',
+      );
     });
 
     test('zero-motion gesture ends with no command', () {
-      final session =
-          DragSession.start(construction, onSegment, const Vec2(1, 0))!;
+      final session = DragSession.start(
+        construction,
+        onSegment,
+        const Vec2(1, 0),
+      )!;
       expect(session.end(), isNull);
     });
 
@@ -446,8 +537,11 @@ void main() {
         ..add(onCircle);
       expect(onCircle.position, const Vec2(4, 0));
 
-      final session =
-          DragSession.start(construction, onCircle, const Vec2(4, 0))!;
+      final session = DragSession.start(
+        construction,
+        onCircle,
+        const Vec2(4, 0),
+      )!;
       // Drag toward the top of the circle, from off-rim: the point must
       // radially project back onto the rim.
       session.update(const Vec2(0, 7));
@@ -460,22 +554,27 @@ void main() {
       expect(onCircle.position!.y, closeTo(4, 1e-12));
     });
 
-    test('slide on a sector stops at the wedge ends instead of circling',
-        () {
+    test('slide on a sector stops at the wedge ends instead of circling', () {
       final center = FreePoint(id: 'c', position: Vec2.zero);
       final end = FreePoint(id: 'e', position: const Vec2(0, 4));
       // b sits at (4, 0): wedge from angle 0 to π/2, radius 4.
       final sector = Sector(id: 'w', center: center, start: b, end: end);
-      final onSector =
-          PointOnObject(id: 'q', curve: sector, parameter: math.pi / 4);
+      final onSector = PointOnObject(
+        id: 'q',
+        curve: sector,
+        parameter: math.pi / 4,
+      );
       construction
         ..add(center)
         ..add(end)
         ..add(sector)
         ..add(onSector);
 
-      final session =
-          DragSession.start(construction, onSector, onSector.position!)!;
+      final session = DragSession.start(
+        construction,
+        onSector,
+        onSector.position!,
+      )!;
       // Drag far past the end rim: the point must stop there instead of
       // following the pointer around the carrier.
       session.update(const Vec2(-4, 4));
@@ -488,17 +587,21 @@ void main() {
       expect(onSector.position!.closeTo(const Vec2(4, 0)), isTrue);
 
       final command = session.end()! as SetPointOnObjectParameterCommand;
-      expect(command.to, closeTo(0, 1e-9),
-          reason: 'the committed parameter is the clamped one');
+      expect(
+        command.to,
+        closeTo(0, 1e-9),
+        reason: 'the committed parameter is the clamped one',
+      );
     });
 
-    test('grabbing near the ±π angular cut never jumps the point a turn',
-        () {
+    test('grabbing near the ±π angular cut never jumps the point a turn', () {
       final center = FreePoint(id: 'c', position: Vec2.zero);
-      final circle =
-          CircleCenterPoint(id: 'k', center: center, onCircle: b);
-      final onCircle =
-          PointOnObject(id: 'q', curve: circle, parameter: math.pi);
+      final circle = CircleCenterPoint(id: 'k', center: center, onCircle: b);
+      final onCircle = PointOnObject(
+        id: 'q',
+        curve: circle,
+        parameter: math.pi,
+      );
       construction
         ..add(center)
         ..add(circle)
@@ -508,31 +611,40 @@ void main() {
       // Grab a hair below the −x axis: atan2 there is ≈ −π while the
       // parameter is +π — the raw offset is ~2π and must be normalized.
       final session = DragSession.start(
-          construction, onCircle, const Vec2(-4, -1e-9))!;
+        construction,
+        onCircle,
+        const Vec2(-4, -1e-9),
+      )!;
       session.update(const Vec2(-4, -1e-9));
-      expect(onCircle.position!.x, closeTo(-4, 1e-6),
-          reason: 'a still gesture must not move the point');
+      expect(
+        onCircle.position!.x,
+        closeTo(-4, 1e-6),
+        reason: 'a still gesture must not move the point',
+      );
       expect(onCircle.position!.y, closeTo(0, 1e-6));
-      expect(onCircle.parameter.abs(), lessThan(math.pi + 1e-6),
-          reason: 'the normalized offset keeps the parameter within a '
-              'turn (±π may swap sign at the cut — same rim position)');
+      expect(
+        onCircle.parameter.abs(),
+        lessThan(math.pi + 1e-6),
+        reason:
+            'the normalized offset keeps the parameter within a '
+            'turn (±π may swap sign at the cut — same rim position)',
+      );
       session.cancel();
       expect(onCircle.parameter, math.pi, reason: 'rollback is float-exact');
     });
 
     test('refuses to start while the host curve is undefined', () {
       construction.moveFreePoint('b', Vec2.zero); // a == b: carrier gone
-      expect(
-        DragSession.start(construction, onSegment, Vec2.zero),
-        isNull,
-      );
+      expect(DragSession.start(construction, onSegment, Vec2.zero), isNull);
       construction.moveFreePoint('b', const Vec2(4, 0));
     });
 
-    test('rollback skips a point removed mid-session instead of throwing',
-        () {
-      final session =
-          DragSession.start(construction, onSegment, const Vec2(1, 0))!;
+    test('rollback skips a point removed mid-session instead of throwing', () {
+      final session = DragSession.start(
+        construction,
+        onSegment,
+        const Vec2(1, 0),
+      )!;
       session.update(const Vec2(2, 0));
       construction.removeWithDependents('p');
       session.cancel(); // must not throw

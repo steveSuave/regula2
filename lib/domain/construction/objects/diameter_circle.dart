@@ -1,4 +1,6 @@
 import '../../math/circle_eq.dart';
+import '../../projective/circles.dart';
+import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
 /// The circle with the span from [point1] to [point2] as a diameter:
@@ -8,6 +10,12 @@ import '../geo_object.dart';
 /// Defined whenever both parents are defined — coincident parents give a
 /// zero-radius circle ([CircleEq] allows that) so the object survives a
 /// drag through the degeneracy without flickering undefined.
+///
+/// Migrated (Phase 109): stores [diameterCircleOf] of the parents'
+/// projective views; [circle] is its projection. An endpoint at infinity
+/// now yields the degenerate line pair of the perpendicular through the
+/// finite endpoint with the line at infinity — the Thales limit shape
+/// ([conic] non-null, [circle] null).
 class DiameterCircle extends GeoCircle {
   DiameterCircle({
     required super.id,
@@ -21,7 +29,11 @@ class DiameterCircle extends GeoCircle {
   final GeoPoint point1;
   final GeoPoint point2;
 
+  ConicMatrix? _conic;
   CircleEq? _circle;
+
+  @override
+  ConicMatrix? get conic => _conic;
 
   @override
   CircleEq? get circle => _circle;
@@ -31,10 +43,15 @@ class DiameterCircle extends GeoCircle {
 
   @override
   void recompute() {
-    final a = point1.position;
-    final b = point2.position;
-    _circle = (a == null || b == null)
-        ? null
-        : CircleEq(a.lerp(b, 0.5), a.distanceTo(b) / 2);
+    final a = point1.projPoint;
+    final b = point2.projPoint;
+    if (a == null || b == null) {
+      _conic = null;
+      _circle = null;
+      return;
+    }
+    final k = diameterCircleOf(a, b);
+    _conic = k.isZero ? null : k;
+    _circle = _conic?.toCircleEq();
   }
 }

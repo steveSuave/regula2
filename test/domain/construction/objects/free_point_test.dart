@@ -22,18 +22,20 @@ void main() {
   });
 
   group('projective view (Phase 107)', () {
-    test('stores the exact lift and projects back exactly at any magnitude',
-        () {
-      final p = FreePoint(id: 'p', position: const Vec2(1e12, -3e12));
-      expect(p.projPoint.x, const Complex(1e12));
-      expect(p.projPoint.y, const Complex(-3e12));
-      expect(p.projPoint.w, Complex.one);
-      // Beyond 1/projectiveEpsilon the tolerance-based chart projection
-      // would call this "at infinity"; a free point's stored lift has w
-      // exactly 1, so the position reads back exactly regardless.
-      expect(p.position, const Vec2(1e12, -3e12));
-      expect(p.isDefined, isTrue);
-    });
+    test(
+      'stores the exact lift and projects back exactly at any magnitude',
+      () {
+        final p = FreePoint(id: 'p', position: const Vec2(1e12, -3e12));
+        expect(p.projPoint.x, const Complex(1e12));
+        expect(p.projPoint.y, const Complex(-3e12));
+        expect(p.projPoint.w, Complex.one);
+        // Beyond 1/projectiveEpsilon the tolerance-based chart projection
+        // would call this "at infinity"; a free point's stored lift has w
+        // exactly 1, so the position reads back exactly regardless.
+        expect(p.position, const Vec2(1e12, -3e12));
+        expect(p.isDefined, isTrue);
+      },
+    );
 
     test('the position setter re-lifts', () {
       final p = FreePoint(id: 'p', position: Vec2.zero);

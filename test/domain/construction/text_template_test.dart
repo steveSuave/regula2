@@ -38,10 +38,10 @@ void main() {
       expect(template.render(const _TableEnv()), '1.002.00');
     });
 
-    test('reference names: unique, first-occurrence order, across slots',
-        () {
-      final template =
-          TextTemplate.parse('{dist(A, B) + a} then {len(c) + a + B}');
+    test('reference names: unique, first-occurrence order, across slots', () {
+      final template = TextTemplate.parse(
+        '{dist(A, B) + a} then {len(c) + a + B}',
+      );
       expect(template.referenceNames, ['A', 'B', 'a', 'c']);
     });
 
@@ -57,8 +57,13 @@ void main() {
     void expectParseError(String content, Pattern message) {
       expect(
         () => TextTemplate.parse(content),
-        throwsA(isA<FormatException>()
-            .having((e) => e.message, 'message', contains(message))),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains(message),
+          ),
+        ),
         reason: content,
       );
     }
@@ -71,8 +76,10 @@ void main() {
     });
 
     test('malformed slot expressions propagate as FormatException', () {
-      expect(() => TextTemplate.parse('{1 +}'),
-          throwsA(isA<ExpressionFormatException>()));
+      expect(
+        () => TextTemplate.parse('{1 +}'),
+        throwsA(isA<ExpressionFormatException>()),
+      );
     });
 
     test('unknown functions and arities are rejected at parse time', () {

@@ -47,35 +47,44 @@ void main() {
         final command = (result as ToolCommitted).command;
         final derived =
             (command as AddObjectCommand).object as PerpendicularLine;
-        expect(derived.parents, [p, refLine],
-            reason: 'parent order is (through, reference) regardless of '
-                'tap order (lineFirst: $lineFirst)');
+        expect(
+          derived.parents,
+          [p, refLine],
+          reason:
+              'parent order is (through, reference) regardless of '
+              'tap order (lineFirst: $lineFirst)',
+        );
       }
     });
 
-    test('empty canvas creates a new free point, grouped in one MacroCommand',
-        () {
-      final construction = Construction()
-        ..add(a)
-        ..add(b)
-        ..add(refLine);
-      final tool = toolFor(ParallelLine.new);
+    test(
+      'empty canvas creates a new free point, grouped in one MacroCommand',
+      () {
+        final construction = Construction()
+          ..add(a)
+          ..add(b)
+          ..add(refLine);
+        final tool = toolFor(ParallelLine.new);
 
-      tool.onInput(ToolInput(const Vec2(2, 0), hit: refLine));
-      final result =
-          tool.onInput(const ToolInput(Vec2(1, 5))) as ToolCommitted;
+        tool.onInput(ToolInput(const Vec2(2, 0), hit: refLine));
+        final result =
+            tool.onInput(const ToolInput(Vec2(1, 5))) as ToolCommitted;
 
-      expect(result.command, isA<MacroCommand>());
-      result.command.apply(construction);
-      expect(construction.length, 5, reason: 'the new free point + the line');
-      final derived = construction.objects.last as ParallelLine;
-      expect(derived.through.position, const Vec2(1, 5));
-      expect(derived.line!.isParallelTo(refLine.line!), isTrue);
+        expect(result.command, isA<MacroCommand>());
+        result.command.apply(construction);
+        expect(construction.length, 5, reason: 'the new free point + the line');
+        final derived = construction.objects.last as ParallelLine;
+        expect(derived.through.position, const Vec2(1, 5));
+        expect(derived.line!.isParallelTo(refLine.line!), isTrue);
 
-      result.command.undo(construction);
-      expect(construction.length, 3,
-          reason: 'the whole step is one undo unit');
-    });
+        result.command.undo(construction);
+        expect(
+          construction.length,
+          3,
+          reason: 'the whole step is one undo unit',
+        );
+      },
+    );
 
     test('a second line, a second point, or any circle is ignored', () {
       final other = LineThroughTwoPoints(
@@ -104,18 +113,20 @@ void main() {
       expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolCommitted>());
     });
 
-    test('with the point slot filled, empty canvas is ignored (missed tap)',
-        () {
-      final p = FreePoint(id: 'p', position: const Vec2(1, 5));
-      final tool = toolFor(PerpendicularLine.new);
+    test(
+      'with the point slot filled, empty canvas is ignored (missed tap)',
+      () {
+        final p = FreePoint(id: 'p', position: const Vec2(1, 5));
+        final tool = toolFor(PerpendicularLine.new);
 
-      tool.onInput(ToolInput(p.position, hit: p));
-      expect(tool.onInput(const ToolInput(Vec2(9, 9))), isA<ToolIgnored>());
-      expect(
-        tool.onInput(ToolInput(const Vec2(2, 0), hit: refLine)),
-        isA<ToolCommitted>(),
-      );
-    });
+        tool.onInput(ToolInput(p.position, hit: p));
+        expect(tool.onInput(const ToolInput(Vec2(9, 9))), isA<ToolIgnored>());
+        expect(
+          tool.onInput(ToolInput(const Vec2(2, 0), hit: refLine)),
+          isA<ToolCommitted>(),
+        );
+      },
+    );
 
     test('preview: existing point and line are haloed, no markers', () {
       final p = FreePoint(id: 'p', position: const Vec2(1, 5));
@@ -125,8 +136,11 @@ void main() {
 
       tool.onInput(ToolInput(p.position, hit: p));
       expect(tool.previewObjectIds, ['p']);
-      expect(tool.previewPositions, isEmpty,
-          reason: 'an existing point is haloed, never marked');
+      expect(
+        tool.previewPositions,
+        isEmpty,
+        reason: 'an existing point is haloed, never marked',
+      );
 
       tool.onInput(ToolInput(const Vec2(2, 3), hit: refLine));
       expect(tool.previewObjectIds, isEmpty, reason: 'commit clears state');
@@ -136,8 +150,9 @@ void main() {
       final tool = toolFor(PerpendicularLine.new);
 
       tool.onInput(const ToolInput(Vec2(1, 5)));
-      expect(tool.previewPositions, [const Vec2(1, 5)],
-          reason: 'the point is not in the construction yet');
+      expect(tool.previewPositions, [
+        const Vec2(1, 5),
+      ], reason: 'the point is not in the construction yet');
       expect(tool.previewObjectIds, isEmpty);
 
       tool.onInput(ToolInput(const Vec2(2, 3), hit: refLine));

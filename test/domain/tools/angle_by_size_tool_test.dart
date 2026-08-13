@@ -42,8 +42,7 @@ void main() {
         reason: 'the parents + rotated point + angle marker',
       );
 
-      final rotated =
-          construction.objects.whereType<RotatedPoint>().single;
+      final rotated = construction.objects.whereType<RotatedPoint>().single;
       expect(rotated.parents, [arm, vertex]);
       expect(rotated.angle, math.pi / 3);
       expect(
@@ -76,8 +75,7 @@ void main() {
         ..add(vertex);
       result.command.apply(construction);
 
-      final rotated =
-          construction.objects.whereType<RotatedPoint>().single;
+      final rotated = construction.objects.whereType<RotatedPoint>().single;
       expect(
         rotated.position!.closeTo(
           Vec2(math.cos(-math.pi / 4), math.sin(-math.pi / 4)),
@@ -97,8 +95,7 @@ void main() {
       final tool = toolFor(math.pi / 2);
 
       tool.onInput(const ToolInput(Vec2(2, 1)));
-      final result =
-          tool.onInput(const ToolInput(Vec2(1, 1))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(1, 1))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
@@ -107,8 +104,7 @@ void main() {
         4,
         reason: '2 free points + rotation + marker',
       );
-      final rotated =
-          construction.objects.whereType<RotatedPoint>().single;
+      final rotated = construction.objects.whereType<RotatedPoint>().single;
       expect(rotated.position!.closeTo(const Vec2(1, 2), 1e-12), isTrue);
 
       result.command.undo(construction);
@@ -143,8 +139,7 @@ void main() {
       );
     });
 
-    test('arm on the vertex leaves the marker undefined and it recovers',
-        () {
+    test('arm on the vertex leaves the marker undefined and it recovers', () {
       final construction = Construction();
       final arm = FreePoint(id: 'a', position: const Vec2(1, 0));
       final vertex = FreePoint(id: 'v', position: const Vec2(0, 0));
@@ -186,7 +181,8 @@ void main() {
       construction.add(vertex);
       final tool = toolFor(1);
       ToolResult tap(FreePoint point) => tool.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(arm);
       (tap(vertex) as ToolCommitted).command.apply(construction);
@@ -196,13 +192,17 @@ void main() {
       (tap(vertex) as ToolCommitted).command.apply(construction);
 
       expect(
-          construction.objects.whereType<RotatedPoint>().single, same(rotated),
-          reason: 'the rotated arm point is reused, not stacked');
+        construction.objects.whereType<RotatedPoint>().single,
+        same(rotated),
+        reason: 'the rotated arm point is reused, not stacked',
+      );
       final markers = construction.objects.whereType<VertexAngle>().toList();
-      expect(markers, hasLength(2),
-          reason: 'the marker itself is still added');
-      expect(identical(markers[1].arm2, rotated), isTrue,
-          reason: 'the second marker is wired to the existing arm point');
+      expect(markers, hasLength(2), reason: 'the marker itself is still added');
+      expect(
+        identical(markers[1].arm2, rotated),
+        isTrue,
+        reason: 'the second marker is wired to the existing arm point',
+      );
     });
   });
 }

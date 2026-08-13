@@ -42,27 +42,32 @@ void main() {
       expect(center.parents, [a, b, c]);
     });
 
-    test('taps on empty canvas create free points, grouped in a MacroCommand',
-        () {
-      final construction = Construction();
+    test(
+      'taps on empty canvas create free points, grouped in a MacroCommand',
+      () {
+        final construction = Construction();
 
-      tool.onInput(const ToolInput(Vec2(0, 0)));
-      tool.onInput(const ToolInput(Vec2(6, 0)));
-      final result = tool.onInput(const ToolInput(Vec2(0, 6)));
+        tool.onInput(const ToolInput(Vec2(0, 0)));
+        tool.onInput(const ToolInput(Vec2(6, 0)));
+        final result = tool.onInput(const ToolInput(Vec2(0, 6)));
 
-      expect(result, isA<ToolCommitted>());
-      final command = (result as ToolCommitted).command;
-      expect(command, isA<MacroCommand>());
+        expect(result, isA<ToolCommitted>());
+        final command = (result as ToolCommitted).command;
+        expect(command, isA<MacroCommand>());
 
-      command.apply(construction);
-      expect(construction.length, 4, reason: '3 free points + the center');
-      final center = construction.objects.last as Centroid;
-      expect(center.position!.closeTo(const Vec2(2, 2)), isTrue);
+        command.apply(construction);
+        expect(construction.length, 4, reason: '3 free points + the center');
+        final center = construction.objects.last as Centroid;
+        expect(center.position!.closeTo(const Vec2(2, 2)), isTrue);
 
-      command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole step is one undo unit');
-    });
+        command.undo(construction);
+        expect(
+          construction.isEmpty,
+          isTrue,
+          reason: 'the whole step is one undo unit',
+        );
+      },
+    );
 
     test('mixed input: only the new free points get add commands', () {
       final construction = Construction();
@@ -71,19 +76,25 @@ void main() {
 
       tool.onInput(ToolInput(a.position, hit: a));
       tool.onInput(const ToolInput(Vec2(6, 0)));
-      final result =
-          tool.onInput(const ToolInput(Vec2(0, 6))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(0, 6))) as ToolCommitted;
 
       final macro = result.command as MacroCommand;
-      expect(macro.commands, hasLength(3),
-          reason: '2 new free points + the center; the existing point is not '
-              're-added');
+      expect(
+        macro.commands,
+        hasLength(3),
+        reason:
+            '2 new free points + the center; the existing point is not '
+            're-added',
+      );
 
       macro.apply(construction);
       expect(construction.length, 4);
       macro.undo(construction);
-      expect(construction.objects.single, a,
-          reason: 'undo must not remove the pre-existing vertex');
+      expect(
+        construction.objects.single,
+        a,
+        reason: 'undo must not remove the pre-existing vertex',
+      );
     });
 
     test('the same existing point twice is ignored', () {
@@ -107,17 +118,22 @@ void main() {
       expect(vertex.parents, [line]);
     });
 
-    test('collectedVertices exposes in-progress input and empties on commit',
-        () {
-      expect(tool.collectedVertices, isEmpty);
-      tool.onInput(const ToolInput(Vec2(0, 0)));
-      tool.onInput(const ToolInput(Vec2(6, 0)));
-      expect(tool.collectedVertices, hasLength(2));
+    test(
+      'collectedVertices exposes in-progress input and empties on commit',
+      () {
+        expect(tool.collectedVertices, isEmpty);
+        tool.onInput(const ToolInput(Vec2(0, 0)));
+        tool.onInput(const ToolInput(Vec2(6, 0)));
+        expect(tool.collectedVertices, hasLength(2));
 
-      tool.onInput(const ToolInput(Vec2(0, 6)));
-      expect(tool.collectedVertices, isEmpty,
-          reason: 'ToolCommitted implies the tool is back in initial state');
-    });
+        tool.onInput(const ToolInput(Vec2(0, 6)));
+        expect(
+          tool.collectedVertices,
+          isEmpty,
+          reason: 'ToolCommitted implies the tool is back in initial state',
+        );
+      },
+    );
 
     test('reset discards collected vertices and the tool keeps working', () {
       tool.onInput(const ToolInput(Vec2(0, 0)));
@@ -165,7 +181,8 @@ void main() {
     });
 
     ToolResult tap(TriangleCenterTool t, FreePoint point) => t.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects));
+      ToolInput(point.position, hit: point, objects: construction.objects),
+    );
 
     test('the same center twice refuses the completing tap', () {
       tap(tool, a);
@@ -175,8 +192,11 @@ void main() {
 
       tap(tool, a);
       tap(tool, b);
-      expect(tap(tool, c), isA<ToolIgnored>(),
-          reason: 'the identical centroid already exists');
+      expect(
+        tap(tool, c),
+        isA<ToolIgnored>(),
+        reason: 'the identical centroid already exists',
+      );
       expect(construction.objects.whereType<Centroid>(), hasLength(1));
     });
 
@@ -197,9 +217,13 @@ void main() {
 
       tap(tool, a);
       tap(tool, b);
-      expect(tap(tool, c), isA<ToolIgnored>(),
-          reason: 'the medians crossing IS the centroid, by theorem — no '
-              'structural check can see it, the identity probe does');
+      expect(
+        tap(tool, c),
+        isA<ToolIgnored>(),
+        reason:
+            'the medians crossing IS the centroid, by theorem — no '
+            'structural check can see it, the identity probe does',
+      );
       expect(construction.objects.whereType<Centroid>(), isEmpty);
     });
   });

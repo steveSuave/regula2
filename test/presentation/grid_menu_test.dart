@@ -36,8 +36,8 @@ void main() {
   /// bare Text inside a popup item never appears in the hit path (a
   /// ListTile-title quirk), which makes text taps warn on every run.
   Future<void> tapItem(WidgetTester tester, String label) => tester.tap(
-        find.widgetWithText(CheckedPopupMenuItem<VoidCallback>, label),
-      );
+    find.widgetWithText(CheckedPopupMenuItem<VoidCallback>, label),
+  );
 
   testWidgets('wide chrome: the grid popup toggles axes and grid', (
     tester,

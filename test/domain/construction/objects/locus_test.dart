@@ -66,10 +66,7 @@ void main() {
 
     test('chain is unmodifiable', () {
       final locus = _circleLocus(sampleCount: 4);
-      expect(
-        () => locus.chain.removeLast(),
-        throwsUnsupportedError,
-      );
+      expect(() => locus.chain.removeLast(), throwsUnsupportedError);
     });
   });
 
@@ -105,12 +102,12 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(4, 0));
       final traced = Midpoint(id: 'tr', point1: driver, point2: p);
       Locus build({int sampleCount = 128, double halfSpan = 100}) => Locus(
-            id: 'loc',
-            driver: driver,
-            traced: traced,
-            sampleCount: sampleCount,
-            halfSpan: halfSpan,
-          );
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: sampleCount,
+        halfSpan: halfSpan,
+      );
       expect(() => build(sampleCount: 1), throwsArgumentError);
       expect(() => build(halfSpan: 0), throwsArgumentError);
       expect(() => build(halfSpan: double.nan), throwsArgumentError);
@@ -156,10 +153,12 @@ void main() {
       expect(samples.length, 9);
       for (var i = 0; i < samples.length; i++) {
         final angle = math.pi / 2 * i / 8;
-        expect(samples[i]!.x, closeTo(2 + math.cos(angle), 1e-12),
-            reason: 'x[$i]');
-        expect(samples[i]!.y, closeTo(math.sin(angle), 1e-12),
-            reason: 'y[$i]');
+        expect(
+          samples[i]!.x,
+          closeTo(2 + math.cos(angle), 1e-12),
+          reason: 'x[$i]',
+        );
+        expect(samples[i]!.y, closeTo(math.sin(angle), 1e-12), reason: 'y[$i]');
       }
     });
 
@@ -183,11 +182,17 @@ void main() {
       final samples = locus.samples!;
       expect(samples.length, 5);
       for (var i = 0; i < 5; i++) {
-        expect(samples[i]!.closeTo(Vec2(i.toDouble(), 0)), isTrue,
-            reason: 'sample $i');
+        expect(
+          samples[i]!.closeTo(Vec2(i.toDouble(), 0)),
+          isTrue,
+          reason: 'sample $i',
+        );
       }
-      expect(locus.coreSamples, hasLength(5),
-          reason: 'a bounded sweep has no far-out samples — all core');
+      expect(
+        locus.coreSamples,
+        hasLength(5),
+        reason: 'a bounded sweep has no far-out samples — all core',
+      );
     });
 
     test('ray host: the sweep starts at the origin and runs only along '
@@ -212,8 +217,11 @@ void main() {
       // never behind it.
       final samples = locus.samples!;
       expect(samples.length, 4);
-      expect(samples.first!.closeTo(const Vec2(1, 0)), isTrue,
-          reason: 'the first sample sits exactly on the ray origin');
+      expect(
+        samples.first!.closeTo(const Vec2(1, 0)),
+        isTrue,
+        reason: 'the first sample sits exactly on the ray origin',
+      );
       for (var i = 0; i < 4; i++) {
         final expected = 1 + 100 * math.tan(math.pi / 2 * i / 4);
         expect(samples[i]!.x, closeTo(expected, 1e-9), reason: 'x[$i]');
@@ -252,11 +260,17 @@ void main() {
         closeTo(0, 1e-9),
         reason: 'the grid sits symmetrically about the focus center',
       );
-      expect(locus.coreSamples, hasLength(1),
-          reason: 'only the center sample lies inside the focus window — '
-              'coreSamples is the bounded slice fit and labels consume');
-      expect(locus.coreSamples!.single.distanceTo(Vec2.zero),
-          closeTo(0, 1e-12));
+      expect(
+        locus.coreSamples,
+        hasLength(1),
+        reason:
+            'only the center sample lies inside the focus window — '
+            'coreSamples is the bounded slice fit and labels consume',
+      );
+      expect(
+        locus.coreSamples!.single.distanceTo(Vec2.zero),
+        closeTo(0, 1e-12),
+      );
     });
 
     test('restores the driver bit-exactly', () {
@@ -297,8 +311,7 @@ void main() {
       }
     });
 
-    test(
-        'tangency-bounded run closes through the linkage continuation '
+    test('tangency-bounded run closes through the linkage continuation '
         'into the full circle', () {
       // Driver sweeps the x-axis over [-100, 100]; traced is the
       // perpendicular-through-driver ∩ circle(radius 10), defined only
@@ -311,20 +324,32 @@ void main() {
         sampleCount: 41,
       );
       final samples = locus.samples!;
-      expect(samples, isNot(contains(null)),
-          reason: 'a single run walks into a single component');
+      expect(
+        samples,
+        isNot(contains(null)),
+        reason: 'a single run walks into a single component',
+      );
       final points = samples.cast<Vec2>();
       expect(points.first, points.last, reason: 'closed loop');
       for (final p in points) {
         // 1e-6: the boundary samples sit in the intersection math's
         // epsilon-tangent zone, ~1e-8 outside the exact circle.
-        expect(p.x * p.x + p.y * p.y, closeTo(100, 1e-6),
-            reason: 'every sample lies on the circle');
+        expect(
+          p.x * p.x + p.y * p.y,
+          closeTo(100, 1e-6),
+          reason: 'every sample lies on the circle',
+        );
       }
-      expect(points.any((p) => p.y > 5), isTrue,
-          reason: 'the flipped branch covers the upper half');
-      expect(points.any((p) => p.y < -5), isTrue,
-          reason: 'the original branch covers the lower half');
+      expect(
+        points.any((p) => p.y > 5),
+        isTrue,
+        reason: 'the flipped branch covers the upper half',
+      );
+      expect(
+        points.any((p) => p.y < -5),
+        isTrue,
+        reason: 'the original branch covers the lower half',
+      );
       // Boundary refinement dives to the two-candidate edge — the
       // intersection epsilon puts it ~1e-4 from the exact tangency (the
       // old 1e-6 pin relied on the uniform window grid landing a sample
@@ -365,13 +390,22 @@ void main() {
       final points = samples.cast<Vec2>();
       expect(points.first, points.last, reason: 'closed loop');
       for (final p in points) {
-        expect(p.x * p.x + p.y * p.y, closeTo(900, 1e-4),
-            reason: 'every sample lies on the circle');
+        expect(
+          p.x * p.x + p.y * p.y,
+          closeTo(900, 1e-4),
+          reason: 'every sample lies on the circle',
+        );
       }
-      expect(points.any((p) => p.y > 15), isTrue,
-          reason: 'the flipped branch covers the upper half');
-      expect(points.any((p) => p.y < -15), isTrue,
-          reason: 'the original branch covers the lower half');
+      expect(
+        points.any((p) => p.y > 15),
+        isTrue,
+        reason: 'the flipped branch covers the upper half',
+      );
+      expect(
+        points.any((p) => p.y < -15),
+        isTrue,
+        reason: 'the original branch covers the lower half',
+      );
     });
 
     test('doc-1 shape: open walks keep strokes and dives, no mirror '
@@ -430,20 +464,30 @@ void main() {
           components.last.add(s);
         }
       }
-      expect(components, hasLength(2),
-          reason: 'one run each side of the |AD| < |AB| gap');
+      expect(
+        components,
+        hasLength(2),
+        reason: 'one run each side of the |AD| < |AB| gap',
+      );
       final componentSigns = <double>[];
       for (final component in components) {
-        final signs =
-            component.map((p) => p.y.sign).where((s) => s != 0).toSet();
-        expect(signs, hasLength(1),
-            reason: 'each component stays on one sheet — no mirror '
-                'strokes from a dangling flipped segment');
+        final signs = component
+            .map((p) => p.y.sign)
+            .where((s) => s != 0)
+            .toSet();
+        expect(
+          signs,
+          hasLength(1),
+          reason:
+              'each component stays on one sheet — no mirror '
+              'strokes from a dangling flipped segment',
+        );
         componentSigns.add(signs.single);
         expect(
           component.map((p) => p.norm).reduce(math.min),
           greaterThan(1.0),
-          reason: 'no sample near A — a sample there means the ladder '
+          reason:
+              'no sample near A — a sample there means the ladder '
               'entered the tolerance zone past the true tangency',
         );
       }
@@ -463,14 +507,19 @@ void main() {
         expect(
           component.map((p) => p.distanceTo(infinityLimit)).reduce(math.min),
           lessThan(1e-3),
-          reason: 'the window-edge end touches the driver-at-infinity '
+          reason:
+              'the window-edge end touches the driver-at-infinity '
               'limit on the perpendicular through A',
         );
       }
-      expect(componentSigns.toSet(), hasLength(2),
-          reason: 'the fixed branch lands on opposite sides of AB for '
-              'the two runs — identical signs mean run 2 was traced '
-              "under run 1's leaked flip (the mirror sheet)");
+      expect(
+        componentSigns.toSet(),
+        hasLength(2),
+        reason:
+            'the fixed branch lands on opposite sides of AB for '
+            'the two runs — identical signs mean run 2 was traced '
+            "under run 1's leaked flip (the mirror sheet)",
+      );
       expect(f.branchIndex, 0);
       expect(g.branchIndex, 1);
     });
@@ -503,8 +552,11 @@ void main() {
         sampleCount: 64,
       );
       final samples = locus.samples!;
-      expect(samples, isNot(contains(null)),
-          reason: 'one wrapped run, one component — no seam at 0/2π');
+      expect(
+        samples,
+        isNot(contains(null)),
+        reason: 'one wrapped run, one component — no seam at 0/2π',
+      );
       final points = samples.cast<Vec2>();
       expect(points.first, points.last, reason: 'the eight closes');
       // The walk covers both branches: roughly twice the defined uniform
@@ -515,8 +567,11 @@ void main() {
         final b = host.circle!.pointAt(2 * math.pi * i / 64);
         if (b.distanceTo(c.position) <= 240) uniformDefined++;
       }
-      expect(points.length, greaterThan((1.8 * uniformDefined).round()),
-          reason: 'both halves of the eight are traced');
+      expect(
+        points.length,
+        greaterThan((1.8 * uniformDefined).round()),
+        reason: 'both halves of the eight are traced',
+      );
       expect(d.branchIndex, 1, reason: 'flips restored after the sweep');
     });
 
@@ -588,8 +643,11 @@ Locus _perpendicularCircleLocus({
   final b = FreePoint(id: 'b', position: const Vec2(1, 0));
   final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
   final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
-  final perpendicular =
-      PerpendicularLine(id: 'perp', through: driver, reference: host);
+  final perpendicular = PerpendicularLine(
+    id: 'perp',
+    through: driver,
+    reference: host,
+  );
   final rim = FreePoint(id: 'r', position: Vec2(radius, 0));
   final circle = CircleCenterPoint(id: 'k', center: a, onCircle: rim);
   final traced = IntersectionPoint(
@@ -620,8 +678,11 @@ Locus _circleLocus({
   final center = FreePoint(id: 'o', position: Vec2.zero);
   final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
   final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
-  final driver =
-      PointOnObject(id: 'drv', curve: host, parameter: driverParameter);
+  final driver = PointOnObject(
+    id: 'drv',
+    curve: host,
+    parameter: driverParameter,
+  );
   final p = FreePoint(id: 'p', position: const Vec2(4, 0));
   final traced = Midpoint(id: 'tr', point1: driver, point2: p);
   final locus = Locus(

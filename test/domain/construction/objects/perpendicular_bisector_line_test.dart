@@ -15,11 +15,7 @@ void main() {
     test('passes through the midpoint, perpendicular to the join', () {
       final p = FreePoint(id: 'p', position: const Vec2(1, 1));
       final q = FreePoint(id: 'q', position: const Vec2(5, 3));
-      final bisector = PerpendicularBisectorLine(
-        id: 'b',
-        point1: p,
-        point2: q,
-      );
+      final bisector = PerpendicularBisectorLine(id: 'b', point1: p, point2: q);
       final line = bisector.line!;
       expect(line.contains(const Vec2(3, 2)), isTrue);
       expect(line.direction.dot(const Vec2(4, 2)), closeTo(0, 1e-12));
@@ -29,19 +25,18 @@ void main() {
     test('undefined while the points coincide, recovers on drag', () {
       final p = FreePoint(id: 'p', position: const Vec2(2, 2));
       final q = FreePoint(id: 'q', position: const Vec2(2, 2));
-      final bisector = PerpendicularBisectorLine(
-        id: 'b',
-        point1: p,
-        point2: q,
-      );
+      final bisector = PerpendicularBisectorLine(id: 'b', point1: p, point2: q);
       expect(bisector.line, isNull);
       expect(bisector.isDefined, isFalse);
 
       q.position = const Vec2(6, 2);
       bisector.recompute();
       expect(bisector.line, isNotNull);
-      expect(bisector.line!.contains(const Vec2(4, 7)), isTrue,
-          reason: 'vertical bisector of a horizontal join at x = 4');
+      expect(
+        bisector.line!.contains(const Vec2(4, 7)),
+        isTrue,
+        reason: 'vertical bisector of a horizontal join at x = 4',
+      );
 
       q.position = const Vec2(2, 2);
       bisector.recompute();
@@ -104,25 +99,27 @@ void main() {
     );
 
     Glados3(any.vec2, any.vec2, any.coordinate).test(
-        'recompute is invariant under complex rescaling of a parent '
-        '(Phase 107)', (p, q, kRe) {
-      if (p.closeTo(q, 1e-3)) {
-        return;
-      }
-      // A genuinely complex scalar, bounded away from zero.
-      final k = Complex(kRe.abs() >= 1 ? kRe : kRe + 2, 1.5);
-      final plain = PerpendicularBisectorLine(
-        id: 'b1',
-        point1: StubProjectivePoint(ProjPoint.lift(p)),
-        point2: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      final scaled = PerpendicularBisectorLine(
-        id: 'b2',
-        point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
-        point2: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
-      expect(scaled.line!.closeTo(plain.line!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent '
+      '(Phase 107)',
+      (p, q, kRe) {
+        if (p.closeTo(q, 1e-3)) {
+          return;
+        }
+        // A genuinely complex scalar, bounded away from zero.
+        final k = Complex(kRe.abs() >= 1 ? kRe : kRe + 2, 1.5);
+        final plain = PerpendicularBisectorLine(
+          id: 'b1',
+          point1: StubProjectivePoint(ProjPoint.lift(p)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        final scaled = PerpendicularBisectorLine(
+          id: 'b2',
+          point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+        expect(scaled.line!.closeTo(plain.line!), isTrue);
+      },
+    );
   });
 }

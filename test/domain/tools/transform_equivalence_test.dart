@@ -16,30 +16,33 @@ void main() {
   final c = FreePoint(id: 'c', position: const Vec2(2, 3));
 
   test('finds an existing image with identical parents and equal angle', () {
-    final existing =
-        RotatedPoint(id: 'r', point: a, center: b, angle: 1.25);
-    final candidate =
-        RotatedPoint(id: 'n0', point: a, center: b, angle: 1.25);
+    final existing = RotatedPoint(id: 'r', point: a, center: b, angle: 1.25);
+    final candidate = RotatedPoint(id: 'n0', point: a, center: b, angle: 1.25);
 
     expect(equivalentExisting([b, a, existing], candidate), same(existing));
   });
 
   test('a different angle is not equivalent', () {
-    final existing =
-        RotatedPoint(id: 'r', point: a, center: b, angle: 1.25);
-    final candidate =
-        RotatedPoint(id: 'n0', point: a, center: b, angle: 1.25 + 1e-9);
+    final existing = RotatedPoint(id: 'r', point: a, center: b, angle: 1.25);
+    final candidate = RotatedPoint(
+      id: 'n0',
+      point: a,
+      center: b,
+      angle: 1.25 + 1e-9,
+    );
 
     expect(equivalentExisting([existing], candidate), isNull);
   });
 
   test('homothetic points compare their ratio exactly (Phase 68)', () {
-    final existing =
-        HomotheticPoint(id: 'h', point: a, center: b, ratio: 2);
-    final matching =
-        HomotheticPoint(id: 'n0', point: a, center: b, ratio: 2);
-    final other =
-        HomotheticPoint(id: 'n1', point: a, center: b, ratio: 2 + 1e-9);
+    final existing = HomotheticPoint(id: 'h', point: a, center: b, ratio: 2);
+    final matching = HomotheticPoint(id: 'n0', point: a, center: b, ratio: 2);
+    final other = HomotheticPoint(
+      id: 'n1',
+      point: a,
+      center: b,
+      ratio: 2 + 1e-9,
+    );
 
     expect(equivalentExisting([b, a, existing], matching), same(existing));
     expect(equivalentExisting([existing], other), isNull);
@@ -64,8 +67,7 @@ void main() {
     expect(equivalentExisting([existing], matching), same(existing));
   });
 
-  test('a different concrete kind over the same parents is not equivalent',
-      () {
+  test('a different concrete kind over the same parents is not equivalent', () {
     final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
     final candidate = Segment(id: 'n0', point1: a, point2: b);
 
@@ -76,8 +78,11 @@ void main() {
     final existing = Midpoint(id: 'm', point1: a, point2: b);
     final candidate = Midpoint(id: 'n0', point1: a, point2: b);
 
-    expect(equivalentExisting([existing], candidate), isNull,
-        reason: 'only transform-image kinds participate');
+    expect(
+      equivalentExisting([existing], candidate),
+      isNull,
+      reason: 'only transform-image kinds participate',
+    );
   });
 
   test('first equivalent in iteration order wins', () {

@@ -23,9 +23,9 @@ void main() {
     final construction = Construction();
     tool.onInput(const ToolInput(Vec2(0, 0)));
     tool.onInput(const ToolInput(Vec2(4, 0)));
-    (tool.onInput(const ToolInput(Vec2(3, 5))) as ToolCommitted)
-        .command
-        .apply(construction);
+    (tool.onInput(const ToolInput(Vec2(3, 5))) as ToolCommitted).command.apply(
+      construction,
+    );
     return construction;
   }
 
@@ -53,15 +53,15 @@ void main() {
         isA<ToolAccepted>(),
         reason: 'the second corner does not commit — the apex is pending',
       );
-      final result =
-          tool.onInput(const ToolInput(Vec2(3, 5))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(3, 5))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
       expect(
         construction.length,
         8,
-        reason: '2 free corners + base + midpoint + bisector + apex '
+        reason:
+            '2 free corners + base + midpoint + bisector + apex '
             '+ 2 legs',
       );
       expect(
@@ -103,8 +103,9 @@ void main() {
     test('scaffolding is hidden, corners and sides are visible', () {
       final construction = buildTriangle();
 
-      final hidden =
-          construction.objects.where((o) => !o.attributes.visible).toList();
+      final hidden = construction.objects
+          .where((o) => !o.attributes.visible)
+          .toList();
       expect(hidden, hasLength(2), reason: 'the midpoint and the bisector');
 
       final visible = construction.objects.where((o) => o.attributes.visible);

@@ -14,10 +14,10 @@ void main() {
   late int nextId;
 
   ThreePointTool bisectorTool() => ThreePointTool(
-        newId: () => 'n${nextId++}',
-        build: (id, a, b, c) =>
-            AngleBisectorLine(id: id, arm1: a, vertex: b, arm2: c),
-      );
+    newId: () => 'n${nextId++}',
+    build: (id, a, b, c) =>
+        AngleBisectorLine(id: id, arm1: a, vertex: b, arm2: c),
+  );
 
   setUp(() => nextId = 0);
 
@@ -36,8 +36,11 @@ void main() {
       final command = (result as ToolCommitted).command;
       final bisector =
           (command as AddObjectCommand).object as AngleBisectorLine;
-      expect(bisector.parents, [a, v, b],
-          reason: 'tap order is builder order: arm, vertex, arm');
+      expect(bisector.parents, [
+        a,
+        v,
+        b,
+      ], reason: 'tap order is builder order: arm, vertex, arm');
     });
 
     test('three canvas taps: 3 free points + object in one MacroCommand', () {
@@ -46,8 +49,7 @@ void main() {
 
       tool.onInput(const ToolInput(Vec2(5, 0)));
       tool.onInput(const ToolInput(Vec2(0, 0)));
-      final result =
-          tool.onInput(const ToolInput(Vec2(0, 5))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(0, 5))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
@@ -56,8 +58,11 @@ void main() {
       expect(bisector.line!.contains(const Vec2(1, 1)), isTrue);
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole step is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole step is one undo unit',
+      );
     });
 
     test('allowCurveTaps: false refuses curve-flavored taps (Phase 29b)', () {

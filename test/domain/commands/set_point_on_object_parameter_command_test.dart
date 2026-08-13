@@ -24,13 +24,19 @@ void main() {
       ..add(mid);
     expect(p.position, const Vec2(3, 0));
 
-    final command =
-        SetPointOnObjectParameterCommand(pointId: 'p', from: 3, to: 7);
+    final command = SetPointOnObjectParameterCommand(
+      pointId: 'p',
+      from: 3,
+      to: 7,
+    );
     command.apply(construction);
     expect(p.parameter, 7);
     expect(p.position, const Vec2(7, 0));
-    expect(mid.position, const Vec2(3.5, 0),
-        reason: 'dependents recompute when the parameter changes');
+    expect(
+      mid.position,
+      const Vec2(3.5, 0),
+      reason: 'dependents recompute when the parameter changes',
+    );
 
     command.undo(construction);
     expect(p.parameter, 3);
@@ -42,8 +48,7 @@ void main() {
     final construction = Construction();
     final center = FreePoint(id: 'c', position: Vec2.zero);
     final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
-    final circle =
-        CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+    final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
     final p = PointOnObject(id: 'p', curve: circle, parameter: 0);
     construction
       ..add(center)
@@ -52,7 +57,10 @@ void main() {
       ..add(p);
 
     final quarterTurn = SetPointOnObjectParameterCommand(
-        pointId: 'p', from: 0, to: 1.5707963267948966);
+      pointId: 'p',
+      from: 0,
+      to: 1.5707963267948966,
+    );
     quarterTurn.apply(construction);
     expect(p.position!.x, closeTo(0, 1e-12));
     expect(p.position!.y, closeTo(2, 1e-12));
@@ -65,8 +73,11 @@ void main() {
     final a = FreePoint(id: 'a', position: Vec2.zero);
     construction.add(a);
 
-    final command =
-        SetPointOnObjectParameterCommand(pointId: 'a', from: 0, to: 1);
+    final command = SetPointOnObjectParameterCommand(
+      pointId: 'a',
+      from: 0,
+      to: 1,
+    );
     expect(() => command.apply(construction), throwsArgumentError);
     expect(a.position, Vec2.zero);
   });

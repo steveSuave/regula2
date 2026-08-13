@@ -118,10 +118,7 @@ void main() {
         ..add(a)
         ..add(b)
         ..add(m);
-      expect(
-        () => c.setPointOnObjectParameter('nope', 0),
-        throwsArgumentError,
-      );
+      expect(() => c.setPointOnObjectParameter('nope', 0), throwsArgumentError);
       expect(() => c.setPointOnObjectParameter('a', 0), throwsArgumentError);
       expect(() => c.setPointOnObjectParameter('m', 0), throwsArgumentError);
     });
@@ -296,11 +293,7 @@ void main() {
 
       expect(mid.position!.closeTo(const Vec2(2, 0)), isTrue);
 
-      for (final target in const [
-        Vec2(1, 3),
-        Vec2(-2, -5),
-        Vec2(10, 0.5),
-      ]) {
+      for (final target in const [Vec2(1, 3), Vec2(-2, -5), Vec2(10, 0.5)]) {
         c.moveFreePoint('a', target);
         final expected = target.lerp(b.position, 0.5);
         expect(
@@ -337,10 +330,7 @@ void main() {
       c.moveFreePoint('a', Vec2.zero); // back: intersection reappears
       expect(x0.isDefined, isTrue);
       // Radius-4 circles centered (0,0) and (4,0) meet at (2, ±2√3).
-      expect(
-        x0.position!.closeTo(const Vec2(2, 3.4641016151377544)),
-        isTrue,
-      );
+      expect(x0.position!.closeTo(const Vec2(2, 3.4641016151377544)), isTrue);
     });
   });
 }

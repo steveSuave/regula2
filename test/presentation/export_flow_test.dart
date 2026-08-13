@@ -43,9 +43,9 @@ class _FakeFilePicker extends FilePickerPlatform {
 
 /// Big-endian PNG IHDR dimensions — width at bytes 16–19, height 20–23.
 ({int width, int height}) pngDimensions(Uint8List bytes) => (
-      width: ByteData.sublistView(bytes).getUint32(16),
-      height: ByteData.sublistView(bytes).getUint32(20),
-    );
+  width: ByteData.sublistView(bytes).getUint32(16),
+  height: ByteData.sublistView(bytes).getUint32(20),
+);
 
 void main() {
   late ProviderContainer container;
@@ -69,7 +69,9 @@ void main() {
   }
 
   void addPoint() {
-    container.read(commandStackProvider.notifier).execute(
+    container
+        .read(commandStackProvider.notifier)
+        .execute(
           AddObjectCommand(FreePoint(id: 'a', position: const Vec2(2, -3))),
         );
     expect(container.read(constructionProvider).construction.length, 1);
@@ -94,8 +96,9 @@ void main() {
     return (width: int.parse(parts[0]), height: int.parse(parts[1]));
   }
 
-  testWidgets('File menu export saves a PNG at the canvas size',
-      (tester) async {
+  testWidgets('File menu export saves a PNG at the canvas size', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint();
     await openExportDialog(tester);
@@ -122,8 +125,9 @@ void main() {
     expect(dimensions.height, canvasSize.height.round());
   });
 
-  testWidgets('scale multiplies the displayed and exported size',
-      (tester) async {
+  testWidgets('scale multiplies the displayed and exported size', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint();
     await openExportDialog(tester);
@@ -147,8 +151,7 @@ void main() {
     expect(dimensions.height, base.height * 2);
   });
 
-  testWidgets(
-      'the axes & grid checkbox appears with the document toggles and '
+  testWidgets('the axes & grid checkbox appears with the document toggles and '
       'unticking excludes the layer from the export', (tester) async {
     await pumpEditor(tester);
     addPoint();
@@ -171,8 +174,11 @@ void main() {
 
     // Baseline: toggles off — no checkbox, no layer.
     await openExportDialog(tester);
-    expect(find.text(checkbox), findsNothing,
-        reason: 'the checkbox is meaningless while both toggles are off');
+    expect(
+      find.text(checkbox),
+      findsNothing,
+      reason: 'the checkbox is meaningless while both toggles are off',
+    );
     final withoutLayer = await export(tester);
 
     // Toggles on: the checkbox shows, defaults ticked, and the export
@@ -184,20 +190,25 @@ void main() {
     await openExportDialog(tester);
     expect(find.text(checkbox), findsOneWidget);
     final withLayer = await export(tester);
-    expect(listEquals(withLayer, withoutLayer), isFalse,
-        reason: 'axes + grid must render into the export by default');
+    expect(
+      listEquals(withLayer, withoutLayer),
+      isFalse,
+      reason: 'axes + grid must render into the export by default',
+    );
 
     // Unticked: byte-identical to the toggles-off baseline.
     await openExportDialog(tester);
     await tester.tap(find.text(checkbox));
     await tester.pumpAndSettle();
     final excluded = await export(tester);
-    expect(listEquals(excluded, withoutLayer), isTrue,
-        reason: 'unticking must exclude the layer entirely');
+    expect(
+      listEquals(excluded, withoutLayer),
+      isTrue,
+      reason: 'unticking must exclude the layer entirely',
+    );
   });
 
-  testWidgets('fit framing is disabled with nothing to frame',
-      (tester) async {
+  testWidgets('fit framing is disabled with nothing to frame', (tester) async {
     await pumpEditor(tester);
     await openExportDialog(tester);
     expect(find.text('Nothing visible to frame'), findsOneWidget);
@@ -210,8 +221,7 @@ void main() {
     expect(fitTile.enabled, isFalse);
   });
 
-  testWidgets(
-      'region pick round trip: overlay drag reopens the dialog and the '
+  testWidgets('region pick round trip: overlay drag reopens the dialog and the '
       'export crops to the marquee', (tester) async {
     await pumpEditor(tester);
     addPoint();
@@ -253,8 +263,7 @@ void main() {
     expect(dimensions.height, 60);
   });
 
-  testWidgets('Esc cancels the region pick back to the dialog',
-      (tester) async {
+  testWidgets('Esc cancels the region pick back to the dialog', (tester) async {
     await pumpEditor(tester);
     addPoint();
     await openExportDialog(tester);
@@ -271,8 +280,7 @@ void main() {
     expect(find.text('Drag a rectangle on the canvas'), findsOneWidget);
   });
 
-  testWidgets('a sub-threshold drag keeps the overlay armed',
-      (tester) async {
+  testWidgets('a sub-threshold drag keeps the overlay armed', (tester) async {
     await pumpEditor(tester);
     addPoint();
     await openExportDialog(tester);
@@ -295,8 +303,9 @@ void main() {
     expect(find.text('Export as PNG'), findsNothing);
   });
 
-  testWidgets('the dialog scrolls instead of overflowing in a short window',
-      (tester) async {
+  testWidgets('the dialog scrolls instead of overflowing in a short window', (
+    tester,
+  ) async {
     // Short enough that the dialog's content area cannot hold the
     // options at their natural height; a RenderFlex overflow would fail
     // this test via FlutterError.

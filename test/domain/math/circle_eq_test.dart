@@ -50,47 +50,60 @@ void main() {
   });
 
   group('CircleEq properties', () {
-    Glados2(any.vec2, any.vec2)
-        .test('centerAndPoint passes through the defining point', (c, p) {
-      final circle = CircleEq.centerAndPoint(c, p);
-      expect(circle.contains(p), isTrue);
-      expect(circle.radius, c.distanceTo(p));
-    });
+    Glados2(any.vec2, any.vec2).test(
+      'centerAndPoint passes through the defining point',
+      (c, p) {
+        final circle = CircleEq.centerAndPoint(c, p);
+        expect(circle.contains(p), isTrue);
+        expect(circle.radius, c.distanceTo(p));
+      },
+    );
 
-    Glados3(any.vec2, any.coordinate, any.unitInterval)
-        .test('pointAt lies on the circle for any angle', (center, r, t) {
-      final circle = CircleEq(center, r.abs());
-      final p = circle.pointAt(t * 2 * math.pi);
-      expect(circle.contains(p, 1e-6), isTrue);
-    });
+    Glados3(any.vec2, any.coordinate, any.unitInterval).test(
+      'pointAt lies on the circle for any angle',
+      (center, r, t) {
+        final circle = CircleEq(center, r.abs());
+        final p = circle.pointAt(t * 2 * math.pi);
+        expect(circle.contains(p, 1e-6), isTrue);
+      },
+    );
 
-    Glados2(any.vec2, any.coordinate)
-        .test('center is radius away from the boundary', (center, r) {
-      final circle = CircleEq(center, r.abs());
-      expect(circle.signedDistanceTo(center), -r.abs());
-    });
+    Glados2(any.vec2, any.coordinate).test(
+      'center is radius away from the boundary',
+      (center, r) {
+        final circle = CircleEq(center, r.abs());
+        expect(circle.signedDistanceTo(center), -r.abs());
+      },
+    );
 
     test('angleAt reads the polar angle around the center', () {
       final circle = CircleEq(const Vec2(1, 1), 2);
       expect(circle.angleAt(const Vec2(5, 1)), closeTo(0, 1e-12));
       expect(circle.angleAt(const Vec2(1, 9)), closeTo(math.pi / 2, 1e-12));
       expect(circle.angleAt(const Vec2(-4, 1)), closeTo(math.pi, 1e-12));
-      expect(circle.angleAt(circle.center), 0,
-          reason: 'the center has no direction — documented fallback');
+      expect(
+        circle.angleAt(circle.center),
+        0,
+        reason: 'the center has no direction — documented fallback',
+      );
     });
 
-    Glados2(any.vec2, any.vec2)
-        .test('pointAt(angleAt(p)) is the radial projection of p',
-            (center, p) {
-      if (center == p) return;
-      final circle = CircleEq(center, 3);
-      final projected = circle.pointAt(circle.angleAt(p));
-      final toP = p - center;
-      final toProjected = projected - center;
-      expect(toP.cross(toProjected).abs() / toP.norm, closeTo(0, 1e-6),
-          reason: 'projection stays on the ray center → p');
-      expect(toP.dot(toProjected), greaterThan(0));
-      expect(circle.contains(projected, 1e-9), isTrue);
-    });
+    Glados2(any.vec2, any.vec2).test(
+      'pointAt(angleAt(p)) is the radial projection of p',
+      (center, p) {
+        if (center == p) return;
+        final circle = CircleEq(center, 3);
+        final projected = circle.pointAt(circle.angleAt(p));
+        final toP = p - center;
+        final toProjected = projected - center;
+        expect(
+          toP.cross(toProjected).abs() / toP.norm,
+          closeTo(0, 1e-6),
+          reason: 'projection stays on the ray center → p',
+        );
+        expect(toP.dot(toProjected), greaterThan(0));
+        expect(circle.contains(projected, 1e-9), isTrue);
+      },
+    );
   });
 }

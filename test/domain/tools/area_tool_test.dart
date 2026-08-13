@@ -47,8 +47,7 @@ void main() {
       expect(second, isA<ToolCommitted>());
     });
 
-    test('the topmost region is consulted from extraHits past a point hit',
-        () {
+    test('the topmost region is consulted from extraHits past a point hit', () {
       // Tapping near vertex b: the point wins the hit, but the polygon in
       // extraHits is what the tool measures.
       final tool = AreaTool(newId: newId);
@@ -61,8 +60,7 @@ void main() {
       expect((object as AreaMeasurement).subject, same(polygon));
     });
 
-    test('line, point and empty taps are ignored — never the point ladder',
-        () {
+    test('line, point and empty taps are ignored — never the point ladder', () {
       final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       final tool = AreaTool(newId: newId);
       expect(

@@ -23,9 +23,9 @@ void main() {
     final construction = Construction();
     tool.onInput(const ToolInput(Vec2(0, 0)));
     tool.onInput(const ToolInput(Vec2(4, 0)));
-    (tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted)
-        .command
-        .apply(construction);
+    (tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted).command.apply(
+      construction,
+    );
     return construction;
   }
 
@@ -41,8 +41,11 @@ void main() {
     final b = free[1].position;
     final c = free[2].position;
     final d = cornerD(construction).position!;
-    expect((c - b).norm, closeTo((d - a).norm, 1e-9),
-        reason: 'the legs stay equal');
+    expect(
+      (c - b).norm,
+      closeTo((d - a).norm, 1e-9),
+      reason: 'the legs stay equal',
+    );
     expect((b - a).cross(c - d).abs(), lessThan(1e-9), reason: 'DC ∥ AB');
   }
 
@@ -52,28 +55,38 @@ void main() {
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
       expect(tool.onInput(const ToolInput(Vec2(4, 0))), isA<ToolAccepted>());
-      final result =
-          tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(construction.length, 12,
-          reason: '3 free points + 4 sides + midpoint + axis + mirror '
-              'perpendicular + foot + D');
+      expect(
+        construction.length,
+        12,
+        reason:
+            '3 free points + 4 sides + midpoint + axis + mirror '
+            'perpendicular + foot + D',
+      );
       expect(cornerD(construction).position, const Vec2(1, 2));
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole trapezium is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole trapezium is one undo unit',
+      );
     });
 
     test('scaffolding is hidden, corners and sides are visible', () {
       final construction = buildTrapezium();
 
-      final hidden =
-          construction.objects.where((o) => !o.attributes.visible).toList();
-      expect(hidden, hasLength(4),
-          reason: 'midpoint, axis, mirror perpendicular and its foot');
+      final hidden = construction.objects
+          .where((o) => !o.attributes.visible)
+          .toList();
+      expect(
+        hidden,
+        hasLength(4),
+        reason: 'midpoint, axis, mirror perpendicular and its foot',
+      );
 
       final visible = construction.objects.where((o) => o.attributes.visible);
       expect(visible.whereType<Segment>(), hasLength(4));
@@ -91,14 +104,16 @@ void main() {
       expectIsosceles(construction);
     });
 
-    test('C dragged across the axis keeps the shape isosceles — no flip',
-        () {
+    test('C dragged across the axis keeps the shape isosceles — no flip', () {
       final construction = buildTrapezium();
       final c = freeCorners(construction)[2];
 
       construction.moveFreePoint(c.id, const Vec2(0.5, 2));
-      expect(cornerD(construction).position, const Vec2(3.5, 2),
-          reason: 'D mirrors through the axis smoothly');
+      expect(
+        cornerD(construction).position,
+        const Vec2(3.5, 2),
+        reason: 'D mirrors through the axis smoothly',
+      );
       expectIsosceles(construction);
     });
 
@@ -107,8 +122,11 @@ void main() {
       final a = freeCorners(construction)[0];
 
       construction.moveFreePoint(a.id, const Vec2(4, 0));
-      expect(cornerD(construction).position, isNull,
-          reason: 'coincident A and B leave the axis undefined');
+      expect(
+        cornerD(construction).position,
+        isNull,
+        reason: 'coincident A and B leave the axis undefined',
+      );
 
       construction.moveFreePoint(a.id, const Vec2(0, 0));
       expect(cornerD(construction).position, const Vec2(1, 2));
@@ -125,23 +143,29 @@ void main() {
         construction.add(point);
       }
       ToolResult tap(FreePoint point) => tool.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(a);
       tap(b);
       (tap(c) as ToolCommitted).command.apply(construction);
-      expect(
-          construction.objects.whereType<SegmentRatioPoint>(), hasLength(1));
+      expect(construction.objects.whereType<SegmentRatioPoint>(), hasLength(1));
       final before = construction.length;
 
       tap(a);
       tap(b);
       (tap(c) as ToolCommitted).command.apply(construction);
 
-      expect(construction.objects.whereType<SegmentRatioPoint>(), hasLength(1),
-          reason: 'the mirrored corner is reused, its scaffolding skipped');
-      expect(construction.length, before + 4,
-          reason: 'only the four side segments are re-added');
+      expect(
+        construction.objects.whereType<SegmentRatioPoint>(),
+        hasLength(1),
+        reason: 'the mirrored corner is reused, its scaffolding skipped',
+      );
+      expect(
+        construction.length,
+        before + 4,
+        reason: 'only the four side segments are re-added',
+      );
     });
   });
 }

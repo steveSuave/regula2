@@ -14,7 +14,11 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(1, 0));
       final d = HarmonicConjugatePoint(
-          id: 'd', point1: a, point2: b, point3: c);
+        id: 'd',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
       expect(d.position!.closeTo(const Vec2(-2, 0)), isTrue);
       expect(d.parents, [a, b, c]);
     });
@@ -24,7 +28,11 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(1, 3));
       final d = HarmonicConjugatePoint(
-          id: 'd', point1: a, point2: b, point3: c);
+        id: 'd',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
       expect(d.isDefined, isFalse);
 
       c.position = const Vec2(1, 0);
@@ -33,13 +41,16 @@ void main() {
       expect(d.position!.closeTo(const Vec2(-2, 0)), isTrue);
     });
 
-    test('undefined while C is the midpoint of AB (conjugate at infinity)',
-        () {
+    test('undefined while C is the midpoint of AB (conjugate at infinity)', () {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(2, 0));
       final d = HarmonicConjugatePoint(
-          id: 'd', point1: a, point2: b, point3: c);
+        id: 'd',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
       expect(d.isDefined, isFalse);
     });
 
@@ -48,7 +59,11 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(1, 1));
       final c = FreePoint(id: 'c', position: const Vec2(3, 1));
       final d = HarmonicConjugatePoint(
-          id: 'd', point1: a, point2: b, point3: c);
+        id: 'd',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
       expect(d.isDefined, isFalse);
     });
 
@@ -57,13 +72,20 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(1, 0));
       final d = HarmonicConjugatePoint(
-          id: 'd', point1: a, point2: b, point3: c);
+        id: 'd',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
 
       // Slide C outside the segment: the conjugate returns inside.
       c.position = const Vec2(-2, 0);
       d.recompute();
-      expect(d.position!.closeTo(const Vec2(1, 0)), isTrue,
-          reason: 'the harmonic map is an involution');
+      expect(
+        d.position!.closeTo(const Vec2(1, 0)),
+        isTrue,
+        reason: 'the harmonic map is an involution',
+      );
     });
   });
 
@@ -81,8 +103,11 @@ void main() {
       final image = d.projPoint!;
       expect(image.isReal(), isTrue);
       expect(image.isFinite(), isFalse);
-      expect(image.closeTo(ProjPoint.real(4, 2, 0)), isTrue,
-          reason: 'the direction of AB');
+      expect(
+        image.closeTo(ProjPoint.real(4, 2, 0)),
+        isTrue,
+        reason: 'the direction of AB',
+      );
     });
 
     test('still undefined with a null view while the points are not '
@@ -107,31 +132,35 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (a, b, k) {
-      if (a.closeTo(b, 1e-3)) {
-        return;
-      }
-      final pa = ProjPoint.lift(a);
-      final pb = ProjPoint.lift(b);
-      final pc = ProjPoint.lift(a.lerp(b, 0.25));
-      HarmonicConjugatePoint build(ProjPoint x, ProjPoint y, ProjPoint z) =>
-          HarmonicConjugatePoint(
-            id: 'd',
-            point1: StubProjectivePoint(x),
-            point2: StubProjectivePoint(y),
-            point3: StubProjectivePoint(z),
-          );
-      final plain = build(pa, pb, pc);
-      expect(build(pa.scaledBy(k), pb, pc)
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-      expect(build(pa, pb.scaledBy(k), pc)
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-      expect(build(pa, pb, pc.scaledBy(k))
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (a, b, k) {
+        if (a.closeTo(b, 1e-3)) {
+          return;
+        }
+        final pa = ProjPoint.lift(a);
+        final pb = ProjPoint.lift(b);
+        final pc = ProjPoint.lift(a.lerp(b, 0.25));
+        HarmonicConjugatePoint build(ProjPoint x, ProjPoint y, ProjPoint z) =>
+            HarmonicConjugatePoint(
+              id: 'd',
+              point1: StubProjectivePoint(x),
+              point2: StubProjectivePoint(y),
+              point3: StubProjectivePoint(z),
+            );
+        final plain = build(pa, pb, pc);
+        expect(
+          build(pa.scaledBy(k), pb, pc).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+        expect(
+          build(pa, pb.scaledBy(k), pc).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+        expect(
+          build(pa, pb, pc.scaledBy(k)).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+      },
+    );
   });
 }

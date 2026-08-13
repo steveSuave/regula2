@@ -23,9 +23,9 @@ void main() {
     final construction = Construction();
     tool.onInput(const ToolInput(Vec2(0, 0)));
     tool.onInput(const ToolInput(Vec2(1, 2)));
-    (tool.onInput(const ToolInput(Vec2(4, 0))) as ToolCommitted)
-        .command
-        .apply(construction);
+    (tool.onInput(const ToolInput(Vec2(4, 0))) as ToolCommitted).command.apply(
+      construction,
+    );
     return construction;
   }
 
@@ -41,10 +41,8 @@ void main() {
     final b = free[1].position;
     final c = free[2].position;
     final d = cornerD(construction).position!;
-    expect((d - a).norm, closeTo((b - a).norm, 1e-9),
-        reason: '|AD| = |AB|');
-    expect((d - c).norm, closeTo((b - c).norm, 1e-9),
-        reason: '|CD| = |CB|');
+    expect((d - a).norm, closeTo((b - a).norm, 1e-9), reason: '|AD| = |AB|');
+    expect((d - c).norm, closeTo((b - c).norm, 1e-9), reason: '|CD| = |CB|');
   }
 
   group('KiteMacroTool', () {
@@ -53,30 +51,43 @@ void main() {
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
       expect(tool.onInput(const ToolInput(Vec2(1, 2))), isA<ToolAccepted>());
-      final result =
-          tool.onInput(const ToolInput(Vec2(4, 0))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(4, 0))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(construction.length, 11,
-          reason: '3 free points + diagonal + 4 sides + mirror '
-              'perpendicular + foot + D');
+      expect(
+        construction.length,
+        11,
+        reason:
+            '3 free points + diagonal + 4 sides + mirror '
+            'perpendicular + foot + D',
+      );
       expect(cornerD(construction).position, const Vec2(1, -2));
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole kite is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole kite is one undo unit',
+      );
     });
 
     test('the diagonal is hidden, corners and sides are visible', () {
       final construction = buildKite();
 
-      final hidden =
-          construction.objects.where((o) => !o.attributes.visible).toList();
-      expect(hidden, hasLength(3),
-          reason: 'the diagonal, the mirror perpendicular and its foot');
-      expect(hidden.whereType<Segment>(), hasLength(1),
-          reason: 'the diagonal AC is a hidden segment serving as the axis');
+      final hidden = construction.objects
+          .where((o) => !o.attributes.visible)
+          .toList();
+      expect(
+        hidden,
+        hasLength(3),
+        reason: 'the diagonal, the mirror perpendicular and its foot',
+      );
+      expect(
+        hidden.whereType<Segment>(),
+        hasLength(1),
+        reason: 'the diagonal AC is a hidden segment serving as the axis',
+      );
 
       final visible = construction.objects.where((o) => o.attributes.visible);
       expect(visible.whereType<Segment>(), hasLength(4));
@@ -99,13 +110,19 @@ void main() {
       final b = freeCorners(construction)[1];
 
       construction.moveFreePoint(b.id, const Vec2(1, -2));
-      expect(cornerD(construction).position, const Vec2(1, 2),
-          reason: 'D mirrors to the other side');
+      expect(
+        cornerD(construction).position,
+        const Vec2(1, 2),
+        reason: 'D mirrors to the other side',
+      );
       expectKite(construction);
 
       construction.moveFreePoint(b.id, const Vec2(2, 0));
-      expect(cornerD(construction).position, const Vec2(2, 0),
-          reason: 'B on the diagonal is the flat kite, D ≡ B');
+      expect(
+        cornerD(construction).position,
+        const Vec2(2, 0),
+        reason: 'B on the diagonal is the flat kite, D ≡ B',
+      );
     });
 
     test('the shape survives a drag through degeneracy', () {
@@ -113,8 +130,11 @@ void main() {
       final a = freeCorners(construction)[0];
 
       construction.moveFreePoint(a.id, const Vec2(4, 0));
-      expect(cornerD(construction).position, isNull,
-          reason: 'coincident apexes leave the diagonal carrier undefined');
+      expect(
+        cornerD(construction).position,
+        isNull,
+        reason: 'coincident apexes leave the diagonal carrier undefined',
+      );
 
       construction.moveFreePoint(a.id, const Vec2(0, 0));
       expect(cornerD(construction).position, const Vec2(1, -2));
@@ -131,23 +151,29 @@ void main() {
         construction.add(point);
       }
       ToolResult tap(FreePoint point) => tool.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(a);
       tap(b);
       (tap(c) as ToolCommitted).command.apply(construction);
-      expect(
-          construction.objects.whereType<SegmentRatioPoint>(), hasLength(1));
+      expect(construction.objects.whereType<SegmentRatioPoint>(), hasLength(1));
       final before = construction.length;
 
       tap(a);
       tap(b);
       (tap(c) as ToolCommitted).command.apply(construction);
 
-      expect(construction.objects.whereType<SegmentRatioPoint>(), hasLength(1),
-          reason: 'the mirrored corner is reused, its scaffolding skipped');
-      expect(construction.length, before + 4,
-          reason: 'only the four side segments are re-added');
+      expect(
+        construction.objects.whereType<SegmentRatioPoint>(),
+        hasLength(1),
+        reason: 'the mirrored corner is reused, its scaffolding skipped',
+      );
+      expect(
+        construction.length,
+        before + 4,
+        reason: 'only the four side segments are re-added',
+      );
     });
   });
 }

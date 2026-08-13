@@ -24,8 +24,10 @@ void main() {
 
       final construction = container.read(constructionProvider).construction;
       expect(construction.contains('a'), isTrue);
-      expect(container.read(commandStackProvider),
-          (canUndo: true, canRedo: false));
+      expect(container.read(commandStackProvider), (
+        canUndo: true,
+        canRedo: false,
+      ));
     });
 
     test('undo/redo round-trip through the provider', () {
@@ -44,20 +46,26 @@ void main() {
 
       notifier.undo();
       expect((construction.byId('a')! as FreePoint).position, Vec2.zero);
-      expect(container.read(commandStackProvider),
-          (canUndo: true, canRedo: true));
+      expect(container.read(commandStackProvider), (
+        canUndo: true,
+        canRedo: true,
+      ));
 
       notifier.undo();
       expect(construction.isEmpty, isTrue);
-      expect(container.read(commandStackProvider),
-          (canUndo: false, canRedo: true));
+      expect(container.read(commandStackProvider), (
+        canUndo: false,
+        canRedo: true,
+      ));
 
       notifier
         ..redo()
         ..redo();
       expect((construction.byId('a')! as FreePoint).position, const Vec2(2, 3));
-      expect(container.read(commandStackProvider),
-          (canUndo: true, canRedo: false));
+      expect(container.read(commandStackProvider), (
+        canUndo: true,
+        canRedo: false,
+      ));
     });
 
     test('watchers are only notified when the flags actually change', () {
@@ -96,8 +104,10 @@ void main() {
         ),
         throwsArgumentError,
       );
-      expect(container.read(commandStackProvider),
-          (canUndo: false, canRedo: false));
+      expect(container.read(commandStackProvider), (
+        canUndo: false,
+        canRedo: false,
+      ));
     });
 
     test('history survives construction mutations (revision bumps)', () {
@@ -114,8 +124,7 @@ void main() {
       expect(container.read(commandStackProvider).canUndo, isTrue);
     });
 
-    test('replacing the construction rebuilds the stack and drops history',
-        () {
+    test('replacing the construction rebuilds the stack and drops history', () {
       container
           .read(commandStackProvider.notifier)
           .execute(AddObjectCommand(FreePoint(id: 'a', position: Vec2.zero)));
@@ -124,8 +133,10 @@ void main() {
       final fresh = Construction();
       container.read(constructionProvider.notifier).replace(fresh);
 
-      expect(container.read(commandStackProvider),
-          (canUndo: false, canRedo: false));
+      expect(container.read(commandStackProvider), (
+        canUndo: false,
+        canRedo: false,
+      ));
 
       // New commands act on the replacement construction.
       container

@@ -85,14 +85,20 @@ void main() {
       actionOf(stroke(LogicalKeyboardKey.keyG, shift: true)),
       AppAction.toggleGrid,
     );
-    expect(resolver.hasPendingLeader, isFalse,
-        reason: '⇧G must not leave the G leader pending');
+    expect(
+      resolver.hasPendingLeader,
+      isFalse,
+      reason: '⇧G must not leave the G leader pending',
+    );
     expect(
       actionOf(stroke(LogicalKeyboardKey.keyX, shift: true)),
       AppAction.toggleAxes,
     );
-    expect(resolver.hasPendingLeader, isFalse,
-        reason: '⇧X must not leave the X leader pending');
+    expect(
+      resolver.hasPendingLeader,
+      isFalse,
+      reason: '⇧X must not leave the X leader pending',
+    );
     // The very next stroke resolves standalone, not as a chord second.
     expect(actionOf(stroke(LogicalKeyboardKey.keyS)), AppAction.segmentTool);
   });
@@ -110,16 +116,10 @@ void main() {
     );
 
     stroke(LogicalKeyboardKey.keyG);
-    expect(
-      actionOf(stroke(LogicalKeyboardKey.keyM)),
-      AppAction.namePointsTool,
-    );
+    expect(actionOf(stroke(LogicalKeyboardKey.keyM)), AppAction.namePointsTool);
 
     stroke(LogicalKeyboardKey.keyG);
-    expect(
-      actionOf(stroke(LogicalKeyboardKey.keyE)),
-      AppAction.textTool,
-    );
+    expect(actionOf(stroke(LogicalKeyboardKey.keyE)), AppAction.textTool);
   });
 
   test('X leader chords reach the macros', () {

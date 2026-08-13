@@ -52,8 +52,11 @@ void main() {
         curve2: circle,
         branchIndex: 0,
       );
-      final distance =
-          DistanceMeasurement(id: 'd', point1: a, point2: crossing);
+      final distance = DistanceMeasurement(
+        id: 'd',
+        point1: a,
+        point2: crossing,
+      );
       expect(distance.isDefined, isTrue);
 
       // Radius below 3 lifts the circle off the line: the crossing — and

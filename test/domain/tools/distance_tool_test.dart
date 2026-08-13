@@ -33,13 +33,18 @@ void main() {
 
     test('two existing points commit one DistanceMeasurement', () {
       final tool = DistanceTool(newId: newId);
-      expect(tool.onInput(ToolInput(const Vec2(0, 0), hit: a)),
-          isA<ToolAccepted>());
+      expect(
+        tool.onInput(ToolInput(const Vec2(0, 0), hit: a)),
+        isA<ToolAccepted>(),
+      );
       final result = tool.onInput(ToolInput(const Vec2(3, 4), hit: b));
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
-      expect(command, isA<AddObjectCommand>(),
-          reason: 'no new points → a bare add, no macro');
+      expect(
+        command,
+        isA<AddObjectCommand>(),
+        reason: 'no new points → a bare add, no macro',
+      );
       final distance =
           (command as AddObjectCommand).object as DistanceMeasurement;
       expect(distance.value, 5);
@@ -74,8 +79,11 @@ void main() {
       );
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
-      expect(command, isA<AddObjectCommand>(),
-          reason: 'one length in one command — no glued point by-product');
+      expect(
+        command,
+        isA<AddObjectCommand>(),
+        reason: 'one length in one command — no glued point by-product',
+      );
       final length = (command as AddObjectCommand).object;
       expect(length, isA<LengthMeasurement>());
       expect((length as LengthMeasurement).subject, same(circle));
@@ -97,9 +105,11 @@ void main() {
           ((result as ToolCommitted).command as AddObjectCommand).object;
       expect((length as LengthMeasurement).value, closeTo(math.pi, 1e-12));
 
-      expect(tool.onInput(ToolInput(const Vec2(0, 0), hit: a)),
-          isA<ToolAccepted>(),
-          reason: 'committing resets nothing — the tool never left idle');
+      expect(
+        tool.onInput(ToolInput(const Vec2(0, 0), hit: a)),
+        isA<ToolAccepted>(),
+        reason: 'committing resets nothing — the tool never left idle',
+      );
     });
 
     test('a first tap on a sector commits its full perimeter', () {
@@ -115,8 +125,7 @@ void main() {
       expect(result, isA<ToolCommitted>());
       final length =
           ((result as ToolCommitted).command as AddObjectCommand).object;
-      expect((length as LengthMeasurement).value,
-          closeTo(4 + math.pi, 1e-12));
+      expect((length as LengthMeasurement).value, closeTo(4 + math.pi, 1e-12));
     });
 
     test('an in-threshold point outranks the curve — point flow wins', () {
@@ -124,8 +133,11 @@ void main() {
       final result = tool.onInput(
         ToolInput(const Vec2(3, 4), hit: b, extraHits: [circle]),
       );
-      expect(result, isA<ToolAccepted>(),
-          reason: 'the rim point starts a point-to-point measurement');
+      expect(
+        result,
+        isA<ToolAccepted>(),
+        reason: 'the rim point starts a point-to-point measurement',
+      );
       expect(nextId, 0);
     });
 
@@ -137,8 +149,11 @@ void main() {
       );
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
-      expect(command, isA<MacroCommand>(),
-          reason: 'glued point + measurement land together');
+      expect(
+        command,
+        isA<MacroCommand>(),
+        reason: 'glued point + measurement land together',
+      );
 
       final construction = Construction()
         ..add(a)
@@ -148,8 +163,11 @@ void main() {
       final objects = construction.objects.toList();
       expect(objects[3], isA<PointOnObject>());
       expect(objects[4], isA<DistanceMeasurement>());
-      expect((objects[4] as DistanceMeasurement).value, closeTo(10, 1e-12),
-          reason: 'diameter: rim point to the antipodal glued point');
+      expect(
+        (objects[4] as DistanceMeasurement).value,
+        closeTo(10, 1e-12),
+        reason: 'diameter: rim point to the antipodal glued point',
+      );
     });
   });
 }

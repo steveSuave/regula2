@@ -24,18 +24,27 @@ void main() {
       for (var i = 0; i <= 200; i++) {
         final scale = 0.05 * math.pow(1000, i / 200);
         final step = gridStep(scale);
-        expect(isRoundStep(step), isTrue,
-            reason: 'step $step at scale $scale is not {1,2,5}×10^k');
-        expect(step * scale, greaterThanOrEqualTo(48 * (1 - 1e-12)),
-            reason: 'step $step at scale $scale spans < 48 px');
+        expect(
+          isRoundStep(step),
+          isTrue,
+          reason: 'step $step at scale $scale is not {1,2,5}×10^k',
+        );
+        expect(
+          step * scale,
+          greaterThanOrEqualTo(48 * (1 - 1e-12)),
+          reason: 'step $step at scale $scale spans < 48 px',
+        );
         // Minimal: the next round step down violates the minimum. The
         // lower neighbor is a factor 2.5 away from a 5-mantissa step
         // (5 → 2) and a factor 2 otherwise (2 → 1, 1 → 0.5).
         final decade = math.pow(10.0, (math.log(step) / math.ln10).floor());
         final mantissaIsFive = (step / decade - 5).abs() < 0.5;
         final lowerNeighbor = mantissaIsFive ? step / 2.5 : step / 2;
-        expect(lowerNeighbor * scale, lessThan(48),
-            reason: 'step $step at scale $scale is not the smallest');
+        expect(
+          lowerNeighbor * scale,
+          lessThan(48),
+          reason: 'step $step at scale $scale is not the smallest',
+        );
       }
     });
 
@@ -53,8 +62,11 @@ void main() {
       for (var i = 0; i <= 60; i++) {
         final scale = 0.05 * math.pow(1000, i / 60);
         final step = gridStep(scale);
-        expect(step, lessThanOrEqualTo(previous),
-            reason: 'zooming in coarsened the grid at scale $scale');
+        expect(
+          step,
+          lessThanOrEqualTo(previous),
+          reason: 'zooming in coarsened the grid at scale $scale',
+        );
         previous = step;
       }
     });

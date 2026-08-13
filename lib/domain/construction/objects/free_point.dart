@@ -14,7 +14,7 @@ import '../geo_object.dart';
 /// always defined.
 class FreePoint extends GeoPoint {
   FreePoint({required super.id, required Vec2 position, super.attributes})
-      : _projPoint = ProjPoint.lift(position);
+    : _projPoint = ProjPoint.lift(position);
 
   ProjPoint _projPoint;
 

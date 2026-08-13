@@ -62,38 +62,44 @@ void main() {
       expect(l.incidence(p), p.incidence(l));
     });
 
-    Glados2(any.projLine, any.projLine)
-        .test('line∩line is always one point, on both lines', (l, m) {
-      if (l.closeTo(m, 1e-6)) return;
-      final p = l.meet(m);
-      expect(p.isZero, isFalse);
-      expect(l.contains(p, eps), isTrue);
-      expect(m.contains(p, eps), isTrue);
-    });
+    Glados2(any.projLine, any.projLine).test(
+      'line∩line is always one point, on both lines',
+      (l, m) {
+        if (l.closeTo(m, 1e-6)) return;
+        final p = l.meet(m);
+        expect(p.isZero, isFalse);
+        expect(l.contains(p, eps), isTrue);
+        expect(m.contains(p, eps), isTrue);
+      },
+    );
 
-    Glados3(any.projLine, any.projLine, any.projLine)
-        .test('join of two meets on l recovers l (duality)', (l, m, n) {
-      if (l.closeTo(m, 1e-3) || l.closeTo(n, 1e-3) || m.closeTo(n, 1e-3)) {
-        return;
-      }
-      final p = l.meet(m);
-      final q = l.meet(n);
-      if (p.closeTo(q, 1e-3)) return; // concurrent triple: meets coincide
-      expect(p.join(q).closeTo(l, 1e-6), isTrue);
-    });
+    Glados3(any.projLine, any.projLine, any.projLine).test(
+      'join of two meets on l recovers l (duality)',
+      (l, m, n) {
+        if (l.closeTo(m, 1e-3) || l.closeTo(n, 1e-3) || m.closeTo(n, 1e-3)) {
+          return;
+        }
+        final p = l.meet(m);
+        final q = l.meet(n);
+        if (p.closeTo(q, 1e-3)) return; // concurrent triple: meets coincide
+        expect(p.join(q).closeTo(l, 1e-6), isTrue);
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('parallel lifted lines meet at [d.x, d.y, 0]', (p1, p2, d) {
-      if (d.normSquared < 1e-6) return;
-      final l1 = LineEq.pointDirection(p1, d);
-      final l2 = LineEq.pointDirection(p2, d);
-      // Same construction ⇒ same oriented normal; distinct parallels differ
-      // exactly in the offset c.
-      if ((l1.c - l2.c).abs() < 1e-3) return;
-      final m = ProjLine.lift(l1).meet(ProjLine.lift(l2));
-      expect(m.closeTo(ProjPoint.real(d.x, d.y, 0), 1e-6), isTrue);
-      expect(m.isFinite(), isFalse);
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'parallel lifted lines meet at [d.x, d.y, 0]',
+      (p1, p2, d) {
+        if (d.normSquared < 1e-6) return;
+        final l1 = LineEq.pointDirection(p1, d);
+        final l2 = LineEq.pointDirection(p2, d);
+        // Same construction ⇒ same oriented normal; distinct parallels differ
+        // exactly in the offset c.
+        if ((l1.c - l2.c).abs() < 1e-3) return;
+        final m = ProjLine.lift(l1).meet(ProjLine.lift(l2));
+        expect(m.closeTo(ProjPoint.real(d.x, d.y, 0), 1e-6), isTrue);
+        expect(m.isFinite(), isFalse);
+      },
+    );
   });
 
   group('realness, finiteness, projection', () {
@@ -128,34 +134,42 @@ void main() {
   });
 
   group('invariance under complex rescaling (glados)', () {
-    Glados2(any.projLine, any.nonZeroComplex)
-        .test('closeTo: a scaled copy is the same line', (l, k) {
-      expect(l.scaledBy(k).closeTo(l, eps), isTrue);
-    });
+    Glados2(any.projLine, any.nonZeroComplex).test(
+      'closeTo: a scaled copy is the same line',
+      (l, k) {
+        expect(l.scaledBy(k).closeTo(l, eps), isTrue);
+      },
+    );
 
-    Glados2(any.projLine, any.nonZeroComplex)
-        .test('isReal and isFinite are scale-invariant', (l, k) {
-      final scaled = l.scaledBy(k);
-      expect(scaled.isReal(), l.isReal());
-      expect(scaled.isFinite(), l.isFinite());
-    });
+    Glados2(any.projLine, any.nonZeroComplex).test(
+      'isReal and isFinite are scale-invariant',
+      (l, k) {
+        final scaled = l.scaledBy(k);
+        expect(scaled.isReal(), l.isReal());
+        expect(scaled.isFinite(), l.isFinite());
+      },
+    );
 
-    Glados2(any.projLine, any.nonZeroComplex)
-        .test('toLineEq is scale-invariant', (l, k) {
-      final e = l.toLineEq();
-      final eScaled = l.scaledBy(k).toLineEq();
-      if (e == null) {
-        expect(eScaled, isNull);
-      } else {
-        expect(eScaled, isNotNull);
-        expect(eScaled!.closeTo(e, 1e-6), isTrue);
-      }
-    });
+    Glados2(any.projLine, any.nonZeroComplex).test(
+      'toLineEq is scale-invariant',
+      (l, k) {
+        final e = l.toLineEq();
+        final eScaled = l.scaledBy(k).toLineEq();
+        if (e == null) {
+          expect(eScaled, isNull);
+        } else {
+          expect(eScaled, isNotNull);
+          expect(eScaled!.closeTo(e, 1e-6), isTrue);
+        }
+      },
+    );
   });
 
   group('lift ∘ project = id', () {
-    Glados2(any.vec2, any.vec2)
-        .test('toLineEq of a lifted line is the line', (p, q) {
+    Glados2(any.vec2, any.vec2).test('toLineEq of a lifted line is the line', (
+      p,
+      q,
+    ) {
       if (p.closeTo(q, 1e-3)) return;
       final l = LineEq.throughPoints(p, q);
       final back = ProjLine.lift(l).toLineEq();
@@ -163,13 +177,15 @@ void main() {
       expect(back!.closeTo(l, eps), isTrue);
     });
 
-    Glados3(any.vec2, any.vec2, any.nonZeroComplex)
-        .test('…even after complex rescaling', (p, q, k) {
-      if (p.closeTo(q, 1e-3)) return;
-      final l = LineEq.throughPoints(p, q);
-      final back = ProjLine.lift(l).scaledBy(k).toLineEq();
-      expect(back, isNotNull);
-      expect(back!.closeTo(l, 1e-6), isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+      '…even after complex rescaling',
+      (p, q, k) {
+        if (p.closeTo(q, 1e-3)) return;
+        final l = LineEq.throughPoints(p, q);
+        final back = ProjLine.lift(l).scaledBy(k).toLineEq();
+        expect(back, isNotNull);
+        expect(back!.closeTo(l, 1e-6), isTrue);
+      },
+    );
   });
 }

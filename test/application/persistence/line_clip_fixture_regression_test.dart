@@ -34,20 +34,29 @@ void main() {
     bisector.attributes = bisector.attributes.copyWith(lineClip: 2);
 
     final span = lineClipSpan(objects, bisector);
-    expect(span, isNotNull,
-        reason: 'K (parents the bisector) + L (crossing of the parent '
-            'lines, derived incidence) = two incident points');
+    expect(
+      span,
+      isNotNull,
+      reason:
+          'K (parents the bisector) + L (crossing of the parent '
+          'lines, derived incidence) = two incident points',
+    );
     final k = (named('K') as GeoPoint).position!;
     final l = (named('L') as GeoPoint).position!;
     final ends = [span!.start, span.end];
-    expect(ends.any((e) => e.distanceTo(k) < 1e-6), isTrue,
-        reason: 'one end at K');
-    expect(ends.any((e) => e.distanceTo(l) < 1e-6), isTrue,
-        reason: 'the other end at L = f ∩ h');
+    expect(
+      ends.any((e) => e.distanceTo(k) < 1e-6),
+      isTrue,
+      reason: 'one end at K',
+    );
+    expect(
+      ends.any((e) => e.distanceTo(l) < 1e-6),
+      isTrue,
+      reason: 'the other end at L = f ∩ h',
+    );
   });
 
-  test('the tangent stays infinite: its points coincide by theorem only',
-      () {
+  test('the tangent stays infinite: its points coincide by theorem only', () {
     final tangent = named('k') as TangentLine;
     tangent.attributes = tangent.attributes.copyWith(lineClip: 2);
 

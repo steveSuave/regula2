@@ -30,9 +30,7 @@ class TwoLineBisectorLine extends GeoLine {
       throw ArgumentError.value(branch, 'branch', 'must be 0 or 1');
     }
     if (identical(line1, line2)) {
-      throw ArgumentError(
-        'TwoLineBisectorLine requires two distinct lines',
-      );
+      throw ArgumentError('TwoLineBisectorLine requires two distinct lines');
     }
     recompute();
   }

@@ -28,19 +28,16 @@ void main() {
   });
 
   test('a stored choice wins on startup', () async {
-    final container =
-        await containerWithPrefs(stored: {'themeMode': 'dark'});
+    final container = await containerWithPrefs(stored: {'themeMode': 'dark'});
     expect(container.read(themeModeProvider), ThemeMode.dark);
   });
 
   test('garbage in the store falls back to system', () async {
-    final container =
-        await containerWithPrefs(stored: {'themeMode': 'plaid'});
+    final container = await containerWithPrefs(stored: {'themeMode': 'plaid'});
     expect(container.read(themeModeProvider), ThemeMode.system);
   });
 
-  test('toggle flips against the rendered brightness and persists',
-      () async {
+  test('toggle flips against the rendered brightness and persists', () async {
     final container = await containerWithPrefs();
     final notifier = container.read(themeModeProvider.notifier);
 
@@ -54,8 +51,7 @@ void main() {
   });
 
   test('setMode(system) clears the stored choice', () async {
-    final container =
-        await containerWithPrefs(stored: {'themeMode': 'dark'});
+    final container = await containerWithPrefs(stored: {'themeMode': 'dark'});
     container.read(themeModeProvider.notifier).setMode(ThemeMode.system);
     expect(container.read(themeModeProvider), ThemeMode.system);
     expect(preferences.getString('themeMode'), isNull);
@@ -64,9 +60,6 @@ void main() {
   test('unoverridden preferences throw, pointing at main()', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    expect(
-      () => container.read(themeModeProvider),
-      throwsA(isA<Object>()),
-    );
+    expect(() => container.read(themeModeProvider), throwsA(isA<Object>()));
   });
 }

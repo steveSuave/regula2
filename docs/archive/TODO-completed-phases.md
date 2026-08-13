@@ -616,3 +616,9 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Zero behaviour change: full suite green untouched
 - [x] Exhaustive test: lift defaults agree with affine values for every concrete kind (loop over the codec's kind registry)
 - [x] PLAN documents the migrated/unmigrated contract + rule: new domain code reads projective accessors only
+
+## Phase 107 — Object batch 1: incidence core
+
+- [x] Migrate: `FreePoint` (stores `ProjPoint`, drag sets it real), `Midpoint`, `LineThroughTwoPoints`, `Segment`, `Ray` (projective carrier, real-extent metadata unchanged), `ParallelLine` (meet with line at infinity → join), `PerpendicularLine` / `PerpendicularBisectorLine` (conjugate directions w.r.t. I,J), `Centroid`, `Orthocenter`, circumcenter-as-point
+- [x] Existing suite green (the spec); per-kind glados: recompute invariant under complex rescaling of parent homogeneous coords
+- [x] New V2-semantics tests: old degeneracies that now correctly yield points at infinity, marked as such

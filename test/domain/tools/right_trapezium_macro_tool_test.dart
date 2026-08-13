@@ -23,9 +23,9 @@ void main() {
     final construction = Construction();
     tool.onInput(const ToolInput(Vec2(0, 0)));
     tool.onInput(const ToolInput(Vec2(4, 0)));
-    (tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted)
-        .command
-        .apply(construction);
+    (tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted).command.apply(
+      construction,
+    );
     return construction;
   }
 
@@ -43,8 +43,11 @@ void main() {
     final d = cornerD(construction).position!;
     final ab = b - a;
     expect(ab.dot(d - a).abs(), lessThan(1e-9), reason: '∠A is right');
-    expect(ab.cross(c - d).abs(), lessThan(1e-9),
-        reason: 'DC ∥ AB, so ∠D is right too');
+    expect(
+      ab.cross(c - d).abs(),
+      lessThan(1e-9),
+      reason: 'DC ∥ AB, so ∠D is right too',
+    );
   }
 
   group('RightTrapeziumMacroTool', () {
@@ -53,18 +56,23 @@ void main() {
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
       expect(tool.onInput(const ToolInput(Vec2(4, 0))), isA<ToolAccepted>());
-      final result =
-          tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(construction.length, 10,
-          reason: '3 free points + 4 sides + perpendicular + parallel + D');
+      expect(
+        construction.length,
+        10,
+        reason: '3 free points + 4 sides + perpendicular + parallel + D',
+      );
       expect(cornerD(construction).position, const Vec2(0, 2));
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole trapezium is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole trapezium is one undo unit',
+      );
     });
 
     test('tapping existing points consumes them as corners', () {
@@ -74,12 +82,14 @@ void main() {
 
       tool.onInput(ToolInput(a.position, hit: a));
       tool.onInput(const ToolInput(Vec2(4, 0)));
-      final result =
-          tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted;
       result.command.apply(construction);
 
-      expect(construction.objects.whereType<FreePoint>(), hasLength(3),
-          reason: 'a was consumed, only B and C are new');
+      expect(
+        construction.objects.whereType<FreePoint>(),
+        hasLength(3),
+        reason: 'a was consumed, only B and C are new',
+      );
 
       result.command.undo(construction);
       expect(construction.objects, [a]);
@@ -88,10 +98,14 @@ void main() {
     test('scaffolding is hidden, corners and sides are visible', () {
       final construction = buildTrapezium();
 
-      final hidden =
-          construction.objects.where((o) => !o.attributes.visible).toList();
-      expect(hidden, hasLength(2),
-          reason: 'the perpendicular and the parallel');
+      final hidden = construction.objects
+          .where((o) => !o.attributes.visible)
+          .toList();
+      expect(
+        hidden,
+        hasLength(2),
+        reason: 'the perpendicular and the parallel',
+      );
 
       final visible = construction.objects.where((o) => o.attributes.visible);
       expect(visible.whereType<Segment>(), hasLength(4));
@@ -114,8 +128,11 @@ void main() {
       final a = freeCorners(construction)[0];
 
       construction.moveFreePoint(a.id, const Vec2(4, 0));
-      expect(cornerD(construction).position, isNull,
-          reason: 'coincident A and B leave the scaffolding undefined');
+      expect(
+        cornerD(construction).position,
+        isNull,
+        reason: 'coincident A and B leave the scaffolding undefined',
+      );
 
       construction.moveFreePoint(a.id, const Vec2(0, 0));
       expect(cornerD(construction).position, const Vec2(0, 2));
@@ -132,23 +149,29 @@ void main() {
         construction.add(point);
       }
       ToolResult tap(FreePoint point) => tool.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(a);
       tap(b);
       (tap(c) as ToolCommitted).command.apply(construction);
-      expect(
-          construction.objects.whereType<IntersectionPoint>(), hasLength(1));
+      expect(construction.objects.whereType<IntersectionPoint>(), hasLength(1));
       final before = construction.length;
 
       tap(a);
       tap(b);
       (tap(c) as ToolCommitted).command.apply(construction);
 
-      expect(construction.objects.whereType<IntersectionPoint>(), hasLength(1),
-          reason: 'the corner is reused, its scaffolding skipped');
-      expect(construction.length, before + 4,
-          reason: 'only the four side segments are re-added');
+      expect(
+        construction.objects.whereType<IntersectionPoint>(),
+        hasLength(1),
+        reason: 'the corner is reused, its scaffolding skipped',
+      );
+      expect(
+        construction.length,
+        before + 4,
+        reason: 'only the four side segments are re-added',
+      );
     });
   });
 }

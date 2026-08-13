@@ -15,18 +15,23 @@ import '../../projective/generators.dart';
 
 void main() {
   group('PerpendicularLine', () {
-    test('contains the through-point and is perpendicular to the reference',
-        () {
-      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
-      final b = FreePoint(id: 'b', position: const Vec2(4, 2));
-      final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
-      final p = FreePoint(id: 'p', position: const Vec2(1, 5));
-      final perp = PerpendicularLine(id: 'k', through: p, reference: ref);
+    test(
+      'contains the through-point and is perpendicular to the reference',
+      () {
+        final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+        final b = FreePoint(id: 'b', position: const Vec2(4, 2));
+        final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+        final p = FreePoint(id: 'p', position: const Vec2(1, 5));
+        final perp = PerpendicularLine(id: 'k', through: p, reference: ref);
 
-      expect(perp.parents, [p, ref]);
-      expect(perp.line!.contains(p.position), isTrue);
-      expect(perp.line!.direction.dot(ref.line!.direction), closeTo(0, 1e-12));
-    });
+        expect(perp.parents, [p, ref]);
+        expect(perp.line!.contains(p.position), isTrue);
+        expect(
+          perp.line!.direction.dot(ref.line!.direction),
+          closeTo(0, 1e-12),
+        );
+      },
+    );
 
     test('a through-point on the reference line itself is fine', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
@@ -50,30 +55,35 @@ void main() {
       expect(perp.line!.contains(const Vec2(2, 100)), isTrue);
     });
 
-    test('reference degenerates (coincident points): undefined, then recovers',
-        () {
-      final construction = Construction();
-      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
-      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
-      final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
-      final p = FreePoint(id: 'p', position: const Vec2(1, 5));
-      final perp = PerpendicularLine(id: 'k', through: p, reference: ref);
-      construction
-        ..add(a)
-        ..add(b)
-        ..add(ref)
-        ..add(p)
-        ..add(perp);
+    test(
+      'reference degenerates (coincident points): undefined, then recovers',
+      () {
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+        final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+        final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+        final p = FreePoint(id: 'p', position: const Vec2(1, 5));
+        final perp = PerpendicularLine(id: 'k', through: p, reference: ref);
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(ref)
+          ..add(p)
+          ..add(perp);
 
-      construction.moveFreePoint('b', const Vec2(0, 0));
-      expect(perp.isDefined, isFalse);
-      expect(perp.line, isNull);
+        construction.moveFreePoint('b', const Vec2(0, 0));
+        expect(perp.isDefined, isFalse);
+        expect(perp.line, isNull);
 
-      construction.moveFreePoint('b', const Vec2(0, 4));
-      expect(perp.isDefined, isTrue);
-      expect(perp.line!.contains(p.position), isTrue);
-      expect(perp.line!.direction.dot(ref.line!.direction), closeTo(0, 1e-12));
-    });
+        construction.moveFreePoint('b', const Vec2(0, 4));
+        expect(perp.isDefined, isTrue);
+        expect(perp.line!.contains(p.position), isTrue);
+        expect(
+          perp.line!.direction.dot(ref.line!.direction),
+          closeTo(0, 1e-12),
+        );
+      },
+    );
 
     test('through-point goes undefined: undefined, then recovers', () {
       final construction = Construction();
@@ -129,24 +139,25 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of either parent',
-        (a, b, k) {
-      if (a.closeTo(b, 1e-3)) {
-        return;
-      }
-      final refLine = LineEq.throughPoints(a, b);
-      final plain = PerpendicularLine(
-        id: 'k1',
-        through: StubProjectivePoint(ProjPoint.real(-3, 7)),
-        reference: StubProjectiveLine(ProjLine.lift(refLine)),
-      );
-      final scaled = PerpendicularLine(
-        id: 'k2',
-        through: StubProjectivePoint(ProjPoint.real(-3, 7).scaledBy(k)),
-        reference: StubProjectiveLine(ProjLine.lift(refLine).scaledBy(k)),
-      );
-      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
-      expect(scaled.line!.closeTo(plain.line!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of either parent',
+      (a, b, k) {
+        if (a.closeTo(b, 1e-3)) {
+          return;
+        }
+        final refLine = LineEq.throughPoints(a, b);
+        final plain = PerpendicularLine(
+          id: 'k1',
+          through: StubProjectivePoint(ProjPoint.real(-3, 7)),
+          reference: StubProjectiveLine(ProjLine.lift(refLine)),
+        );
+        final scaled = PerpendicularLine(
+          id: 'k2',
+          through: StubProjectivePoint(ProjPoint.real(-3, 7).scaledBy(k)),
+          reference: StubProjectiveLine(ProjLine.lift(refLine).scaledBy(k)),
+        );
+        expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+        expect(scaled.line!.closeTo(plain.line!), isTrue);
+      },
+    );
   });
 }

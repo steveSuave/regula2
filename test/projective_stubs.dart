@@ -1,6 +1,8 @@
 import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 
@@ -38,6 +40,27 @@ class StubProjectiveLine extends GeoLine {
 
   @override
   LineEq? get line => value?.toLineEq();
+
+  @override
+  List<GeoObject> get parents => const [];
+
+  @override
+  void recompute() {}
+}
+
+/// The circle sibling of [StubProjectivePoint] (Phase 109): a parent
+/// whose conic is set directly — for exercising kinds that consume
+/// [GeoCircle.conic] with complex-rescaled or degenerate carriers.
+class StubProjectiveCircle extends GeoCircle {
+  StubProjectiveCircle(this.value, {super.id = 'stub-circle'});
+
+  ConicMatrix? value;
+
+  @override
+  ConicMatrix? get conic => value;
+
+  @override
+  CircleEq? get circle => value?.toCircleEq();
 
   @override
   List<GeoObject> get parents => const [];

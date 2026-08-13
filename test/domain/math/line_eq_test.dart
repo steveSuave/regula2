@@ -75,53 +75,59 @@ void main() {
         isFalse,
       );
       // Degenerate: two coincident points are always collinear with anything.
-      expect(
-        isCollinear(Vec2.zero, Vec2.zero, const Vec2(3, 7)),
-        isTrue,
-      );
+      expect(isCollinear(Vec2.zero, Vec2.zero, const Vec2(3, 7)), isTrue);
     });
   });
 
   group('LineEq properties', () {
-    Glados2(any.vec2, any.vec2).test('line through two points contains both',
-        (p, q) {
+    Glados2(any.vec2, any.vec2).test('line through two points contains both', (
+      p,
+      q,
+    ) {
       if (p == q) return;
       final l = LineEq.throughPoints(p, q);
       expect(l.distanceTo(p), closeTo(0, 1e-9));
       expect(l.distanceTo(q), closeTo(0, 1e-9));
     });
 
-    Glados2(any.vec2, any.vec2)
-        .test('point order does not change the line geometrically', (p, q) {
-      if (p == q) return;
-      final l1 = LineEq.throughPoints(p, q);
-      final l2 = LineEq.throughPoints(q, p);
-      expect(l1.closeTo(l2, 1e-6), isTrue);
-    });
+    Glados2(any.vec2, any.vec2).test(
+      'point order does not change the line geometrically',
+      (p, q) {
+        if (p == q) return;
+        final l1 = LineEq.throughPoints(p, q);
+        final l2 = LineEq.throughPoints(q, p);
+        expect(l1.closeTo(l2, 1e-6), isTrue);
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('projection lies on the line and realizes the distance',
-            (p, q, x) {
-      if (p == q) return;
-      final l = LineEq.throughPoints(p, q);
-      final proj = l.project(x);
-      expect(l.distanceTo(proj), closeTo(0, 1e-9));
-      expect(x.distanceTo(proj), closeTo(l.distanceTo(x), 1e-9));
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'projection lies on the line and realizes the distance',
+      (p, q, x) {
+        if (p == q) return;
+        final l = LineEq.throughPoints(p, q);
+        final proj = l.project(x);
+        expect(l.distanceTo(proj), closeTo(0, 1e-9));
+        expect(x.distanceTo(proj), closeTo(l.distanceTo(x), 1e-9));
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, any.vec2).test('translated line is parallel',
-        (p, q, offset) {
+    Glados3(any.vec2, any.vec2, any.vec2).test('translated line is parallel', (
+      p,
+      q,
+      offset,
+    ) {
       if (p == q) return;
       final l1 = LineEq.throughPoints(p, q);
       final l2 = LineEq.throughPoints(p + offset, q + offset);
       expect(l1.isParallelTo(l2, 1e-6), isTrue);
     });
 
-    Glados3(any.vec2, any.vec2, any.unitInterval)
-        .test('points on a segment are collinear with its endpoints',
-            (a, b, t) {
-      expect(isCollinear(a, b, a.lerp(b, t)), isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.unitInterval).test(
+      'points on a segment are collinear with its endpoints',
+      (a, b, t) {
+        expect(isCollinear(a, b, a.lerp(b, t)), isTrue);
+      },
+    );
 
     Glados2(any.vec2, any.vec2).test('pointOnLine lies on the line', (p, q) {
       if (p == q) return;
@@ -136,38 +142,45 @@ void main() {
       expect(l.parameterAt(const Vec2(3, 7)), closeTo(3, 1e-12));
     });
 
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('pointAt(parameterAt(p)) is the projection of p', (p, q, r) {
-      if (p == q) return;
-      final l = LineEq.throughPoints(p, q);
-      expect(l.pointAt(l.parameterAt(r)).closeTo(l.project(r), 1e-6), isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'pointAt(parameterAt(p)) is the projection of p',
+      (p, q, r) {
+        if (p == q) return;
+        final l = LineEq.throughPoints(p, q);
+        expect(l.pointAt(l.parameterAt(r)).closeTo(l.project(r), 1e-6), isTrue);
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, any.vec2).test('double reflection is identity',
-        (p, q, x) {
-      if (p == q) return;
-      final l = LineEq.throughPoints(p, q);
-      expect(l.reflect(l.reflect(x)).closeTo(x, 1e-6), isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'double reflection is identity',
+      (p, q, x) {
+        if (p == q) return;
+        final l = LineEq.throughPoints(p, q);
+        expect(l.reflect(l.reflect(x)).closeTo(x, 1e-6), isTrue);
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('reflection negates the signed distance', (p, q, x) {
-      if (p == q) return;
-      final l = LineEq.throughPoints(p, q);
-      expect(
-        l.signedDistanceTo(l.reflect(x)),
-        closeTo(-l.signedDistanceTo(x), 1e-9),
-      );
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'reflection negates the signed distance',
+      (p, q, x) {
+        if (p == q) return;
+        final l = LineEq.throughPoints(p, q);
+        expect(
+          l.signedDistanceTo(l.reflect(x)),
+          closeTo(-l.signedDistanceTo(x), 1e-9),
+        );
+      },
+    );
 
-    Glados2(any.vec2, any.vec2)
-        .test('reflection across the perpendicular bisector swaps the points',
-            (a, b) {
-      if (a == b) return;
-      final mid = a.lerp(b, 0.5);
-      final bisector = LineEq.pointDirection(mid, (b - a).perpendicular);
-      expect(bisector.reflect(a).closeTo(b, 1e-6), isTrue);
-      expect(bisector.reflect(b).closeTo(a, 1e-6), isTrue);
-    });
+    Glados2(any.vec2, any.vec2).test(
+      'reflection across the perpendicular bisector swaps the points',
+      (a, b) {
+        if (a == b) return;
+        final mid = a.lerp(b, 0.5);
+        final bisector = LineEq.pointDirection(mid, (b - a).perpendicular);
+        expect(bisector.reflect(a).closeTo(b, 1e-6), isTrue);
+        expect(bisector.reflect(b).closeTo(a, 1e-6), isTrue);
+      },
+    );
   });
 }

@@ -59,38 +59,42 @@ void main() {
       expect((object as SlopeMeasurement).subject, same(line));
     });
 
-    test('polygon, point and empty taps are ignored — never the point ladder',
-        () {
-      final c = FreePoint(id: 'c', position: const Vec2(0, 1));
-      final polygon = Polygon(id: 'p', vertices: [a, b, c]);
-      final tool = SlopeTool(newId: newId);
-      expect(
-        tool.onInput(ToolInput(const Vec2(1, 0.4), hit: polygon)),
-        isA<ToolIgnored>(),
-        reason: 'a polygon edge is not a line-valued object',
-      );
-      expect(
-        tool.onInput(ToolInput(const Vec2(0, 0), hit: a)),
-        isA<ToolIgnored>(),
-      );
-      expect(
-        tool.onInput(const ToolInput(Vec2(100, 100))),
-        isA<ToolIgnored>(),
-        reason: 'an empty tap must not drop a free point',
-      );
-      expect(nextId, 0, reason: 'no ids consumed by ignored taps');
-    });
+    test(
+      'polygon, point and empty taps are ignored — never the point ladder',
+      () {
+        final c = FreePoint(id: 'c', position: const Vec2(0, 1));
+        final polygon = Polygon(id: 'p', vertices: [a, b, c]);
+        final tool = SlopeTool(newId: newId);
+        expect(
+          tool.onInput(ToolInput(const Vec2(1, 0.4), hit: polygon)),
+          isA<ToolIgnored>(),
+          reason: 'a polygon edge is not a line-valued object',
+        );
+        expect(
+          tool.onInput(ToolInput(const Vec2(0, 0), hit: a)),
+          isA<ToolIgnored>(),
+        );
+        expect(
+          tool.onInput(const ToolInput(Vec2(100, 100))),
+          isA<ToolIgnored>(),
+          reason: 'an empty tap must not drop a free point',
+        );
+        expect(nextId, 0, reason: 'no ids consumed by ignored taps');
+      },
+    );
 
-    test('a vertical line still commits — the measurement is just undefined',
-        () {
-      final top = FreePoint(id: 't', position: const Vec2(0, 3));
-      final vertical = LineThroughTwoPoints(id: 'v', point1: a, point2: top);
-      final tool = SlopeTool(newId: newId);
-      final result = tool.onInput(ToolInput(const Vec2(0, 1), hit: vertical));
-      expect(result, isA<ToolCommitted>());
-      final object =
-          ((result as ToolCommitted).command as AddObjectCommand).object;
-      expect((object as SlopeMeasurement).isDefined, isFalse);
-    });
+    test(
+      'a vertical line still commits — the measurement is just undefined',
+      () {
+        final top = FreePoint(id: 't', position: const Vec2(0, 3));
+        final vertical = LineThroughTwoPoints(id: 'v', point1: a, point2: top);
+        final tool = SlopeTool(newId: newId);
+        final result = tool.onInput(ToolInput(const Vec2(0, 1), hit: vertical));
+        expect(result, isA<ToolCommitted>());
+        final object =
+            ((result as ToolCommitted).command as AddObjectCommand).object;
+        expect((object as SlopeMeasurement).isDefined, isFalse);
+      },
+    );
   });
 }

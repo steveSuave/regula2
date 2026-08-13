@@ -119,21 +119,31 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (p, q, k) {
-      SegmentRatioPoint build(ProjPoint p1, ProjPoint p2) => SegmentRatioPoint(
-            id: 'r',
-            point1: StubProjectivePoint(p1),
-            point2: StubProjectivePoint(p2),
-            ratio: 0.75,
-          );
-      final plain = build(ProjPoint.lift(p), ProjPoint.lift(q));
-      expect(build(ProjPoint.lift(p).scaledBy(k), ProjPoint.lift(q))
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-      expect(build(ProjPoint.lift(p), ProjPoint.lift(q).scaledBy(k))
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (p, q, k) {
+        SegmentRatioPoint build(ProjPoint p1, ProjPoint p2) =>
+            SegmentRatioPoint(
+              id: 'r',
+              point1: StubProjectivePoint(p1),
+              point2: StubProjectivePoint(p2),
+              ratio: 0.75,
+            );
+        final plain = build(ProjPoint.lift(p), ProjPoint.lift(q));
+        expect(
+          build(
+            ProjPoint.lift(p).scaledBy(k),
+            ProjPoint.lift(q),
+          ).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+        expect(
+          build(
+            ProjPoint.lift(p),
+            ProjPoint.lift(q).scaledBy(k),
+          ).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+      },
+    );
   });
 }

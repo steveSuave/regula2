@@ -42,7 +42,8 @@ void main() {
     Midpoint mBC,
     Midpoint mCD,
     Midpoint mDA,
-  }) varignonQuad() {
+  })
+  varignonQuad() {
     final a = FreePoint(id: newId(), position: const Vec2(0, 0));
     final b = FreePoint(id: newId(), position: const Vec2(6, 1));
     final c = FreePoint(id: newId(), position: const Vec2(7, 5));
@@ -95,7 +96,8 @@ void main() {
       expect(
         coincidentExistingPoint(construction.objects, candidate),
         isNull,
-        reason: 'the stray point has its own degree of freedom — probing '
+        reason:
+            'the stray point has its own degree of freedom — probing '
             'its position separates it from the corner',
       );
     });
@@ -123,7 +125,8 @@ void main() {
       expect(
         coincidentExistingPoint(construction.objects, fourthCorner(a, b, c)),
         isNull,
-        reason: 'the glued point rides an independent parameter — probing '
+        reason:
+            'the glued point rides an independent parameter — probing '
             'it slides it off the corner',
       );
     });
@@ -153,8 +156,11 @@ void main() {
         construction.add(object);
       }
       final candidate = fourthCorner(a, b, c);
-      expect(candidate.position, isNull,
-          reason: 'collinear inputs leave the parallels parallel');
+      expect(
+        candidate.position,
+        isNull,
+        reason: 'collinear inputs leave the parallels parallel',
+      );
 
       expect(coincidentExistingPoint(construction.objects, candidate), isNull);
     });
@@ -194,8 +200,11 @@ void main() {
       expect(candidate.position, candidatePositionBefore);
       for (final object in quad.construction.objects) {
         if (object is GeoPoint) {
-          expect(object.position, positionsBefore[object.id],
-              reason: '${object.id} must be restored exactly');
+          expect(
+            object.position,
+            positionsBefore[object.id],
+            reason: '${object.id} must be restored exactly',
+          );
         }
       }
     });
@@ -217,11 +226,7 @@ void main() {
         position: const Vec2(569.9285617029774, -324.6115666414743),
       );
       final sideAB = Segment(id: newId(), point1: a, point2: b);
-      final parallel = ParallelLine(
-        id: newId(),
-        through: c,
-        reference: sideAB,
-      );
+      final parallel = ParallelLine(id: newId(), through: c, reference: sideAB);
       final d = PointOnObject(
         id: 'D',
         curve: parallel,
@@ -242,7 +247,8 @@ void main() {
           fourthCorner(mCB, mBA, mAD),
         ),
         same(mDC),
-        reason: 'D rides a glued parameter shared by both definitions — '
+        reason:
+            'D rides a glued parameter shared by both definitions — '
             'the coincidence survives its perturbation too',
       );
     });
@@ -252,13 +258,11 @@ void main() {
       final far = FreePoint(id: newId(), position: const Vec2(100, 100));
       quad.construction.add(far);
 
-      final candidate = fourthCorner(
-        quad.corners[0],
-        far,
-        quad.corners[1],
+      final candidate = fourthCorner(quad.corners[0], far, quad.corners[1]);
+      expect(
+        coincidentExistingPoint(quad.construction.objects, candidate),
+        isNull,
       );
-      expect(coincidentExistingPoint(quad.construction.objects, candidate),
-          isNull);
     });
   });
 }
