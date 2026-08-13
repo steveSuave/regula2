@@ -175,8 +175,7 @@ void main() {
         throwsArgumentError,
       );
       expect(
-        () =>
-            IntersectionPoint(id: 'x', curve1: l, curve2: l2, branchIndex: 2),
+        () => IntersectionPoint(id: 'x', curve1: l, curve2: l2, branchIndex: 2),
         throwsArgumentError,
       );
     });

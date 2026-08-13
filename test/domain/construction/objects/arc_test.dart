@@ -5,11 +5,16 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
 
 void main() {
   group('Arc', () {
-    test('carrier is the circumcircle, extent starts at the start point',
-        () {
+    test('carrier is the circumcircle, extent starts at the start point', () {
       final s = FreePoint(id: 's', position: const Vec2(1, 0));
       final v = FreePoint(id: 'v', position: const Vec2(0, 1));
       final e = FreePoint(id: 'e', position: const Vec2(-1, 0));
@@ -74,8 +79,11 @@ void main() {
       var (start, sweep) = upper.angularExtent!;
       expect(start, closeTo(0, 1e-9));
       expect(sweep, closeTo(math.pi, 1e-9));
-      expect(upper.clampAngle(math.pi / 3), math.pi / 3,
-          reason: 'inside angles pass through untouched');
+      expect(
+        upper.clampAngle(math.pi / 3),
+        math.pi / 3,
+        reason: 'inside angles pass through untouched',
+      );
       expect(upper.clampAngle(-math.pi / 4), closeTo(0, 1e-9));
       expect(upper.clampAngle(-3 * math.pi / 4), closeTo(math.pi, 1e-9));
 
@@ -133,6 +141,44 @@ void main() {
       expect(arc.sweep, greaterThan(0));
       construction.moveFreePoint('v', const Vec2(0, -1));
       expect(arc.sweep, lessThan(0));
+    });
+  });
+
+  group('projective semantics (Phase 109)', () {
+    test('collinear points carry the degenerate line-conic; the angular '
+        'extent is null (V2)', () {
+      final arc = Arc(
+        id: 'arc',
+        start: FreePoint(id: 's', position: const Vec2(0, 0)),
+        via: FreePoint(id: 'v', position: const Vec2(2, 1)),
+        end: FreePoint(id: 'e', position: const Vec2(6, 3)),
+      );
+      expect(arc.isDefined, isFalse);
+      expect(arc.circle, isNull);
+      expect(arc.startAngle, isNull);
+      expect(arc.sweep, isNull);
+      expect(arc.angularExtent, isNull);
+      expect(
+        arc.conic!.closeTo(
+          ConicMatrix.linePair(ProjLine.real(1, -2, 0), ProjLine.infinity),
+        ),
+        isTrue,
+      );
+    });
+
+    test('recompute is invariant under complex rescaling of parents', () {
+      final s = StubProjectivePoint(ProjPoint.real(1, 0), id: 's');
+      final v = StubProjectivePoint(ProjPoint.real(0, 1), id: 'v');
+      final e = StubProjectivePoint(ProjPoint.real(-1, 0), id: 'e');
+      final arc = Arc(id: 'arc', start: s, via: v, end: e);
+      final reference = arc.conic!;
+      s.value = s.value!.scaledBy(const Complex(0, 2));
+      v.value = v.value!.scaledBy(const Complex(-3, 1));
+      e.value = e.value!.scaledBy(const Complex(0.5, 0.5));
+      arc.recompute();
+      expect(arc.conic!.closeTo(reference), isTrue);
+      expect(arc.startAngle!, closeTo(0, 1e-9));
+      expect(arc.sweep!, closeTo(math.pi, 1e-9));
     });
   });
 }

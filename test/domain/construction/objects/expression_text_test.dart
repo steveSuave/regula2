@@ -12,10 +12,10 @@ import 'package:regula/domain/construction/text_template.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 FreePoint namedPoint(String id, String name, double x, double y) => FreePoint(
-      id: id,
-      position: Vec2(x, y),
-      attributes: ObjectAttributes(name: name),
-    );
+  id: id,
+  position: Vec2(x, y),
+  attributes: ObjectAttributes(name: name),
+);
 
 void main() {
   group('ExpressionText', () {
@@ -44,8 +44,9 @@ void main() {
         content: 'AB = {dist(A, B)}',
         anchor: const Vec2(0, 0),
         references: bindReferences(
-            TextTemplate.parse('AB = {dist(A, B)}').referenceNames,
-            construction.objects),
+          TextTemplate.parse('AB = {dist(A, B)}').referenceNames,
+          construction.objects,
+        ),
       );
       construction.add(text);
       expect(text.renderedText, 'AB = 5.00');
@@ -66,8 +67,9 @@ void main() {
         content: 'AB = {dist(A, B)}',
         anchor: Vec2.zero,
         references: bindReferences(
-            TextTemplate.parse('AB = {dist(A, B)}').referenceNames,
-            construction.objects),
+          TextTemplate.parse('AB = {dist(A, B)}').referenceNames,
+          construction.objects,
+        ),
         attributes: const ObjectAttributes(valueDecimals: 4),
       );
       construction.add(text);
@@ -76,8 +78,7 @@ void main() {
 
       // The inspector path: an attribute-only change re-renders the text
       // (the Phase 72 carve-out in setAttributes).
-      construction.setAttributes(
-          't', const ObjectAttributes(valueDecimals: 0));
+      construction.setAttributes('t', const ObjectAttributes(valueDecimals: 0));
       expect(text.renderedText, 'AB = 5');
 
       construction.moveFreePoint('b', const Vec2(6, 8));

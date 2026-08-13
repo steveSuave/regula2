@@ -23,12 +23,14 @@ void main() {
       expect(par.parents, [p, ref]);
       expect(par.line!.contains(p.position), isTrue);
       expect(par.line!.isParallelTo(ref.line!), isTrue);
-      expect(par.line!.contains(a.position), isFalse,
-          reason: 'a distinct parallel, not the reference itself');
+      expect(
+        par.line!.contains(a.position),
+        isFalse,
+        reason: 'a distinct parallel, not the reference itself',
+      );
     });
 
-    test('a through-point on the reference yields the same (defined) line',
-        () {
+    test('a through-point on the reference yields the same (defined) line', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 2));
       final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
@@ -38,30 +40,32 @@ void main() {
       expect(par.line!.closeTo(ref.line!), isTrue);
     });
 
-    test('reference degenerates (coincident points): undefined, then recovers',
-        () {
-      final construction = Construction();
-      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
-      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
-      final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
-      final p = FreePoint(id: 'p', position: const Vec2(1, 5));
-      final par = ParallelLine(id: 'k', through: p, reference: ref);
-      construction
-        ..add(a)
-        ..add(b)
-        ..add(ref)
-        ..add(p)
-        ..add(par);
+    test(
+      'reference degenerates (coincident points): undefined, then recovers',
+      () {
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+        final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+        final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+        final p = FreePoint(id: 'p', position: const Vec2(1, 5));
+        final par = ParallelLine(id: 'k', through: p, reference: ref);
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(ref)
+          ..add(p)
+          ..add(par);
 
-      construction.moveFreePoint('b', const Vec2(0, 0));
-      expect(par.isDefined, isFalse);
-      expect(par.line, isNull);
+        construction.moveFreePoint('b', const Vec2(0, 0));
+        expect(par.isDefined, isFalse);
+        expect(par.line, isNull);
 
-      construction.moveFreePoint('b', const Vec2(0, 4));
-      expect(par.isDefined, isTrue);
-      expect(par.line!.contains(p.position), isTrue);
-      expect(par.line!.isParallelTo(ref.line!), isTrue);
-    });
+        construction.moveFreePoint('b', const Vec2(0, 4));
+        expect(par.isDefined, isTrue);
+        expect(par.line!.contains(p.position), isTrue);
+        expect(par.line!.isParallelTo(ref.line!), isTrue);
+      },
+    );
 
     test('tracks a rotating reference', () {
       final construction = Construction();
@@ -104,24 +108,25 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of either parent',
-        (a, b, k) {
-      if (a.closeTo(b, 1e-3)) {
-        return;
-      }
-      final refLine = LineEq.throughPoints(a, b);
-      final plain = ParallelLine(
-        id: 'k1',
-        through: StubProjectivePoint(ProjPoint.real(-3, 7)),
-        reference: StubProjectiveLine(ProjLine.lift(refLine)),
-      );
-      final scaled = ParallelLine(
-        id: 'k2',
-        through: StubProjectivePoint(ProjPoint.real(-3, 7).scaledBy(k)),
-        reference: StubProjectiveLine(ProjLine.lift(refLine).scaledBy(k)),
-      );
-      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
-      expect(scaled.line!.closeTo(plain.line!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of either parent',
+      (a, b, k) {
+        if (a.closeTo(b, 1e-3)) {
+          return;
+        }
+        final refLine = LineEq.throughPoints(a, b);
+        final plain = ParallelLine(
+          id: 'k1',
+          through: StubProjectivePoint(ProjPoint.real(-3, 7)),
+          reference: StubProjectiveLine(ProjLine.lift(refLine)),
+        );
+        final scaled = ParallelLine(
+          id: 'k2',
+          through: StubProjectivePoint(ProjPoint.real(-3, 7).scaledBy(k)),
+          reference: StubProjectiveLine(ProjLine.lift(refLine).scaledBy(k)),
+        );
+        expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+        expect(scaled.line!.closeTo(plain.line!), isTrue);
+      },
+    );
   });
 }

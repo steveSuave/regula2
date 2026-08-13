@@ -10,8 +10,7 @@ import '../../projective/generators.dart';
 
 void main() {
   group('Ray', () {
-    test('carrier contains both points; start/through expose the extent',
-        () {
+    test('carrier contains both points; start/through expose the extent', () {
       final a = FreePoint(id: 'a', position: const Vec2(1, 1));
       final b = FreePoint(id: 'b', position: const Vec2(4, 5));
       final r = Ray(id: 'r', origin: a, through: b);
@@ -41,14 +40,23 @@ void main() {
         expect(max, t0);
       }
 
-      expect(r.clampParameter(tThrough), tThrough,
-          reason: 'parameters on the ray pass through untouched');
+      expect(
+        r.clampParameter(tThrough),
+        tThrough,
+        reason: 'parameters on the ray pass through untouched',
+      );
       final behind = t0 - (tThrough - t0);
-      expect(r.clampParameter(behind), t0,
-          reason: 'behind the origin clamps onto it');
+      expect(
+        r.clampParameter(behind),
+        t0,
+        reason: 'behind the origin clamps onto it',
+      );
       final far = t0 + 100 * (tThrough - t0);
-      expect(r.clampParameter(far), far,
-          reason: 'the through side is unbounded');
+      expect(
+        r.clampParameter(far),
+        far,
+        reason: 'the through side is unbounded',
+      );
     });
 
     test('drag through coincidence: undefined, then recovers', () {
@@ -79,28 +87,32 @@ void main() {
       final r = Ray(id: 'r', origin: a, through: inf);
       expect(r.isDefined, isFalse);
       expect(r.line, isNull);
-      expect(r.projLine, isNull,
-          reason: 'a ray needs a drawable endpoint and direction anchor');
+      expect(
+        r.projLine,
+        isNull,
+        reason: 'a ray needs a drawable endpoint and direction anchor',
+      );
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (p, q, k) {
-      if (p.closeTo(q, 1e-3)) {
-        return;
-      }
-      final plain = Ray(
-        id: 'r1',
-        origin: StubProjectivePoint(ProjPoint.lift(p)),
-        through: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      final scaled = Ray(
-        id: 'r2',
-        origin: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
-        through: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
-      expect(scaled.line!.closeTo(plain.line!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (p, q, k) {
+        if (p.closeTo(q, 1e-3)) {
+          return;
+        }
+        final plain = Ray(
+          id: 'r1',
+          origin: StubProjectivePoint(ProjPoint.lift(p)),
+          through: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        final scaled = Ray(
+          id: 'r2',
+          origin: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+          through: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+        expect(scaled.line!.closeTo(plain.line!), isTrue);
+      },
+    );
   });
 }

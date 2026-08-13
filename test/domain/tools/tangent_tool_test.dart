@@ -27,13 +27,12 @@ void main() {
   });
 
   List<TangentLine> tangentsOf(MacroCommand command) => [
-        for (final c in command.commands)
-          if ((c as AddObjectCommand).object case final TangentLine t) t,
-      ];
+    for (final c in command.commands)
+      if ((c as AddObjectCommand).object case final TangentLine t) t,
+  ];
 
   group('TangentTool', () {
-    test('point first or circle first, both tangents in one MacroCommand',
-        () {
+    test('point first or circle first, both tangents in one MacroCommand', () {
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));
 
       for (final circleFirst in [true, false]) {
@@ -48,11 +47,17 @@ void main() {
 
         expect(tool.onInput(inputs[0]), isA<ToolAccepted>());
         final result = tool.onInput(inputs[1]);
-        expect(result, isA<ToolCommitted>(),
-            reason: 'circleFirst: $circleFirst');
+        expect(
+          result,
+          isA<ToolCommitted>(),
+          reason: 'circleFirst: $circleFirst',
+        );
         final command = (result as ToolCommitted).command as MacroCommand;
-        expect(command.commands, hasLength(2),
-            reason: 'existing point — only the two tangents are added');
+        expect(
+          command.commands,
+          hasLength(2),
+          reason: 'existing point — only the two tangents are added',
+        );
         final tangents = tangentsOf(command);
         expect([for (final t in tangents) t.branch], [0, 1]);
         for (final t in tangents) {
@@ -70,14 +75,16 @@ void main() {
       final tool = newTool();
 
       tool.onInput(ToolInput(const Vec2(1, 0.05), hit: circle));
-      final result =
-          tool.onInput(const ToolInput(Vec2(5, 0))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(5, 0))) as ToolCommitted;
 
       final command = result.command as MacroCommand;
       expect(command.commands, hasLength(3));
       command.apply(construction);
-      expect(construction.length, 6,
-          reason: 'new free point + two tangent lines');
+      expect(
+        construction.length,
+        6,
+        reason: 'new free point + two tangent lines',
+      );
       command.undo(construction);
       expect(construction.length, 3);
     });
@@ -105,8 +112,7 @@ void main() {
       );
     });
 
-    test('the circle is consulted from extraHits before the point ladder',
-        () {
+    test('the circle is consulted from extraHits before the point ladder', () {
       final other = FreePoint(id: 'o', position: const Vec2(0, 3));
       final line = LineThroughTwoPoints(id: 'l', point1: rim, point2: other);
       final tool = newTool();
@@ -125,23 +131,25 @@ void main() {
       expect(tool.previewPositions, isEmpty);
     });
 
-    test('with the circle slot full, a line tap still glues via the ladder',
-        () {
-      final other = FreePoint(id: 'o', position: const Vec2(-2, 3));
-      final far = FreePoint(id: 'f', position: const Vec2(-2, -3));
-      final line = LineThroughTwoPoints(id: 'l', point1: other, point2: far);
-      final tool = newTool();
-      tool.onInput(ToolInput(const Vec2(1, 0.05), hit: circle));
-      final result = tool.onInput(
-        ToolInput(const Vec2(-2, 1), hit: line, snapThreshold: 0.2),
-      );
-      expect(result, isA<ToolCommitted>());
-      final command = (result as ToolCommitted).command as MacroCommand;
-      expect(command.commands, hasLength(3));
-      final glued = (command.commands.first as AddObjectCommand).object;
-      expect(glued, isA<PointOnObject>());
-      expect((glued as PointOnObject).curve, line);
-    });
+    test(
+      'with the circle slot full, a line tap still glues via the ladder',
+      () {
+        final other = FreePoint(id: 'o', position: const Vec2(-2, 3));
+        final far = FreePoint(id: 'f', position: const Vec2(-2, -3));
+        final line = LineThroughTwoPoints(id: 'l', point1: other, point2: far);
+        final tool = newTool();
+        tool.onInput(ToolInput(const Vec2(1, 0.05), hit: circle));
+        final result = tool.onInput(
+          ToolInput(const Vec2(-2, 1), hit: line, snapThreshold: 0.2),
+        );
+        expect(result, isA<ToolCommitted>());
+        final command = (result as ToolCommitted).command as MacroCommand;
+        expect(command.commands, hasLength(3));
+        final glued = (command.commands.first as AddObjectCommand).object;
+        expect(glued, isA<PointOnObject>());
+        expect((glued as PointOnObject).curve, line);
+      },
+    );
 
     test('previews: existing inputs haloed, new point keeps the marker', () {
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));

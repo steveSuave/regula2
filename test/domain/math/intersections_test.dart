@@ -50,16 +50,17 @@ void main() {
     });
 
     test('tangent line touches at one point', () {
-      final tangent =
-          LineEq.throughPoints(const Vec2(0, 1), const Vec2(1, 1));
+      final tangent = LineEq.throughPoints(const Vec2(0, 1), const Vec2(1, 1));
       final pts = intersectLineCircle(tangent, unitCircle);
       expect(pts, hasLength(1));
       expect(pts.single.closeTo(const Vec2(0, 1), 1e-12), isTrue);
     });
 
     test('near-tangent line within epsilon counts as tangent', () {
-      final nearTangent =
-          LineEq.throughPoints(const Vec2(0, 1 + 1e-12), const Vec2(1, 1 + 1e-12));
+      final nearTangent = LineEq.throughPoints(
+        const Vec2(0, 1 + 1e-12),
+        const Vec2(1, 1 + 1e-12),
+      );
       expect(intersectLineCircle(nearTangent, unitCircle), hasLength(1));
     });
 
@@ -110,61 +111,80 @@ void main() {
 
     test('contained circle misses', () {
       expect(
-        intersectCircleCircle(CircleEq(Vec2.zero, 5), CircleEq(const Vec2(1, 0), 1)),
+        intersectCircleCircle(
+          CircleEq(Vec2.zero, 5),
+          CircleEq(const Vec2(1, 0), 1),
+        ),
         isEmpty,
       );
     });
 
     test('concentric and coincident circles return empty', () {
-      expect(intersectCircleCircle(unitCircle, CircleEq(Vec2.zero, 2)), isEmpty);
-      expect(intersectCircleCircle(unitCircle, CircleEq(Vec2.zero, 1)), isEmpty);
+      expect(
+        intersectCircleCircle(unitCircle, CircleEq(Vec2.zero, 2)),
+        isEmpty,
+      );
+      expect(
+        intersectCircleCircle(unitCircle, CircleEq(Vec2.zero, 1)),
+        isEmpty,
+      );
     });
   });
 
   group('intersection properties', () {
-    Glados2(any.lineEq, any.lineEq)
-        .test('line-line intersection lies on both lines', (l1, l2) {
-      // A coarse parallel cutoff keeps the system well-conditioned; the
-      // point's accuracy degrades as the lines approach parallel.
-      final pts = intersectLineLine(l1, l2, 1e-3);
-      if (pts.isEmpty) return;
-      expect(l1.distanceTo(pts.single), closeTo(0, 1e-6));
-      expect(l2.distanceTo(pts.single), closeTo(0, 1e-6));
-    });
+    Glados2(any.lineEq, any.lineEq).test(
+      'line-line intersection lies on both lines',
+      (l1, l2) {
+        // A coarse parallel cutoff keeps the system well-conditioned; the
+        // point's accuracy degrades as the lines approach parallel.
+        final pts = intersectLineLine(l1, l2, 1e-3);
+        if (pts.isEmpty) return;
+        expect(l1.distanceTo(pts.single), closeTo(0, 1e-6));
+        expect(l2.distanceTo(pts.single), closeTo(0, 1e-6));
+      },
+    );
 
-    Glados2(any.lineEq, any.circleEq)
-        .test('line-circle intersections lie on both objects', (l, c) {
-      for (final p in intersectLineCircle(l, c)) {
-        expect(l.distanceTo(p), closeTo(0, 1e-6));
-        expect(c.distanceTo(p), closeTo(0, 1e-6));
-      }
-    });
+    Glados2(any.lineEq, any.circleEq).test(
+      'line-circle intersections lie on both objects',
+      (l, c) {
+        for (final p in intersectLineCircle(l, c)) {
+          expect(l.distanceTo(p), closeTo(0, 1e-6));
+          expect(c.distanceTo(p), closeTo(0, 1e-6));
+        }
+      },
+    );
 
-    Glados2(any.circleEq, any.vec2)
-        .test('line through the center cuts a full diameter', (c, dir) {
-      if (dir == Vec2.zero) return;
-      final l = LineEq.pointDirection(c.center, dir);
-      final pts = intersectLineCircle(l, c);
-      expect(pts, hasLength(2));
-      expect(pts[0].distanceTo(pts[1]), closeTo(2 * c.radius, 1e-6));
-    });
+    Glados2(any.circleEq, any.vec2).test(
+      'line through the center cuts a full diameter',
+      (c, dir) {
+        if (dir == Vec2.zero) return;
+        final l = LineEq.pointDirection(c.center, dir);
+        final pts = intersectLineCircle(l, c);
+        expect(pts, hasLength(2));
+        expect(pts[0].distanceTo(pts[1]), closeTo(2 * c.radius, 1e-6));
+      },
+    );
 
-    Glados2(any.circleEq, any.circleEq)
-        .test('circle-circle intersections lie on both circles', (c1, c2) {
-      for (final p in intersectCircleCircle(c1, c2)) {
-        expect(c1.distanceTo(p), closeTo(0, 1e-6));
-        expect(c2.distanceTo(p), closeTo(0, 1e-6));
-      }
-    });
+    Glados2(any.circleEq, any.circleEq).test(
+      'circle-circle intersections lie on both circles',
+      (c1, c2) {
+        for (final p in intersectCircleCircle(c1, c2)) {
+          expect(c1.distanceTo(p), closeTo(0, 1e-6));
+          expect(c2.distanceTo(p), closeTo(0, 1e-6));
+        }
+      },
+    );
 
-    Glados2(any.circleEq, any.circleEq)
-        .test('argument order does not change the intersection set', (c1, c2) {
-      final ab = intersectCircleCircle(c1, c2);
-      final ba = intersectCircleCircle(c2, c1);
-      expect(ab.length, ba.length);
-      for (final p in ab) {
-        expect(ba.any((q) => q.closeTo(p, 1e-6)), isTrue);
-      }
-    });
+    Glados2(any.circleEq, any.circleEq).test(
+      'argument order does not change the intersection set',
+      (c1, c2) {
+        final ab = intersectCircleCircle(c1, c2);
+        final ba = intersectCircleCircle(c2, c1);
+        expect(ab.length, ba.length);
+        for (final p in ab) {
+          expect(ba.any((q) => q.closeTo(p, 1e-6)), isTrue);
+        }
+      },
+    );
   });
 }

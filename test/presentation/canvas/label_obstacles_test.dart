@@ -34,7 +34,10 @@ void main() {
       point2: b,
       attributes: const ObjectAttributes(showValue: true),
     );
-    construction..add(a)..add(b)..add(s);
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(s);
 
     final scene = buildDeclutterScene(construction, viewport, canvasSize);
     expect(scene.rects.map((r) => r.ownerId), ['a', 'b']);
@@ -61,7 +64,11 @@ void main() {
       arm2: b,
       attributes: const ObjectAttributes(showValue: true),
     );
-    construction..add(a)..add(b)..add(hidden)..add(undefined);
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(hidden)
+      ..add(undefined);
 
     final scene = buildDeclutterScene(construction, viewport, canvasSize);
     expect(scene.capsules, isEmpty);
@@ -74,7 +81,10 @@ void main() {
     final a = FreePoint(id: 'a', position: const Vec2(0, 0));
     final b = FreePoint(id: 'b', position: const Vec2(3, 4));
     final d = DistanceMeasurement(id: 'd', point1: a, point2: b);
-    construction..add(a)..add(b)..add(d);
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(d);
 
     final scene = buildDeclutterScene(construction, viewport, canvasSize);
     expect(scene.capsules, isEmpty);
@@ -108,10 +118,12 @@ void main() {
       ..add(acute);
 
     final scene = buildDeclutterScene(construction, viewport, canvasSize);
-    final rightCapsules =
-        scene.capsules.where((c) => c.ownerId == 'right').length;
-    final acuteCapsules =
-        scene.capsules.where((c) => c.ownerId == 'acute').length;
+    final rightCapsules = scene.capsules
+        .where((c) => c.ownerId == 'right')
+        .length;
+    final acuteCapsules = scene.capsules
+        .where((c) => c.ownerId == 'acute')
+        .length;
     expect(rightCapsules, 4, reason: 'the right-angle square has 4 edges');
     // 45° at ≤ 30° steps → 2 steps: 3 spokes + 2 rim chords.
     expect(acuteCapsules, 5);

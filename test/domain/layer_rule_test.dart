@@ -64,7 +64,8 @@ void main() {
     expect(
       offenders,
       isEmpty,
-      reason: 'domain layer imports must stay on the pure-Dart allowlist '
+      reason:
+          'domain layer imports must stay on the pure-Dart allowlist '
           '(see CLAUDE.md / this test)',
     );
   });

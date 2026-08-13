@@ -13,8 +13,7 @@ import 'package:regula/domain/projective/proj_point.dart';
 import '../math/generators.dart';
 import 'generators.dart';
 
-ProjPoint conjPoint(ProjPoint p) =>
-    ProjPoint(p.x.conj, p.y.conj, p.w.conj);
+ProjPoint conjPoint(ProjPoint p) => ProjPoint(p.x.conj, p.y.conj, p.w.conj);
 
 extension on Any {
   /// Six classical conic coefficients on a 0.01 grid in [-5, 5].
@@ -22,37 +21,35 @@ extension on Any {
       listWithLength(6, intInRange(-500, 501));
 
   Generator<ConicMatrix> get realConic => conicCoeffInts.map(
-        (k) => ConicMatrix.coefficients(
-          k[0] / 100,
-          k[1] / 100,
-          k[2] / 100,
-          k[3] / 100,
-          k[4] / 100,
-          k[5] / 100,
-        ),
-      );
+    (k) => ConicMatrix.coefficients(
+      k[0] / 100,
+      k[1] / 100,
+      k[2] / 100,
+      k[3] / 100,
+      k[4] / 100,
+      k[5] / 100,
+    ),
+  );
 
   /// A circle small and near enough to the origin that five-point conic
   /// fitting stays well conditioned: center on a 0.01 grid in [-10, 10],
   /// radius on a 0.01 grid in [0.5, 5].
   Generator<CircleEq> get smallCircle => combine3(
-        intInRange(-1000, 1001),
-        intInRange(-1000, 1001),
-        intInRange(50, 501),
-        (int cx, int cy, int r) =>
-            CircleEq(Vec2(cx / 100, cy / 100), r / 100),
-      );
+    intInRange(-1000, 1001),
+    intInRange(-1000, 1001),
+    intInRange(50, 501),
+    (int cx, int cy, int r) => CircleEq(Vec2(cx / 100, cy / 100), r / 100),
+  );
 
   /// An affine point on a 0.001 grid (disambiguates the `vec2` generators
   /// that both imported extensions define).
-  Generator<Vec2> get gridVec2 =>
-      combine2(component, component, Vec2.new);
+  Generator<Vec2> get gridVec2 => combine2(component, component, Vec2.new);
 
   /// Five angles on a 0.001 grid in [0, 2π).
-  Generator<List<double>> get fiveAngles =>
-      listWithLength(5, intInRange(0, 6283)).map(
-        (l) => [for (final i in l) i / 1000],
-      );
+  Generator<List<double>> get fiveAngles => listWithLength(
+    5,
+    intInRange(0, 6283),
+  ).map((l) => [for (final i in l) i / 1000]);
 }
 
 /// Whether the [angles] (radians, mod 2π) are pairwise at least [gap] apart.
@@ -81,72 +78,78 @@ void main() {
       expect(circularPointI.closeTo(circularPointJ), isFalse);
     });
 
-    Glados(any.circleEq).test('every lifted circle passes through I and J',
-        (c) {
+    Glados(any.circleEq).test('every lifted circle passes through I and J', (
+      c,
+    ) {
       final conic = ConicMatrix.lift(c);
       expect(conic.containsPoint(circularPointI), isTrue);
       expect(conic.containsPoint(circularPointJ), isTrue);
     });
 
     Glados(any.conicCoeffInts).test(
-        'a real conic passes through I and J iff it has circle shape', (k) {
-      final conic = ConicMatrix.coefficients(
-        k[0] / 100,
-        k[1] / 100,
-        k[2] / 100,
-        k[3] / 100,
-        k[4] / 100,
-        k[5] / 100,
-      );
-      if (conic.isZero) return;
-      // evaluate(I) = (xx − yy) + 2i·xy, so on the coefficient grid the
-      // predicate separates cleanly: through I ⇔ a == c and b == 0.
-      final isCircleShape = k[0] == k[2] && k[1] == 0;
-      expect(conic.containsPoint(circularPointI), isCircleShape);
-      expect(conic.containsPoint(circularPointJ), isCircleShape);
-    });
+      'a real conic passes through I and J iff it has circle shape',
+      (k) {
+        final conic = ConicMatrix.coefficients(
+          k[0] / 100,
+          k[1] / 100,
+          k[2] / 100,
+          k[3] / 100,
+          k[4] / 100,
+          k[5] / 100,
+        );
+        if (conic.isZero) return;
+        // evaluate(I) = (xx − yy) + 2i·xy, so on the coefficient grid the
+        // predicate separates cleanly: through I ⇔ a == c and b == 0.
+        final isCircleShape = k[0] == k[2] && k[1] == 0;
+        expect(conic.containsPoint(circularPointI), isCircleShape);
+        expect(conic.containsPoint(circularPointJ), isCircleShape);
+      },
+    );
   });
 
   group('lift and toCircleEq', () {
-    Glados2(any.circleEq, any.angle).test('lifted circle contains its points',
-        (c, theta) {
+    Glados2(any.circleEq, any.angle).test('lifted circle contains its points', (
+      c,
+      theta,
+    ) {
       final conic = ConicMatrix.lift(c);
       expect(conic.containsPoint(ProjPoint.lift(c.pointAt(theta))), isTrue);
     });
 
-    Glados2(any.circleEq, any.nonZeroComplex)
-        .test('toCircleEq round-trips the lift, up to complex scale', (c, s) {
-      final projected = ConicMatrix.lift(c).scaledBy(s).toCircleEq();
-      expect(projected, isNotNull);
-      final tol = 1e-6 * (1 + c.center.norm + c.radius);
-      expect(projected!.center.closeTo(c.center, tol), isTrue);
-      expect((projected.radius - c.radius).abs(), lessThan(tol));
-    });
+    Glados2(any.circleEq, any.nonZeroComplex).test(
+      'toCircleEq round-trips the lift, up to complex scale',
+      (c, s) {
+        final projected = ConicMatrix.lift(c).scaledBy(s).toCircleEq();
+        expect(projected, isNotNull);
+        final tol = 1e-6 * (1 + c.center.norm + c.radius);
+        expect(projected!.center.closeTo(c.center, tol), isTrue);
+        expect((projected.radius - c.radius).abs(), lessThan(tol));
+      },
+    );
 
     test('non-circles project to null', () {
       // Tilted conic (xy term), ellipse, imaginary circle, line pair.
+      expect(ConicMatrix.coefficients(1, 1, 1, 0, 0, -1).toCircleEq(), isNull);
+      expect(ConicMatrix.coefficients(1, 0, 2, 0, 0, -1).toCircleEq(), isNull);
+      expect(ConicMatrix.coefficients(1, 0, 1, 0, 0, 1).toCircleEq(), isNull);
       expect(
-        ConicMatrix.coefficients(1, 1, 1, 0, 0, -1).toCircleEq(),
-        isNull,
-      );
-      expect(
-        ConicMatrix.coefficients(1, 0, 2, 0, 0, -1).toCircleEq(),
-        isNull,
-      );
-      expect(
-        ConicMatrix.coefficients(1, 0, 1, 0, 0, 1).toCircleEq(),
-        isNull,
-      );
-      expect(
-        ConicMatrix.linePair(ProjLine.real(1, 0, 0), ProjLine.real(0, 1, 0))
-            .toCircleEq(),
+        ConicMatrix.linePair(
+          ProjLine.real(1, 0, 0),
+          ProjLine.real(0, 1, 0),
+        ).toCircleEq(),
         isNull,
       );
     });
 
     test('a point circle projects to radius zero', () {
-      final projected =
-          ConicMatrix.coefficients(1, 0, 1, -2, -4, 5).toCircleEq();
+      final projected = ConicMatrix.coefficients(
+        1,
+        0,
+        1,
+        -2,
+        -4,
+        5,
+      ).toCircleEq();
       expect(projected, isNotNull);
       expect(projected!.center.closeTo(const Vec2(1, 2), 1e-12), isTrue);
       expect(projected.radius, lessThan(1e-9));
@@ -154,39 +157,45 @@ void main() {
   });
 
   group('evaluate, polarLine, containsPoint', () {
-    Glados(any.circleEq).test('polar of the center is the line at infinity',
-        (c) {
+    Glados(any.circleEq).test('polar of the center is the line at infinity', (
+      c,
+    ) {
       final polar = ConicMatrix.lift(c).polarLine(ProjPoint.lift(c.center));
       expect(polar.closeTo(ProjLine.infinity), isTrue);
     });
 
-    Glados2(any.circleEq, any.angle)
-        .test('polar at an on-circle point is the tangent there', (c, theta) {
-      final conic = ConicMatrix.lift(c);
-      final p = ProjPoint.lift(c.pointAt(theta));
-      final tangent = conic.polarLine(p);
-      expect(tangent.contains(p, 1e-7), isTrue);
-      // Tangency: both intersection points collapse onto p.
-      for (final root in intersectLineConic(tangent, conic)) {
-        expect(root.closeTo(p, 1e-5), isTrue);
-      }
-    });
+    Glados2(any.circleEq, any.angle).test(
+      'polar at an on-circle point is the tangent there',
+      (c, theta) {
+        final conic = ConicMatrix.lift(c);
+        final p = ProjPoint.lift(c.pointAt(theta));
+        final tangent = conic.polarLine(p);
+        expect(tangent.contains(p, 1e-7), isTrue);
+        // Tangency: both intersection points collapse onto p.
+        for (final root in intersectLineConic(tangent, conic)) {
+          expect(root.closeTo(p, 1e-5), isTrue);
+        }
+      },
+    );
 
     Glados3(any.circleEq, any.angle, any.nonZeroComplex).test(
-        'containsPoint is invariant under complex rescaling of both sides',
-        (c, theta, s) {
-      final conic = ConicMatrix.lift(c);
-      final p = ProjPoint.lift(c.pointAt(theta));
-      expect(conic.scaledBy(s).containsPoint(p.scaledBy(s)), isTrue);
-      final off = ProjPoint.lift(c.pointAt(theta) + Vec2(c.radius, 0));
-      expect(
-        conic.scaledBy(s).containsPoint(off.scaledBy(s)),
-        conic.containsPoint(off),
-      );
-    });
+      'containsPoint is invariant under complex rescaling of both sides',
+      (c, theta, s) {
+        final conic = ConicMatrix.lift(c);
+        final p = ProjPoint.lift(c.pointAt(theta));
+        expect(conic.scaledBy(s).containsPoint(p.scaledBy(s)), isTrue);
+        final off = ProjPoint.lift(c.pointAt(theta) + Vec2(c.radius, 0));
+        expect(
+          conic.scaledBy(s).containsPoint(off.scaledBy(s)),
+          conic.containsPoint(off),
+        );
+      },
+    );
 
-    Glados2(any.realConic, any.nonZeroComplex)
-        .test('polarLine commutes with rescaling', (conic, s) {
+    Glados2(
+      any.realConic,
+      any.nonZeroComplex,
+    ).test('polarLine commutes with rescaling', (conic, s) {
       if (conic.isZero) return;
       final p = ProjPoint.real(3, -2);
       final base = conic.polarLine(p);
@@ -196,16 +205,18 @@ void main() {
   });
 
   group('closeTo, normalized, isReal', () {
-    Glados2(any.realConic, any.nonZeroComplex)
-        .test('rescaling preserves closeTo, isReal, rank', (conic, s) {
-      if (conic.isZero) return;
-      final scaled = conic.scaledBy(s);
-      expect(scaled.closeTo(conic), isTrue);
-      expect(scaled.isReal(), conic.isReal());
-      expect(scaled.isReal(), isTrue);
-      expect(scaled.rank(), conic.rank());
-      expect(scaled.normalized.closeTo(conic.normalized), isTrue);
-    });
+    Glados2(any.realConic, any.nonZeroComplex).test(
+      'rescaling preserves closeTo, isReal, rank',
+      (conic, s) {
+        if (conic.isZero) return;
+        final scaled = conic.scaledBy(s);
+        expect(scaled.closeTo(conic), isTrue);
+        expect(scaled.isReal(), conic.isReal());
+        expect(scaled.isReal(), isTrue);
+        expect(scaled.rank(), conic.rank());
+        expect(scaled.normalized.closeTo(conic.normalized), isTrue);
+      },
+    );
 
     test('distinct conics are not close', () {
       final shifted = ConicMatrix.lift(CircleEq(const Vec2(1, 0), 1));
@@ -260,54 +271,64 @@ void main() {
       expect(ConicMatrix.lift(c).rank(), 3);
     });
 
-    Glados2(any.projLine, any.projLine)
-        .test('a pair of distinct lines has rank 2', (g, h) {
-      if (g.closeTo(h, 1e-3)) return;
-      expect(ConicMatrix.linePair(g, h).rank(), 2);
-    });
+    Glados2(any.projLine, any.projLine).test(
+      'a pair of distinct lines has rank 2',
+      (g, h) {
+        if (g.closeTo(h, 1e-3)) return;
+        expect(ConicMatrix.linePair(g, h).rank(), 2);
+      },
+    );
 
     Glados(any.projLine).test('a double line has rank 1', (g) {
       expect(ConicMatrix.linePair(g, g).rank(), 1);
     });
 
-    Glados3(any.projLine, any.projLine, any.gridVec2)
-        .test('a line pair contains the points of both lines', (g, h, v) {
-      final conic = ConicMatrix.linePair(g, h);
-      if (conic.isZero) return;
-      // A point on g: meet with a generic second line through v.
-      final other = ProjPoint.lift(v).join(ProjPoint.lift(v + const Vec2(1, 1)));
-      for (final line in [g, h]) {
-        final p = line.meet(other);
-        if (p.isZero) continue;
-        expect(conic.containsPoint(p, 1e-9), isTrue);
-      }
-    });
+    Glados3(any.projLine, any.projLine, any.gridVec2).test(
+      'a line pair contains the points of both lines',
+      (g, h, v) {
+        final conic = ConicMatrix.linePair(g, h);
+        if (conic.isZero) return;
+        // A point on g: meet with a generic second line through v.
+        final other = ProjPoint.lift(
+          v,
+        ).join(ProjPoint.lift(v + const Vec2(1, 1)));
+        for (final line in [g, h]) {
+          final p = line.meet(other);
+          if (p.isZero) continue;
+          expect(conic.containsPoint(p, 1e-9), isTrue);
+        }
+      },
+    );
   });
 
   group('throughFivePoints', () {
-    Glados2(any.smallCircle, any.fiveAngles)
-        .test('five points on a circle recover the circle', (c, angles) {
-      if (!anglesSeparated(angles, 0.05)) return;
-      final conic = ConicMatrix.throughFivePoints([
-        for (final theta in angles) ProjPoint.lift(c.pointAt(theta)),
-      ]);
-      expect(conic, isNotNull);
-      expect(conic!.closeTo(ConicMatrix.lift(c), 1e-6), isTrue);
-      expect(conic.rank(), 3);
-    });
+    Glados2(any.smallCircle, any.fiveAngles).test(
+      'five points on a circle recover the circle',
+      (c, angles) {
+        if (!anglesSeparated(angles, 0.05)) return;
+        final conic = ConicMatrix.throughFivePoints([
+          for (final theta in angles) ProjPoint.lift(c.pointAt(theta)),
+        ]);
+        expect(conic, isNotNull);
+        expect(conic!.closeTo(ConicMatrix.lift(c), 1e-6), isTrue);
+        expect(conic.rank(), 3);
+      },
+    );
 
     Glados(any.smallCircle).test(
-        'the fitted conic contains its five defining points', (c) {
-      final angles = [0.3, 1.4, 2.8, 4.1, 5.5];
-      final points = [
-        for (final theta in angles) ProjPoint.lift(c.pointAt(theta)),
-      ];
-      final conic = ConicMatrix.throughFivePoints(points);
-      expect(conic, isNotNull);
-      for (final p in points) {
-        expect(conic!.containsPoint(p, 1e-7), isTrue);
-      }
-    });
+      'the fitted conic contains its five defining points',
+      (c) {
+        final angles = [0.3, 1.4, 2.8, 4.1, 5.5];
+        final points = [
+          for (final theta in angles) ProjPoint.lift(c.pointAt(theta)),
+        ];
+        final conic = ConicMatrix.throughFivePoints(points);
+        expect(conic, isNotNull);
+        for (final p in points) {
+          expect(conic!.containsPoint(p, 1e-7), isTrue);
+        }
+      },
+    );
 
     test('a repeated point yields null', () {
       final p = ProjPoint.real(1, 2);
@@ -390,17 +411,13 @@ void main() {
     });
 
     test('the line at infinity meets every circle at I and J', () {
-      final pts = intersectLineConic(ProjLine.infinity,
-          ConicMatrix.lift(CircleEq(const Vec2(3, -2), 5)));
+      final pts = intersectLineConic(
+        ProjLine.infinity,
+        ConicMatrix.lift(CircleEq(const Vec2(3, -2), 5)),
+      );
       expect(pts, hasLength(2));
-      expect(
-        pts.where((p) => p.closeTo(circularPointI, 1e-12)),
-        hasLength(1),
-      );
-      expect(
-        pts.where((p) => p.closeTo(circularPointJ, 1e-12)),
-        hasLength(1),
-      );
+      expect(pts.where((p) => p.closeTo(circularPointI, 1e-12)), hasLength(1));
+      expect(pts.where((p) => p.closeTo(circularPointJ, 1e-12)), hasLength(1));
     });
 
     test('a line lying on a degenerate conic returns points of the line', () {
@@ -416,39 +433,49 @@ void main() {
     });
 
     Glados2(any.lineEq, any.circleEq).test(
-        'agrees with V1 intersectLineCircle, positions and order', (l, c) {
-      final margin = 1e-3 * (1 + c.radius);
-      if ((l.distanceTo(c.center) - c.radius).abs() < margin) return;
-      final line = ProjLine.lift(l);
-      final conic = ConicMatrix.lift(c);
-      final pts = intersectLineConic(line, conic);
-      expect(pts, hasLength(2));
-      for (final p in pts) {
-        expect(p.isIncidentTo(line, 1e-7), isTrue);
-        expect(conic.containsPoint(p, 1e-7), isTrue);
-      }
-      final v1 = intersectLineCircle(l, c);
-      final tol = 1e-6 * (1 + c.center.norm + c.radius);
-      if (v1.length == 2) {
-        for (var i = 0; i < 2; i++) {
-          final v = pts[i].toVec2();
-          expect(v, isNotNull,
-              reason: 'line $l circle $c: expected real point $i in $pts');
-          expect(v!.distanceTo(v1[i]), lessThan(tol),
-              reason: 'line $l circle $c: $pts vs $v1');
-        }
-      } else {
-        // Miss: a conjugate pair with no real projection.
-        expect(v1, isEmpty);
+      'agrees with V1 intersectLineCircle, positions and order',
+      (l, c) {
+        final margin = 1e-3 * (1 + c.radius);
+        if ((l.distanceTo(c.center) - c.radius).abs() < margin) return;
+        final line = ProjLine.lift(l);
+        final conic = ConicMatrix.lift(c);
+        final pts = intersectLineConic(line, conic);
+        expect(pts, hasLength(2));
         for (final p in pts) {
-          expect(p.toVec2(), isNull);
+          expect(p.isIncidentTo(line, 1e-7), isTrue);
+          expect(conic.containsPoint(p, 1e-7), isTrue);
         }
-        expect(pts[0].closeTo(conjPoint(pts[1]), 1e-6), isTrue);
-      }
-    });
+        final v1 = intersectLineCircle(l, c);
+        final tol = 1e-6 * (1 + c.center.norm + c.radius);
+        if (v1.length == 2) {
+          for (var i = 0; i < 2; i++) {
+            final v = pts[i].toVec2();
+            expect(
+              v,
+              isNotNull,
+              reason: 'line $l circle $c: expected real point $i in $pts',
+            );
+            expect(
+              v!.distanceTo(v1[i]),
+              lessThan(tol),
+              reason: 'line $l circle $c: $pts vs $v1',
+            );
+          }
+        } else {
+          // Miss: a conjugate pair with no real projection.
+          expect(v1, isEmpty);
+          for (final p in pts) {
+            expect(p.toVec2(), isNull);
+          }
+          expect(pts[0].closeTo(conjPoint(pts[1]), 1e-6), isTrue);
+        }
+      },
+    );
 
-    Glados2(any.circleEq, any.angle)
-        .test('agrees with V1 on constructed tangent lines', (c, theta) {
+    Glados2(
+      any.circleEq,
+      any.angle,
+    ).test('agrees with V1 on constructed tangent lines', (c, theta) {
       final touch = c.pointAt(theta);
       final l = LineEq.pointDirection(touch, (touch - c.center).perpendicular);
       final v1 = intersectLineCircle(l, c);
@@ -461,38 +488,47 @@ void main() {
       for (final p in pts) {
         final v = p.toVec2(1e-5);
         expect(v, isNotNull, reason: 'line $l circle $c: $pts');
-        expect(v!.distanceTo(v1.single), lessThan(tol),
-            reason: 'line $l circle $c: $pts vs $v1');
+        expect(
+          v!.distanceTo(v1.single),
+          lessThan(tol),
+          reason: 'line $l circle $c: $pts vs $v1',
+        );
       }
     });
 
-    Glados2(any.realConic, any.lineEq)
-        .test('both roots are incident to both carriers', (conic, l) {
-      if (conic.isZero) return;
-      final line = ProjLine.lift(l);
-      final pts = intersectLineConic(line, conic);
-      expect(pts, hasLength(2));
-      for (final p in pts) {
-        if (p.isZero) continue;
-        expect(p.isIncidentTo(line, 1e-7), isTrue);
-        expect(conic.containsPoint(p, 1e-7), isTrue);
-      }
-    });
+    Glados2(any.realConic, any.lineEq).test(
+      'both roots are incident to both carriers',
+      (conic, l) {
+        if (conic.isZero) return;
+        final line = ProjLine.lift(l);
+        final pts = intersectLineConic(line, conic);
+        expect(pts, hasLength(2));
+        for (final p in pts) {
+          if (p.isZero) continue;
+          expect(p.isIncidentTo(line, 1e-7), isTrue);
+          expect(conic.containsPoint(p, 1e-7), isTrue);
+        }
+      },
+    );
 
     Glados3(any.lineEq, any.circleEq, any.nonZeroComplex).test(
-        'the point set is invariant under rescaling line and conic', (l, c, s) {
-      final margin = 1e-3 * (1 + c.radius);
-      if ((l.distanceTo(c.center) - c.radius).abs() < margin) return;
-      final base =
-          intersectLineConic(ProjLine.lift(l), ConicMatrix.lift(c));
-      final scaled = intersectLineConic(
-        ProjLine.lift(l).scaledBy(s),
-        ConicMatrix.lift(c).scaledBy(s),
-      );
-      for (final p in scaled) {
-        expect(base.any((q) => q.closeTo(p, 1e-6)), isTrue,
-            reason: 'line $l circle $c scale $s: $scaled vs $base');
-      }
-    });
+      'the point set is invariant under rescaling line and conic',
+      (l, c, s) {
+        final margin = 1e-3 * (1 + c.radius);
+        if ((l.distanceTo(c.center) - c.radius).abs() < margin) return;
+        final base = intersectLineConic(ProjLine.lift(l), ConicMatrix.lift(c));
+        final scaled = intersectLineConic(
+          ProjLine.lift(l).scaledBy(s),
+          ConicMatrix.lift(c).scaledBy(s),
+        );
+        for (final p in scaled) {
+          expect(
+            base.any((q) => q.closeTo(p, 1e-6)),
+            isTrue,
+            reason: 'line $l circle $c scale $s: $scaled vs $base',
+          );
+        }
+      },
+    );
   });
 }

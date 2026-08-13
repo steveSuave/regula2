@@ -28,8 +28,9 @@ void main() {
   Brightness renderedBrightness(WidgetTester tester) =>
       Theme.of(tester.element(find.byType(Scaffold))).brightness;
 
-  testWidgets('the toggle flips to dark and persists the choice',
-      (tester) async {
+  testWidgets('the toggle flips to dark and persists the choice', (
+    tester,
+  ) async {
     final preferences = await pumpApp(tester);
     // The test platform reports light, so "system" renders light.
     expect(renderedBrightness(tester), Brightness.light);
@@ -48,8 +49,9 @@ void main() {
     expect(preferences.getString('themeMode'), 'light');
   });
 
-  testWidgets('a stored dark choice applies from the first frame',
-      (tester) async {
+  testWidgets('a stored dark choice applies from the first frame', (
+    tester,
+  ) async {
     await pumpApp(tester, stored: {'themeMode': 'dark'});
     expect(renderedBrightness(tester), Brightness.dark);
   });

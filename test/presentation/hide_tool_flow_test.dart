@@ -58,16 +58,17 @@ void main() {
       .visible;
 
   bool hideActive() => switch (container.read(toolProvider).tool) {
-        VisibilityTool(mode: VisibilityMode.hide) => true,
-        _ => false,
-      };
+    VisibilityTool(mode: VisibilityMode.hide) => true,
+    _ => false,
+  };
 
   Color? groupIconColor(WidgetTester tester) =>
       tester.widget<Icon>(find.byIcon(Icons.delete_outline)).color;
 
   testWidgets('the Hide item activates the tool and tints the group icon; '
-      'double-clicking the icon deactivates and touches nothing',
-      (tester) async {
+      'double-clicking the icon deactivates and touches nothing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     await tester.pump();
@@ -90,8 +91,11 @@ void main() {
     expect(find.text('Hide objects'), findsNothing, reason: 'no menu opened');
     expect(groupIconColor(tester), isNot(theme.colorScheme.primary));
     expect(visible('a'), isTrue);
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'entering and leaving the mode is not an edit');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'entering and leaving the mode is not an edit',
+    );
   });
 
   testWidgets('Esc leaves hide mode', (tester) async {
@@ -116,18 +120,28 @@ void main() {
 
     expect(visible('a'), isFalse);
     expect(visible('b'), isFalse);
-    expect(hideActive(), isTrue,
-        reason: 'the selection hides and the tap tool stays armed');
-    expect(container.read(selectionProvider), containsAll(['a', 'b']),
-        reason: 'hiding keeps the selection — the inspector/tree is the '
-            'way back');
+    expect(
+      hideActive(),
+      isTrue,
+      reason: 'the selection hides and the tap tool stays armed',
+    );
+    expect(
+      container.read(selectionProvider),
+      containsAll(['a', 'b']),
+      reason:
+          'hiding keeps the selection — the inspector/tree is the '
+          'way back',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(visible('a'), isTrue);
     expect(visible('b'), isTrue);
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'the selection rode one command');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'the selection rode one command',
+    );
   });
 
   testWidgets('after activation hides the selection, tap-by-tap hiding '
@@ -144,13 +158,17 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     await tester.tapAt(origin + const Offset(300, 200));
     await tester.pumpAndSettle();
-    expect(visible('b'), isFalse,
-        reason: 'the tool stayed active for per-tap hides');
+    expect(
+      visible('b'),
+      isFalse,
+      reason: 'the tool stayed active for per-tap hides',
+    );
   });
 
   testWidgets('the Show/Hide item activates the toggle tool without '
-      'touching the selection, and the group icon tints for it too',
-      (tester) async {
+      'touching the selection, and the group icon tints for it too', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     container.read(selectionProvider.notifier).select('a');
@@ -164,8 +182,11 @@ void main() {
     final tool = container.read(toolProvider).tool;
     expect(tool, isA<VisibilityTool>());
     expect((tool! as VisibilityTool).mode, VisibilityMode.showHide);
-    expect(visible('a'), isTrue,
-        reason: 'Show/Hide has no act-on-selection step');
+    expect(
+      visible('a'),
+      isTrue,
+      reason: 'Show/Hide has no act-on-selection step',
+    );
     expect(container.read(commandStackProvider).canUndo, isFalse);
 
     final theme = Theme.of(tester.element(group));

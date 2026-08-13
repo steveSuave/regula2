@@ -25,9 +25,9 @@ void main() {
     final construction = Construction();
     tool.onInput(const ToolInput(Vec2(0, 0)));
     tool.onInput(const ToolInput(Vec2(4, 0)));
-    (tool.onInput(const ToolInput(Vec2(5, 2))) as ToolCommitted)
-        .command
-        .apply(construction);
+    (tool.onInput(const ToolInput(Vec2(5, 2))) as ToolCommitted).command.apply(
+      construction,
+    );
     return construction;
   }
 
@@ -40,26 +40,35 @@ void main() {
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
       expect(tool.onInput(const ToolInput(Vec2(4, 0))), isA<ToolAccepted>());
-      final result =
-          tool.onInput(const ToolInput(Vec2(5, 2))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(5, 2))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(construction.length, 10,
-          reason: '3 free points + 2 sides + 2 parallels + corner + 2 sides');
-      expect(cornerOf(construction).position, const Vec2(1, 2),
-          reason: 'D = A + (C − B)');
+      expect(
+        construction.length,
+        10,
+        reason: '3 free points + 2 sides + 2 parallels + corner + 2 sides',
+      );
+      expect(
+        cornerOf(construction).position,
+        const Vec2(1, 2),
+        reason: 'D = A + (C − B)',
+      );
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole parallelogram is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole parallelogram is one undo unit',
+      );
     });
 
     test('scaffolding is hidden, corner and sides are visible', () {
       final construction = buildParallelogram();
 
-      final hidden =
-          construction.objects.where((o) => !o.attributes.visible).toList();
+      final hidden = construction.objects
+          .where((o) => !o.attributes.visible)
+          .toList();
       expect(hidden, hasLength(2));
       expect(hidden.whereType<ParallelLine>(), hasLength(2));
 
@@ -85,8 +94,11 @@ void main() {
       final cornerD = cornerOf(construction);
 
       construction.moveFreePoint(c.id, const Vec2(2, 0));
-      expect(cornerD.position, isNull,
-          reason: 'collinear corners make the two parallels parallel');
+      expect(
+        cornerD.position,
+        isNull,
+        reason: 'collinear corners make the two parallels parallel',
+      );
 
       construction.moveFreePoint(c.id, const Vec2(5, 2));
       expect(cornerD.position, const Vec2(1, 2));
@@ -94,8 +106,7 @@ void main() {
   });
 
   group('derived corner dedup', () {
-    test('completing over three side-midpoints reuses the fourth midpoint',
-        () {
+    test('completing over three side-midpoints reuses the fourth midpoint', () {
       // The reported duplicate (Varignon): a quadrilateral with all four
       // side midpoints, then the parallelogram macro over three of them —
       // its fourth corner lands identically on the fourth midpoint.
@@ -112,49 +123,65 @@ void main() {
         construction.add(object);
       }
 
-      ToolResult tap(Midpoint point) => tool.onInput(ToolInput(
-            point.position!,
-            hit: point,
-            objects: construction.objects,
-          ));
+      ToolResult tap(Midpoint point) => tool.onInput(
+        ToolInput(point.position!, hit: point, objects: construction.objects),
+      );
       tap(mBC);
       tap(mAB);
       final result = tap(mDA) as ToolCommitted;
       result.command.apply(construction);
 
-      expect(construction.objects.whereType<IntersectionPoint>(), isEmpty,
-          reason: 'the corner is the existing midpoint, not a new point');
-      expect(construction.objects.whereType<ParallelLine>(), isEmpty,
-          reason: 'scaffolding for a reused corner is not added');
-      final closing = construction.objects
-          .whereType<Segment>()
-          .where((s) => identical(s.point1, mCD) || identical(s.point2, mCD));
-      expect(closing, hasLength(2),
-          reason: 'both closing sides attach to the existing midpoint');
+      expect(
+        construction.objects.whereType<IntersectionPoint>(),
+        isEmpty,
+        reason: 'the corner is the existing midpoint, not a new point',
+      );
+      expect(
+        construction.objects.whereType<ParallelLine>(),
+        isEmpty,
+        reason: 'scaffolding for a reused corner is not added',
+      );
+      final closing = construction.objects.whereType<Segment>().where(
+        (s) => identical(s.point1, mCD) || identical(s.point2, mCD),
+      );
+      expect(
+        closing,
+        hasLength(2),
+        reason: 'both closing sides attach to the existing midpoint',
+      );
 
       result.command.undo(construction);
-      expect(construction.length, 8,
-          reason: 'undo removes only what the macro added');
+      expect(
+        construction.length,
+        8,
+        reason: 'undo removes only what the macro added',
+      );
     });
 
     test('an accidentally coincident point keeps the derived corner', () {
       final construction = Construction();
       construction.add(FreePoint(id: 'stray', position: const Vec2(1, 2)));
 
-      ToolResult tap(Vec2 position) => tool.onInput(
-          ToolInput(position, objects: construction.objects));
+      ToolResult tap(Vec2 position) =>
+          tool.onInput(ToolInput(position, objects: construction.objects));
       tap(const Vec2(0, 0));
       tap(const Vec2(4, 0));
       final result = tap(const Vec2(5, 2)) as ToolCommitted;
       result.command.apply(construction);
 
-      final corner =
-          construction.objects.whereType<IntersectionPoint>().single;
-      expect(corner.position, const Vec2(1, 2),
-          reason: 'the corner still lands on the stray point…');
-      expect(construction.objects.whereType<ParallelLine>(), hasLength(2),
-          reason: '…but stays independently derived: the coincidence does '
-              'not survive perturbation of the stray free point');
+      final corner = construction.objects.whereType<IntersectionPoint>().single;
+      expect(
+        corner.position,
+        const Vec2(1, 2),
+        reason: 'the corner still lands on the stray point…',
+      );
+      expect(
+        construction.objects.whereType<ParallelLine>(),
+        hasLength(2),
+        reason:
+            '…but stays independently derived: the coincidence does '
+            'not survive perturbation of the stray free point',
+      );
     });
   });
 }

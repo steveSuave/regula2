@@ -33,19 +33,18 @@ void main() {
     bool showAxes = false,
     bool showGrid = false,
     CanvasViewport viewport = const CanvasViewport(ViewportState()),
-  }) =>
-      GeometryPainter(
-        construction: construction,
-        viewport: viewport,
-        revision: revision,
-        defaultColor: const Color(0xFF000000),
-        selectionColor: const Color(0xFF0000FF),
-        selectedIds: selectedIds,
-        previewObjectIds: previewObjectIds,
-        showHidden: showHidden,
-        showAxes: showAxes,
-        showGrid: showGrid,
-      );
+  }) => GeometryPainter(
+    construction: construction,
+    viewport: viewport,
+    revision: revision,
+    defaultColor: const Color(0xFF000000),
+    selectionColor: const Color(0xFF0000FF),
+    selectedIds: selectedIds,
+    previewObjectIds: previewObjectIds,
+    showHidden: showHidden,
+    showAxes: showAxes,
+    showGrid: showGrid,
+  );
 
   void paintOnce(GeometryPainter painter) {
     final recorder = PictureRecorder();
@@ -77,12 +76,9 @@ void main() {
       construction
         ..add(driver)
         ..add(traced)
-        ..add(Locus(
-          id: 'loc',
-          driver: driver,
-          traced: traced,
-          sampleCount: 16,
-        ));
+        ..add(
+          Locus(id: 'loc', driver: driver, traced: traced, sampleCount: 16),
+        );
 
       paintOnce(painterFor(construction));
     });
@@ -96,11 +92,13 @@ void main() {
         ..add(b)
         // Undefined: line through coincident points.
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
-        ..add(FreePoint(
-          id: 'h',
-          position: const Vec2(1, 1),
-          attributes: const ObjectAttributes(visible: false),
-        ));
+        ..add(
+          FreePoint(
+            id: 'h',
+            position: const Vec2(1, 1),
+            attributes: const ObjectAttributes(visible: false),
+          ),
+        );
 
       paintOnce(painterFor(construction));
     });
@@ -117,20 +115,30 @@ void main() {
         ..add(c)
         ..add(Segment(id: 's', point1: a, point2: b, attributes: named))
         ..add(Ray(id: 'r', origin: a, through: c, attributes: named))
-        ..add(LineThroughTwoPoints(
-            id: 'l', point1: a, point2: c, attributes: named))
-        ..add(CircleCenterPoint(
-            id: 'k', center: a, onCircle: b, attributes: named))
+        ..add(
+          LineThroughTwoPoints(
+            id: 'l',
+            point1: a,
+            point2: c,
+            attributes: named,
+          ),
+        )
+        ..add(
+          CircleCenterPoint(id: 'k', center: a, onCircle: b, attributes: named),
+        )
         ..add(Arc(id: 'arc', start: b, via: c, end: a, attributes: named))
         ..add(Sector(id: 'w', center: a, start: b, end: c, attributes: named))
-        ..add(VertexAngle(
-            id: 'g', arm1: b, vertex: a, arm2: c, attributes: named))
+        ..add(
+          VertexAngle(id: 'g', arm1: b, vertex: a, arm2: c, attributes: named),
+        )
         // labelVisible off: name present but no label painted.
-        ..add(FreePoint(
-          id: 'q',
-          position: const Vec2(1, 1),
-          attributes: const ObjectAttributes(name: 'Q', labelVisible: false),
-        ));
+        ..add(
+          FreePoint(
+            id: 'q',
+            position: const Vec2(1, 1),
+            attributes: const ObjectAttributes(name: 'Q', labelVisible: false),
+          ),
+        );
 
       paintOnce(painterFor(construction));
     });
@@ -167,9 +175,7 @@ void main() {
         ..add(Sector(id: 'w', center: a, start: b, end: c))
         ..add(VertexAngle(id: 'g', arm1: b, vertex: a, arm2: c));
 
-      final everything = {
-        for (final object in construction.objects) object.id,
-      };
+      final everything = {for (final object in construction.objects) object.id};
       paintOnce(painterFor(construction, selectedIds: everything));
     });
 
@@ -188,8 +194,11 @@ void main() {
     test('showHidden paints dimmed hidden objects without throwing', () {
       const hidden = ObjectAttributes(visible: false);
       const hiddenNamed = ObjectAttributes(visible: false, name: 'S');
-      const hiddenFilled =
-          ObjectAttributes(visible: false, fillAlpha: 0.25, name: 'W');
+      const hiddenFilled = ObjectAttributes(
+        visible: false,
+        fillAlpha: 0.25,
+        name: 'W',
+      );
       final construction = Construction();
       final a = FreePoint(id: 'a', position: Vec2.zero, attributes: hidden);
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
@@ -199,15 +208,24 @@ void main() {
         ..add(b)
         ..add(c)
         ..add(Segment(id: 's', point1: a, point2: b, attributes: hiddenNamed))
-        ..add(Sector(id: 'w', center: a, start: b, end: c,
-            attributes: hiddenFilled));
+        ..add(
+          Sector(
+            id: 'w',
+            center: a,
+            start: b,
+            end: c,
+            attributes: hiddenFilled,
+          ),
+        );
 
       // Dimmed halo too: hiding keeps the selection.
-      paintOnce(painterFor(
-        construction,
-        showHidden: true,
-        selectedIds: const {'a', 's'},
-      ));
+      paintOnce(
+        painterFor(
+          construction,
+          showHidden: true,
+          selectedIds: const {'a', 's'},
+        ),
+      );
     });
 
     test('paints axes and grid at any viewport without throwing', () {
@@ -222,12 +240,14 @@ void main() {
         ViewportState(scale: 0.05),
         ViewportState(scale: 50),
       ]) {
-        paintOnce(painterFor(
-          construction,
-          showAxes: true,
-          showGrid: true,
-          viewport: CanvasViewport(state),
-        ));
+        paintOnce(
+          painterFor(
+            construction,
+            showAxes: true,
+            showGrid: true,
+            viewport: CanvasViewport(state),
+          ),
+        );
       }
       paintOnce(painterFor(construction, showAxes: true));
       paintOnce(painterFor(construction, showGrid: true));
@@ -247,11 +267,24 @@ void main() {
         ..add(a)
         ..add(b)
         ..add(c)
-        ..add(CircleCenterPoint(
-            id: 'k', center: a, onCircle: b, attributes: styled))
+        ..add(
+          CircleCenterPoint(
+            id: 'k',
+            center: a,
+            onCircle: b,
+            attributes: styled,
+          ),
+        )
         ..add(Arc(id: 'arc', start: b, via: c, end: a))
-        ..add(Sector(id: 'w', center: a, start: b, end: c,
-            attributes: const ObjectAttributes(fillAlpha: 0.2)));
+        ..add(
+          Sector(
+            id: 'w',
+            center: a,
+            start: b,
+            end: c,
+            attributes: const ObjectAttributes(fillAlpha: 0.2),
+          ),
+        );
 
       for (final pan in const [
         Vec2(9990, 3), // rim crosses the canvas
@@ -259,11 +292,13 @@ void main() {
         Vec2(30000, 0), // circle fully off screen
         Vec2.zero, // center on canvas, rim far away
       ]) {
-        paintOnce(painterFor(
-          construction,
-          selectedIds: const {'k', 'arc', 'w'},
-          viewport: CanvasViewport(ViewportState(pan: pan, scale: 50)),
-        ));
+        paintOnce(
+          painterFor(
+            construction,
+            selectedIds: const {'k', 'arc', 'w'},
+            viewport: CanvasViewport(ViewportState(pan: pan, scale: 50)),
+          ),
+        );
       }
     });
 
@@ -299,13 +334,13 @@ void main() {
     test('shouldRepaint keys on preview markers', () {
       final construction = Construction();
       GeometryPainter withMarkers(List<Vec2> markers) => GeometryPainter(
-            construction: construction,
-            viewport: const CanvasViewport(ViewportState()),
-            revision: 0,
-            defaultColor: const Color(0xFF000000),
-            selectionColor: const Color(0xFF0000FF),
-            previewMarkers: markers,
-          );
+        construction: construction,
+        viewport: const CanvasViewport(ViewportState()),
+        revision: 0,
+        defaultColor: const Color(0xFF000000),
+        selectionColor: const Color(0xFF0000FF),
+        previewMarkers: markers,
+      );
 
       final base = withMarkers(const [Vec2(1, 1)]);
       expect(withMarkers(const [Vec2(1, 1)]).shouldRepaint(base), isFalse);
@@ -313,26 +348,26 @@ void main() {
         withMarkers(const [Vec2(1, 1), Vec2(2, 2)]).shouldRepaint(base),
         isTrue,
       );
-      expect(withMarkers(const []).shouldRepaint(base), isTrue,
-          reason: 'markers must clear on commit/reset');
+      expect(
+        withMarkers(const []).shouldRepaint(base),
+        isTrue,
+        reason: 'markers must clear on commit/reset',
+      );
     });
 
-    test(
-        'shouldRepaint keys on construction instance, revision and '
+    test('shouldRepaint keys on construction instance, revision and '
         'viewport state', () {
       final construction = Construction()
         ..add(FreePoint(id: 'a', position: Vec2.zero));
 
       final base = painterFor(construction);
       expect(base.shouldRepaint(painterFor(construction)), isFalse);
-      expect(
-        painterFor(construction, revision: 1).shouldRepaint(base),
-        isTrue,
-      );
+      expect(painterFor(construction, revision: 1).shouldRepaint(base), isTrue);
       expect(
         painterFor(Construction()).shouldRepaint(base),
         isTrue,
-        reason: 'replace() swaps the construction but resets the revision '
+        reason:
+            'replace() swaps the construction but resets the revision '
             'to 0 — the instance change alone must trigger a repaint',
       );
 
@@ -352,13 +387,18 @@ void main() {
 
       final base = painterFor(construction, previewObjectIds: const {'a'});
       expect(
-        painterFor(construction, previewObjectIds: const {'a'})
-            .shouldRepaint(base),
+        painterFor(
+          construction,
+          previewObjectIds: const {'a'},
+        ).shouldRepaint(base),
         isFalse,
         reason: 'set equality, not identity — the canvas rebuilds sets',
       );
-      expect(painterFor(construction).shouldRepaint(base), isTrue,
-          reason: 'the halo must clear on commit/reset');
+      expect(
+        painterFor(construction).shouldRepaint(base),
+        isTrue,
+        reason: 'the halo must clear on commit/reset',
+      );
     });
 
     test('shouldRepaint keys on the selected-id set', () {
@@ -367,13 +407,15 @@ void main() {
 
       final base = painterFor(construction, selectedIds: const {'a'});
       expect(
-        painterFor(construction, selectedIds: const {'a'})
-            .shouldRepaint(base),
+        painterFor(construction, selectedIds: const {'a'}).shouldRepaint(base),
         isFalse,
         reason: 'set equality, not identity — the provider rebuilds sets',
       );
-      expect(painterFor(construction).shouldRepaint(base), isTrue,
-          reason: 'clearing the selection must drop the halo');
+      expect(
+        painterFor(construction).shouldRepaint(base),
+        isTrue,
+        reason: 'clearing the selection must drop the halo',
+      );
       expect(
         painterFor(construction, selectedIds: const {'b'}).shouldRepaint(base),
         isTrue,
@@ -381,17 +423,24 @@ void main() {
     });
 
     group('locus paths (Phase 39)', () {
-      test('one path per multi-sample run; isolated samples draw nothing',
-          () {
+      test('one path per multi-sample run; isolated samples draw nothing', () {
         final construction = Construction()
-          ..add(_StubLocus(id: 'loc', samples: const [
-            Vec2(0, 0), Vec2(2, 0), null, Vec2(4, 0), // isolated
-            null, Vec2(6, 0), Vec2(8, 0), Vec2(8, 2), //
-          ]));
+          ..add(
+            _StubLocus(
+              id: 'loc',
+              samples: const [
+                Vec2(0, 0), Vec2(2, 0), null, Vec2(4, 0), // isolated
+                null, Vec2(6, 0), Vec2(8, 0), Vec2(8, 2), //
+              ],
+            ),
+          );
         final canvas = _PathRecordingCanvas();
         painterFor(construction).paint(canvas, const Size(800, 600));
-        expect(canvas.paths, hasLength(2),
-            reason: 'two runs of ≥ 2 samples; the lone sample is skipped');
+        expect(
+          canvas.paths,
+          hasLength(2),
+          reason: 'two runs of ≥ 2 samples; the lone sample is skipped',
+        );
         for (final path in canvas.paths) {
           expect(path.computeMetrics().single.isClosed, isFalse);
         }
@@ -409,8 +458,7 @@ void main() {
         final construction = Construction();
         final center = FreePoint(id: 'o', position: Vec2.zero);
         final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
-        final host =
-            CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+        final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
         final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
         final p = FreePoint(id: 'p', position: const Vec2(4, 0));
         final traced = Midpoint(id: 'tr', point1: driver, point2: p);
@@ -421,15 +469,19 @@ void main() {
           ..add(driver)
           ..add(p)
           ..add(traced)
-          ..add(Locus(id: 'loc', driver: driver, traced: traced,
-              sampleCount: 16));
+          ..add(
+            Locus(id: 'loc', driver: driver, traced: traced, sampleCount: 16),
+          );
         final canvas = _PathRecordingCanvas();
         painterFor(construction).paint(canvas, const Size(800, 600));
         // Everything else in the scene strokes via drawLine/drawCircle,
         // so the recorded path is the locus polyline alone.
         expect(canvas.paths, hasLength(1));
-        expect(canvas.paths.single.computeMetrics().single.isClosed, isTrue,
-            reason: 'no gaps and a circle host: the loop closes');
+        expect(
+          canvas.paths.single.computeMetrics().single.isClosed,
+          isTrue,
+          reason: 'no gaps and a circle host: the loop closes',
+        );
       });
     });
 
@@ -460,27 +512,31 @@ void main() {
         painterFor(construction).paint(canvas, size);
         expect(canvas.lines, hasLength(1));
         final (p1, p2) = canvas.lines.single;
-        expect({p1, p2}, {
-          viewport.worldToScreen(Vec2.zero),
-          viewport.worldToScreen(const Vec2(40, 0)),
-        });
+        expect(
+          {p1, p2},
+          {
+            viewport.worldToScreen(Vec2.zero),
+            viewport.worldToScreen(const Vec2(40, 0)),
+          },
+        );
       });
 
       test('a mode-2 line strokes to the outermost incident point', () {
         final (construction, line) = lineScene(2);
-        construction.add(PointOnObject.near(
-          id: 'g',
-          curve: line,
-          position: const Vec2(70, 0),
-        ));
+        construction.add(
+          PointOnObject.near(id: 'g', curve: line, position: const Vec2(70, 0)),
+        );
         final canvas = _LineRecordingCanvas();
         painterFor(construction).paint(canvas, size);
         expect(canvas.lines, hasLength(1));
         final (p1, p2) = canvas.lines.single;
-        expect({p1, p2}, {
-          viewport.worldToScreen(Vec2.zero),
-          viewport.worldToScreen(const Vec2(70, 0)),
-        });
+        expect(
+          {p1, p2},
+          {
+            viewport.worldToScreen(Vec2.zero),
+            viewport.worldToScreen(const Vec2(70, 0)),
+          },
+        );
       });
 
       test('a mode-0 line keeps the far-overdraw stroke', () {
@@ -489,8 +545,11 @@ void main() {
         painterFor(construction).paint(canvas, size);
         expect(canvas.lines, hasLength(1));
         final (p1, p2) = canvas.lines.single;
-        expect((p1 - p2).distance, greaterThan(size.width + size.height),
-            reason: 'unclipped: drawn far past the canvas on both sides');
+        expect(
+          (p1 - p2).distance,
+          greaterThan(size.width + size.height),
+          reason: 'unclipped: drawn far past the canvas on both sides',
+        );
       });
 
       test('a mode-2 ray clamps its far end at the through point', () {
@@ -500,20 +559,25 @@ void main() {
         construction
           ..add(a)
           ..add(b)
-          ..add(Ray(
-            id: 'r',
-            origin: a,
-            through: b,
-            attributes: const ObjectAttributes(lineClip: 2),
-          ));
+          ..add(
+            Ray(
+              id: 'r',
+              origin: a,
+              through: b,
+              attributes: const ObjectAttributes(lineClip: 2),
+            ),
+          );
         final canvas = _LineRecordingCanvas();
         painterFor(construction).paint(canvas, size);
         expect(canvas.lines, hasLength(1));
         final (p1, p2) = canvas.lines.single;
-        expect({p1, p2}, {
-          viewport.worldToScreen(Vec2.zero),
-          viewport.worldToScreen(const Vec2(40, 0)),
-        });
+        expect(
+          {p1, p2},
+          {
+            viewport.worldToScreen(Vec2.zero),
+            viewport.worldToScreen(const Vec2(40, 0)),
+          },
+        );
       });
     });
 
@@ -528,12 +592,14 @@ void main() {
         construction
           ..add(a)
           ..add(b)
-          ..add(Segment(
-            id: 's',
-            point1: a,
-            point2: b,
-            attributes: ObjectAttributes(tickMarks: tickMarks),
-          ));
+          ..add(
+            Segment(
+              id: 's',
+              point1: a,
+              point2: b,
+              attributes: ObjectAttributes(tickMarks: tickMarks),
+            ),
+          );
         return construction;
       }
 
@@ -543,12 +609,10 @@ void main() {
         expect(canvas.lines, hasLength(1));
       });
 
-      test('two ticks: perpendicular, centered as a group on the midpoint',
-          () {
+      test('two ticks: perpendicular, centered as a group on the midpoint', () {
         final canvas = _LineRecordingCanvas();
         painterFor(segmentScene(2)).paint(canvas, size);
-        expect(canvas.lines, hasLength(3),
-            reason: 'the stroke plus two ticks');
+        expect(canvas.lines, hasLength(3), reason: 'the stroke plus two ticks');
         final stroke = canvas.lines.first;
         final segmentDirection = stroke.$2 - stroke.$1;
         final screenMidpoint = (stroke.$1 + stroke.$2) / 2;
@@ -556,8 +620,11 @@ void main() {
         final tickCenters = <Offset>[];
         for (final (p1, p2) in ticks) {
           final tick = p2 - p1;
-          expect(tick.distance, closeTo(10, 1e-9),
-              reason: 'ticks are 10 logical px long');
+          expect(
+            tick.distance,
+            closeTo(10, 1e-9),
+            reason: 'ticks are 10 logical px long',
+          );
           expect(
             tick.dx * segmentDirection.dx + tick.dy * segmentDirection.dy,
             closeTo(0, 1e-6),
@@ -567,8 +634,11 @@ void main() {
         }
         final groupCenter =
             tickCenters.reduce((a, b) => a + b) / tickCenters.length.toDouble();
-        expect((groupCenter - screenMidpoint).distance, closeTo(0, 1e-6),
-            reason: 'the tick group is centered on the segment midpoint');
+        expect(
+          (groupCenter - screenMidpoint).distance,
+          closeTo(0, 1e-6),
+          reason: 'the tick group is centered on the segment midpoint',
+        );
         expect(
           (tickCenters[0] - tickCenters[1]).distance,
           closeTo(5, 1e-9),
@@ -594,12 +664,14 @@ void main() {
         construction
           ..add(a)
           ..add(b)
-          ..add(Segment(
-            id: 's',
-            point1: a,
-            point2: b,
-            attributes: const ObjectAttributes(tickMarks: 3, dashPeriod: 8),
-          ));
+          ..add(
+            Segment(
+              id: 's',
+              point1: a,
+              point2: b,
+              attributes: const ObjectAttributes(tickMarks: 3, dashPeriod: 8),
+            ),
+          );
         final canvas = _LineRecordingCanvas();
         painterFor(construction).paint(canvas, size);
         // The dashed stroke goes through drawPath, so drawLine records
@@ -610,9 +682,13 @@ void main() {
       test('a degenerate segment draws no ticks', () {
         final canvas = _LineRecordingCanvas();
         painterFor(segmentScene(3, end: Vec2.zero)).paint(canvas, size);
-        expect(canvas.lines, isEmpty,
-            reason: 'a coincident-endpoint segment paints nothing — and '
-                'the tick guard must not divide by its zero length');
+        expect(
+          canvas.lines,
+          isEmpty,
+          reason:
+              'a coincident-endpoint segment paints nothing — and '
+              'the tick guard must not divide by its zero length',
+        );
       });
     });
   });
@@ -623,7 +699,7 @@ void main() {
 /// spelled out directly.
 class _StubLocus extends GeoLocus {
   _StubLocus({required super.id, required List<Vec2?>? samples})
-      : _samples = samples;
+    : _samples = samples;
 
   final List<Vec2?>? _samples;
 

@@ -121,8 +121,9 @@ void main() {
       expect(container.read(toolProvider).tool, isA<PointTool>());
     });
 
-    testWidgets('the tool groups stay reachable on a very narrow window',
-        (tester) async {
+    testWidgets('the tool groups stay reachable on a very narrow window', (
+      tester,
+    ) async {
       await pumpEditor(tester, screen: const Size(250, 600));
 
       await revealInBar(tester, Icons.straighten);
@@ -132,8 +133,9 @@ void main() {
       );
     });
 
-    testWidgets('the leading tree icon opens the object-tree drawer',
-        (tester) async {
+    testWidgets('the leading tree icon opens the object-tree drawer', (
+      tester,
+    ) async {
       await pumpEditor(tester, screen: phone);
       expect(find.byType(ObjectTreePanel), findsNothing);
 
@@ -182,8 +184,9 @@ void main() {
     // bar is the same row as everywhere and simply scrolls a little.
     const tabletPortrait = Size(810, 1080);
 
-    testWidgets('same bar over docked panels — no drawers, no overflow',
-        (tester) async {
+    testWidgets('same bar over docked panels — no drawers, no overflow', (
+      tester,
+    ) async {
       await pumpEditor(tester, screen: tabletPortrait);
 
       expect(inAppBar(find.byIcon(Icons.more_vert)), findsNothing);
@@ -263,8 +266,9 @@ void main() {
       expect(scaffold.endDrawer, isNull);
     });
 
-    testWidgets('the leading tree icon toggles the docked panel',
-        (tester) async {
+    testWidgets('the leading tree icon toggles the docked panel', (
+      tester,
+    ) async {
       await pumpEditor(tester, screen: const Size(1280, 800));
 
       await tester.tap(inAppBar(find.byIcon(Icons.account_tree_outlined)));

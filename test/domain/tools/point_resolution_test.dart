@@ -34,8 +34,7 @@ void main() {
     test('reuses an existing hit point without consuming an id', () {
       final existing = FreePoint(id: 'x', position: Vec2.zero);
 
-      final resolved =
-          resolvePoint(ToolInput(Vec2.zero, hit: existing), newId);
+      final resolved = resolvePoint(ToolInput(Vec2.zero, hit: existing), newId);
 
       expect(resolved.isNew, isFalse);
       expect(identical(resolved.point, existing), isTrue);
@@ -70,8 +69,11 @@ void main() {
       );
 
       expect(resolved.isNew, isFalse);
-      expect(identical(resolved.point, existing), isTrue,
-          reason: 'reuse must beat the grid crossing');
+      expect(
+        identical(resolved.point, existing),
+        isTrue,
+        reason: 'reuse must beat the grid crossing',
+      );
     });
 
     test('grid rounding is the last rung: a curve glue wins', () {
@@ -88,17 +90,22 @@ void main() {
       );
 
       final glued = resolved.point as PointOnObject;
-      expect(identical(glued.curve, host), isTrue,
-          reason: 'the glue must beat the grid crossing');
-      expect(glued.position!.y, closeTo(0.3, 1e-12),
-          reason: 'the glued position is the projection, never snapped');
+      expect(
+        identical(glued.curve, host),
+        isTrue,
+        reason: 'the glue must beat the grid crossing',
+      );
+      expect(
+        glued.position!.y,
+        closeTo(0.3, 1e-12),
+        reason: 'the glued position is the projection, never snapped',
+      );
     });
 
     test('a single line glues a PointOnObject at the projection', () {
       final l = line('h', Vec2.zero, const Vec2(4, 0));
 
-      final resolved =
-          resolvePoint(ToolInput(const Vec2(3, 1), hit: l), newId);
+      final resolved = resolvePoint(ToolInput(const Vec2(3, 1), hit: l), newId);
 
       expect(resolved.isNew, isTrue);
       final point = resolved.point as PointOnObject;
@@ -109,8 +116,7 @@ void main() {
     test('a single circle glues a PointOnObject on the rim', () {
       final c = circle('k', Vec2.zero, const Vec2(2, 0));
 
-      final resolved =
-          resolvePoint(ToolInput(const Vec2(0, 5), hit: c), newId);
+      final resolved = resolvePoint(ToolInput(const Vec2(0, 5), hit: c), newId);
 
       final point = resolved.point as PointOnObject;
       expect(point.parents, [c]);
@@ -187,8 +193,7 @@ void main() {
       expect(point.position!.closeTo(up, 1e-9), isTrue);
     });
 
-    test('a crossing beyond the threshold glues to the ranked-best curve',
-        () {
+    test('a crossing beyond the threshold glues to the ranked-best curve', () {
       final l1 = line('h', Vec2.zero, const Vec2(4, 0));
       final l2 = line('v', const Vec2(2, -2), const Vec2(2, 2));
 
@@ -207,8 +212,7 @@ void main() {
       expect(point.position!.closeTo(const Vec2(2.5, 0)), isTrue);
     });
 
-    test('the default snapThreshold of 0 disables intersection snapping',
-        () {
+    test('the default snapThreshold of 0 disables intersection snapping', () {
       final l1 = line('h', Vec2.zero, const Vec2(4, 0));
       final l2 = line('v', const Vec2(2, -2), const Vec2(2, 2));
 
@@ -217,8 +221,11 @@ void main() {
         newId,
       );
 
-      expect(resolved.point, isA<PointOnObject>(),
-          reason: 'legacy inputs without threshold data must not snap');
+      expect(
+        resolved.point,
+        isA<PointOnObject>(),
+        reason: 'legacy inputs without threshold data must not snap',
+      );
     });
 
     test('parallel lines in range glue instead of snapping', () {
@@ -243,11 +250,11 @@ void main() {
       // Half-circle sector: carrier radius 2 around the origin, arc on
       // the upper half, straight edges along the x-axis diameter.
       Sector halfSector() => Sector(
-            id: 's',
-            center: FreePoint(id: 's-c', position: Vec2.zero),
-            start: FreePoint(id: 's-s', position: const Vec2(2, 0)),
-            end: FreePoint(id: 's-e', position: const Vec2(-2, 0)),
-          );
+        id: 's',
+        center: FreePoint(id: 's-c', position: Vec2.zero),
+        start: FreePoint(id: 's-s', position: const Vec2(2, 0)),
+        end: FreePoint(id: 's-e', position: const Vec2(-2, 0)),
+      );
 
       test('a segment under the diameter takes the glue', () {
         final sector = halfSector();
@@ -271,8 +278,11 @@ void main() {
 
         expect(resolved.isNew, isTrue);
         final point = resolved.point as PointOnObject;
-        expect(point.parents, [diameter],
-            reason: 'the carrier glue must skip to the in-reach curve');
+        expect(
+          point.parents,
+          [diameter],
+          reason: 'the carrier glue must skip to the in-reach curve',
+        );
         expect(point.position!.closeTo(const Vec2(0.5, 0)), isTrue);
       });
 
@@ -288,8 +298,11 @@ void main() {
 
         expect(resolved.isNew, isTrue);
         final point = resolved.point as FreePoint;
-        expect(point.position, const Vec2(0.5, 0.1),
-            reason: 'better a free point here than one flung to the arc');
+        expect(
+          point.position,
+          const Vec2(0.5, 0.1),
+          reason: 'better a free point here than one flung to the arc',
+        );
       });
 
       test('a tap near the arc still glues to the sector', () {
@@ -314,8 +327,9 @@ void main() {
         );
 
         final point = resolved.point as PointOnObject;
-        expect(point.parents, [sector],
-            reason: 'no threshold data → old always-glue behavior');
+        expect(point.parents, [
+          sector,
+        ], reason: 'no threshold data → old always-glue behavior');
       });
     });
 

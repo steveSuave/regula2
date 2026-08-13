@@ -40,17 +40,11 @@ void main() {
 
   group('sweepThrough', () {
     test('via on the CCW path: positive sweep to the end', () {
-      expect(
-        sweepThrough(0, math.pi / 2, math.pi),
-        closeTo(math.pi, 1e-12),
-      );
+      expect(sweepThrough(0, math.pi / 2, math.pi), closeTo(math.pi, 1e-12));
     });
 
     test('via on the other side: negative (clockwise) sweep', () {
-      expect(
-        sweepThrough(0, -math.pi / 2, math.pi),
-        closeTo(-math.pi, 1e-12),
-      );
+      expect(sweepThrough(0, -math.pi / 2, math.pi), closeTo(-math.pi, 1e-12));
     });
 
     test('via at an endpoint counts as on the CCW path', () {
@@ -73,10 +67,7 @@ void main() {
   group('angularDistance', () {
     test('takes the shorter way around', () {
       expect(angularDistance(0, math.pi / 2), closeTo(math.pi / 2, 1e-12));
-      expect(
-        angularDistance(0, 3 * math.pi / 2),
-        closeTo(math.pi / 2, 1e-12),
-      );
+      expect(angularDistance(0, 3 * math.pi / 2), closeTo(math.pi / 2, 1e-12));
       expect(
         angularDistance(-3 * math.pi / 4, math.pi),
         closeTo(math.pi / 4, 1e-12),
@@ -164,10 +155,7 @@ void main() {
           if (forward.sweep == 0 || backward.sweep == 0) {
             expect(forward.sweep, closeTo(backward.sweep, 1e-9));
           } else {
-            expect(
-              forward.sweep + backward.sweep,
-              closeTo(2 * math.pi, 1e-9),
-            );
+            expect(forward.sweep + backward.sweep, closeTo(2 * math.pi, 1e-9));
           }
         },
       );
@@ -226,8 +214,11 @@ void main() {
       Glados2(any.vec2, any.vec2).test(
         'sweep is always acute or right and opens CCW',
         (direction1, direction2) {
-          final angle =
-              AngleGeometry.betweenLines(Vec2.zero, direction1, direction2);
+          final angle = AngleGeometry.betweenLines(
+            Vec2.zero,
+            direction1,
+            direction2,
+          );
           if (angle == null) {
             return;
           }

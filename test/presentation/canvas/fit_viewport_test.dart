@@ -13,27 +13,40 @@ import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/fit_viewport.dart';
 
 void main() {
-  FreePoint point(String id, double x, double y,
-          {ObjectAttributes attributes = const ObjectAttributes()}) =>
-      FreePoint(id: id, position: Vec2(x, y), attributes: attributes);
+  FreePoint point(
+    String id,
+    double x,
+    double y, {
+    ObjectAttributes attributes = const ObjectAttributes(),
+  }) => FreePoint(id: id, position: Vec2(x, y), attributes: attributes);
 
   group('visibleWorldBounds', () {
     test('null on nothing, on hidden-only, and on lines-only', () {
       expect(visibleWorldBounds(const []), isNull);
       expect(
         visibleWorldBounds([
-          point('h', 1, 2,
-              attributes: const ObjectAttributes(visible: false)),
+          point('h', 1, 2, attributes: const ObjectAttributes(visible: false)),
         ]),
         isNull,
       );
-      final a = point('a', 0, 0,
-          attributes: const ObjectAttributes(visible: false));
-      final b = point('b', 4, 0,
-          attributes: const ObjectAttributes(visible: false));
+      final a = point(
+        'a',
+        0,
+        0,
+        attributes: const ObjectAttributes(visible: false),
+      );
+      final b = point(
+        'b',
+        4,
+        0,
+        attributes: const ObjectAttributes(visible: false),
+      );
       expect(
-        visibleWorldBounds(
-            [a, b, LineThroughTwoPoints(id: 'l', point1: a, point2: b)]),
+        visibleWorldBounds([
+          a,
+          b,
+          LineThroughTwoPoints(id: 'l', point1: a, point2: b),
+        ]),
         isNull,
         reason: 'an unbounded carrier contributes no extent of its own',
       );
@@ -43,8 +56,12 @@ void main() {
       final bounds = visibleWorldBounds([
         point('a', -3, 2),
         point('b', 5, -7),
-        point('h', 100, 100,
-            attributes: const ObjectAttributes(visible: false)),
+        point(
+          'h',
+          100,
+          100,
+          attributes: const ObjectAttributes(visible: false),
+        ),
       ]);
       expect(bounds, isNotNull);
       expect(bounds!.min, const Vec2(-3, -7));
@@ -64,12 +81,24 @@ void main() {
     });
 
     test('an angle contributes its vertex', () {
-      final arm1 = point('a', 0, 5,
-          attributes: const ObjectAttributes(visible: false));
-      final vertex = point('v', 2, 3,
-          attributes: const ObjectAttributes(visible: false));
-      final arm2 = point('b', 4, 5,
-          attributes: const ObjectAttributes(visible: false));
+      final arm1 = point(
+        'a',
+        0,
+        5,
+        attributes: const ObjectAttributes(visible: false),
+      );
+      final vertex = point(
+        'v',
+        2,
+        3,
+        attributes: const ObjectAttributes(visible: false),
+      );
+      final arm2 = point(
+        'b',
+        4,
+        5,
+        attributes: const ObjectAttributes(visible: false),
+      );
       final bounds = visibleWorldBounds([
         arm1,
         vertex,
@@ -89,13 +118,12 @@ void main() {
       expect(fittedViewport([point('a', 1, 1)], Size.zero), isNull);
     });
 
-    test('centers the extent and scales to the tight axis with margin',
-        () {
+    test('centers the extent and scales to the tight axis with margin', () {
       // 100 world units wide, 10 tall: width is the tight constraint.
-      final state = fittedViewport(
-        [point('a', 0, 0), point('b', 100, 10)],
-        canvas,
-      );
+      final state = fittedViewport([
+        point('a', 0, 0),
+        point('b', 100, 10),
+      ], canvas);
       expect(state, isNotNull);
       expect(state!.scale, closeTo((800 - 2 * fitMarginPx) / 100, 1e-12));
 
@@ -105,13 +133,15 @@ void main() {
       // Both corners on-canvas, margin respected.
       for (final corner in const [Vec2(0, 0), Vec2(100, 10)]) {
         final screen = viewport.worldToScreen(corner);
-        expect(screen.dx, inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9));
+        expect(
+          screen.dx,
+          inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9),
+        );
         expect(screen.dy, inInclusiveRange(0, 600));
       }
     });
 
-    test('a single point centers at 100 % instead of zooming to the clamp',
-        () {
+    test('a single point centers at 100 % instead of zooming to the clamp', () {
       final state = fittedViewport([point('a', 40, -20)], canvas)!;
       expect(state.scale, 1);
       expect(
@@ -121,16 +151,16 @@ void main() {
     });
 
     test('scale clamps at both extremes', () {
-      final vast = fittedViewport(
-        [point('a', 0, 0), point('b', 1e9, 0)],
-        canvas,
-      )!;
+      final vast = fittedViewport([
+        point('a', 0, 0),
+        point('b', 1e9, 0),
+      ], canvas)!;
       expect(vast.scale, CanvasViewport.minScale);
 
-      final microscopic = fittedViewport(
-        [point('a', 0, 0), point('b', 1e-9, 0)],
-        canvas,
-      )!;
+      final microscopic = fittedViewport([
+        point('a', 0, 0),
+        point('b', 1e-9, 0),
+      ], canvas)!;
       expect(microscopic.scale, CanvasViewport.maxScale);
     });
 
@@ -149,10 +179,19 @@ void main() {
       final viewport = CanvasViewport(state);
       final a = viewport.worldToScreen(const Vec2(0, 0));
       final b = viewport.worldToScreen(const Vec2(100, 0));
-      expect((a + b) / 2, offsetMoreOrLessEquals(const Offset(400, 300), epsilon: 1e-6));
+      expect(
+        (a + b) / 2,
+        offsetMoreOrLessEquals(const Offset(400, 300), epsilon: 1e-6),
+      );
       for (final screen in [a, b]) {
-        expect(screen.dx, inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9));
-        expect(screen.dy, inInclusiveRange(fitMarginPx - 1e-9, 600 - fitMarginPx + 1e-9));
+        expect(
+          screen.dx,
+          inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9),
+        );
+        expect(
+          screen.dy,
+          inInclusiveRange(fitMarginPx - 1e-9, 600 - fitMarginPx + 1e-9),
+        );
       }
     });
 
@@ -168,10 +207,19 @@ void main() {
       final b = viewport.worldToScreen(const Vec2(50, -25));
       // Two points span the view-frame box, so their screen midpoint is
       // the box center — pinned to the canvas center at any angle.
-      expect((a + b) / 2, offsetMoreOrLessEquals(const Offset(400, 300), epsilon: 1e-6));
+      expect(
+        (a + b) / 2,
+        offsetMoreOrLessEquals(const Offset(400, 300), epsilon: 1e-6),
+      );
       for (final screen in [a, b]) {
-        expect(screen.dx, inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9));
-        expect(screen.dy, inInclusiveRange(fitMarginPx - 1e-9, 600 - fitMarginPx + 1e-9));
+        expect(
+          screen.dx,
+          inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9),
+        );
+        expect(
+          screen.dy,
+          inInclusiveRange(fitMarginPx - 1e-9, 600 - fitMarginPx + 1e-9),
+        );
       }
     });
 
@@ -179,10 +227,18 @@ void main() {
         'center ± radius', () {
       // A lone disc's view-frame box is 60 × 60 at any angle; rotating
       // box *corners* instead would break this scale.
-      final center = point('c', 10, 10,
-          attributes: const ObjectAttributes(visible: false));
-      final rim = point('r', 40, 10,
-          attributes: const ObjectAttributes(visible: false));
+      final center = point(
+        'c',
+        10,
+        10,
+        attributes: const ObjectAttributes(visible: false),
+      );
+      final rim = point(
+        'r',
+        40,
+        10,
+        attributes: const ObjectAttributes(visible: false),
+      );
       final state = fittedViewport(
         [
           center,
@@ -224,8 +280,8 @@ class _StubLocus extends GeoLocus {
     required super.id,
     required List<Vec2?>? samples,
     required List<Vec2> coreSamples,
-  })  : _samples = samples,
-        _coreSamples = coreSamples;
+  }) : _samples = samples,
+       _coreSamples = coreSamples;
 
   final List<Vec2?>? _samples;
   final List<Vec2> _coreSamples;

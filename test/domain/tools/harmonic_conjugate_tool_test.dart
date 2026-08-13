@@ -32,8 +32,11 @@ void main() {
       expect(command, isA<AddObjectCommand>());
       final conjugate =
           (command as AddObjectCommand).object as HarmonicConjugatePoint;
-      expect(conjugate.parents, [a, b, c],
-          reason: 'tap order is base pair A, B, then C');
+      expect(conjugate.parents, [
+        a,
+        b,
+        c,
+      ], reason: 'tap order is base pair A, B, then C');
       expect(conjugate.position!.closeTo(const Vec2(-2, 0)), isTrue);
     });
 
@@ -49,15 +52,16 @@ void main() {
       expect(command, isA<MacroCommand>());
 
       command.apply(construction);
-      expect(construction.length, 4,
-          reason: '3 free points + the conjugate');
-      final conjugate =
-          construction.objects.last as HarmonicConjugatePoint;
+      expect(construction.length, 4, reason: '3 free points + the conjugate');
+      final conjugate = construction.objects.last as HarmonicConjugatePoint;
       expect(conjugate.position!.closeTo(const Vec2(-2, 0)), isTrue);
 
       command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole step is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole step is one undo unit',
+      );
     });
 
     test('non-collinear taps still commit an undefined conjugate that '
@@ -66,12 +70,10 @@ void main() {
 
       tool.onInput(const ToolInput(Vec2(0, 0)));
       tool.onInput(const ToolInput(Vec2(4, 0)));
-      final result =
-          tool.onInput(const ToolInput(Vec2(1, 3))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(1, 3))) as ToolCommitted;
       result.command.apply(construction);
 
-      final conjugate =
-          construction.objects.last as HarmonicConjugatePoint;
+      final conjugate = construction.objects.last as HarmonicConjugatePoint;
       expect(conjugate.isDefined, isFalse);
 
       construction.moveFreePoint(conjugate.point3.id, const Vec2(1, 0));
@@ -85,7 +87,11 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(1, 0));
       final existing = HarmonicConjugatePoint(
-          id: 'd', point1: a, point2: b, point3: c);
+        id: 'd',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
       final construction = Construction()
         ..add(a)
         ..add(b)
@@ -98,8 +104,11 @@ void main() {
 
       expect(tap(a), isA<ToolAccepted>());
       expect(tap(b), isA<ToolAccepted>());
-      expect(tap(c), isA<ToolIgnored>(),
-          reason: 'the conjugate of the same triple already exists');
+      expect(
+        tap(c),
+        isA<ToolIgnored>(),
+        reason: 'the conjugate of the same triple already exists',
+      );
 
       // The conjugate is symmetric in A and B, so the swapped base pair
       // is the same construction and dedupes too.

@@ -72,10 +72,7 @@ void main() {
     expect(container.read(toolProvider).tool, isA<IntersectionTool>());
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
-    expect(
-      iconColor(tester, Icons.timeline),
-      isNot(theme.colorScheme.primary),
-    );
+    expect(iconColor(tester, Icons.timeline), isNot(theme.colorScheme.primary));
     expect(
       iconColor(tester, Icons.circle_outlined),
       isNot(theme.colorScheme.primary),
@@ -97,10 +94,7 @@ void main() {
     expect(container.read(toolProvider).tool, isA<TwoPointTool>());
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
-    expect(
-      iconColor(tester, Icons.timeline),
-      isNot(theme.colorScheme.primary),
-    );
+    expect(iconColor(tester, Icons.timeline), isNot(theme.colorScheme.primary));
   });
 
   testWidgets('the projection row highlights Points, not Lines — the one '
@@ -117,10 +111,7 @@ void main() {
     expect((tool as PointAndLineTool).build, buildProjectionPoint);
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
-    expect(
-      iconColor(tester, Icons.timeline),
-      isNot(theme.colorScheme.primary),
-    );
+    expect(iconColor(tester, Icons.timeline), isNot(theme.colorScheme.primary));
   });
 
   testWidgets('the Measure rows activate their tools and highlight the '
@@ -158,8 +149,9 @@ void main() {
     expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
   });
 
-  testWidgets('a single tap on the active group icon still opens its menu',
-      (tester) async {
+  testWidgets('a single tap on the active group icon still opens its menu', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.tap(find.byIcon(Icons.control_point));
@@ -177,8 +169,9 @@ void main() {
     expect(container.read(toolProvider).tool, isNotNull);
   });
 
-  testWidgets('the active group tooltip advertises double-click to deselect',
-      (tester) async {
+  testWidgets('the active group tooltip advertises double-click to deselect', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     // Shortcut keys live next to the flyout rows, not in the tooltip.
     const idleTooltip = 'Points: free, derived and constrained points';
@@ -203,8 +196,7 @@ void main() {
     final rows = {
       'Rectangle': RectangleMacroTool,
       'Rhombus': RhombusMacroTool,
-      'Isosceles trapezium':
-          IsoscelesTrapeziumMacroTool,
+      'Isosceles trapezium': IsoscelesTrapeziumMacroTool,
       'Right trapezium': RightTrapeziumMacroTool,
       'Kite': KiteMacroTool,
       'Equilateral triangle': EquilateralTriangleMacroTool,
@@ -352,8 +344,11 @@ void main() {
     await tester.enterText(find.byType(TextField), '0');
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    expect(container.read(toolProvider).tool, isNull,
-        reason: 'ratio 0 collapses onto the center — reads as cancel');
+    expect(
+      container.read(toolProvider).tool,
+      isNull,
+      reason: 'ratio 0 collapses onto the center — reads as cancel',
+    );
 
     await openDilateDialog();
     await tester.enterText(find.byType(TextField), '-3/2');
@@ -382,8 +377,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Dilate from point…'));
     await tester.pumpAndSettle();
-    expect(find.text('G H'), findsOneWidget,
-        reason: 'the dialog title carries the chord');
+    expect(
+      find.text('G H'),
+      findsOneWidget,
+      reason: 'the dialog title carries the chord',
+    );
     await tester.enterText(find.byType(TextField), 'sqrt(2)');
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
@@ -400,8 +398,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'pi');
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    final circle =
-        container.read(toolProvider).tool! as FixedRadiusCircleTool;
+    final circle = container.read(toolProvider).tool! as FixedRadiusCircleTool;
     expect(circle.radius, closeTo(math.pi, 1e-12));
   });
 
@@ -412,27 +409,38 @@ void main() {
     await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
 
-    expect(find.text('Homothetic point…'), findsNothing,
-        reason: 'retired in favor of the Transform-group dilate');
+    expect(
+      find.text('Homothetic point…'),
+      findsNothing,
+      reason: 'retired in favor of the Transform-group dilate',
+    );
 
     final pointY = tester.getTopLeft(find.text('Point')).dy;
-    final intersectionY =
-        tester.getTopLeft(find.text('Intersection of two curves')).dy;
+    final intersectionY = tester
+        .getTopLeft(find.text('Intersection of two curves'))
+        .dy;
     final midpointY = tester.getTopLeft(find.text('Midpoint or center')).dy;
     expect(pointY, lessThan(intersectionY));
-    expect(intersectionY, lessThan(midpointY),
-        reason: 'row order is Point, Intersection, Midpoint');
-    final otherRowBetween = [
-      'Segment-ratio point…',
-      'Projection onto a line',
-      'Harmonic conjugate',
-      'Centroid',
-    ].any((label) {
-      final y = tester.getTopLeft(find.textContaining(label).first).dy;
-      return y > pointY && y < midpointY;
-    });
-    expect(otherRowBetween, isFalse,
-        reason: 'nothing else sits between Point and Midpoint');
+    expect(
+      intersectionY,
+      lessThan(midpointY),
+      reason: 'row order is Point, Intersection, Midpoint',
+    );
+    final otherRowBetween =
+        [
+          'Segment-ratio point…',
+          'Projection onto a line',
+          'Harmonic conjugate',
+          'Centroid',
+        ].any((label) {
+          final y = tester.getTopLeft(find.textContaining(label).first).dy;
+          return y > pointY && y < midpointY;
+        });
+    expect(
+      otherRowBetween,
+      isFalse,
+      reason: 'nothing else sits between Point and Midpoint',
+    );
   });
 
   testWidgets('the regular-polygon item asks for the side count; cancel '
@@ -570,9 +578,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.text('Segment with given length…'),
-    );
+    await tester.tap(find.text('Segment with given length…'));
     await tester.pumpAndSettle();
     expect(find.text('Segment length'), findsOneWidget);
     await tester.enterText(find.byType(TextField), '3');
@@ -664,7 +670,8 @@ void main() {
       expect(
         iconColor(tester, Icons.control_point),
         isNot(theme.colorScheme.primary),
-        reason: 'the tool lives in the text & labels group, not the '
+        reason:
+            'the tool lives in the text & labels group, not the '
             'Points catch-all',
       );
     });
@@ -683,13 +690,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(container.read(toolProvider).tool, isNull);
-      expect(find.text('Name points in sequence…'), findsNothing,
-          reason: 'no menu opened');
+      expect(
+        find.text('Name points in sequence…'),
+        findsNothing,
+        reason: 'no menu opened',
+      );
       expect(find.text('OK'), findsNothing, reason: 'no dialog opened');
     });
 
-    testWidgets('a single letter starts the alphabet there, case respected',
-        (tester) async {
+    testWidgets('a single letter starts the alphabet there, case respected', (
+      tester,
+    ) async {
       await pumpEditor(tester);
       await openDialog(tester);
       await tester.enterText(find.byType(TextField), 'm');
@@ -720,13 +731,19 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('only once'), findsOneWidget);
-      expect(container.read(toolProvider).tool, isNull,
-          reason: 'invalid input must not activate anything');
+      expect(
+        container.read(toolProvider).tool,
+        isNull,
+        reason: 'invalid input must not activate anything',
+      );
 
       await tester.enterText(find.byType(TextField), 'MID');
       await tester.pump();
-      expect(find.textContaining('only once'), findsNothing,
-          reason: 'editing clears the error');
+      expect(
+        find.textContaining('only once'),
+        findsNothing,
+        reason: 'editing clears the error',
+      );
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       expect(container.read(toolProvider).tool, isA<NamePointsTool>());
@@ -785,10 +802,7 @@ void main() {
     expect(tool, isA<TriangleCircleTool>());
     expect((tool! as TriangleCircleTool).buildCircle, NinePointCircle.new);
     final theme = Theme.of(tester.element(find.byType(AppBar)));
-    expect(
-      iconColor(tester, Icons.circle_outlined),
-      theme.colorScheme.primary,
-    );
+    expect(iconColor(tester, Icons.circle_outlined), theme.colorScheme.primary);
   });
 
   testWidgets('the inscribed-circle row activates its tool and highlights '
@@ -804,10 +818,7 @@ void main() {
     expect(tool, isA<TriangleCircleTool>());
     expect((tool! as TriangleCircleTool).buildCircle, InscribedCircle.new);
     final theme = Theme.of(tester.element(find.byType(AppBar)));
-    expect(
-      iconColor(tester, Icons.circle_outlined),
-      theme.colorScheme.primary,
-    );
+    expect(iconColor(tester, Icons.circle_outlined), theme.colorScheme.primary);
   });
 
   testWidgets('the Apollonius-circle row activates its tool and highlights '
@@ -823,14 +834,12 @@ void main() {
     expect(tool, isA<ThreePointTool>());
     expect((tool! as ThreePointTool).build, buildApolloniusCircle);
     final theme = Theme.of(tester.element(find.byType(AppBar)));
-    expect(
-      iconColor(tester, Icons.circle_outlined),
-      theme.colorScheme.primary,
-    );
+    expect(iconColor(tester, Icons.circle_outlined), theme.colorScheme.primary);
   });
 
-  testWidgets('the polar-line row activates its tool and highlights Lines',
-      (tester) async {
+  testWidgets('the polar-line row activates its tool and highlights Lines', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.tap(find.byIcon(Icons.timeline));
@@ -857,13 +866,17 @@ void main() {
     final tangentsY = tester.getTopLeft(find.text('Tangents from point')).dy;
     final polarY = tester.getTopLeft(find.text('Polar line')).dy;
     final radicalAxisY = tester.getTopLeft(find.text('Radical axis')).dy;
-    expect(tangentsY, lessThan(polarY),
-        reason: 'the two point-and-circle tools stay adjacent');
+    expect(
+      tangentsY,
+      lessThan(polarY),
+      reason: 'the two point-and-circle tools stay adjacent',
+    );
     expect(polarY, lessThan(radicalAxisY));
   });
 
-  testWidgets('the radical-axis row activates its tool and highlights Lines',
-      (tester) async {
+  testWidgets('the radical-axis row activates its tool and highlights Lines', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.tap(find.byIcon(Icons.timeline));
@@ -893,20 +906,19 @@ void main() {
     expect(tool, isA<TwoPointTool>());
     expect((tool! as TwoPointTool).build, buildDiameterCircle);
     final theme = Theme.of(tester.element(find.byType(AppBar)));
-    expect(
-      iconColor(tester, Icons.circle_outlined),
-      theme.colorScheme.primary,
-    );
+    expect(iconColor(tester, Icons.circle_outlined), theme.colorScheme.primary);
     expect(
       iconColor(tester, Icons.control_point),
       isNot(theme.colorScheme.primary),
-      reason: 'a two-point circle builder must not fall into the Points '
+      reason:
+          'a two-point circle builder must not fall into the Points '
           'catch-all',
     );
   });
 
-  testWidgets('Lines flyout: Radical axis sits above Polygon (Phase 70)',
-      (tester) async {
+  testWidgets('Lines flyout: Radical axis sits above Polygon (Phase 70)', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.tap(find.byIcon(Icons.timeline));
@@ -917,8 +929,9 @@ void main() {
     expect(radicalAxisY, lessThan(polygonY));
   });
 
-  testWidgets('flyout rows show their shortcut as trailing text',
-      (tester) async {
+  testWidgets('flyout rows show their shortcut as trailing text', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.tap(find.byIcon(Icons.timeline));
@@ -929,10 +942,7 @@ void main() {
     expect(find.text('S'), findsOneWidget);
     expect(find.text('Perpendicular line'), findsOneWidget);
     expect(find.text('T'), findsOneWidget);
-    expect(
-      find.text('Angle bisector'),
-      findsOneWidget,
-    );
+    expect(find.text('Angle bisector'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
   });
 }

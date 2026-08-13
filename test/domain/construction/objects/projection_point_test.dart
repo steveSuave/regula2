@@ -88,21 +88,27 @@ void main() {
   });
 
   group('projective semantics (Phase 108)', () {
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('agrees with the V1 affine formula through the object graph',
-            (v, p, q) {
-      if (p.closeTo(q, 1e-3)) {
-        return;
-      }
-      final a = FreePoint(id: 'a', position: p);
-      final b = FreePoint(id: 'b', position: q);
-      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
-      final foot = ProjectionPoint(
-          id: 'f', point: FreePoint(id: 'p', position: v), line: line);
-      final expected = LineEq.throughPoints(p, q).project(v);
-      expect(foot.position!.closeTo(expected, 1e-6 * (1 + expected.norm)),
-          isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'agrees with the V1 affine formula through the object graph',
+      (v, p, q) {
+        if (p.closeTo(q, 1e-3)) {
+          return;
+        }
+        final a = FreePoint(id: 'a', position: p);
+        final b = FreePoint(id: 'b', position: q);
+        final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+        final foot = ProjectionPoint(
+          id: 'f',
+          point: FreePoint(id: 'p', position: v),
+          line: line,
+        );
+        final expected = LineEq.throughPoints(p, q).project(v);
+        expect(
+          foot.position!.closeTo(expected, 1e-6 * (1 + expected.norm)),
+          isTrue,
+        );
+      },
+    );
 
     test('a generic point at infinity projects to the carrier\'s point at '
         'infinity, marked as such', () {
@@ -131,25 +137,35 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (v, q, k) {
-      if (v.closeTo(q, 1e-3)) {
-        return;
-      }
-      final carrier = ProjLine.lift(LineEq.throughPoints(v, q));
-      ProjectionPoint build(ProjPoint point, ProjLine line) => ProjectionPoint(
-            id: 'f',
-            point: StubProjectivePoint(point),
-            line: StubProjectiveLine(line),
-          );
-      final witness = ProjPoint.real(-3, 7);
-      final plain = build(witness, carrier);
-      expect(build(witness.scaledBy(k), carrier)
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-      expect(build(witness, carrier.scaledBy(k))
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (v, q, k) {
+        if (v.closeTo(q, 1e-3)) {
+          return;
+        }
+        final carrier = ProjLine.lift(LineEq.throughPoints(v, q));
+        ProjectionPoint build(ProjPoint point, ProjLine line) =>
+            ProjectionPoint(
+              id: 'f',
+              point: StubProjectivePoint(point),
+              line: StubProjectiveLine(line),
+            );
+        final witness = ProjPoint.real(-3, 7);
+        final plain = build(witness, carrier);
+        expect(
+          build(
+            witness.scaledBy(k),
+            carrier,
+          ).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+        expect(
+          build(
+            witness,
+            carrier.scaledBy(k),
+          ).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+      },
+    );
   });
 }

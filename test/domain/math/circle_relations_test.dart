@@ -35,7 +35,10 @@ void main() {
 
     test('concentric circles have no radical axis', () {
       expect(
-        radicalAxis(CircleEq(const Vec2(2, 3), 1), CircleEq(const Vec2(2, 3), 4)),
+        radicalAxis(
+          CircleEq(const Vec2(2, 3), 1),
+          CircleEq(const Vec2(2, 3), 4),
+        ),
         isNull,
       );
     });
@@ -47,41 +50,45 @@ void main() {
     final axisParameter = any.intInRange(-2000, 2001).map((i) => i * 1.0);
 
     Glados3(any.circleEq, any.circleEq, axisParameter).test(
-        'points on the axis have equal power to both circles', (c1, c2, t) {
-      if (c1.center.closeTo(c2.center, 1e-3)) {
-        return;
-      }
-      final p = radicalAxis(c1, c2)!.pointAt(t);
-      final p1 = power(c1, p);
-      final p2 = power(c2, p);
-      final scale = math.max(1.0, math.max(p1.abs(), p2.abs()));
-      expect((p1 - p2).abs() / scale, lessThan(1e-6));
-    });
+      'points on the axis have equal power to both circles',
+      (c1, c2, t) {
+        if (c1.center.closeTo(c2.center, 1e-3)) {
+          return;
+        }
+        final p = radicalAxis(c1, c2)!.pointAt(t);
+        final p1 = power(c1, p);
+        final p2 = power(c2, p);
+        final scale = math.max(1.0, math.max(p1.abs(), p2.abs()));
+        expect((p1 - p2).abs() / scale, lessThan(1e-6));
+      },
+    );
 
     Glados2(any.circleEq, any.circleEq).test(
-        'the axis carries the common chord of intersecting circles',
-        (c1, c2) {
-      if (c1.center.closeTo(c2.center, 1e-3)) {
-        return;
-      }
-      final axis = radicalAxis(c1, c2)!;
-      for (final p in intersectCircleCircle(c1, c2)) {
-        final scale = math.max(1.0, p.norm);
-        expect(axis.distanceTo(p) / scale, lessThan(1e-6));
-      }
-    });
+      'the axis carries the common chord of intersecting circles',
+      (c1, c2) {
+        if (c1.center.closeTo(c2.center, 1e-3)) {
+          return;
+        }
+        final axis = radicalAxis(c1, c2)!;
+        for (final p in intersectCircleCircle(c1, c2)) {
+          final scale = math.max(1.0, p.norm);
+          expect(axis.distanceTo(p) / scale, lessThan(1e-6));
+        }
+      },
+    );
 
     Glados3(any.vec2, any.vec2, any.positiveRadius).test(
-        'equal radii put the midpoint of the centers on the axis',
-        (a, b, r) {
-      if (a.closeTo(b, 1e-3)) {
-        return;
-      }
-      final axis = radicalAxis(CircleEq(a, r), CircleEq(b, r))!;
-      final midpoint = (a + b) * 0.5;
-      final scale = math.max(1.0, midpoint.norm);
-      expect(axis.distanceTo(midpoint) / scale, lessThan(1e-6));
-    });
+      'equal radii put the midpoint of the centers on the axis',
+      (a, b, r) {
+        if (a.closeTo(b, 1e-3)) {
+          return;
+        }
+        final axis = radicalAxis(CircleEq(a, r), CircleEq(b, r))!;
+        final midpoint = (a + b) * 0.5;
+        final scale = math.max(1.0, midpoint.norm);
+        expect(axis.distanceTo(midpoint) / scale, lessThan(1e-6));
+      },
+    );
   });
 
   group('polarLine on canonical configurations', () {
@@ -111,7 +118,10 @@ void main() {
 
     test('a pole on the center has no polar', () {
       expect(polarLine(Vec2.zero, unit), isNull);
-      expect(polarLine(const Vec2(2, 3), CircleEq(const Vec2(2, 3), 4)), isNull);
+      expect(
+        polarLine(const Vec2(2, 3), CircleEq(const Vec2(2, 3), 4)),
+        isNull,
+      );
     });
   });
 
@@ -119,50 +129,56 @@ void main() {
     final axisParameter = any.intInRange(-2000, 2001).map((i) => i * 1.0);
 
     Glados2(any.circleEq, any.vec2).test(
-        'perpendicular to the center–pole join at the inverse point',
-        (circle, pole) {
-      if (pole.closeTo(circle.center, 1e-3)) {
-        return;
-      }
-      final polar = polarLine(pole, circle)!;
-      final n = pole - circle.center;
-      final inverse =
-          circle.center + n * (circle.radius * circle.radius / n.normSquared);
-      final scale = math.max(1.0, math.max(inverse.norm, n.norm));
-      expect(polar.distanceTo(inverse) / scale, lessThan(1e-6));
-      expect(polar.distanceTo(inverse + n.perpendicular) / scale,
+      'perpendicular to the center–pole join at the inverse point',
+      (circle, pole) {
+        if (pole.closeTo(circle.center, 1e-3)) {
+          return;
+        }
+        final polar = polarLine(pole, circle)!;
+        final n = pole - circle.center;
+        final inverse =
+            circle.center + n * (circle.radius * circle.radius / n.normSquared);
+        final scale = math.max(1.0, math.max(inverse.norm, n.norm));
+        expect(polar.distanceTo(inverse) / scale, lessThan(1e-6));
+        expect(
+          polar.distanceTo(inverse + n.perpendicular) / scale,
           lessThan(1e-6),
-          reason: 'stepping from the inverse point perpendicular to the '
-              'center–pole join must stay on the polar');
-    });
+          reason:
+              'stepping from the inverse point perpendicular to the '
+              'center–pole join must stay on the polar',
+        );
+      },
+    );
 
     Glados2(any.circleEq, any.vec2).test(
-        'an external pole\'s polar carries both tangent points',
-        (circle, pole) {
-      if (pole.closeTo(circle.center, 1e-3)) {
-        return;
-      }
-      final polar = polarLine(pole, circle)!;
-      for (final touch in tangentPointsToCircle(pole, circle)) {
-        final scale = math.max(1.0, touch.norm);
-        expect(polar.distanceTo(touch) / scale, lessThan(1e-6));
-      }
-    });
+      'an external pole\'s polar carries both tangent points',
+      (circle, pole) {
+        if (pole.closeTo(circle.center, 1e-3)) {
+          return;
+        }
+        final polar = polarLine(pole, circle)!;
+        for (final touch in tangentPointsToCircle(pole, circle)) {
+          final scale = math.max(1.0, touch.norm);
+          expect(polar.distanceTo(touch) / scale, lessThan(1e-6));
+        }
+      },
+    );
 
     Glados3(any.circleEq, any.vec2, axisParameter).test(
-        'La Hire reciprocity: Q on the polar of P puts P on the polar of Q',
-        (circle, p, t) {
-      if (p.closeTo(circle.center, 1e-3)) {
-        return;
-      }
-      final q = polarLine(p, circle)!.pointAt(t);
-      if (q.closeTo(circle.center, 1e-3)) {
-        return;
-      }
-      final polarOfQ = polarLine(q, circle)!;
-      final scale = math.max(1.0, math.max(p.norm, q.norm));
-      expect(polarOfQ.distanceTo(p) / scale, lessThan(1e-6));
-    });
+      'La Hire reciprocity: Q on the polar of P puts P on the polar of Q',
+      (circle, p, t) {
+        if (p.closeTo(circle.center, 1e-3)) {
+          return;
+        }
+        final q = polarLine(p, circle)!.pointAt(t);
+        if (q.closeTo(circle.center, 1e-3)) {
+          return;
+        }
+        final polarOfQ = polarLine(q, circle)!;
+        final scale = math.max(1.0, math.max(p.norm, q.norm));
+        expect(polarOfQ.distanceTo(p) / scale, lessThan(1e-6));
+      },
+    );
   });
 
   group('apolloniusCircle on canonical configurations', () {
@@ -197,35 +213,44 @@ void main() {
     final ratio = any.intInRange(1, 5001).map((i) => i / 1000);
     bool nearOne(double k) => (k - 1).abs() < 0.05;
 
-    Glados3(any.vec2, any.vec2, ratio).test(
-        'sampled circle points satisfy |PA| / |PB| = ratio', (a, b, k) {
+    Glados3(
+      any.vec2,
+      any.vec2,
+      ratio,
+    ).test('sampled circle points satisfy |PA| / |PB| = ratio', (a, b, k) {
       if (a.closeTo(b, 1e-3) || nearOne(k)) {
         return;
       }
       final circle = apolloniusCircle(a, b, k)!;
       for (final angle in [0.0, math.pi / 3, math.pi / 2, math.pi, 4.0, 5.5]) {
         final p = circle.pointAt(angle);
-        expect((p.distanceTo(a) / p.distanceTo(b) - k).abs() / k,
-            lessThan(1e-6));
+        expect(
+          (p.distanceTo(a) / p.distanceTo(b) - k).abs() / k,
+          lessThan(1e-6),
+        );
       }
     });
 
     Glados3(any.vec2, any.vec2, ratio).test(
-        'the circle cuts AB at the internal and external division points',
-        (a, b, k) {
-      if (a.closeTo(b, 1e-3) || nearOne(k)) {
-        return;
-      }
-      final circle = apolloniusCircle(a, b, k)!;
-      final scale = math.max(1.0, circle.radius);
-      for (final t in [k / (1 + k), k / (k - 1)]) {
-        final p = a + (b - a) * t;
-        expect(circle.distanceTo(p) / scale, lessThan(1e-6));
-      }
-    });
+      'the circle cuts AB at the internal and external division points',
+      (a, b, k) {
+        if (a.closeTo(b, 1e-3) || nearOne(k)) {
+          return;
+        }
+        final circle = apolloniusCircle(a, b, k)!;
+        final scale = math.max(1.0, circle.radius);
+        for (final t in [k / (1 + k), k / (k - 1)]) {
+          final p = a + (b - a) * t;
+          expect(circle.distanceTo(p) / scale, lessThan(1e-6));
+        }
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, ratio).test(
-        'swapping the base points inverts the ratio', (a, b, k) {
+    Glados3(
+      any.vec2,
+      any.vec2,
+      ratio,
+    ).test('swapping the base points inverts the ratio', (a, b, k) {
       if (a.closeTo(b, 1e-3) || nearOne(k)) {
         return;
       }

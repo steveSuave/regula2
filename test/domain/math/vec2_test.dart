@@ -82,14 +82,19 @@ void main() {
       expect(a.perpendicular.norm, a.norm);
     });
 
-    Glados2(any.vec2, any.vec2)
-        .test('distance is symmetric and matches norm of difference', (a, b) {
-      expect(a.distanceTo(b), b.distanceTo(a));
-      expect(a.distanceTo(b), (a - b).norm);
-    });
+    Glados2(any.vec2, any.vec2).test(
+      'distance is symmetric and matches norm of difference',
+      (a, b) {
+        expect(a.distanceTo(b), b.distanceTo(a));
+        expect(a.distanceTo(b), (a - b).norm);
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, any.vec2).test('triangle inequality',
-        (a, b, c) {
+    Glados3(any.vec2, any.vec2, any.vec2).test('triangle inequality', (
+      a,
+      b,
+      c,
+    ) {
       expect(
         a.distanceTo(b),
         lessThanOrEqualTo(a.distanceTo(c) + c.distanceTo(b) + 1e-9),
@@ -101,8 +106,10 @@ void main() {
       expect(a.normalized().norm, closeTo(1, 1e-12));
     });
 
-    Glados2(any.vec2, any.vec2).test('addition and subtraction round-trip',
-        (a, b) {
+    Glados2(any.vec2, any.vec2).test('addition and subtraction round-trip', (
+      a,
+      b,
+    ) {
       expect((a + b - b).closeTo(a, 1e-9), isTrue);
     });
 
@@ -111,11 +118,13 @@ void main() {
       expect(a.lerp(b, 1).closeTo(b, 1e-9), isTrue);
     });
 
-    Glados2(any.vec2, any.vec2)
-        .test('midpoint is equidistant from both endpoints', (a, b) {
-      final m = a.lerp(b, 0.5);
-      expect(m.distanceTo(a), closeTo(m.distanceTo(b), 1e-9));
-    });
+    Glados2(any.vec2, any.vec2).test(
+      'midpoint is equidistant from both endpoints',
+      (a, b) {
+        final m = a.lerp(b, 0.5);
+        expect(m.distanceTo(a), closeTo(m.distanceTo(b), 1e-9));
+      },
+    );
 
     Glados2(any.vec2, any.angle).test('rotation preserves length', (a, t) {
       expect(a.rotated(t).norm, closeTo(a.norm, 1e-9));
@@ -125,9 +134,11 @@ void main() {
       expect(a.rotated(math.pi / 2).closeTo(a.perpendicular, 1e-9), isTrue);
     });
 
-    Glados3(any.vec2, any.angle, any.angle).test('rotations compose additively',
-        (a, s, t) {
-      expect(a.rotated(s).rotated(t).closeTo(a.rotated(s + t), 1e-6), isTrue);
-    });
+    Glados3(any.vec2, any.angle, any.angle).test(
+      'rotations compose additively',
+      (a, s, t) {
+        expect(a.rotated(s).rotated(t).closeTo(a.rotated(s + t), 1e-6), isTrue);
+      },
+    );
   });
 }

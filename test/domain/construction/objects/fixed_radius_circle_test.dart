@@ -4,7 +4,12 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
+import 'package:regula/domain/projective/proj_line.dart';
+import 'package:regula/domain/projective/proj_point.dart';
 
+import '../../../projective_stubs.dart';
 import '../../math/generators.dart';
 
 void main() {
@@ -68,6 +73,44 @@ void main() {
       circle.recompute();
       expect(circle.circle!.center, p);
       expect(circle.circle!.radius, 1.75);
+    });
+  });
+
+  group('projective semantics (Phase 109)', () {
+    test('recompute is invariant under complex rescaling of the center', () {
+      final c = StubProjectivePoint(ProjPoint.real(2, -1), id: 'c');
+      final k = FixedRadiusCircle(id: 'k', center: c, radius: 3.5);
+      final reference = k.conic!;
+      for (final s in [
+        const Complex(2),
+        const Complex(0, 1),
+        const Complex(-0.5, 3),
+      ]) {
+        c.value = ProjPoint.real(2, -1).scaledBy(s);
+        k.recompute();
+        expect(k.conic!.closeTo(reference), isTrue);
+        expect(k.circle!.center.closeTo(const Vec2(2, -1), 1e-9), isTrue);
+        expect(k.circle!.radius, 3.5, reason: 'the stored radius is exact');
+      }
+    });
+
+    test('a center at infinity carries the double line at infinity (V2)', () {
+      final k = FixedRadiusCircle(
+        id: 'k',
+        center: StubProjectivePoint(
+          const ProjPoint(Complex.one, Complex(2), Complex.zero),
+          id: 'c',
+        ),
+        radius: 2,
+      );
+      expect(k.isDefined, isFalse);
+      expect(k.circle, isNull);
+      expect(
+        k.conic!.closeTo(
+          ConicMatrix.linePair(ProjLine.infinity, ProjLine.infinity),
+        ),
+        isTrue,
+      );
     });
   });
 }

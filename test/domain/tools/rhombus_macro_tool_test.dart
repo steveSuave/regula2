@@ -26,9 +26,9 @@ void main() {
     final construction = Construction();
     tool.onInput(const ToolInput(Vec2(0, 0)));
     tool.onInput(const ToolInput(Vec2(4, 0)));
-    (tool.onInput(const ToolInput(Vec2(4, 5))) as ToolCommitted)
-        .command
-        .apply(construction);
+    (tool.onInput(const ToolInput(Vec2(4, 5))) as ToolCommitted).command.apply(
+      construction,
+    );
     return construction;
   }
 
@@ -57,23 +57,35 @@ void main() {
       final construction = Construction();
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
-      expect(tool.onInput(const ToolInput(Vec2(4, 0))), isA<ToolAccepted>(),
-          reason: 'the second corner does not commit — the direction is '
-              'pending');
-      final result =
-          tool.onInput(const ToolInput(Vec2(4, 5))) as ToolCommitted;
+      expect(
+        tool.onInput(const ToolInput(Vec2(4, 0))),
+        isA<ToolAccepted>(),
+        reason:
+            'the second corner does not commit — the direction is '
+            'pending',
+      );
+      final result = tool.onInput(const ToolInput(Vec2(4, 5))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(construction.length, 11,
-          reason: '2 free points + 4 sides + circle + 2 parallels + C + D');
-      expect(cornerC(construction).position, const Vec2(4, 4),
-          reason: 'C is the tap projected onto the compass circle');
+      expect(
+        construction.length,
+        11,
+        reason: '2 free points + 4 sides + circle + 2 parallels + C + D',
+      );
+      expect(
+        cornerC(construction).position,
+        const Vec2(4, 4),
+        reason: 'C is the tap projected onto the compass circle',
+      );
       expect(cornerD(construction).position, const Vec2(0, 4));
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole rhombus is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole rhombus is one undo unit',
+      );
     });
 
     test('the direction tap never consumes an existing point', () {
@@ -87,8 +99,11 @@ void main() {
           tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
       result.command.apply(construction);
 
-      expect(cornerC(construction).position, const Vec2(4, 4),
-          reason: 'the hit point only donates its position');
+      expect(
+        cornerC(construction).position,
+        const Vec2(4, 4),
+        reason: 'the hit point only donates its position',
+      );
 
       result.command.undo(construction);
       expect(construction.objects, [e]);
@@ -97,10 +112,14 @@ void main() {
     test('scaffolding is hidden, corners and sides are visible', () {
       final construction = buildRhombus();
 
-      final hidden =
-          construction.objects.where((o) => !o.attributes.visible).toList();
-      expect(hidden, hasLength(3),
-          reason: 'the compass circle and the two parallels');
+      final hidden = construction.objects
+          .where((o) => !o.attributes.visible)
+          .toList();
+      expect(
+        hidden,
+        hasLength(3),
+        reason: 'the compass circle and the two parallels',
+      );
       expect(hidden.whereType<CompassCircle>(), hasLength(1));
 
       final visible = construction.objects.where((o) => o.attributes.visible);
@@ -123,14 +142,22 @@ void main() {
       final a = freeCorners(construction)[0];
 
       construction.moveFreePoint(a.id, const Vec2(4, 0));
-      expect(cornerC(construction).position, const Vec2(4, 0),
-          reason: 'a zero-radius circle pins C to its center — degenerate '
-              'but defined');
+      expect(
+        cornerC(construction).position,
+        const Vec2(4, 0),
+        reason:
+            'a zero-radius circle pins C to its center — degenerate '
+            'but defined',
+      );
 
       construction.moveFreePoint(a.id, const Vec2(0, 0));
-      expect(cornerC(construction).position, const Vec2(4, 4),
-          reason: 'the polar parameter rides the analytic form, so C '
-              'returns exactly in place');
+      expect(
+        cornerC(construction).position,
+        const Vec2(4, 4),
+        reason:
+            'the polar parameter rides the analytic form, so C '
+            'returns exactly in place',
+      );
       expect(cornerD(construction).position, const Vec2(0, 4));
     });
   });

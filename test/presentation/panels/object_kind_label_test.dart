@@ -28,21 +28,23 @@ void main() {
 
   test('concrete types shadow their kind fallback', () {
     expect(objectKindLabel(a), 'Point');
-    expect(objectKindLabel(Midpoint(id: 'm', point1: a, point2: b)),
-        'Midpoint');
     expect(
-      objectKindLabel(IntersectionPoint(
-        id: 'x',
-        curve1: line1,
-        curve2: line2,
-        branchIndex: 0,
-      )),
-      'Intersection point',
+      objectKindLabel(Midpoint(id: 'm', point1: a, point2: b)),
+      'Midpoint',
     );
     expect(
       objectKindLabel(
-        Centroid(id: 'g', vertex1: a, vertex2: b, vertex3: c),
+        IntersectionPoint(
+          id: 'x',
+          curve1: line1,
+          curve2: line2,
+          branchIndex: 0,
+        ),
       ),
+      'Intersection point',
+    );
+    expect(
+      objectKindLabel(Centroid(id: 'g', vertex1: a, vertex2: b, vertex3: c)),
       'Centroid',
     );
     expect(
@@ -59,9 +61,7 @@ void main() {
       'Projection point',
     );
     expect(
-      objectKindLabel(
-        HomotheticPoint(id: 'ho', point: c, center: a, ratio: 2),
-      ),
+      objectKindLabel(HomotheticPoint(id: 'ho', point: c, center: a, ratio: 2)),
       'Homothetic point',
     );
     expect(
@@ -74,13 +74,10 @@ void main() {
 
   test('line kinds', () {
     expect(objectKindLabel(line1), 'Line');
-    expect(objectKindLabel(Segment(id: 's', point1: a, point2: b)),
-        'Segment');
+    expect(objectKindLabel(Segment(id: 's', point1: a, point2: b)), 'Segment');
     expect(objectKindLabel(Ray(id: 'r', origin: a, through: b)), 'Ray');
     expect(
-      objectKindLabel(
-        PerpendicularLine(id: 'p', through: c, reference: line1),
-      ),
+      objectKindLabel(PerpendicularLine(id: 'p', through: c, reference: line1)),
       'Perpendicular line',
     );
   });

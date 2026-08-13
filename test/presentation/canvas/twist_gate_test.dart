@@ -32,8 +32,11 @@ void main() {
     test('stays armed when the rotation returns below the threshold', () {
       final gate = TwistGate();
       gate.applied(0.2);
-      expect(gate.applied(0.05), closeTo(-0.15, 1e-12),
-          reason: 'an armed twist keeps tracking through small angles');
+      expect(
+        gate.applied(0.05),
+        closeTo(-0.15, 1e-12),
+        reason: 'an armed twist keeps tracking through small angles',
+      );
       expect(gate.armed, isTrue);
     });
 
@@ -58,8 +61,11 @@ void main() {
     test('snaps a nearly-level release to exactly 0', () {
       expect(TwistGate.settled(0.01), 0);
       expect(TwistGate.settled(-0.03), 0);
-      expect(TwistGate.settled(2 * math.pi / 180), 0,
-          reason: 'the boundary itself still snaps');
+      expect(
+        TwistGate.settled(2 * math.pi / 180),
+        0,
+        reason: 'the boundary itself still snaps',
+      );
     });
 
     test('keeps a deliberate angle', () {
@@ -82,8 +88,11 @@ void main() {
     test('wraps into (−π, π]', () {
       expect(normalizeAngle(0), 0);
       expect(normalizeAngle(math.pi), math.pi);
-      expect(normalizeAngle(-math.pi), math.pi,
-          reason: '−π and π are the same angle; the convention keeps π');
+      expect(
+        normalizeAngle(-math.pi),
+        math.pi,
+        reason: '−π and π are the same angle; the convention keeps π',
+      );
       expect(normalizeAngle(3 * math.pi), closeTo(math.pi, 1e-12));
       expect(
         normalizeAngle(190 * math.pi / 180),

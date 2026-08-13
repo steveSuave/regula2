@@ -47,8 +47,9 @@ void main() {
           (command as AddObjectCommand).object as TwoLineBisectorLine;
       expect(bisector.parents, [xAxis, yAxis]);
       expect(
-        bisector.line!
-            .closeTo(LineEq.throughPoints(Vec2.zero, const Vec2(1, 1))),
+        bisector.line!.closeTo(
+          LineEq.throughPoints(Vec2.zero, const Vec2(1, 1)),
+        ),
         isTrue,
         reason: 'first-quadrant taps pick the first-quadrant wedge',
       );
@@ -68,8 +69,7 @@ void main() {
       );
     });
 
-    test('the same line twice, points, circles and empty taps are ignored',
-        () {
+    test('the same line twice, points, circles and empty taps are ignored', () {
       final t = tool();
       final circle = CircleCenterPoint(id: 'k', center: o, onCircle: x);
       t.onInput(ToolInput(const Vec2(2, 0), hit: xAxis));
@@ -78,8 +78,11 @@ void main() {
         t.onInput(ToolInput(const Vec2(3, 0), hit: xAxis)),
         isA<ToolIgnored>(),
       );
-      expect(t.onInput(ToolInput(Vec2.zero, hit: o)), isA<ToolIgnored>(),
-          reason: 'modes never mix — no point collection after a line');
+      expect(
+        t.onInput(ToolInput(Vec2.zero, hit: o)),
+        isA<ToolIgnored>(),
+        reason: 'modes never mix — no point collection after a line',
+      );
       expect(
         t.onInput(ToolInput(const Vec2(4, 0), hit: circle)),
         isA<ToolIgnored>(),
@@ -107,8 +110,11 @@ void main() {
       final command = (result as ToolCommitted).command;
       final bisector =
           (command as AddObjectCommand).object as AngleBisectorLine;
-      expect(bisector.parents, [x, o, y],
-          reason: 'tap order is arm, vertex, arm');
+      expect(bisector.parents, [
+        x,
+        o,
+        y,
+      ], reason: 'tap order is arm, vertex, arm');
     });
 
     test('empty-canvas taps create free points, one MacroCommand', () {
@@ -121,10 +127,7 @@ void main() {
       final macro = (result as ToolCommitted).command as MacroCommand;
       macro.apply(construction);
       expect(construction.length, 4, reason: '3 free points + the bisector');
-      expect(
-        construction.objects.whereType<FreePoint>().length,
-        3,
-      );
+      expect(construction.objects.whereType<FreePoint>().length, 3);
       macro.undo(construction);
       expect(construction.length, 0, reason: 'one undo unit');
     });

@@ -28,8 +28,7 @@ void main() {
       expect(window, isNull);
     });
 
-    test('is the full circle when center and rim are both near the canvas',
-        () {
+    test('is the full circle when center and rim are both near the canvas', () {
       final window = visibleAngularWindow(
         center: const Offset(200, 300),
         radius: 400,
@@ -86,20 +85,17 @@ void main() {
     const window = (center: 0.0, halfWidth: 0.5);
 
     test('clamps an arc straddling the window', () {
-      final pieces =
-          arcWindowOverlap(start: -2, sweep: 4, window: window);
+      final pieces = arcWindowOverlap(start: -2, sweep: 4, window: window);
       expect(pieces, [(start: -0.5, end: 0.5)]);
     });
 
     test('is empty for a disjoint arc', () {
-      final pieces =
-          arcWindowOverlap(start: 1, sweep: 1, window: window);
+      final pieces = arcWindowOverlap(start: 1, sweep: 1, window: window);
       expect(pieces, isEmpty);
     });
 
     test('normalizes a negative sweep', () {
-      final pieces =
-          arcWindowOverlap(start: 0.3, sweep: -0.2, window: window);
+      final pieces = arcWindowOverlap(start: 0.3, sweep: -0.2, window: window);
       expect(pieces, hasLength(1));
       expect(pieces.single.start, closeTo(0.1, 1e-12));
       expect(pieces.single.end, closeTo(0.3, 1e-12));
@@ -140,8 +136,13 @@ void main() {
       const center = Offset(400, 50300);
       const radius = 50000.0;
       final path = Path();
-      addSampledArc(path, center, radius, -math.pi / 2 - 0.02,
-          -math.pi / 2 + 0.02);
+      addSampledArc(
+        path,
+        center,
+        radius,
+        -math.pi / 2 - 0.02,
+        -math.pi / 2 + 0.02,
+      );
       final metric = path.computeMetrics().single;
       expect(metric.length, greaterThan(0));
       // Walk the polyline: every position stays within a sagitta of the

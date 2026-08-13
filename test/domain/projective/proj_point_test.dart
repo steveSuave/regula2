@@ -56,10 +56,12 @@ void main() {
       expect(zero.normalized, zero);
     });
 
-    Glados(any.projPoint).test('normalized is projectively equal to the input',
-        (p) {
-      expect(p.normalized.closeTo(p, eps), isTrue);
-    });
+    Glados(any.projPoint).test(
+      'normalized is projectively equal to the input',
+      (p) {
+        expect(p.normalized.closeTo(p, eps), isTrue);
+      },
+    );
   });
 
   group('projective equality (closeTo)', () {
@@ -144,64 +146,78 @@ void main() {
       expect(p.join(p.scaledBy(const Complex(2))).norm2, lessThan(1e-20));
     });
 
-    Glados2(any.projPoint, any.projPoint)
-        .test('both points are incident to their join', (p, q) {
-      if (p.closeTo(q, 1e-6)) return;
-      final l = p.join(q);
-      expect(p.isIncidentTo(l, eps), isTrue);
-      expect(q.isIncidentTo(l, eps), isTrue);
-    });
+    Glados2(any.projPoint, any.projPoint).test(
+      'both points are incident to their join',
+      (p, q) {
+        if (p.closeTo(q, 1e-6)) return;
+        final l = p.join(q);
+        expect(p.isIncidentTo(l, eps), isTrue);
+        expect(q.isIncidentTo(l, eps), isTrue);
+      },
+    );
 
-    Glados2(any.projPoint, any.projPoint)
-        .test('join is projectively antisymmetric', (p, q) {
-      if (p.closeTo(q, 1e-6)) return;
-      expect(p.join(q).closeTo(q.join(p), eps), isTrue);
-    });
+    Glados2(any.projPoint, any.projPoint).test(
+      'join is projectively antisymmetric',
+      (p, q) {
+        if (p.closeTo(q, 1e-6)) return;
+        expect(p.join(q).closeTo(q.join(p), eps), isTrue);
+      },
+    );
 
-    Glados3(any.projPoint, any.projPoint, any.projPoint)
-        .test('meet of two joins through p recovers p', (p, q, r) {
-      if (p.closeTo(q, 1e-3) || p.closeTo(r, 1e-3) || q.closeTo(r, 1e-3)) {
-        return;
-      }
-      final l1 = p.join(q);
-      final l2 = p.join(r);
-      if (l1.closeTo(l2, 1e-3)) return; // collinear triple: joins coincide
-      expect(l1.meet(l2).closeTo(p, 1e-6), isTrue);
-    });
+    Glados3(any.projPoint, any.projPoint, any.projPoint).test(
+      'meet of two joins through p recovers p',
+      (p, q, r) {
+        if (p.closeTo(q, 1e-3) || p.closeTo(r, 1e-3) || q.closeTo(r, 1e-3)) {
+          return;
+        }
+        final l1 = p.join(q);
+        final l2 = p.join(r);
+        if (l1.closeTo(l2, 1e-3)) return; // collinear triple: joins coincide
+        expect(l1.meet(l2).closeTo(p, 1e-6), isTrue);
+      },
+    );
   });
 
   group('invariance under complex rescaling (glados)', () {
-    Glados2(any.projPoint, any.nonZeroComplex)
-        .test('closeTo: a scaled copy is the same point', (p, k) {
-      expect(p.scaledBy(k).closeTo(p, eps), isTrue);
-    });
+    Glados2(any.projPoint, any.nonZeroComplex).test(
+      'closeTo: a scaled copy is the same point',
+      (p, k) {
+        expect(p.scaledBy(k).closeTo(p, eps), isTrue);
+      },
+    );
 
-    Glados2(any.projPoint, any.nonZeroComplex)
-        .test('isReal and isFinite are scale-invariant', (p, k) {
-      final scaled = p.scaledBy(k);
-      expect(scaled.isReal(), p.isReal());
-      expect(scaled.isFinite(), p.isFinite());
-    });
+    Glados2(any.projPoint, any.nonZeroComplex).test(
+      'isReal and isFinite are scale-invariant',
+      (p, k) {
+        final scaled = p.scaledBy(k);
+        expect(scaled.isReal(), p.isReal());
+        expect(scaled.isFinite(), p.isFinite());
+      },
+    );
 
-    Glados2(any.projPoint, any.nonZeroComplex)
-        .test('toVec2 is scale-invariant', (p, k) {
-      final v = p.toVec2();
-      final vScaled = p.scaledBy(k).toVec2();
-      if (v == null) {
-        expect(vScaled, isNull);
-      } else {
-        expect(vScaled, isNotNull);
-        expect(vScaled!.closeTo(v, 1e-6), isTrue);
-      }
-    });
+    Glados2(any.projPoint, any.nonZeroComplex).test(
+      'toVec2 is scale-invariant',
+      (p, k) {
+        final v = p.toVec2();
+        final vScaled = p.scaledBy(k).toVec2();
+        if (v == null) {
+          expect(vScaled, isNull);
+        } else {
+          expect(vScaled, isNotNull);
+          expect(vScaled!.closeTo(v, 1e-6), isTrue);
+        }
+      },
+    );
 
-    Glados3(any.projPoint, any.projPoint, any.nonZeroComplex)
-        .test('incidence with a join is scale-invariant', (p, q, k) {
-      if (p.closeTo(q, 1e-6)) return;
-      final l = p.join(q);
-      expect(p.scaledBy(k).isIncidentTo(l, eps), isTrue);
-      expect(p.scaledBy(k).isIncidentTo(l.scaledBy(k), eps), isTrue);
-    });
+    Glados3(any.projPoint, any.projPoint, any.nonZeroComplex).test(
+      'incidence with a join is scale-invariant',
+      (p, q, k) {
+        if (p.closeTo(q, 1e-6)) return;
+        final l = p.join(q);
+        expect(p.scaledBy(k).isIncidentTo(l, eps), isTrue);
+        expect(p.scaledBy(k).isIncidentTo(l.scaledBy(k), eps), isTrue);
+      },
+    );
   });
 
   group('lift ∘ project = id', () {
@@ -209,50 +225,58 @@ void main() {
       expect(ProjPoint.lift(v).toVec2()!.closeTo(v, 1e-12), isTrue);
     });
 
-    Glados2(any.vec2, any.nonZeroComplex)
-        .test('…even after complex rescaling', (v, k) {
-      final back = ProjPoint.lift(v).scaledBy(k).toVec2();
-      expect(back, isNotNull);
-      expect(back!.closeTo(v, 1e-6), isTrue);
-    });
+    Glados2(any.vec2, any.nonZeroComplex).test(
+      '…even after complex rescaling',
+      (v, k) {
+        final back = ProjPoint.lift(v).scaledBy(k).toVec2();
+        expect(back, isNotNull);
+        expect(back!.closeTo(v, 1e-6), isTrue);
+      },
+    );
   });
 
   group('harmonicConjugateOf', () {
-    Glados3(any.vec2, any.vec2, any.component)
-        .test('agrees with the V1 affine harmonicConjugate', (a, b, t0) {
-      final t = t0 / 1000; // [-1, 1] grid
-      if (a.closeTo(b, 1e-3) || (2 * t - 1).abs() < 1e-3) {
-        return;
-      }
-      final c = a.lerp(b, t);
-      final expected = harmonicConjugate(a, b, c);
-      if (expected == null) {
-        return; // V1's own degeneracy tolerance; boundary cases skipped.
-      }
-      final d = harmonicConjugateOf(
-          ProjPoint.lift(a), ProjPoint.lift(b), ProjPoint.lift(c));
-      final got = d.toVec2();
-      expect(got, isNotNull);
-      final tol = 1e-8 * (1 + expected.norm + got!.norm);
-      expect(got.distanceTo(expected), lessThanOrEqualTo(tol));
-    });
+    Glados3(any.vec2, any.vec2, any.component).test(
+      'agrees with the V1 affine harmonicConjugate',
+      (a, b, t0) {
+        final t = t0 / 1000; // [-1, 1] grid
+        if (a.closeTo(b, 1e-3) || (2 * t - 1).abs() < 1e-3) {
+          return;
+        }
+        final c = a.lerp(b, t);
+        final expected = harmonicConjugate(a, b, c);
+        if (expected == null) {
+          return; // V1's own degeneracy tolerance; boundary cases skipped.
+        }
+        final d = harmonicConjugateOf(
+          ProjPoint.lift(a),
+          ProjPoint.lift(b),
+          ProjPoint.lift(c),
+        );
+        final got = d.toVec2();
+        expect(got, isNotNull);
+        final tol = 1e-8 * (1 + expected.norm + got!.norm);
+        expect(got.distanceTo(expected), lessThanOrEqualTo(tol));
+      },
+    );
 
-    Glados3(any.vec2, any.vec2, any.component)
-        .test('is an involution (totally — through infinity included)',
-            (a, b, t0) {
-      final t = t0 / 1000;
-      if (a.closeTo(b, 1e-3)) {
-        return;
-      }
-      final pa = ProjPoint.lift(a);
-      final pb = ProjPoint.lift(b);
-      final pc = ProjPoint.lift(a.lerp(b, t));
-      final d = harmonicConjugateOf(pa, pb, pc);
-      if (d.isZero) {
-        return;
-      }
-      expect(harmonicConjugateOf(pa, pb, d).closeTo(pc), isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.component).test(
+      'is an involution (totally — through infinity included)',
+      (a, b, t0) {
+        final t = t0 / 1000;
+        if (a.closeTo(b, 1e-3)) {
+          return;
+        }
+        final pa = ProjPoint.lift(a);
+        final pb = ProjPoint.lift(b);
+        final pc = ProjPoint.lift(a.lerp(b, t));
+        final d = harmonicConjugateOf(pa, pb, pc);
+        if (d.isZero) {
+          return;
+        }
+        expect(harmonicConjugateOf(pa, pb, d).closeTo(pc), isTrue);
+      },
+    );
 
     test('the midpoint conjugates to the join\'s point at infinity, '
         'endpoints to themselves', () {
@@ -262,28 +286,32 @@ void main() {
       final d = harmonicConjugateOf(a, b, mid);
       expect(d.isReal(), isTrue);
       expect(d.isFinite(), isFalse);
-      expect(d.closeTo(ProjPoint.real(4, 2, 0)), isTrue,
-          reason: 'the direction of AB');
+      expect(
+        d.closeTo(ProjPoint.real(4, 2, 0)),
+        isTrue,
+        reason: 'the direction of AB',
+      );
       expect(harmonicConjugateOf(a, b, a).closeTo(a), isTrue);
       expect(harmonicConjugateOf(a, b, b).closeTo(b), isTrue);
     });
 
-    Glados2(any.vec2, any.nonZeroComplex)
-        .test('is projectively invariant under rescaling any argument',
-            (v, k) {
-      final a = ProjPoint.lift(v);
-      final b = ProjPoint.real(4, -1);
-      final c = ProjPoint.lift(v.lerp(const Vec2(4, -1), 0.25));
-      if (a.closeTo(b)) {
-        return;
-      }
-      final d = harmonicConjugateOf(a, b, c);
-      if (d.isZero) {
-        return;
-      }
-      expect(harmonicConjugateOf(a.scaledBy(k), b, c).closeTo(d), isTrue);
-      expect(harmonicConjugateOf(a, b.scaledBy(k), c).closeTo(d), isTrue);
-      expect(harmonicConjugateOf(a, b, c.scaledBy(k)).closeTo(d), isTrue);
-    });
+    Glados2(any.vec2, any.nonZeroComplex).test(
+      'is projectively invariant under rescaling any argument',
+      (v, k) {
+        final a = ProjPoint.lift(v);
+        final b = ProjPoint.real(4, -1);
+        final c = ProjPoint.lift(v.lerp(const Vec2(4, -1), 0.25));
+        if (a.closeTo(b)) {
+          return;
+        }
+        final d = harmonicConjugateOf(a, b, c);
+        if (d.isZero) {
+          return;
+        }
+        expect(harmonicConjugateOf(a.scaledBy(k), b, c).closeTo(d), isTrue);
+        expect(harmonicConjugateOf(a, b.scaledBy(k), c).closeTo(d), isTrue);
+        expect(harmonicConjugateOf(a, b, c.scaledBy(k)).closeTo(d), isTrue);
+      },
+    );
   });
 }

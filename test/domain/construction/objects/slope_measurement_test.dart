@@ -117,10 +117,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(1, 0));
       final c = FreePoint(id: 'c', position: const Vec2(0, 1));
-      expect(
-        () => SlopeMeasurement(id: 'm', subject: a),
-        throwsArgumentError,
-      );
+      expect(() => SlopeMeasurement(id: 'm', subject: a), throwsArgumentError);
       expect(
         () => SlopeMeasurement(
           id: 'm',

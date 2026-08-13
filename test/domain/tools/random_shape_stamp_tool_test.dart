@@ -16,19 +16,17 @@ void main() {
     required int min,
     required int max,
     int seed = 7,
-  }) =>
-      RandomShapeStampTool(
-        newId: () => 'n${nextId++}',
-        minVertices: min,
-        maxVertices: max,
-        random: math.Random(seed),
-      );
+  }) => RandomShapeStampTool(
+    newId: () => 'n${nextId++}',
+    minVertices: min,
+    maxVertices: max,
+    random: math.Random(seed),
+  );
 
   setUp(() => nextId = 0);
 
   group('RandomShapeStampTool', () {
-    test('one tap stamps free vertices joined by segments, one undo unit',
-        () {
+    test('one tap stamps free vertices joined by segments, one undo unit', () {
       final construction = Construction();
       final tool = toolFor(min: 3, max: 3);
 
@@ -54,9 +52,9 @@ void main() {
       final construction = Construction();
       final tool = toolFor(min: 4, max: 7);
 
-      final result = tool.onInput(
-        const ToolInput(tap, snapThreshold: threshold),
-      ) as ToolCommitted;
+      final result =
+          tool.onInput(const ToolInput(tap, snapThreshold: threshold))
+              as ToolCommitted;
       result.command.apply(construction);
 
       for (final vertex in construction.objects.whereType<FreePoint>()) {
@@ -70,11 +68,9 @@ void main() {
       for (var seed = 0; seed < 20; seed++) {
         final construction = Construction();
         final tool = toolFor(min: 4, max: 7, seed: seed);
-        (tool.onInput(const ToolInput(Vec2(0, 0))) as ToolCommitted)
-            .command
+        (tool.onInput(const ToolInput(Vec2(0, 0))) as ToolCommitted).command
             .apply(construction);
-        final count =
-            construction.objects.whereType<FreePoint>().length;
+        final count = construction.objects.whereType<FreePoint>().length;
         expect(count, inInclusiveRange(4, 7));
         expect(
           construction.objects.whereType<Segment>(),
@@ -84,14 +80,13 @@ void main() {
       }
     });
 
-    test('the outline is simple — vertices wind around the tap in order',
-        () {
+    test('the outline is simple — vertices wind around the tap in order', () {
       const tap = Vec2(0, 0);
       final construction = Construction();
       final tool = toolFor(min: 5, max: 5);
-      (tool.onInput(const ToolInput(tap)) as ToolCommitted)
-          .command
-          .apply(construction);
+      (tool.onInput(const ToolInput(tap)) as ToolCommitted).command.apply(
+        construction,
+      );
 
       // The stamp draws its angles in [0, 2π); atan2 lives in [−π, π], so
       // normalize back before comparing the winding order.
@@ -112,9 +107,9 @@ void main() {
           newId: () => 'n${nextId++}',
           random: math.Random(seed),
         );
-        (tool.onInput(const ToolInput(tap)) as ToolCommitted)
-            .command
-            .apply(construction);
+        (tool.onInput(const ToolInput(tap)) as ToolCommitted).command.apply(
+          construction,
+        );
 
         // Stamp order is polygon order — the vertices land before the
         // segments in insertion order.
@@ -125,8 +120,9 @@ void main() {
         expect(corners, hasLength(4), reason: 'seed $seed');
         final crossProducts = [
           for (var k = 0; k < 4; k++)
-            (corners[(k + 1) % 4] - corners[k])
-                .cross(corners[(k + 2) % 4] - corners[(k + 1) % 4]),
+            (corners[(k + 1) % 4] - corners[k]).cross(
+              corners[(k + 2) % 4] - corners[(k + 1) % 4],
+            ),
         ];
         for (final crossProduct in crossProducts) {
           expect(
@@ -143,34 +139,35 @@ void main() {
       }
     });
 
-    test('the convex quadrilateral closes with 4 segments in one undo unit',
-        () {
-      final construction = Construction();
-      final tool = RandomShapeStampTool.convexQuadrilateral(
-        newId: () => 'n${nextId++}',
-        random: math.Random(11),
-      );
+    test(
+      'the convex quadrilateral closes with 4 segments in one undo unit',
+      () {
+        final construction = Construction();
+        final tool = RandomShapeStampTool.convexQuadrilateral(
+          newId: () => 'n${nextId++}',
+          random: math.Random(11),
+        );
 
-      final result =
-          tool.onInput(const ToolInput(Vec2(0, 0))) as ToolCommitted;
-      expect(result.command, isA<MacroCommand>());
-      result.command.apply(construction);
+        final result =
+            tool.onInput(const ToolInput(Vec2(0, 0))) as ToolCommitted;
+        expect(result.command, isA<MacroCommand>());
+        result.command.apply(construction);
 
-      final vertices =
-          construction.objects.whereType<FreePoint>().toList();
-      final segments = construction.objects.whereType<Segment>().toList();
-      expect(vertices, hasLength(4));
-      expect(segments, hasLength(4));
-      for (final vertex in vertices) {
-        final degree = segments
-            .where((s) => s.point1 == vertex || s.point2 == vertex)
-            .length;
-        expect(degree, 2, reason: 'the outline closes through every vertex');
-      }
+        final vertices = construction.objects.whereType<FreePoint>().toList();
+        final segments = construction.objects.whereType<Segment>().toList();
+        expect(vertices, hasLength(4));
+        expect(segments, hasLength(4));
+        for (final vertex in vertices) {
+          final degree = segments
+              .where((s) => s.point1 == vertex || s.point2 == vertex)
+              .length;
+          expect(degree, 2, reason: 'the outline closes through every vertex');
+        }
 
-      result.command.undo(construction);
-      expect(construction.isEmpty, isTrue);
-    });
+        result.command.undo(construction);
+        expect(construction.isEmpty, isTrue);
+      },
+    );
 
     test('the convex quadrilateral stays centered near the tap', () {
       const tap = Vec2(100, 200);
@@ -190,14 +187,17 @@ void main() {
         // On-circle distance 40, stretched by axis factors in [0.7, 1.3].
         for (final vertex in construction.objects.whereType<FreePoint>()) {
           final distance = vertex.position.distanceTo(tap);
-          expect(distance, greaterThanOrEqualTo(40 * 0.7), reason: 'seed $seed');
+          expect(
+            distance,
+            greaterThanOrEqualTo(40 * 0.7),
+            reason: 'seed $seed',
+          );
           expect(distance, lessThanOrEqualTo(40 * 1.3), reason: 'seed $seed');
         }
       }
     });
 
-    test('a tap on an existing point stamps beside it, never consuming it',
-        () {
+    test('a tap on an existing point stamps beside it, never consuming it', () {
       final construction = Construction();
       final e = FreePoint(id: 'e', position: const Vec2(0, 0));
       construction.add(e);

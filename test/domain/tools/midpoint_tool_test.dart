@@ -52,8 +52,11 @@ void main() {
       final center = construction.objects.whereType<CircleCenter>().single;
       expect(center.parents, [circle]);
       expect(center.position, const Vec2(2, 1));
-      expect(t.previewPositions, isEmpty,
-          reason: 'the tool is back in its initial state');
+      expect(
+        t.previewPositions,
+        isEmpty,
+        reason: 'the tool is back in its initial state',
+      );
       expect(t.previewObjectIds, isEmpty);
     });
 
@@ -67,7 +70,8 @@ void main() {
       final result =
           t.onInput(ToolInput(const Vec2(1, 0.1), hit: arc)) as ToolCommitted;
 
-      final center = (result.command as AddObjectCommand).object as CircleCenter;
+      final center =
+          (result.command as AddObjectCommand).object as CircleCenter;
       expect(center.position!.closeTo(Vec2.zero), isTrue);
     });
 
@@ -81,8 +85,11 @@ void main() {
         ToolInput(b.position, hit: b, extraHits: [circle]),
       );
 
-      expect(result, isA<ToolAccepted>(),
-          reason: 'the rim point is collected as a midpoint parent');
+      expect(
+        result,
+        isA<ToolAccepted>(),
+        reason: 'the rim point is collected as a midpoint parent',
+      );
       expect(t.collectedVertices, [b]);
     });
 
@@ -100,7 +107,8 @@ void main() {
 
       t.onInput(ToolInput(p.position, hit: p));
       final result =
-          t.onInput(ToolInput(const Vec2(5, 1.1), hit: circle)) as ToolCommitted;
+          t.onInput(ToolInput(const Vec2(5, 1.1), hit: circle))
+              as ToolCommitted;
 
       result.command.apply(construction);
       expect(construction.objects.whereType<CircleCenter>(), isEmpty);
@@ -120,17 +128,24 @@ void main() {
       construction.add(b);
       final t = tool();
       ToolResult tap(FreePoint point) => t.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(a);
       (tap(b) as ToolCommitted).command.apply(construction);
       expect(construction.objects.whereType<Midpoint>(), hasLength(1));
 
       tap(a);
-      expect(tap(b), isA<ToolIgnored>(),
-          reason: 'the identical midpoint already exists');
-      expect(t.collectedVertices, hasLength(1),
-          reason: 'the refused tap is dropped, the first stays armed');
+      expect(
+        tap(b),
+        isA<ToolIgnored>(),
+        reason: 'the identical midpoint already exists',
+      );
+      expect(
+        t.collectedVertices,
+        hasLength(1),
+        reason: 'the refused tap is dropped, the first stays armed',
+      );
       expect(construction.objects.whereType<Midpoint>(), hasLength(1));
     });
 
@@ -142,13 +157,17 @@ void main() {
       construction.add(b);
       final t = tool();
       ToolResult tap(FreePoint point) => t.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(a);
       (tap(b) as ToolCommitted).command.apply(construction);
       tap(b);
-      expect(tap(a), isA<ToolIgnored>(),
-          reason: 'Midpoint(b, a) is numerically identical to Midpoint(a, b)');
+      expect(
+        tap(a),
+        isA<ToolIgnored>(),
+        reason: 'Midpoint(b, a) is numerically identical to Midpoint(a, b)',
+      );
       expect(construction.objects.whereType<Midpoint>(), hasLength(1));
     });
 
@@ -161,11 +180,19 @@ void main() {
         construction.add(object);
       }
 
-      final result = tool().onInput(ToolInput(const Vec2(4, 1.1),
-          hit: circle, objects: construction.objects));
+      final result = tool().onInput(
+        ToolInput(
+          const Vec2(4, 1.1),
+          hit: circle,
+          objects: construction.objects,
+        ),
+      );
 
-      expect(result, isA<ToolIgnored>(),
-          reason: 'the center point is already there');
+      expect(
+        result,
+        isA<ToolIgnored>(),
+        reason: 'the center point is already there',
+      );
       expect(construction.objects.whereType<CircleCenter>(), isEmpty);
     });
   });

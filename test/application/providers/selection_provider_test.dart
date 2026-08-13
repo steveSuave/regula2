@@ -26,8 +26,9 @@ void main() {
       expect(container.read(selectionProvider), {'a'});
 
       notifier.select('b');
-      expect(container.read(selectionProvider), {'b'},
-          reason: 'plain select is exclusive');
+      expect(container.read(selectionProvider), {
+        'b',
+      }, reason: 'plain select is exclusive');
 
       notifier.toggle('a');
       expect(container.read(selectionProvider), {'a', 'b'});
@@ -52,8 +53,11 @@ void main() {
       expect(container.read(selectionProvider), {'d'});
 
       notifier.selectMany([]);
-      expect(container.read(selectionProvider), isEmpty,
-          reason: 'an empty band clears a non-additive selection');
+      expect(
+        container.read(selectionProvider),
+        isEmpty,
+        reason: 'an empty band clears a non-additive selection',
+      );
     });
 
     test('selectAll selects every object in the construction', () {
@@ -68,20 +72,22 @@ void main() {
       expect(container.read(selectionProvider), {'a', 'b', 'm'});
     });
 
-    test('deleting objects prunes them (and their dependents) from selection',
-        () {
-      final a = FreePoint(id: 'a', position: Vec2.zero);
-      final b = FreePoint(id: 'b', position: const Vec2(2, 0));
-      construction
-        ..add(a)
-        ..add(b)
-        ..add(Midpoint(id: 'm', point1: a, point2: b));
-      container.read(selectionProvider.notifier).selectAll();
+    test(
+      'deleting objects prunes them (and their dependents) from selection',
+      () {
+        final a = FreePoint(id: 'a', position: Vec2.zero);
+        final b = FreePoint(id: 'b', position: const Vec2(2, 0));
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(Midpoint(id: 'm', point1: a, point2: b));
+        container.read(selectionProvider.notifier).selectAll();
 
-      construction.removeWithDependents('b');
+        construction.removeWithDependents('b');
 
-      expect(container.read(selectionProvider), {'a'});
-    });
+        expect(container.read(selectionProvider), {'a'});
+      },
+    );
 
     test('replacing the construction drops the now-stale selection', () {
       construction.add(FreePoint(id: 'a', position: Vec2.zero));

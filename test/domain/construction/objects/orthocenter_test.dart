@@ -59,8 +59,11 @@ void main() {
       final p = h.projPoint!;
       expect(p.isReal(), isTrue);
       expect(p.isFinite(), isFalse);
-      expect(p.closeTo(ProjPoint.real(0, 1, 0)), isTrue,
-          reason: 'the altitudes are all vertical: they meet straight up');
+      expect(
+        p.closeTo(ProjPoint.real(0, 1, 0)),
+        isTrue,
+        reason: 'the altitudes are all vertical: they meet straight up',
+      );
     });
 
     test('coincident vertices: the altitudes merge — undefined outright', () {

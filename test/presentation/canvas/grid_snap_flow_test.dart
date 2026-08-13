@@ -53,8 +53,9 @@ void main() {
       .whereType<FreePoint>()
       .toList();
 
-  testWidgets('a snapped tap lands the free point on a grid crossing',
-      (tester) async {
+  testWidgets('a snapped tap lands the free point on a grid crossing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     snapOn();
     activatePointTool();
@@ -63,8 +64,11 @@ void main() {
     await tester.tapAt(origin + const Offset(203, 127));
     await tester.pump();
 
-    expect(freePoints().single.position, const Vec2(200, -150),
-        reason: 'world (203, −127) quantizes to the step-50 grid');
+    expect(
+      freePoints().single.position,
+      const Vec2(200, -150),
+      reason: 'world (203, −127) quantizes to the step-50 grid',
+    );
   });
 
   testWidgets('the snap step follows the zoom level', (tester) async {
@@ -84,12 +88,16 @@ void main() {
     await tester.tapAt(origin + const Offset(150, 90));
     await tester.pump();
 
-    expect(freePoints().single.position, const Vec2(40, -20),
-        reason: 'world (37.5, −22.5) quantizes to the step-20 grid');
+    expect(
+      freePoints().single.position,
+      const Vec2(40, -20),
+      reason: 'world (37.5, −22.5) quantizes to the step-20 grid',
+    );
   });
 
-  testWidgets('with the toggle off a tap is byte-identical to before',
-      (tester) async {
+  testWidgets('with the toggle off a tap is byte-identical to before', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     activatePointTool();
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -100,8 +108,7 @@ void main() {
     expect(freePoints().single.position, const Vec2(203, -127));
   });
 
-  testWidgets(
-      'a snapped free-point drag previews on crossings and commits one '
+  testWidgets('a snapped free-point drag previews on crossings and commits one '
       'undoable move', (tester) async {
     await pumpEditor(tester);
     snapOn();
@@ -117,22 +124,32 @@ void main() {
     final drag = await tester.startGesture(origin + const Offset(200, 150));
     await drag.moveTo(origin + const Offset(263, 216));
     await tester.pump();
-    expect(point().position, const Vec2(250, -200),
-        reason: 'the preview frame lands on a crossing, not at the pointer');
+    expect(
+      point().position,
+      const Vec2(250, -200),
+      reason: 'the preview frame lands on a crossing, not at the pointer',
+    );
     await drag.up();
     await tester.pump();
     expect(point().position, const Vec2(250, -200));
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(point().position, const Vec2(200, -150),
-        reason: 'the whole snapped gesture is one undo unit');
-    expect(container.read(commandStackProvider).canUndo, isTrue,
-        reason: 'only the tap-created point remains on the stack');
+    expect(
+      point().position,
+      const Vec2(200, -150),
+      reason: 'the whole snapped gesture is one undo unit',
+    );
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isTrue,
+      reason: 'only the tap-created point remains on the stack',
+    );
   });
 
-  testWidgets('a rigid drag does not snap even with the toggle on',
-      (tester) async {
+  testWidgets('a rigid drag does not snap even with the toggle on', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     snapOn();
     final construction = container.read(constructionProvider).construction;
@@ -152,8 +169,11 @@ void main() {
     await drag.up();
     await tester.pump();
 
-    expect(a.position, const Vec2(133, -141),
-        reason: 'rigid translations move by the raw delta');
+    expect(
+      a.position,
+      const Vec2(133, -141),
+      reason: 'rigid translations move by the raw delta',
+    );
     expect(b.position, const Vec2(333, -141));
   });
 }

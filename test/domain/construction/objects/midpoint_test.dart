@@ -50,20 +50,21 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (p, q, k) {
-      final plain = Midpoint(
-        id: 'm1',
-        point1: StubProjectivePoint(ProjPoint.lift(p)),
-        point2: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      final scaled = Midpoint(
-        id: 'm2',
-        point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
-        point2: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      expect(scaled.projPoint!.closeTo(plain.projPoint!), isTrue);
-      expect(scaled.position!.closeTo(plain.position!, 1e-6), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (p, q, k) {
+        final plain = Midpoint(
+          id: 'm1',
+          point1: StubProjectivePoint(ProjPoint.lift(p)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        final scaled = Midpoint(
+          id: 'm2',
+          point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        expect(scaled.projPoint!.closeTo(plain.projPoint!), isTrue);
+        expect(scaled.position!.closeTo(plain.position!, 1e-6), isTrue);
+      },
+    );
   });
 }

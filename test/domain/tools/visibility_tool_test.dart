@@ -41,8 +41,11 @@ void main() {
       final command = tapAndApply(tool, ToolInput(Vec2.zero, hit: a));
 
       expect(a.attributes.visible, isFalse);
-      expect(command.newAttributes.keys, ['a'],
-          reason: 'exactly the tapped object, nothing batched');
+      expect(
+        command.newAttributes.keys,
+        ['a'],
+        reason: 'exactly the tapped object, nothing batched',
+      );
 
       command.undo(construction);
       expect(a.attributes.visible, isTrue);
@@ -63,10 +66,7 @@ void main() {
     });
 
     test('a hidden hit is ignored — hide never un-hides', () {
-      construction.setAttributes(
-        'a',
-        const ObjectAttributes(visible: false),
-      );
+      construction.setAttributes('a', const ObjectAttributes(visible: false));
       final tool = VisibilityTool.hide();
       expect(tool.onInput(ToolInput(Vec2.zero, hit: a)), isA<ToolIgnored>());
       expect(a.attributes.visible, isFalse);
@@ -88,8 +88,11 @@ void main() {
       expect(a.attributes.visible, isTrue, reason: 'a dimmed tap re-shows');
 
       command.undo(construction);
-      expect(a.attributes.visible, isFalse,
-          reason: 'each tap is its own undo step');
+      expect(
+        a.attributes.visible,
+        isFalse,
+        reason: 'each tap is its own undo step',
+      );
     });
 
     test('an empty-canvas tap does nothing', () {
@@ -117,27 +120,23 @@ void main() {
       expect(s.attributes.visible, isTrue);
     });
 
-    test('already-hidden objects are skipped — undo must not reveal them',
-        () {
-      construction.setAttributes(
-        'b',
-        const ObjectAttributes(visible: false),
-      );
+    test('already-hidden objects are skipped — undo must not reveal them', () {
+      construction.setAttributes('b', const ObjectAttributes(visible: false));
       final command = VisibilityTool.hideAll([a, b])!;
       expect(command.newAttributes.keys, ['a']);
 
       command.apply(construction);
       command.undo(construction);
       expect(a.attributes.visible, isTrue);
-      expect(b.attributes.visible, isFalse,
-          reason: 'b was hidden before hideAll and must stay hidden');
+      expect(
+        b.attributes.visible,
+        isFalse,
+        reason: 'b was hidden before hideAll and must stay hidden',
+      );
     });
 
     test('returns null for an all-hidden or empty input', () {
-      construction.setAttributes(
-        'a',
-        const ObjectAttributes(visible: false),
-      );
+      construction.setAttributes('a', const ObjectAttributes(visible: false));
       expect(VisibilityTool.hideAll([a]), isNull);
       expect(VisibilityTool.hideAll(const []), isNull);
     });

@@ -14,8 +14,9 @@ import 'package:regula/domain/math/vec2.dart';
 /// refinement — is exercised on real-world geometry, not scaled fixtures.
 void main() {
   Locus loadLocus(String fixture, {required List<FreePoint> freeOut}) {
-    final json = jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
-        as Map<String, dynamic>;
+    final json =
+        jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
+            as Map<String, dynamic>;
     final construction = decodeDocument(json).construction;
     freeOut.addAll(construction.objects.whereType<FreePoint>());
     return construction.objects.whereType<Locus>().single;
@@ -33,8 +34,7 @@ void main() {
     return out;
   }
 
-  test(
-      'locus-miss.json (tangent-and-bisector): two single-sided strokes, '
+  test('locus-miss.json (tangent-and-bisector): two single-sided strokes, '
       'dives converge to the true tangency limits, never to A or B', () {
     // G = bisector of ∠FDA re-crossing the Thales circle over AD, F the
     // tangency point of the tangent from D to circle(A, |AB|). Failure
@@ -51,8 +51,11 @@ void main() {
     final b = free.singleWhere((p) => p.attributes.name == 'B').position;
 
     final comps = components(locus);
-    expect(comps, hasLength(2),
-        reason: 'one run each side of the |AD| < |AB| gap');
+    expect(
+      comps,
+      hasLength(2),
+      reason: 'one run each side of the |AD| < |AB| gap',
+    );
 
     // Analytic limit of G at the tangency |AD| = |AB|: the bisector's
     // limit direction is 45° to AB, so G → A + (AD̂ ± perp) · |AB| / 2,
@@ -71,9 +74,13 @@ void main() {
           .map((p) => (p - a).cross(dir).sign)
           .where((s) => s != 0)
           .toSet();
-      expect(sides, hasLength(1),
-          reason: 'each stroke stays on one side of line AB — no mirror '
-              'sheet from a leaked or dangling branch flip');
+      expect(
+        sides,
+        hasLength(1),
+        reason:
+            'each stroke stays on one side of line AB — no mirror '
+            'sheet from a leaked or dangling branch flip',
+      );
       final sheet = -sides.single;
       expect(
         comp.map((p) => p.distanceTo(limit(side, sheet))).reduce(math.min),
@@ -87,26 +94,27 @@ void main() {
       // units short of it — the reported visible gap; the infinity tail
       // must carry the stroke onto the limit.
       expect(
-        comp.map((p) => p.distanceTo(a + perp * (sheet * r / 2))).reduce(
-              math.min,
-            ),
+        comp
+            .map((p) => p.distanceTo(a + perp * (sheet * r / 2)))
+            .reduce(math.min),
         lessThan(0.01),
-        reason: 'the window-edge end touches the driver-at-infinity '
+        reason:
+            'the window-edge end touches the driver-at-infinity '
             'limit on line b',
       );
       for (final anchor in [a, b]) {
         expect(
           comp.map((p) => p.distanceTo(anchor)).reduce(math.min),
           greaterThan(30),
-          reason: 'no sample near A or B — a sample there is the '
+          reason:
+              'no sample near A or B — a sample there is the '
               'tolerance-zone phantom (the Phase 39d diagonal)',
         );
       }
     }
   });
 
-  test(
-      'locus3.json (parabola): a segment-hosted driver sweeps exactly the '
+  test('locus3.json (parabola): a segment-hosted driver sweeps exactly the '
       'segment — the parabola piece between the endpoint images', () {
     // E on square side BC, F = the perpendicular to AE at E crossing the
     // carrier of the far side CD, G = midpoint(F, E) — analytically on
@@ -122,8 +130,11 @@ void main() {
     // draw the full parabola.
     final locus = loadLocus('locus3.json', freeOut: <FreePoint>[]);
     final samples = locus.samples!;
-    expect(samples, isNot(contains(null)),
-        reason: 'one gapless component — F exists for every E on BC');
+    expect(
+      samples,
+      isNot(contains(null)),
+      reason: 'one gapless component — F exists for every E on BC',
+    );
     final points = samples.cast<Vec2>();
     for (final p in points) {
       expect(
@@ -131,27 +142,41 @@ void main() {
         lessThan(1e-6 * (1 + p.x.abs())),
         reason: 'every sample lies on the parabola x = y²/4',
       );
-      expect(p.y, inInclusiveRange(-2 - 1e-9, 2 + 1e-9),
-          reason: 'nothing beyond the endpoint images');
+      expect(
+        p.y,
+        inInclusiveRange(-2 - 1e-9, 2 + 1e-9),
+        reason: 'nothing beyond the endpoint images',
+      );
     }
-    expect(points.first.distanceTo(const Vec2(1, -2)), lessThan(1e-6),
-        reason: 'the sweep starts exactly on the image of B');
-    expect(points.last.distanceTo(const Vec2(1, 2)), lessThan(1e-6),
-        reason: 'and ends exactly on the image of C');
-    expect(locus.coreSamples, hasLength(points.length),
-        reason: 'a bounded sweep has no far-out samples — all core');
+    expect(
+      points.first.distanceTo(const Vec2(1, -2)),
+      lessThan(1e-6),
+      reason: 'the sweep starts exactly on the image of B',
+    );
+    expect(
+      points.last.distanceTo(const Vec2(1, 2)),
+      lessThan(1e-6),
+      reason: 'and ends exactly on the image of C',
+    );
+    expect(
+      locus.coreSamples,
+      hasLength(points.length),
+      reason: 'a bounded sweep has no far-out samples — all core',
+    );
   });
 
-  test(
-      'locus-miss-2.json (twin tangent points): one closed figure-eight, '
+  test('locus-miss-2.json (twin tangent points): one closed figure-eight, '
       'no gap and no dropped half', () {
     // Traced is itself the coalescing intersection; the walk must flip
     // through both tangencies and close. Failure history: pre-39b the
     // sweep drew only the reachable half of the eight, with a hole at
     // the wrap of the circle-host parameter.
     final locus = loadLocus('locus-miss-2.json', freeOut: <FreePoint>[]);
-    expect(locus.samples, isNot(contains(null)),
-        reason: 'a single closed component — no hole');
+    expect(
+      locus.samples,
+      isNot(contains(null)),
+      reason: 'a single closed component — no hole',
+    );
     final points = locus.samples!.cast<Vec2>();
     expect(points.first, points.last, reason: 'the walk closes the eight');
     expect(points.length, greaterThan(50));

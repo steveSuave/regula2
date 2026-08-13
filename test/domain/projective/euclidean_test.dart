@@ -13,10 +13,9 @@ import 'generators.dart';
 void main() {
   group('directionOf', () {
     test('is the affine direction, at infinity, on the line', () {
-      final l = ProjLine.lift(LineEq.throughPoints(
-        const Vec2(1, 2),
-        const Vec2(4, 6),
-      ));
+      final l = ProjLine.lift(
+        LineEq.throughPoints(const Vec2(1, 2), const Vec2(4, 6)),
+      );
       final d = directionOf(l);
       expect(d.isReal(), isTrue);
       expect(d.isFinite(), isFalse);
@@ -33,8 +32,7 @@ void main() {
   });
 
   group('normalDirectionOf', () {
-    Glados(any.projLine).test(
-        'is conjugate to directionOf w.r.t. any circle '
+    Glados(any.projLine).test('is conjugate to directionOf w.r.t. any circle '
         '(the I,J involution)', (l) {
       final d = directionOf(l);
       final n = normalDirectionOf(l);
@@ -49,10 +47,9 @@ void main() {
     });
 
     test('chart directions are orthogonal', () {
-      final l = ProjLine.lift(LineEq.throughPoints(
-        const Vec2(0, 0),
-        const Vec2(5, 1),
-      ));
+      final l = ProjLine.lift(
+        LineEq.throughPoints(const Vec2(0, 0), const Vec2(5, 1)),
+      );
       final d = directionOf(l);
       final n = normalDirectionOf(l);
       final dot = d.x * n.x + d.y * n.y;
@@ -72,10 +69,9 @@ void main() {
     });
 
     test('parallel keeps the direction, perpendicular conjugates it', () {
-      final l = ProjLine.lift(LineEq.throughPoints(
-        const Vec2(0, 0),
-        const Vec2(2, 1),
-      ));
+      final l = ProjLine.lift(
+        LineEq.throughPoints(const Vec2(0, 0), const Vec2(2, 1)),
+      );
       final through = ProjPoint.real(5, 5);
       final par = parallelThrough(through, l);
       final perp = perpendicularThrough(through, l);
@@ -91,17 +87,17 @@ void main() {
   });
 
   group('midpointOf', () {
-    Glados2(any.vec2, any.vec2).test('agrees with the affine midpoint',
-        (p, q) {
+    Glados2(any.vec2, any.vec2).test('agrees with the affine midpoint', (p, q) {
       final m = midpointOf(ProjPoint.lift(p), ProjPoint.lift(q));
       expect(m.toVec2()!.closeTo(p.lerp(q, 0.5)), isTrue);
     });
 
-    Glados2(any.projPoint, any.nonZeroComplex)
-        .test('a point with a rescaling of itself is the point itself',
-            (p, k) {
-      expect(midpointOf(p, p.scaledBy(k)).closeTo(p), isTrue);
-    });
+    Glados2(any.projPoint, any.nonZeroComplex).test(
+      'a point with a rescaling of itself is the point itself',
+      (p, k) {
+        expect(midpointOf(p, p.scaledBy(k)).closeTo(p), isTrue);
+      },
+    );
 
     test('with a point at infinity is that point at infinity', () {
       final m = midpointOf(ProjPoint.real(1, 2), ProjPoint.real(3, 4, 0));
@@ -117,15 +113,17 @@ void main() {
   });
 
   group('centroidOf', () {
-    Glados3(any.vec2, any.vec2, any.vec2)
-        .test('agrees with the affine centroid', (a, b, c) {
-      final g = centroidOf(
-        ProjPoint.lift(a),
-        ProjPoint.lift(b),
-        ProjPoint.lift(c),
-      );
-      expect(g.toVec2()!.closeTo(tc.centroid(a, b, c), 1e-6), isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.vec2).test(
+      'agrees with the affine centroid',
+      (a, b, c) {
+        final g = centroidOf(
+          ProjPoint.lift(a),
+          ProjPoint.lift(b),
+          ProjPoint.lift(c),
+        );
+        expect(g.toVec2()!.closeTo(tc.centroid(a, b, c), 1e-6), isTrue);
+      },
+    );
 
     test('with one vertex at infinity is that point at infinity', () {
       final g = centroidOf(
@@ -138,12 +136,14 @@ void main() {
   });
 
   group('lerpOf', () {
-    Glados3(any.vec2, any.vec2, any.component)
-        .test('agrees with the affine lerp (extrapolation included)', (p, q, t0) {
-      final t = t0 / 1000; // [-1, 1] grid
-      final r = lerpOf(ProjPoint.lift(p), ProjPoint.lift(q), t);
-      expect(r.toVec2()!.closeTo(p.lerp(q, t), 1e-6), isTrue);
-    });
+    Glados3(any.vec2, any.vec2, any.component).test(
+      'agrees with the affine lerp (extrapolation included)',
+      (p, q, t0) {
+        final t = t0 / 1000; // [-1, 1] grid
+        final r = lerpOf(ProjPoint.lift(p), ProjPoint.lift(q), t);
+        expect(r.toVec2()!.closeTo(p.lerp(q, t), 1e-6), isTrue);
+      },
+    );
 
     test('t = 0 and t = 1 are the endpoints; t = 0.5 the midpoint', () {
       final p = ProjPoint.real(1, 2);
@@ -161,39 +161,48 @@ void main() {
       expect(lerpOf(p, inf, 0).isZero, isTrue);
     });
 
-    Glados3(any.projPoint, any.projPoint, any.nonZeroComplex)
-        .test('is projectively invariant under rescaling an argument',
-            (p, q, k) {
-      const t = 0.375;
-      final r = lerpOf(p, q, t);
-      if (r.isZero) {
-        return;
-      }
-      expect(lerpOf(p.scaledBy(k), q, t).closeTo(r), isTrue);
-      expect(lerpOf(p, q.scaledBy(k), t).closeTo(r), isTrue);
-    });
+    Glados3(any.projPoint, any.projPoint, any.nonZeroComplex).test(
+      'is projectively invariant under rescaling an argument',
+      (p, q, k) {
+        const t = 0.375;
+        final r = lerpOf(p, q, t);
+        if (r.isZero) {
+          return;
+        }
+        expect(lerpOf(p.scaledBy(k), q, t).closeTo(r), isTrue);
+        expect(lerpOf(p, q.scaledBy(k), t).closeTo(r), isTrue);
+      },
+    );
   });
 
   group('perpendicularBisectorOf', () {
-    Glados2(any.vec2, any.vec2)
-        .test('contains the midpoint, perpendicular to the join, equidistant',
-            (p, q) {
-      if (p.closeTo(q, 1e-3)) {
-        return;
-      }
-      final bis = perpendicularBisectorOf(ProjPoint.lift(p), ProjPoint.lift(q));
-      expect(bis.contains(midpointOf(ProjPoint.lift(p), ProjPoint.lift(q))),
-          isTrue);
-      expect(directionOf(bis).closeTo(normalDirectionOf(
-              ProjPoint.lift(p).join(ProjPoint.lift(q)))),
+    Glados2(any.vec2, any.vec2).test(
+      'contains the midpoint, perpendicular to the join, equidistant',
+      (p, q) {
+        if (p.closeTo(q, 1e-3)) {
+          return;
+        }
+        final bis = perpendicularBisectorOf(
+          ProjPoint.lift(p),
+          ProjPoint.lift(q),
+        );
+        expect(
+          bis.contains(midpointOf(ProjPoint.lift(p), ProjPoint.lift(q))),
           isTrue,
-          reason: 'perpendicular to the join');
-      final line = bis.toLineEq()!;
-      expect(line.distanceTo(p), closeTo(line.distanceTo(q), 1e-6));
-    });
+        );
+        expect(
+          directionOf(bis).closeTo(
+            normalDirectionOf(ProjPoint.lift(p).join(ProjPoint.lift(q))),
+          ),
+          isTrue,
+          reason: 'perpendicular to the join',
+        );
+        final line = bis.toLineEq()!;
+        expect(line.distanceTo(p), closeTo(line.distanceTo(q), 1e-6));
+      },
+    );
 
-    Glados(any.projPoint)
-        .test('of a point and itself is the zero triple', (p) {
+    Glados(any.projPoint).test('of a point and itself is the zero triple', (p) {
       // Exact duplicates cancel bitwise. A *rescaled* duplicate leaves
       // rounding residue instead of an exact zero — which is why the
       // object layer (`carrierThrough`, `PerpendicularBisectorLine`)
@@ -203,9 +212,12 @@ void main() {
   });
 
   group('multilinearity (rescaling covariance)', () {
-    Glados3(any.projPoint, any.projPoint, any.nonZeroComplex)
-        .test('midpointOf and perpendicularBisectorOf are projectively '
-            'invariant under rescaling an argument', (p, q, k) {
+    Glados3(
+      any.projPoint,
+      any.projPoint,
+      any.nonZeroComplex,
+    ).test('midpointOf and perpendicularBisectorOf are projectively '
+        'invariant under rescaling an argument', (p, q, k) {
       final m = midpointOf(p, q);
       if (!m.isZero) {
         expect(midpointOf(p.scaledBy(k), q).closeTo(m), isTrue);
@@ -217,44 +229,51 @@ void main() {
       }
     });
 
-    Glados2(any.projLine, any.nonZeroComplex)
-        .test('directions are projectively invariant under rescaling', (l, k) {
-      final d = directionOf(l);
-      if (d.isZero) {
-        return;
-      }
-      expect(directionOf(l.scaledBy(k)).closeTo(d), isTrue);
-      expect(normalDirectionOf(l.scaledBy(k)).closeTo(normalDirectionOf(l)),
-          isTrue);
-    });
+    Glados2(any.projLine, any.nonZeroComplex).test(
+      'directions are projectively invariant under rescaling',
+      (l, k) {
+        final d = directionOf(l);
+        if (d.isZero) {
+          return;
+        }
+        expect(directionOf(l.scaledBy(k)).closeTo(d), isTrue);
+        expect(
+          normalDirectionOf(l.scaledBy(k)).closeTo(normalDirectionOf(l)),
+          isTrue,
+        );
+      },
+    );
 
-    Glados3(any.projPoint, any.projLine, any.nonZeroComplex)
-        .test('parallelThrough / perpendicularThrough are projectively '
-            'invariant under rescaling either argument', (p, l, k) {
-      final par = parallelThrough(p, l);
-      if (par.isZero) {
-        return;
-      }
-      expect(parallelThrough(p.scaledBy(k), l).closeTo(par), isTrue);
-      expect(parallelThrough(p, l.scaledBy(k)).closeTo(par), isTrue);
-      final perp = perpendicularThrough(p, l);
-      if (perp.isZero) {
-        return;
-      }
-      expect(perpendicularThrough(p.scaledBy(k), l).closeTo(perp), isTrue);
-      expect(perpendicularThrough(p, l.scaledBy(k)).closeTo(perp), isTrue);
-    });
+    Glados3(any.projPoint, any.projLine, any.nonZeroComplex).test(
+      'parallelThrough / perpendicularThrough are projectively '
+      'invariant under rescaling either argument',
+      (p, l, k) {
+        final par = parallelThrough(p, l);
+        if (par.isZero) {
+          return;
+        }
+        expect(parallelThrough(p.scaledBy(k), l).closeTo(par), isTrue);
+        expect(parallelThrough(p, l.scaledBy(k)).closeTo(par), isTrue);
+        final perp = perpendicularThrough(p, l);
+        if (perp.isZero) {
+          return;
+        }
+        expect(perpendicularThrough(p.scaledBy(k), l).closeTo(perp), isTrue);
+        expect(perpendicularThrough(p, l.scaledBy(k)).closeTo(perp), isTrue);
+      },
+    );
 
     Glados2(any.vec2, any.nonZeroComplex).test(
-        'centroidOf is projectively invariant under rescaling an argument',
-        (v, k) {
-      final a = ProjPoint.lift(v);
-      final b = ProjPoint.real(4, -1);
-      final c = ProjPoint.real(-2, 3);
-      final g = centroidOf(a, b, c);
-      expect(centroidOf(a.scaledBy(k), b, c).closeTo(g), isTrue);
-      expect(centroidOf(a, b.scaledBy(k), c).closeTo(g), isTrue);
-      expect(centroidOf(a, b, c.scaledBy(k)).closeTo(g), isTrue);
-    });
+      'centroidOf is projectively invariant under rescaling an argument',
+      (v, k) {
+        final a = ProjPoint.lift(v);
+        final b = ProjPoint.real(4, -1);
+        final c = ProjPoint.real(-2, 3);
+        final g = centroidOf(a, b, c);
+        expect(centroidOf(a.scaledBy(k), b, c).closeTo(g), isTrue);
+        expect(centroidOf(a, b.scaledBy(k), c).closeTo(g), isTrue);
+        expect(centroidOf(a, b, c.scaledBy(k)).closeTo(g), isTrue);
+      },
+    );
   });
 }

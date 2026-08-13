@@ -29,8 +29,7 @@ void main() {
       final ab = Segment(id: 'ab', point1: a, point2: b);
       final cd = Segment(id: 'cd', point1: c, point2: d);
       final other = Segment(id: 'o', point1: a, point2: d);
-      final glued =
-          PointOnObject(id: 'g', curve: ab, parameter: 0.25);
+      final glued = PointOnObject(id: 'g', curve: ab, parameter: 0.25);
       final crossing = IntersectionPoint(
         curve1: ab,
         curve2: cd,
@@ -52,10 +51,16 @@ void main() {
       final segment = Segment(id: 's', point1: a, point2: b);
       final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       final ray = Ray(id: 'r', origin: a, through: b);
-      final perpendicular =
-          PerpendicularLine(id: 'pp', through: c, reference: line);
-      final bisector =
-          PerpendicularBisectorLine(id: 'pb', point1: a, point2: b);
+      final perpendicular = PerpendicularLine(
+        id: 'pp',
+        through: c,
+        reference: line,
+      );
+      final bisector = PerpendicularBisectorLine(
+        id: 'pb',
+        point1: a,
+        point2: b,
+      );
 
       expect(structurallyIncident(segment, a), isTrue);
       expect(structurallyIncident(segment, b), isTrue);
@@ -76,8 +81,12 @@ void main() {
       final r1 = point('r1', 10, 0);
       final r2 = point('r2', 13, 0);
       final circle = CircleCenterPoint(id: 'k', center: o, onCircle: rim);
-      final compass =
-          CompassCircle(id: 'cc', radiusPoint1: r1, radiusPoint2: r2, center: o);
+      final compass = CompassCircle(
+        id: 'cc',
+        radiusPoint1: r1,
+        radiusPoint2: r2,
+        center: o,
+      );
       final start = point('as', 4, 0);
       final via = point('av', 0, 4);
       final end = point('ae', -4, 0);
@@ -160,8 +169,11 @@ void main() {
       final a = point('a', 0, 0);
       final b = point('b', 4, 0);
       final c = point('c', 2, 2);
-      final bisector =
-          PerpendicularBisectorLine(id: 'pb', point1: a, point2: b);
+      final bisector = PerpendicularBisectorLine(
+        id: 'pb',
+        point1: a,
+        point2: b,
+      );
       // Reversed pair order relative to the bisector's.
       final mid = Midpoint(id: 'm', point1: b, point2: a);
       final otherMid = Midpoint(id: 'n', point1: a, point2: c);

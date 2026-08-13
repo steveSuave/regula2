@@ -11,13 +11,13 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(5, 0));
       final v = FreePoint(id: 'v', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(0, 5));
-      final bisector =
-          AngleBisectorLine(id: 'k', arm1: a, vertex: v, arm2: b);
+      final bisector = AngleBisectorLine(id: 'k', arm1: a, vertex: v, arm2: b);
 
       expect(bisector.parents, [a, v, b]);
       expect(
-        bisector.line!
-            .closeTo(LineEq.throughPoints(Vec2.zero, const Vec2(1, 1))),
+        bisector.line!.closeTo(
+          LineEq.throughPoints(Vec2.zero, const Vec2(1, 1)),
+        ),
         isTrue,
       );
     });
@@ -27,8 +27,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(5, 0));
       final v = FreePoint(id: 'v', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(0, 5));
-      final bisector =
-          AngleBisectorLine(id: 'k', arm1: a, vertex: v, arm2: b);
+      final bisector = AngleBisectorLine(id: 'k', arm1: a, vertex: v, arm2: b);
       construction
         ..add(a)
         ..add(v)
@@ -49,8 +48,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(5, 0));
       final v = FreePoint(id: 'v', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(0, 5));
-      final bisector =
-          AngleBisectorLine(id: 'k', arm1: a, vertex: v, arm2: b);
+      final bisector = AngleBisectorLine(id: 'k', arm1: a, vertex: v, arm2: b);
       construction
         ..add(a)
         ..add(v)

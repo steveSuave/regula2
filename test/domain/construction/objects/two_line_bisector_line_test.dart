@@ -21,32 +21,34 @@ void main() {
   });
 
   group('TwoLineBisectorLine', () {
-    test('branch 0 bisects along the direction sum, branch 1 the difference',
-        () {
-      final sum = TwoLineBisectorLine(
-        id: 'b0',
-        line1: xAxis,
-        line2: yAxis,
-        branch: 0,
-      );
-      final diff = TwoLineBisectorLine(
-        id: 'b1',
-        line1: xAxis,
-        line2: yAxis,
-        branch: 1,
-      );
-      expect(
-        sum.line!
-            .closeTo(LineEq.throughPoints(Vec2.zero, const Vec2(1, 1))),
-        isTrue,
-      );
-      expect(
-        diff.line!
-            .closeTo(LineEq.throughPoints(Vec2.zero, const Vec2(1, -1))),
-        isTrue,
-      );
-      expect(sum.parents, [xAxis, yAxis]);
-    });
+    test(
+      'branch 0 bisects along the direction sum, branch 1 the difference',
+      () {
+        final sum = TwoLineBisectorLine(
+          id: 'b0',
+          line1: xAxis,
+          line2: yAxis,
+          branch: 0,
+        );
+        final diff = TwoLineBisectorLine(
+          id: 'b1',
+          line1: xAxis,
+          line2: yAxis,
+          branch: 1,
+        );
+        expect(
+          sum.line!.closeTo(LineEq.throughPoints(Vec2.zero, const Vec2(1, 1))),
+          isTrue,
+        );
+        expect(
+          diff.line!.closeTo(
+            LineEq.throughPoints(Vec2.zero, const Vec2(1, -1)),
+          ),
+          isTrue,
+        );
+        expect(sum.parents, [xAxis, yAxis]);
+      },
+    );
 
     test('constructor validates the branch and distinct lines', () {
       expect(
@@ -69,32 +71,39 @@ void main() {
       );
     });
 
-    test('.near picks the bisector of the tapped wedge, all four quadrants',
-        () {
-      // Wedge quadrant → expected bisector: taps in the first quadrant
-      // (+x half, +y half) and the third (−x, −y) bisect along y = x;
-      // mixed-sign quadrants bisect along y = −x.
-      final yEqualsX = LineEq.throughPoints(Vec2.zero, const Vec2(1, 1));
-      final yEqualsMinusX =
-          LineEq.throughPoints(Vec2.zero, const Vec2(1, -1));
-      final cases = [
-        (const Vec2(3, 0.1), const Vec2(0.1, 3), yEqualsX),
-        (const Vec2(-3, 0.1), const Vec2(0.1, -3), yEqualsX),
-        (const Vec2(-3, 0.1), const Vec2(0.1, 3), yEqualsMinusX),
-        (const Vec2(3, 0.1), const Vec2(0.1, -3), yEqualsMinusX),
-      ];
-      for (final (tap1, tap2, expected) in cases) {
-        final bisector = TwoLineBisectorLine.near(
-          id: 'near-$tap1-$tap2',
-          line1: xAxis,
-          line2: yAxis,
-          tap1: tap1,
-          tap2: tap2,
+    test(
+      '.near picks the bisector of the tapped wedge, all four quadrants',
+      () {
+        // Wedge quadrant → expected bisector: taps in the first quadrant
+        // (+x half, +y half) and the third (−x, −y) bisect along y = x;
+        // mixed-sign quadrants bisect along y = −x.
+        final yEqualsX = LineEq.throughPoints(Vec2.zero, const Vec2(1, 1));
+        final yEqualsMinusX = LineEq.throughPoints(
+          Vec2.zero,
+          const Vec2(1, -1),
         );
-        expect(bisector.line!.closeTo(expected), isTrue,
-            reason: 'taps $tap1 / $tap2 pick the wrong wedge');
-      }
-    });
+        final cases = [
+          (const Vec2(3, 0.1), const Vec2(0.1, 3), yEqualsX),
+          (const Vec2(-3, 0.1), const Vec2(0.1, -3), yEqualsX),
+          (const Vec2(-3, 0.1), const Vec2(0.1, 3), yEqualsMinusX),
+          (const Vec2(3, 0.1), const Vec2(0.1, -3), yEqualsMinusX),
+        ];
+        for (final (tap1, tap2, expected) in cases) {
+          final bisector = TwoLineBisectorLine.near(
+            id: 'near-$tap1-$tap2',
+            line1: xAxis,
+            line2: yAxis,
+            tap1: tap1,
+            tap2: tap2,
+          );
+          expect(
+            bisector.line!.closeTo(expected),
+            isTrue,
+            reason: 'taps $tap1 / $tap2 pick the wrong wedge',
+          );
+        }
+      },
+    );
 
     test('undefined while the lines are parallel, recovers on drag', () {
       final p = FreePoint(id: 'p', position: const Vec2(0, 1));

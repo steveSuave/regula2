@@ -31,35 +31,43 @@ void main() {
   });
 
   group('RadicalAxisTool', () {
-    test('two circle taps commit one RadicalAxisLine, parents in tap order',
-        () {
-      final t = tool();
+    test(
+      'two circle taps commit one RadicalAxisLine, parents in tap order',
+      () {
+        final t = tool();
 
-      expect(t.hasPartialInput, isFalse);
-      expect(t.onInput(ToolInput(const Vec2(2, 0), hit: c1)),
-          isA<ToolAccepted>());
-      expect(t.hasPartialInput, isTrue);
-      expect(t.previewObjectIds, ['c1']);
-      expect(t.previewPositions, isEmpty);
+        expect(t.hasPartialInput, isFalse);
+        expect(
+          t.onInput(ToolInput(const Vec2(2, 0), hit: c1)),
+          isA<ToolAccepted>(),
+        );
+        expect(t.hasPartialInput, isTrue);
+        expect(t.previewObjectIds, ['c1']);
+        expect(t.previewPositions, isEmpty);
 
-      final result = t.onInput(ToolInput(const Vec2(6, 0), hit: c2));
-      expect(result, isA<ToolCommitted>());
-      final command = (result as ToolCommitted).command as AddObjectCommand;
-      final axis = command.object as RadicalAxisLine;
-      expect(axis.parents, [c1, c2]);
-      expect(axis.line!.closeTo(LineEq(1, 0, -2)), isTrue);
-      expect(t.hasPartialInput, isFalse);
-    });
+        final result = t.onInput(ToolInput(const Vec2(6, 0), hit: c2));
+        expect(result, isA<ToolCommitted>());
+        final command = (result as ToolCommitted).command as AddObjectCommand;
+        final axis = command.object as RadicalAxisLine;
+        expect(axis.parents, [c1, c2]);
+        expect(axis.line!.closeTo(LineEq(1, 0, -2)), isTrue);
+        expect(t.hasPartialInput, isFalse);
+      },
+    );
 
     test('non-circle and empty-canvas taps are ignored', () {
       final line = LineThroughTwoPoints(id: 'l', point1: o1, point2: o2);
       final t = tool();
 
       expect(t.onInput(ToolInput(const Vec2(1, 1))), isA<ToolIgnored>());
-      expect(t.onInput(ToolInput(const Vec2(1, 0), hit: o1)),
-          isA<ToolIgnored>());
-      expect(t.onInput(ToolInput(const Vec2(2, 0), hit: line)),
-          isA<ToolIgnored>());
+      expect(
+        t.onInput(ToolInput(const Vec2(1, 0), hit: o1)),
+        isA<ToolIgnored>(),
+      );
+      expect(
+        t.onInput(ToolInput(const Vec2(2, 0), hit: line)),
+        isA<ToolIgnored>(),
+      );
       expect(t.hasPartialInput, isFalse);
     });
 
@@ -67,8 +75,10 @@ void main() {
       final t = tool();
       t.onInput(ToolInput(const Vec2(2, 0), hit: c1));
 
-      expect(t.onInput(ToolInput(const Vec2(-2, 0), hit: c1)),
-          isA<ToolIgnored>());
+      expect(
+        t.onInput(ToolInput(const Vec2(-2, 0), hit: c1)),
+        isA<ToolIgnored>(),
+      );
       expect(t.hasPartialInput, isTrue);
       expect(t.previewObjectIds, ['c1']);
     });
@@ -85,26 +95,31 @@ void main() {
           isA<ToolIgnored>(),
           reason: 'axis over (${first.id}, ${second.id}) already exists',
         );
-        expect(t.hasPartialInput, isTrue,
-            reason: 'the collected circle stays armed');
+        expect(
+          t.hasPartialInput,
+          isTrue,
+          reason: 'the collected circle stays armed',
+        );
       }
     });
 
-    test('a different second circle still commits despite an existing axis',
-        () {
-      final o3 = FreePoint(id: 'o3', position: const Vec2(0, 5));
-      final r3 = FreePoint(id: 'r3', position: const Vec2(1, 5));
-      final c3 = CircleCenterPoint(id: 'c3', center: o3, onCircle: r3);
-      final existing = RadicalAxisLine(id: 'x', circle1: c1, circle2: c2);
-      final objects = [o1, r1, o2, r2, o3, r3, c1, c2, c3, existing];
+    test(
+      'a different second circle still commits despite an existing axis',
+      () {
+        final o3 = FreePoint(id: 'o3', position: const Vec2(0, 5));
+        final r3 = FreePoint(id: 'r3', position: const Vec2(1, 5));
+        final c3 = CircleCenterPoint(id: 'c3', center: o3, onCircle: r3);
+        final existing = RadicalAxisLine(id: 'x', circle1: c1, circle2: c2);
+        final objects = [o1, r1, o2, r2, o3, r3, c1, c2, c3, existing];
 
-      final t = tool();
-      t.onInput(ToolInput(const Vec2(2, 0), hit: c1, objects: objects));
-      expect(
-        t.onInput(ToolInput(const Vec2(1, 5), hit: c3, objects: objects)),
-        isA<ToolCommitted>(),
-      );
-    });
+        final t = tool();
+        t.onInput(ToolInput(const Vec2(2, 0), hit: c1, objects: objects));
+        expect(
+          t.onInput(ToolInput(const Vec2(1, 5), hit: c3, objects: objects)),
+          isA<ToolCommitted>(),
+        );
+      },
+    );
 
     test('reset drops the collected circle', () {
       final t = tool();

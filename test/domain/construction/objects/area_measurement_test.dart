@@ -59,8 +59,11 @@ void main() {
       final e = FreePoint(id: 'e', position: const Vec2(0, 7));
       final sector = Sector(id: 'sec', center: o, start: s, end: e);
       final area = AreaMeasurement(id: 'ar', subject: sector);
-      expect(area.value, closeTo(math.pi, 1e-12),
-          reason: 'radius-2 quarter wedge: ½·4·π/2, not the full circle');
+      expect(
+        area.value,
+        closeTo(math.pi, 1e-12),
+        reason: 'radius-2 quarter wedge: ½·4·π/2, not the full circle',
+      );
       // Wedge centroid: (4r/(3θ))·sin(θ/2) along the bisector (π/4).
       final d = 8 / (3 * math.pi / 2) * math.sin(math.pi / 4);
       expect(
@@ -114,10 +117,7 @@ void main() {
         () => AreaMeasurement(id: 'ar', subject: segment),
         throwsArgumentError,
       );
-      expect(
-        () => AreaMeasurement(id: 'ar', subject: a),
-        throwsArgumentError,
-      );
+      expect(() => AreaMeasurement(id: 'ar', subject: a), throwsArgumentError);
       expect(
         () => AreaMeasurement(id: 'ar', subject: angle),
         throwsArgumentError,

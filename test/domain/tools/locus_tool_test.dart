@@ -38,8 +38,7 @@ void main() {
         isA<ToolAccepted>(),
       );
       expect(tool.previewObjectIds, ['drv'], reason: 'the driver is haloed');
-      final result =
-          tool.onInput(ToolInput(const Vec2(3, 0), hit: traced));
+      final result = tool.onInput(ToolInput(const Vec2(3, 0), hit: traced));
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
       expect(command, isA<AddObjectCommand>());
@@ -54,8 +53,11 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(1, 0));
       final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       final lineDriver = PointOnObject(id: 'ldrv', curve: line, parameter: 3);
-      final lineTraced =
-          Midpoint(id: 'ltr', point1: lineDriver, point2: lineDriver);
+      final lineTraced = Midpoint(
+        id: 'ltr',
+        point1: lineDriver,
+        point2: lineDriver,
+      );
       final tool = LocusTool(newId: newId);
       tool.onInput(ToolInput(const Vec2(3, 0), hit: lineDriver));
       final result = tool.onInput(
@@ -121,10 +123,7 @@ void main() {
         isA<ToolIgnored>(),
         reason: 'the driver cannot trace itself',
       );
-      expect(
-        tool.onInput(ToolInput(const Vec2(9, 9))),
-        isA<ToolIgnored>(),
-      );
+      expect(tool.onInput(ToolInput(const Vec2(9, 9))), isA<ToolIgnored>());
       // Still armed: a valid traced point commits.
       expect(
         tool.onInput(ToolInput(const Vec2(3, 0), hit: traced)),

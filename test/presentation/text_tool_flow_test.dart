@@ -40,11 +40,16 @@ void main() {
   }
 
   void addNamedPoint(String id, String name, Vec2 position) {
-    container.read(constructionProvider).construction.add(FreePoint(
-          id: id,
-          position: position,
-          attributes: ObjectAttributes(name: name),
-        ));
+    container
+        .read(constructionProvider)
+        .construction
+        .add(
+          FreePoint(
+            id: id,
+            position: position,
+            attributes: ObjectAttributes(name: name),
+          ),
+        );
   }
 
   Future<void> tapWorld(WidgetTester tester, Offset offset) async {
@@ -55,7 +60,9 @@ void main() {
 
   Future<void> submitContent(WidgetTester tester, String content) async {
     await tester.enterText(
-        find.byKey(const ValueKey('text-content-field')), content);
+      find.byKey(const ValueKey('text-content-field')),
+      content,
+    );
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
   }
@@ -67,16 +74,20 @@ void main() {
       .whereType<ExpressionText>()
       .single;
 
-  testWidgets('tap → dialog → live text, one undo step, tracks drags',
-      (tester) async {
+  testWidgets('tap → dialog → live text, one undo step, tracks drags', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addNamedPoint('a', 'A', const Vec2(100, -200));
     addNamedPoint('b', 'B', const Vec2(400, -200));
     await tester.pump();
 
     await activate(tester);
-    expect(find.byKey(const ValueKey('text-content-field')), findsNothing,
-        reason: 'activation alone opens no dialog — the tap does');
+    expect(
+      find.byKey(const ValueKey('text-content-field')),
+      findsNothing,
+      reason: 'activation alone opens no dialog — the tap does',
+    );
 
     await tapWorld(tester, const Offset(250, 100));
     expect(find.byKey(const ValueKey('text-content-field')), findsOneWidget);
@@ -88,8 +99,11 @@ void main() {
     expect(text.attributes.labelDx, 0);
     expect(text.attributes.labelDy, 0);
     expect(text.attributes.name, isNotEmpty, reason: 'auto-named');
-    expect(text.attributes.labelVisible, isFalse,
-        reason: 'the content is the on-canvas presence, not the name');
+    expect(
+      text.attributes.labelVisible,
+      isFalse,
+      reason: 'the content is the on-canvas presence, not the name',
+    );
     expect(text.parents.map((p) => p.id), ['a', 'b']);
 
     // Live: the value tracks the referenced geometry.
@@ -119,28 +133,28 @@ void main() {
     await tapWorld(tester, const Offset(200, 100));
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    expect(
-      container
-          .read(constructionProvider)
-          .construction
-          .objects,
-      isEmpty,
-    );
+    expect(container.read(constructionProvider).construction.objects, isEmpty);
     expect(container.read(commandStackProvider).canUndo, isFalse);
   });
 
-  testWidgets('unknown reference keeps the dialog open with the error',
-      (tester) async {
+  testWidgets('unknown reference keeps the dialog open with the error', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await activate(tester);
     await tapWorld(tester, const Offset(200, 100));
     await tester.enterText(
-        find.byKey(const ValueKey('text-content-field')), '{dist(A, Z)}');
+      find.byKey(const ValueKey('text-content-field')),
+      '{dist(A, Z)}',
+    );
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     expect(find.textContaining("No object named 'A'"), findsOneWidget);
-    expect(find.byKey(const ValueKey('text-content-field')), findsOneWidget,
-        reason: 'invalid input keeps the dialog open');
+    expect(
+      find.byKey(const ValueKey('text-content-field')),
+      findsOneWidget,
+      reason: 'invalid input keeps the dialog open',
+    );
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(container.read(commandStackProvider).canUndo, isFalse);
@@ -160,15 +174,21 @@ void main() {
 
     // Tap the same spot: the dialog opens pre-filled for editing.
     await tapWorld(tester, const Offset(250, 100));
-    expect(find.text('first note'), findsOneWidget,
-        reason: 'edit dialog pre-fills the current content');
+    expect(
+      find.text('first note'),
+      findsOneWidget,
+      reason: 'edit dialog pre-fills the current content',
+    );
     await submitContent(tester, 'AB = {dist(A, B)}');
 
     final replacement = soleText();
     expect(replacement.id, original.id);
     expect(replacement.renderedText, 'AB = 300.00');
-    expect(replacement.attributes.name, originalName,
-        reason: 'editing keeps the identity, no fresh auto-name');
+    expect(
+      replacement.attributes.name,
+      originalName,
+      reason: 'editing keeps the identity, no fresh auto-name',
+    );
     expect(replacement.anchor, original.anchor);
 
     // The edit is one undo step back to the original.
@@ -188,8 +208,9 @@ void main() {
     );
   });
 
-  testWidgets('dragging a text body moves its anchor freely — no 40 px clamp',
-      (tester) async {
+  testWidgets('dragging a text body moves its anchor freely — no 40 px clamp', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await activate(tester);
     await tapWorld(tester, const Offset(250, 100));
@@ -207,10 +228,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(text.anchor, const Vec2(450, -250),
-        reason: 'anchor rides the full drag delta, unclamped');
-    expect(text.attributes.labelDx, 0,
-        reason: 'the caption offset is untouched — the anchor moved');
+    expect(
+      text.anchor,
+      const Vec2(450, -250),
+      reason: 'anchor rides the full drag delta, unclamped',
+    );
+    expect(
+      text.attributes.labelDx,
+      0,
+      reason: 'the caption offset is untouched — the anchor moved',
+    );
     expect(text.attributes.labelDy, 0);
     expect(text.renderedText, 'movable note');
 
@@ -220,8 +247,9 @@ void main() {
     expect(text.anchor, const Vec2(250, -100));
   });
 
-  testWidgets('G E activates the tool and tints the group icon',
-      (tester) async {
+  testWidgets('G E activates the tool and tints the group icon', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyE);

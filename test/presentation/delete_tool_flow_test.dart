@@ -60,8 +60,9 @@ void main() {
       tester.widget<Icon>(find.byIcon(Icons.delete_outline)).color;
 
   testWidgets('the Delete item activates the tool and tints the group '
-      'icon; double-clicking the icon deactivates and touches nothing',
-      (tester) async {
+      'icon; double-clicking the icon deactivates and touches nothing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     await tester.pump();
@@ -73,8 +74,11 @@ void main() {
     await activateDelete(tester);
     expect(deleteActive(), isTrue);
     expect(groupIconColor(tester), theme.colorScheme.primary);
-    expect(find.byType(AlertDialog), findsNothing,
-        reason: 'no selection, nothing to confirm or delete');
+    expect(
+      find.byType(AlertDialog),
+      findsNothing,
+      reason: 'no selection, nothing to confirm or delete',
+    );
 
     // Double-click the tinted group icon: the tool deactivates and the
     // flyout must not open.
@@ -83,12 +87,14 @@ void main() {
     await tester.tap(group);
     await tester.pumpAndSettle();
     expect(deleteActive(), isFalse);
-    expect(find.text('Delete objects'), findsNothing,
-        reason: 'no menu opened');
+    expect(find.text('Delete objects'), findsNothing, reason: 'no menu opened');
     expect(groupIconColor(tester), isNot(theme.colorScheme.primary));
     expect(has('a'), isTrue);
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'entering and leaving the mode is not an edit');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'entering and leaving the mode is not an edit',
+    );
   });
 
   testWidgets('Esc leaves delete mode', (tester) async {
@@ -110,17 +116,26 @@ void main() {
 
     await activateDelete(tester);
 
-    expect(find.byType(AlertDialog), findsNothing,
-        reason: 'nothing beyond the selection is affected — no dialog');
+    expect(
+      find.byType(AlertDialog),
+      findsNothing,
+      reason: 'nothing beyond the selection is affected — no dialog',
+    );
     expect(has('a'), isFalse);
-    expect(deleteActive(), isTrue,
-        reason: 'the selection deletes and the tap tool stays armed');
+    expect(
+      deleteActive(),
+      isTrue,
+      reason: 'the selection deletes and the tap tool stays armed',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(has('a'), isTrue);
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'the selection rode one command');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'the selection rode one command',
+    );
   });
 
   testWidgets('delete with unselected dependents asks first; Cancel leaves '
@@ -128,7 +143,10 @@ void main() {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     final b = addPoint('b', const Vec2(4, 0));
-    container.read(constructionProvider).construction.add(
+    container
+        .read(constructionProvider)
+        .construction
+        .add(
           Segment(
             id: 's',
             point1: a,
@@ -142,17 +160,27 @@ void main() {
     await activateDelete(tester);
 
     expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.textContaining('base'), findsOneWidget,
-        reason: 'the dialog lists the casualties by name');
+    expect(
+      find.textContaining('base'),
+      findsOneWidget,
+      reason: 'the dialog lists the casualties by name',
+    );
 
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(has('s'), isTrue);
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'a cancelled delete must not touch the undo stack');
-    expect(deleteActive(), isTrue,
-        reason: 'the press asked for delete mode; only the cascade was '
-            'declined');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'a cancelled delete must not touch the undo stack',
+    );
+    expect(
+      deleteActive(),
+      isTrue,
+      reason:
+          'the press asked for delete mode; only the cascade was '
+          'declined',
+    );
   });
 
   testWidgets('confirming a cascading delete removes the dependents in the '
@@ -173,8 +201,7 @@ void main() {
 
     expect(has('a'), isFalse);
     expect(has('s'), isFalse);
-    expect(has('b'), isTrue,
-        reason: 'the other endpoint does not depend on a');
+    expect(has('b'), isTrue, reason: 'the other endpoint does not depend on a');
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
@@ -196,8 +223,11 @@ void main() {
 
     await activateDelete(tester);
 
-    expect(find.byType(AlertDialog), findsNothing,
-        reason: 'the cascade reaches nothing beyond the selection');
+    expect(
+      find.byType(AlertDialog),
+      findsNothing,
+      reason: 'the cascade reaches nothing beyond the selection',
+    );
     expect(container.read(constructionProvider).construction.isEmpty, isTrue);
   });
 
@@ -215,7 +245,10 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     await tester.tapAt(origin + const Offset(300, 200));
     await tester.pumpAndSettle();
-    expect(has('b'), isFalse,
-        reason: 'the tool stayed active for per-tap deletes');
+    expect(
+      has('b'),
+      isFalse,
+      reason: 'the tool stayed active for per-tap deletes',
+    );
   });
 }

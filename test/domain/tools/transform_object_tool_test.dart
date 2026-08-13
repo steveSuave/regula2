@@ -62,8 +62,7 @@ void main() {
 
         expect(tool.onInput(inputs[0]), isA<ToolAccepted>());
         final result = tool.onInput(inputs[1]);
-        expect(result, isA<ToolCommitted>(),
-            reason: 'lineFirst: $lineFirst');
+        expect(result, isA<ToolCommitted>(), reason: 'lineFirst: $lineFirst');
         final command = (result as ToolCommitted).command;
         final image = (command as AddObjectCommand).object as ReflectedPoint;
         expect(image.parents, [p, xAxis]);
@@ -71,27 +70,29 @@ void main() {
       }
     });
 
-    test('reflect: line first + empty tap creates the point, one undo unit',
-        () {
-      final construction = Construction()
-        ..add(m1)
-        ..add(m2)
-        ..add(xAxis);
-      final tool = TransformObjectTool.reflectAboutLine(newId: newId);
+    test(
+      'reflect: line first + empty tap creates the point, one undo unit',
+      () {
+        final construction = Construction()
+          ..add(m1)
+          ..add(m2)
+          ..add(xAxis);
+        final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
-      tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis));
-      final result =
-          tool.onInput(const ToolInput(Vec2(1, 5))) as ToolCommitted;
+        tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis));
+        final result =
+            tool.onInput(const ToolInput(Vec2(1, 5))) as ToolCommitted;
 
-      expect(result.command, isA<MacroCommand>());
-      result.command.apply(construction);
-      expect(construction.length, 5, reason: 'new free point + image');
-      final image = construction.objects.last as ReflectedPoint;
-      expect(image.position!.closeTo(const Vec2(1, -5), 1e-12), isTrue);
+        expect(result.command, isA<MacroCommand>());
+        result.command.apply(construction);
+        expect(construction.length, 5, reason: 'new free point + image');
+        final image = construction.objects.last as ReflectedPoint;
+        expect(image.position!.closeTo(const Vec2(1, -5), 1e-12), isTrue);
 
-      result.command.undo(construction);
-      expect(construction.length, 3, reason: 'one undo unit');
-    });
+        result.command.undo(construction);
+        expect(construction.length, 3, reason: 'one undo unit');
+      },
+    );
 
     test('reflect: with the point slot filled, only a line commits', () {
       final p = FreePoint(id: 'p', position: const Vec2(1, 5));
@@ -100,10 +101,16 @@ void main() {
       final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
       tool.onInput(ToolInput(p.position, hit: p));
-      expect(tool.onInput(const ToolInput(Vec2(9, 9))), isA<ToolIgnored>(),
-          reason: 'empty canvas is a missed tap');
-      expect(tool.onInput(ToolInput(q.position, hit: q)), isA<ToolIgnored>(),
-          reason: 'a second point is ignored');
+      expect(
+        tool.onInput(const ToolInput(Vec2(9, 9))),
+        isA<ToolIgnored>(),
+        reason: 'empty canvas is a missed tap',
+      );
+      expect(
+        tool.onInput(ToolInput(q.position, hit: q)),
+        isA<ToolIgnored>(),
+        reason: 'a second point is ignored',
+      );
       expect(
         tool.onInput(ToolInput(const Vec2(1, 0), hit: circle)),
         isA<ToolIgnored>(),
@@ -115,15 +122,17 @@ void main() {
       );
     });
 
-    test('reflect about point: existing point + center commit a bare add',
-        () {
+    test('reflect about point: existing point + center commit a bare add', () {
       final p = FreePoint(id: 'p', position: const Vec2(3, 1));
       final c = FreePoint(id: 'c', position: const Vec2(1, 1));
       final tool = TransformObjectTool.reflectAboutPoint(newId: newId);
 
       expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolIgnored>(),
-          reason: 'the same existing point twice is refused');
+      expect(
+        tool.onInput(ToolInput(p.position, hit: p)),
+        isA<ToolIgnored>(),
+        reason: 'the same existing point twice is refused',
+      );
       final result = tool.onInput(ToolInput(c.position, hit: c));
 
       expect(result, isA<ToolCommitted>());
@@ -134,12 +143,10 @@ void main() {
       expect(image.position!.closeTo(const Vec2(-1, 1), 1e-12), isTrue);
     });
 
-    test('rotate: point then center on existing points commits a bare add',
-        () {
+    test('rotate: point then center on existing points commits a bare add', () {
       final p = FreePoint(id: 'p', position: const Vec2(1, 0));
       final c = FreePoint(id: 'c', position: const Vec2(0, 0));
-      final tool =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
 
       expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolAccepted>());
       final result = tool.onInput(ToolInput(c.position, hit: c));
@@ -152,14 +159,12 @@ void main() {
       expect(rotated.position!.closeTo(const Vec2(0, 1), 1e-12), isTrue);
     });
 
-    test('rotate: empty-canvas taps create free points, all one undo unit',
-        () {
+    test('rotate: empty-canvas taps create free points, all one undo unit', () {
       final construction = Construction();
       final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi);
 
       tool.onInput(const ToolInput(Vec2(3, 1)));
-      final result =
-          tool.onInput(const ToolInput(Vec2(2, 1))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(2, 1))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
@@ -188,8 +193,7 @@ void main() {
       expect(image.position!.closeTo(const Vec2(3, 2), 1e-12), isTrue);
     });
 
-    test('parameter taps still glue to curves (resolution ladder intact)',
-        () {
+    test('parameter taps still glue to curves (resolution ladder intact)', () {
       final p = FreePoint(id: 'p', position: const Vec2(5, 5));
       final seg = Segment(id: 's', point1: m1, point2: m2);
       final tool = TransformObjectTool.reflectAboutPoint(newId: newId);
@@ -202,8 +206,11 @@ void main() {
       final macro = result.command as MacroCommand;
       expect(macro.commands, hasLength(2));
       final center = (macro.commands[0] as AddObjectCommand).object;
-      expect(center, isA<PointOnObject>(),
-          reason: 'a center tap on a curve glues, exactly like Phase 15/20');
+      expect(
+        center,
+        isA<PointOnObject>(),
+        reason: 'a center tap on a curve glues, exactly like Phase 15/20',
+      );
       final image = (macro.commands[1] as AddObjectCommand).object;
       expect(image, isA<CentralReflectionPoint>());
     });
@@ -236,16 +243,22 @@ void main() {
       expect(macro.commands, hasLength(3), reason: '2 image points + segment');
       macro.apply(construction);
       expect(construction.length, 9);
-      expect(construction.objects.whereType<PointOnObject>(), isEmpty,
-          reason: 'the transformee tap must not glue');
+      expect(
+        construction.objects.whereType<PointOnObject>(),
+        isEmpty,
+        reason: 'the transformee tap must not glue',
+      );
 
       final image = construction.objects.last as Segment;
       final i1 = image.point1 as ReflectedPoint;
       final i2 = image.point2 as ReflectedPoint;
       expect(i1.point, a);
       expect(i2.point, b);
-      expect(i1.attributes.visible, isTrue,
-          reason: 'image points are usable geometry, not scaffolding');
+      expect(
+        i1.attributes.visible,
+        isTrue,
+        reason: 'image points are usable geometry, not scaffolding',
+      );
       expect(i2.attributes.visible, isTrue);
       expect(i1.position!.closeTo(const Vec2(1, -1), 1e-12), isTrue);
       expect(i2.position!.closeTo(const Vec2(3, -2), 1e-12), isTrue);
@@ -287,8 +300,7 @@ void main() {
         ..add(rim)
         ..add(circle)
         ..add(o);
-      final tool =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
 
       tool.onInput(ToolInput(const Vec2(2, 0.01), hit: circle));
       final result =
@@ -338,8 +350,12 @@ void main() {
       final p1 = FreePoint(id: 'p1', position: const Vec2(0, 1));
       final p2 = FreePoint(id: 'p2', position: const Vec2(1, 2));
       final p3 = FreePoint(id: 'p3', position: const Vec2(2, 1));
-      final circle =
-          ThreePointCircle(id: 'o', point1: p1, point2: p2, point3: p3);
+      final circle = ThreePointCircle(
+        id: 'o',
+        point1: p1,
+        point2: p2,
+        point3: p3,
+      );
       final construction = Construction()
         ..add(m1)
         ..add(m2)
@@ -360,8 +376,10 @@ void main() {
       expect(image.circle!.radius, closeTo(circle.circle!.radius, 1e-12));
       final sourceCenter = circle.circle!.center;
       expect(
-        image.circle!.center
-            .closeTo(Vec2(sourceCenter.x, -sourceCenter.y), 1e-12),
+        image.circle!.center.closeTo(
+          Vec2(sourceCenter.x, -sourceCenter.y),
+          1e-12,
+        ),
         isTrue,
       );
     });
@@ -370,8 +388,12 @@ void main() {
       final p1 = FreePoint(id: 'p1', position: const Vec2(0, 0));
       final p2 = FreePoint(id: 'p2', position: const Vec2(4, 0));
       final p3 = FreePoint(id: 'p3', position: const Vec2(0, 3));
-      final circle =
-          NinePointCircle(id: 'o', vertex1: p1, vertex2: p2, vertex3: p3);
+      final circle = NinePointCircle(
+        id: 'o',
+        vertex1: p1,
+        vertex2: p2,
+        vertex3: p3,
+      );
       final o = FreePoint(id: 'ctr', position: const Vec2(0, 0));
       final construction = Construction()
         ..add(p1)
@@ -396,8 +418,12 @@ void main() {
       final p1 = FreePoint(id: 'p1', position: const Vec2(0, 0));
       final p2 = FreePoint(id: 'p2', position: const Vec2(4, 0));
       final p3 = FreePoint(id: 'p3', position: const Vec2(0, 3));
-      final circle =
-          InscribedCircle(id: 'o', vertex1: p1, vertex2: p2, vertex3: p3);
+      final circle = InscribedCircle(
+        id: 'o',
+        vertex1: p1,
+        vertex2: p2,
+        vertex3: p3,
+      );
       final from = FreePoint(id: 'from', position: const Vec2(0, 0));
       final to = FreePoint(id: 'to', position: const Vec2(10, 1));
       final construction = Construction()
@@ -426,8 +452,12 @@ void main() {
       final p1 = FreePoint(id: 'p1', position: const Vec2(0, 0));
       final p2 = FreePoint(id: 'p2', position: const Vec2(3, 0));
       final p3 = FreePoint(id: 'p3', position: const Vec2(2, 0));
-      final circle =
-          ApolloniusCircle(id: 'o', point1: p1, point2: p2, point3: p3);
+      final circle = ApolloniusCircle(
+        id: 'o',
+        point1: p1,
+        point2: p2,
+        point3: p3,
+      );
       final o = FreePoint(id: 'ctr', position: const Vec2(0, 0));
       final construction = Construction()
         ..add(p1)
@@ -500,8 +530,11 @@ void main() {
       final image = construction.objects.last as Arc;
       expect(image.startPosition!.closeTo(const Vec2(2, -1), 1e-12), isTrue);
       expect(image.endPosition!.closeTo(const Vec2(0, -1), 1e-12), isTrue);
-      expect(image.sweep!, closeTo(-arc.sweep!, 1e-12),
-          reason: 'reflection reverses orientation');
+      expect(
+        image.sweep!,
+        closeTo(-arc.sweep!, 1e-12),
+        reason: 'reflection reverses orientation',
+      );
     });
 
     test('reflect a vertex angle: arms swap, so the marker measures the '
@@ -527,8 +560,11 @@ void main() {
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as VertexAngle;
-      expect((image.arm1 as ReflectedPoint).point, a2,
-          reason: 'arms swapped under the orientation-reversing transform');
+      expect(
+        (image.arm1 as ReflectedPoint).point,
+        a2,
+        reason: 'arms swapped under the orientation-reversing transform',
+      );
       expect((image.arm2 as ReflectedPoint).point, a1);
       expect(image.angle!.sweep, closeTo(angle.angle!.sweep, 1e-12));
     });
@@ -575,7 +611,8 @@ void main() {
       expect(
         reflect.onInput(ToolInput(const Vec2(1, 0), hit: sector)),
         isA<ToolIgnored>(),
-        reason: 'rebuilding a reflected sector would give the '
+        reason:
+            'rebuilding a reflected sector would give the '
             'complementary wedge — documented limitation',
       );
 
@@ -592,8 +629,7 @@ void main() {
     test('a curve with non-point parents is no transformee: ignored by '
         'rotate, but still reflect\'s mirror', () {
       final p = FreePoint(id: 'p', position: const Vec2(1, 5));
-      final perp =
-          PerpendicularLine(id: 'perp', through: m1, reference: xAxis);
+      final perp = PerpendicularLine(id: 'perp', through: m1, reference: xAxis);
 
       final rotate = TransformObjectTool.rotate(newId: newId, angle: 1);
       expect(
@@ -627,8 +663,11 @@ void main() {
       final result =
           tool.onInput(ToolInput(c.position, hit: c)) as ToolCommitted;
 
-      expect(result.command, isA<AddObjectCommand>(),
-          reason: 'point mode — the segment was never the transformee');
+      expect(
+        result.command,
+        isA<AddObjectCommand>(),
+        reason: 'point mode — the segment was never the transformee',
+      );
       expect((result.command as AddObjectCommand).object, isA<RotatedPoint>());
     });
 
@@ -641,18 +680,21 @@ void main() {
         ..add(a)
         ..add(b)
         ..add(seg);
-      final tool =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
 
       tool.onInput(ToolInput(const Vec2(2, 1), hit: seg));
-      final result =
-          tool.onInput(const ToolInput(Vec2(0, 0))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(0, 0))) as ToolCommitted;
 
       final macro = result.command as MacroCommand;
-      expect(macro.commands, hasLength(4),
-          reason: 'center + 2 image points + segment');
-      expect((macro.commands.first as AddObjectCommand).object,
-          isA<FreePoint>());
+      expect(
+        macro.commands,
+        hasLength(4),
+        reason: 'center + 2 image points + segment',
+      );
+      expect(
+        (macro.commands.first as AddObjectCommand).object,
+        isA<FreePoint>(),
+      );
       macro.apply(construction);
       final image = construction.objects.last as Segment;
       expect(image.point1.position!.closeTo(const Vec2(-1, 1), 1e-12), isTrue);
@@ -675,8 +717,11 @@ void main() {
           tool.onInput(ToolInput(tip.position, hit: tip)) as ToolCommitted;
 
       final macro = result.command as MacroCommand;
-      expect(macro.commands, hasLength(3),
-          reason: 'the shared arm point images once: 2 images + angle');
+      expect(
+        macro.commands,
+        hasLength(3),
+        reason: 'the shared arm point images once: 2 images + angle',
+      );
     });
 
     test('previews: collected curve is haloed, reset clears all slots', () {
@@ -689,18 +734,18 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(2, 5), hit: seg));
       expect(tool.previewObjectIds, ['s']);
-      expect(tool.previewPositions, isEmpty,
-          reason: 'an existing curve is haloed, never marked');
+      expect(
+        tool.previewPositions,
+        isEmpty,
+        reason: 'an existing curve is haloed, never marked',
+      );
 
       tool.reset();
       expect(tool.previewObjectIds, isEmpty);
 
       // A fresh collection still commits from scratch.
       tool.onInput(ToolInput(const Vec2(2, 1), hit: seg));
-      expect(
-        tool.onInput(const ToolInput(Vec2(0, 0))),
-        isA<ToolCommitted>(),
-      );
+      expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolCommitted>());
     });
 
     test('previews: existing transformee and param points are haloed, '
@@ -717,9 +762,11 @@ void main() {
       final fresh = TransformObjectTool.translate(newId: newId);
       fresh.onInput(const ToolInput(Vec2(2, 1)));
       fresh.onInput(const ToolInput(Vec2(0, 0)));
-      expect(fresh.previewPositions,
-          [const Vec2(2, 1), const Vec2(0, 0)],
-          reason: 'new free points are not in the construction yet');
+      expect(
+        fresh.previewPositions,
+        [const Vec2(2, 1), const Vec2(0, 0)],
+        reason: 'new free points are not in the construction yet',
+      );
       expect(fresh.previewObjectIds, isEmpty);
     });
   });
@@ -755,64 +802,90 @@ void main() {
     ToolInput tapOn(GeoObject hit, Vec2 position) =>
         ToolInput(position, hit: hit, objects: construction.objects);
 
-    test('rotating AB then BC about one center images the shared vertex once',
-        () {
-      final tool =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+    test(
+      'rotating AB then BC about one center images the shared vertex once',
+      () {
+        final tool = TransformObjectTool.rotate(
+          newId: newId,
+          angle: math.pi / 2,
+        );
 
-      tool.onInput(tapOn(ab, const Vec2(2, 2)));
-      final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
-      first.command.apply(construction);
-      final firstImage = construction.objects.last as Segment;
+        tool.onInput(tapOn(ab, const Vec2(2, 2)));
+        final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+        first.command.apply(construction);
+        final firstImage = construction.objects.last as Segment;
 
-      tool.onInput(tapOn(bc, const Vec2(4, 4)));
-      final second = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
-      final macro = second.command as MacroCommand;
-      expect(macro.commands, hasLength(2),
-          reason: "C's image + the rebuilt segment — B's image is reused");
-      second.command.apply(construction);
+        tool.onInput(tapOn(bc, const Vec2(4, 4)));
+        final second = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+        final macro = second.command as MacroCommand;
+        expect(
+          macro.commands,
+          hasLength(2),
+          reason: "C's image + the rebuilt segment — B's image is reused",
+        );
+        second.command.apply(construction);
 
-      expect(construction.objects.whereType<RotatedPoint>(), hasLength(3),
-          reason: 'the shared vertex B is imaged once, not per gesture');
-      final secondImage = construction.objects.last as Segment;
-      expect(identical(secondImage.point1, firstImage.point2), isTrue,
-          reason: 'the rebuilt segments share the one image instance');
-    });
+        expect(
+          construction.objects.whereType<RotatedPoint>(),
+          hasLength(3),
+          reason: 'the shared vertex B is imaged once, not per gesture',
+        );
+        final secondImage = construction.objects.last as Segment;
+        expect(
+          identical(secondImage.point1, firstImage.point2),
+          isTrue,
+          reason: 'the rebuilt segments share the one image instance',
+        );
+      },
+    );
 
     test('repeating the same transform of the same segment is refused, '
         'the collected transformee survives', () {
-      final tool =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
       final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
       first.command.apply(construction);
 
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
-      expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>(),
-          reason: 'the commit would add nothing');
-      expect(tool.previewObjectIds, ['ab'],
-          reason: 'the refused center tap unwinds; the transformee stays');
+      expect(
+        tool.onInput(tapOn(o, o.position)),
+        isA<ToolIgnored>(),
+        reason: 'the commit would add nothing',
+      );
+      expect(
+        tool.previewObjectIds,
+        ['ab'],
+        reason: 'the refused center tap unwinds; the transformee stays',
+      );
 
-      expect(tool.onInput(tapOn(c, c.position)), isA<ToolCommitted>(),
-          reason: 'a different center is not a duplicate');
+      expect(
+        tool.onInput(tapOn(c, c.position)),
+        isA<ToolCommitted>(),
+        reason: 'a different center is not a duplicate',
+      );
     });
 
-    test('a different angle or a different mirror is never falsely reused',
-        () {
-      final quarter =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+    test('a different angle or a different mirror is never falsely reused', () {
+      final quarter = TransformObjectTool.rotate(
+        newId: newId,
+        angle: math.pi / 2,
+      );
       quarter.onInput(tapOn(o, o.position));
       final first = quarter.onInput(tapOn(a, a.position)) as ToolCommitted;
       first.command.apply(construction);
 
-      final third =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 3);
+      final third = TransformObjectTool.rotate(
+        newId: newId,
+        angle: math.pi / 3,
+      );
       third.onInput(tapOn(o, o.position));
-      expect(third.onInput(tapOn(a, a.position)), isA<ToolCommitted>(),
-          reason: 'same point and center, different angle');
+      expect(
+        third.onInput(tapOn(a, a.position)),
+        isA<ToolCommitted>(),
+        reason: 'same point and center, different angle',
+      );
 
-      final otherAxis =
-          LineThroughTwoPoints(id: 'y', point1: m1, point2: a);
+      final otherAxis = LineThroughTwoPoints(id: 'y', point1: m1, point2: a);
       construction.add(otherAxis);
       final reflect = TransformObjectTool.reflectAboutLine(newId: newId);
       reflect.onInput(tapOn(o, o.position));
@@ -826,48 +899,68 @@ void main() {
       );
     });
 
-    test('point mode: the same reflection twice is refused in either order',
-        () {
-      final tool = TransformObjectTool.reflectAboutLine(newId: newId);
-      tool.onInput(tapOn(o, o.position));
-      final first =
-          tool.onInput(tapOn(xAxis, const Vec2(2, 0))) as ToolCommitted;
-      first.command.apply(construction);
+    test(
+      'point mode: the same reflection twice is refused in either order',
+      () {
+        final tool = TransformObjectTool.reflectAboutLine(newId: newId);
+        tool.onInput(tapOn(o, o.position));
+        final first =
+            tool.onInput(tapOn(xAxis, const Vec2(2, 0))) as ToolCommitted;
+        first.command.apply(construction);
 
-      // Point first: the committing mirror tap is refused, the point stays.
-      tool.onInput(tapOn(o, o.position));
-      expect(tool.onInput(tapOn(xAxis, const Vec2(2, 0))), isA<ToolIgnored>());
-      expect(tool.previewObjectIds, ['o']);
-      tool.reset();
+        // Point first: the committing mirror tap is refused, the point stays.
+        tool.onInput(tapOn(o, o.position));
+        expect(
+          tool.onInput(tapOn(xAxis, const Vec2(2, 0))),
+          isA<ToolIgnored>(),
+        );
+        expect(tool.previewObjectIds, ['o']);
+        tool.reset();
 
-      // Line first: the committing point tap is refused and unwound.
-      tool.onInput(tapOn(xAxis, const Vec2(2, 0)));
-      expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>());
-      expect(tool.previewObjectIds, ['x'],
-          reason: 'the point tap unwound, the pending mirror stays');
-      expect(tool.onInput(tapOn(c, c.position)), isA<ToolCommitted>(),
-          reason: 'a different point still commits');
-    });
+        // Line first: the committing point tap is refused and unwound.
+        tool.onInput(tapOn(xAxis, const Vec2(2, 0)));
+        expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>());
+        expect(
+          tool.previewObjectIds,
+          ['x'],
+          reason: 'the point tap unwound, the pending mirror stays',
+        );
+        expect(
+          tool.onInput(tapOn(c, c.position)),
+          isA<ToolCommitted>(),
+          reason: 'a different point still commits',
+        );
+      },
+    );
 
     test('a hidden equivalent image is reused untouched, not revealed', () {
-      final hidden =
-          RotatedPoint(id: 'h', point: a, center: o, angle: math.pi / 2);
+      final hidden = RotatedPoint(
+        id: 'h',
+        point: a,
+        center: o,
+        angle: math.pi / 2,
+      );
       hidden.attributes = hidden.attributes.copyWith(visible: false);
       construction.add(hidden);
 
-      final tool =
-          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
       final result = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
       final macro = result.command as MacroCommand;
-      expect(macro.commands, hasLength(2),
-          reason: "A's image is reused; only B's image + segment are added");
+      expect(
+        macro.commands,
+        hasLength(2),
+        reason: "A's image is reused; only B's image + segment are added",
+      );
       result.command.apply(construction);
 
       final image = construction.objects.last as Segment;
       expect(identical(image.point1, hidden), isTrue);
-      expect(hidden.attributes.visible, isFalse,
-          reason: 'a reused equivalent keeps its attributes');
+      expect(
+        hidden.attributes.visible,
+        isFalse,
+        reason: 'a reused equivalent keeps its attributes',
+      );
     });
   });
 
@@ -940,9 +1033,13 @@ void main() {
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as Sector;
-      expect(image.sweep!, closeTo(sector.sweep!, 1e-12),
-          reason: 'det k² > 0: the wedge is the image wedge, not its '
-              'complement');
+      expect(
+        image.sweep!,
+        closeTo(sector.sweep!, 1e-12),
+        reason:
+            'det k² > 0: the wedge is the image wedge, not its '
+            'complement',
+      );
       expect(image.circle!.radius, closeTo(1.5, 1e-12));
     });
 
@@ -966,8 +1063,11 @@ void main() {
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as VertexAngle;
-      expect((image.arm1 as HomotheticPoint).point, a1,
-          reason: 'no arm swap — dilation preserves orientation');
+      expect(
+        (image.arm1 as HomotheticPoint).point,
+        a1,
+        reason: 'no arm swap — dilation preserves orientation',
+      );
       expect((image.arm2 as HomotheticPoint).point, a2);
       expect(image.angle!.sweep, closeTo(angle.angle!.sweep, 1e-12));
     });
@@ -997,21 +1097,33 @@ void main() {
 
       tool.onInput(tapOn(bc, const Vec2(4, 4)));
       final second = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
-      expect((second.command as MacroCommand).commands, hasLength(2),
-          reason: "C's image + the rebuilt segment — B's image is reused");
+      expect(
+        (second.command as MacroCommand).commands,
+        hasLength(2),
+        reason: "C's image + the rebuilt segment — B's image is reused",
+      );
       second.command.apply(construction);
-      expect(construction.objects.whereType<HomotheticPoint>(), hasLength(3),
-          reason: 'the shared vertex B is imaged once');
+      expect(
+        construction.objects.whereType<HomotheticPoint>(),
+        hasLength(3),
+        reason: 'the shared vertex B is imaged once',
+      );
 
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
-      expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>(),
-          reason: 'repeating the same dilation adds nothing');
+      expect(
+        tool.onInput(tapOn(o, o.position)),
+        isA<ToolIgnored>(),
+        reason: 'repeating the same dilation adds nothing',
+      );
       tool.reset();
 
       final half = TransformObjectTool.dilate(newId: newId, ratio: 0.5);
       half.onInput(tapOn(ab, const Vec2(2, 2)));
-      expect(half.onInput(tapOn(o, o.position)), isA<ToolCommitted>(),
-          reason: 'a different ratio is never falsely reused');
+      expect(
+        half.onInput(tapOn(o, o.position)),
+        isA<ToolCommitted>(),
+        reason: 'a different ratio is never falsely reused',
+      );
     });
   });
 }

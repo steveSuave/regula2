@@ -52,8 +52,11 @@ void main() {
         curve: segment,
         position: const Vec2(6, 1),
       );
-      expect(p.position!.closeTo(const Vec2(4, 0)), isTrue,
-          reason: 'the projection lands past b and clamps to it');
+      expect(
+        p.position!.closeTo(const Vec2(4, 0)),
+        isTrue,
+        reason: 'the projection lands past b and clamps to it',
+      );
     });
 
     test('near() on a ray clamps a tap behind the origin onto it', () {
@@ -73,8 +76,11 @@ void main() {
         curve: ray,
         position: const Vec2(90, -3),
       );
-      expect(ahead.position!.closeTo(const Vec2(90, 0)), isTrue,
-          reason: 'the through side is unbounded');
+      expect(
+        ahead.position!.closeTo(const Vec2(90, 0)),
+        isTrue,
+        reason: 'the through side is unbounded',
+      );
     });
 
     test('a shrinking segment carries the point on its endpoint, then '
@@ -119,8 +125,11 @@ void main() {
         curve: sector,
         position: const Vec2(-4, 4),
       );
-      expect(outside.parameter, closeTo(math.pi / 2, 1e-9),
-          reason: 'a tap past the end rim snaps to the nearer wedge end');
+      expect(
+        outside.parameter,
+        closeTo(math.pi / 2, 1e-9),
+        reason: 'a tap past the end rim snaps to the nearer wedge end',
+      );
       expect(outside.position!.closeTo(const Vec2(0, 4)), isTrue);
     });
 
@@ -145,9 +154,13 @@ void main() {
       construction.moveFreePoint('e', const Vec2(4, 4));
       final rim = Vec2(math.sqrt(8), math.sqrt(8));
       expect(p.position!.closeTo(rim), isTrue);
-      expect(p.parameter, math.pi / 2,
-          reason: 'the stored parameter is untouched — clamping is a '
-              'rendering of the extent, not a mutation');
+      expect(
+        p.parameter,
+        math.pi / 2,
+        reason:
+            'the stored parameter is untouched — clamping is a '
+            'rendering of the extent, not a mutation',
+      );
 
       // Grow the wedge back: the point returns to where it was.
       construction.moveFreePoint('e', const Vec2(0, 4));
@@ -194,8 +207,11 @@ void main() {
         ..add(p);
 
       construction.moveFreePoint('r', const Vec2(5, 0));
-      expect(p.position!.closeTo(const Vec2(0, 5)), isTrue,
-          reason: 'the polar angle is fixed, the radius follows the curve');
+      expect(
+        p.position!.closeTo(const Vec2(0, 5)),
+        isTrue,
+        reason: 'the polar angle is fixed, the radius follows the curve',
+      );
     });
 
     test('undefined while the curve is, recovers after', () {
@@ -223,8 +239,7 @@ void main() {
       expect(line.line!.contains(p.position!), isTrue);
     });
 
-    test('rejects a point parent and projection onto an undefined curve',
-        () {
+    test('rejects a point parent and projection onto an undefined curve', () {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: Vec2.zero); // coincident
       final undefinedLine = LineThroughTwoPoints(id: 'l', point1: a, point2: b);

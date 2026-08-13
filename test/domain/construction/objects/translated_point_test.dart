@@ -116,28 +116,44 @@ void main() {
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (p, delta, k) {
-      TranslatedPoint build(ProjPoint point, ProjPoint from, ProjPoint to) =>
-          TranslatedPoint(
-            id: 'r',
-            point: StubProjectivePoint(point),
-            vectorFrom: StubProjectivePoint(from),
-            vectorTo: StubProjectivePoint(to),
-          );
-      final lifted = ProjPoint.lift(p);
-      final from = ProjPoint.real(1, -2);
-      final to = ProjPoint.lift(delta);
-      final plain = build(lifted, from, to);
-      expect(build(lifted.scaledBy(k), from, to)
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-      expect(build(lifted, from.scaledBy(k), to)
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-      expect(build(lifted, from, to.scaledBy(k))
-          .projPoint!
-          .closeTo(plain.projPoint!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (p, delta, k) {
+        TranslatedPoint build(ProjPoint point, ProjPoint from, ProjPoint to) =>
+            TranslatedPoint(
+              id: 'r',
+              point: StubProjectivePoint(point),
+              vectorFrom: StubProjectivePoint(from),
+              vectorTo: StubProjectivePoint(to),
+            );
+        final lifted = ProjPoint.lift(p);
+        final from = ProjPoint.real(1, -2);
+        final to = ProjPoint.lift(delta);
+        final plain = build(lifted, from, to);
+        expect(
+          build(
+            lifted.scaledBy(k),
+            from,
+            to,
+          ).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+        expect(
+          build(
+            lifted,
+            from.scaledBy(k),
+            to,
+          ).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+        expect(
+          build(
+            lifted,
+            from,
+            to.scaledBy(k),
+          ).projPoint!.closeTo(plain.projPoint!),
+          isTrue,
+        );
+      },
+    );
   });
 }

@@ -59,8 +59,7 @@ void main() {
     );
   }
 
-  int objectCount() =>
-      container.read(constructionProvider).construction.length;
+  int objectCount() => container.read(constructionProvider).construction.length;
 
   testWidgets('tap with no active tool adds nothing', (tester) async {
     await pumpEditor(tester);
@@ -71,8 +70,9 @@ void main() {
     expect(objectCount(), 0);
   });
 
-  testWidgets('tapping an angle\'s marker wedge selects the angle',
-      (tester) async {
+  testWidgets('tapping an angle\'s marker wedge selects the angle', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final construction = container.read(constructionProvider).construction;
     final a = FreePoint(id: 'a', position: const Vec2(150, -100));
@@ -99,8 +99,9 @@ void main() {
     expect(container.read(selectionProvider), {'v'});
   });
 
-  testWidgets('a tapped line mid-collection is haloed, with no marker on it',
-      (tester) async {
+  testWidgets('a tapped line mid-collection is haloed, with no marker on it', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final construction = container.read(constructionProvider).construction;
     final a = FreePoint(id: 'a', position: const Vec2(100, -200));
@@ -122,23 +123,31 @@ void main() {
     await tester.pump();
 
     final painter = tester
-        .widgetList<CustomPaint>(find.descendant(
-          of: find.byType(GeometryCanvas),
-          matching: find.byType(CustomPaint),
-        ))
+        .widgetList<CustomPaint>(
+          find.descendant(
+            of: find.byType(GeometryCanvas),
+            matching: find.byType(CustomPaint),
+          ),
+        )
         .map((paint) => paint.painter)
         .whereType<GeometryPainter>()
         .single;
-    expect(painter.previewObjectIds, {'l'},
-        reason: 'the consumed line is haloed like a selection');
-    expect(painter.previewMarkers, isEmpty,
-        reason: 'no dot+ring marker on an existing object');
+    expect(
+      painter.previewObjectIds,
+      {'l'},
+      reason: 'the consumed line is haloed like a selection',
+    );
+    expect(
+      painter.previewMarkers,
+      isEmpty,
+      reason: 'no dot+ring marker on an existing object',
+    );
   });
 
-  testWidgets(
-      'Show/Hide turns the hidden view on: painter dims hidden in, '
-      'taps toggle both directions, other modes never reach hidden',
-      (tester) async {
+  testWidgets('Show/Hide turns the hidden view on: painter dims hidden in, '
+      'taps toggle both directions, other modes never reach hidden', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final construction = container.read(constructionProvider).construction;
     final h = FreePoint(
@@ -150,10 +159,12 @@ void main() {
     await tester.pump();
 
     GeometryPainter painter() => tester
-        .widgetList<CustomPaint>(find.descendant(
-          of: find.byType(GeometryCanvas),
-          matching: find.byType(CustomPaint),
-        ))
+        .widgetList<CustomPaint>(
+          find.descendant(
+            of: find.byType(GeometryCanvas),
+            matching: find.byType(CustomPaint),
+          ),
+        )
         .map((paint) => paint.painter)
         .whereType<GeometryPainter>()
         .single;
@@ -193,8 +204,9 @@ void main() {
     expect(painter().showHidden, isFalse);
   });
 
-  testWidgets('Hide-tool tap hides the hit object; one undo restores',
-      (tester) async {
+  testWidgets('Hide-tool tap hides the hit object; one undo restores', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final construction = container.read(constructionProvider).construction;
     final p = FreePoint(id: 'p', position: const Vec2(100, -100));
@@ -245,220 +257,261 @@ void main() {
   });
 
   testWidgets(
-      'centroid tool via the centers menu: three taps commit one undo unit',
-      (tester) async {
-    await pumpEditor(tester);
+    'centroid tool via the centers menu: three taps commit one undo unit',
+    (tester) async {
+      await pumpEditor(tester);
 
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Centroid'));
-    await tester.pumpAndSettle();
-
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(200, 100));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'nothing is committed until the third vertex lands');
-
-    await tester.tapAt(origin + const Offset(150, 200));
-    await tester.pump();
-    expect(objectCount(), 4, reason: '3 free points + the centroid');
-
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'the whole construction step is one undo unit');
-
-    await tester.tap(find.byIcon(Icons.redo));
-    await tester.pump();
-    expect(objectCount(), 4);
-  });
-
-  testWidgets(
-      'intersection tool via its toolbar button: tap two crossing segments, '
-      'get the point where they cross', (tester) async {
-    await pumpEditor(tester);
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-
-    // Two crossing segments via the two-point menu (4 free points + 2
-    // segments): horizontal (100,100)–(300,100), vertical (200,40)–(200,160).
-    Future<void> buildSegment(Offset from, Offset to) async {
-      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.tap(find.byIcon(Icons.control_point));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Segment'));
+      await tester.tap(find.text('Centroid'));
       await tester.pumpAndSettle();
-      await tester.tapAt(origin + from);
+
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+      await tester.tapAt(origin + const Offset(100, 100));
       await tester.pump();
-      await tester.tapAt(origin + to);
+      await tester.tapAt(origin + const Offset(200, 100));
       await tester.pump();
-    }
+      expect(
+        objectCount(),
+        0,
+        reason: 'nothing is committed until the third vertex lands',
+      );
 
-    await buildSegment(const Offset(100, 100), const Offset(300, 100));
-    await buildSegment(const Offset(200, 40), const Offset(200, 160));
-    expect(objectCount(), 6);
+      await tester.tapAt(origin + const Offset(150, 200));
+      await tester.pump();
+      expect(objectCount(), 4, reason: '3 free points + the centroid');
 
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Intersection of two curves'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(
+        objectCount(),
+        0,
+        reason: 'the whole construction step is one undo unit',
+      );
 
-    // Taps land on the segments away from their endpoints and from the
-    // crossing, so the hit tester reports the segments themselves.
-    await tester.tapAt(origin + const Offset(150, 100));
-    await tester.pump();
-    expect(objectCount(), 6, reason: 'one curve collected, nothing built');
-
-    await tester.tapAt(origin + const Offset(200, 60));
-    await tester.pump();
-    expect(objectCount(), 7);
-
-    final objects = container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .toList();
-    final point = objects.last as IntersectionPoint;
-    // Default viewport: world origin at the canvas top-left, y-up.
-    expect(point.position!.closeTo(const Vec2(200, -100)), isTrue);
-
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(objectCount(), 6, reason: 'only the intersection point undoes');
-  });
+      await tester.tap(find.byIcon(Icons.redo));
+      await tester.pump();
+      expect(objectCount(), 4);
+    },
+  );
 
   testWidgets(
-      'square macro via the shapes menu: two taps commit one undo unit',
-      (tester) async {
-    await pumpEditor(tester);
+    'intersection tool via its toolbar button: tap two crossing segments, '
+    'get the point where they cross',
+    (tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.crop_square));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Square'));
-    await tester.pumpAndSettle();
+      // Two crossing segments via the two-point menu (4 free points + 2
+      // segments): horizontal (100,100)–(300,100), vertical (200,40)–(200,160).
+      Future<void> buildSegment(Offset from, Offset to) async {
+        await tester.tap(find.byIcon(Icons.timeline));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Segment'));
+        await tester.pumpAndSettle();
+        await tester.tapAt(origin + from);
+        await tester.pump();
+        await tester.tapAt(origin + to);
+        await tester.pump();
+      }
 
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'nothing is committed until the second corner lands');
+      await buildSegment(const Offset(100, 100), const Offset(300, 100));
+      await buildSegment(const Offset(200, 40), const Offset(200, 160));
+      expect(objectCount(), 6);
 
-    await tester.tapAt(origin + const Offset(200, 100));
-    await tester.pump();
-    expect(objectCount(), 12,
-        reason: '2 free points + side + 2 perpendiculars + 2 circles + '
-            '2 corners + 3 sides');
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Intersection of two curves'));
+      await tester.pumpAndSettle();
 
-    // World is y-up at scale 1: screen (100,100)/(200,100) are world
-    // A=(100,-100), B=(200,-100), so the square's derived corners sit
-    // one side length above at y=0 (left of the A->B direction).
-    final corners = container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .whereType<IntersectionPoint>()
-        .toList();
-    expect(corners.map((c) => c.position),
-        [const Vec2(200, 0), const Vec2(100, 0)]);
+      // Taps land on the segments away from their endpoints and from the
+      // crossing, so the hit tester reports the segments themselves.
+      await tester.tapAt(origin + const Offset(150, 100));
+      await tester.pump();
+      expect(objectCount(), 6, reason: 'one curve collected, nothing built');
 
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'the whole square is one undo unit');
+      await tester.tapAt(origin + const Offset(200, 60));
+      await tester.pump();
+      expect(objectCount(), 7);
 
-    await tester.tap(find.byIcon(Icons.redo));
-    await tester.pump();
-    expect(objectCount(), 12);
-  });
+      final objects = container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .toList();
+      final point = objects.last as IntersectionPoint;
+      // Default viewport: world origin at the canvas top-left, y-up.
+      expect(point.position!.closeTo(const Vec2(200, -100)), isTrue);
 
-  testWidgets(
-      'parallelogram macro via the shapes menu: three taps, one undo unit',
-      (tester) async {
-    await pumpEditor(tester);
-
-    await tester.tap(find.byIcon(Icons.crop_square));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Parallelogram'));
-    await tester.pumpAndSettle();
-
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-    await tester.tapAt(origin + const Offset(100, 200));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(200, 200));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'nothing is committed until the third corner lands');
-
-    await tester.tapAt(origin + const Offset(250, 100));
-    await tester.pump();
-    expect(objectCount(), 10,
-        reason: '3 free points + 2 sides + 2 parallels + corner + 2 sides');
-
-    // D = A + (C − B): screen (150, 100).
-    final corner = container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .whereType<IntersectionPoint>()
-        .single;
-    expect(corner.position!.x, closeTo(150, 1e-9));
-    expect(corner.position!.y, closeTo(-100, 1e-9),
-        reason: 'world is y-up: screen y 100 is world y -100');
-
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'the whole parallelogram is one undo unit');
-  });
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(objectCount(), 6, reason: 'only the intersection point undoes');
+    },
+  );
 
   testWidgets(
-      'trapezium macro via the shapes menu: three corners plus the D pick',
-      (tester) async {
-    await pumpEditor(tester);
+    'square macro via the shapes menu: two taps commit one undo unit',
+    (tester) async {
+      await pumpEditor(tester);
 
-    await tester.tap(find.byIcon(Icons.crop_square));
-    await tester.pumpAndSettle();
-    final trapeziumItem =
-        find.text('Trapezium');
-    await tester.ensureVisible(trapeziumItem);
-    await tester.pumpAndSettle();
-    await tester.tap(trapeziumItem);
-    await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.crop_square));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Square'));
+      await tester.pumpAndSettle();
 
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-    await tester.tapAt(origin + const Offset(100, 200));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(200, 200));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(250, 100));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'the third corner does not commit — D is still pending');
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      expect(
+        objectCount(),
+        0,
+        reason: 'nothing is committed until the second corner lands',
+      );
 
-    await tester.tapAt(origin + const Offset(120, 80));
-    await tester.pump();
-    expect(objectCount(), 9,
-        reason: '3 free points + 2 sides + parallel + D + 2 sides');
+      await tester.tapAt(origin + const Offset(200, 100));
+      await tester.pump();
+      expect(
+        objectCount(),
+        12,
+        reason:
+            '2 free points + side + 2 perpendiculars + 2 circles + '
+            '2 corners + 3 sides',
+      );
 
-    // D = the 4th tap projected onto the horizontal parallel through C.
-    final corner = container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .whereType<PointOnObject>()
-        .single;
-    expect(corner.position!.x, closeTo(120, 1e-9));
-    expect(corner.position!.y, closeTo(-100, 1e-9),
-        reason: 'projected to C\'s height (y-up world: screen y 100)');
+      // World is y-up at scale 1: screen (100,100)/(200,100) are world
+      // A=(100,-100), B=(200,-100), so the square's derived corners sit
+      // one side length above at y=0 (left of the A->B direction).
+      final corners = container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<IntersectionPoint>()
+          .toList();
+      expect(corners.map((c) => c.position), [
+        const Vec2(200, 0),
+        const Vec2(100, 0),
+      ]);
 
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(objectCount(), 0, reason: 'the whole trapezium is one undo unit');
-  });
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(objectCount(), 0, reason: 'the whole square is one undo unit');
 
-  testWidgets('undo mid-collection consumes the collected input first',
-      (tester) async {
+      await tester.tap(find.byIcon(Icons.redo));
+      await tester.pump();
+      expect(objectCount(), 12);
+    },
+  );
+
+  testWidgets(
+    'parallelogram macro via the shapes menu: three taps, one undo unit',
+    (tester) async {
+      await pumpEditor(tester);
+
+      await tester.tap(find.byIcon(Icons.crop_square));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Parallelogram'));
+      await tester.pumpAndSettle();
+
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+      await tester.tapAt(origin + const Offset(100, 200));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(200, 200));
+      await tester.pump();
+      expect(
+        objectCount(),
+        0,
+        reason: 'nothing is committed until the third corner lands',
+      );
+
+      await tester.tapAt(origin + const Offset(250, 100));
+      await tester.pump();
+      expect(
+        objectCount(),
+        10,
+        reason: '3 free points + 2 sides + 2 parallels + corner + 2 sides',
+      );
+
+      // D = A + (C − B): screen (150, 100).
+      final corner = container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<IntersectionPoint>()
+          .single;
+      expect(corner.position!.x, closeTo(150, 1e-9));
+      expect(
+        corner.position!.y,
+        closeTo(-100, 1e-9),
+        reason: 'world is y-up: screen y 100 is world y -100',
+      );
+
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(
+        objectCount(),
+        0,
+        reason: 'the whole parallelogram is one undo unit',
+      );
+    },
+  );
+
+  testWidgets(
+    'trapezium macro via the shapes menu: three corners plus the D pick',
+    (tester) async {
+      await pumpEditor(tester);
+
+      await tester.tap(find.byIcon(Icons.crop_square));
+      await tester.pumpAndSettle();
+      final trapeziumItem = find.text('Trapezium');
+      await tester.ensureVisible(trapeziumItem);
+      await tester.pumpAndSettle();
+      await tester.tap(trapeziumItem);
+      await tester.pumpAndSettle();
+
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+      await tester.tapAt(origin + const Offset(100, 200));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(200, 200));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(250, 100));
+      await tester.pump();
+      expect(
+        objectCount(),
+        0,
+        reason: 'the third corner does not commit — D is still pending',
+      );
+
+      await tester.tapAt(origin + const Offset(120, 80));
+      await tester.pump();
+      expect(
+        objectCount(),
+        9,
+        reason: '3 free points + 2 sides + parallel + D + 2 sides',
+      );
+
+      // D = the 4th tap projected onto the horizontal parallel through C.
+      final corner = container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<PointOnObject>()
+          .single;
+      expect(corner.position!.x, closeTo(120, 1e-9));
+      expect(
+        corner.position!.y,
+        closeTo(-100, 1e-9),
+        reason: 'projected to C\'s height (y-up world: screen y 100)',
+      );
+
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(objectCount(), 0, reason: 'the whole trapezium is one undo unit');
+    },
+  );
+
+  testWidgets('undo mid-collection consumes the collected input first', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -499,53 +552,56 @@ void main() {
   });
 
   testWidgets(
-      'segment via the two-point menu, then a point constrained onto it',
-      (tester) async {
-    await pumpEditor(tester);
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    'segment via the two-point menu, then a point constrained onto it',
+    (tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.timeline));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Segment'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Segment'));
+      await tester.pumpAndSettle();
 
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'first endpoint is only collected, not committed');
-    await tester.tapAt(origin + const Offset(300, 100));
-    await tester.pump();
-    expect(objectCount(), 3, reason: '2 free points + the segment');
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      expect(
+        objectCount(),
+        0,
+        reason: 'first endpoint is only collected, not committed',
+      );
+      await tester.tapAt(origin + const Offset(300, 100));
+      await tester.pump();
+      expect(objectCount(), 3, reason: '2 free points + the segment');
 
-    // Constrain a point onto the segment: the smart Point tool glues a
-    // tap near the curve (within the 8 px threshold).
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Point'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(origin + const Offset(200, 103));
-    await tester.pump();
-    expect(objectCount(), 4);
-    expect(
-      container
-          .read(constructionProvider)
-          .construction
-          .objects
-          .whereType<PointOnObject>()
-          .single
-          .position,
-      const Vec2(200, -100),
-      reason: 'the tap projects onto the segment, not a free point at 103',
-    );
+      // Constrain a point onto the segment: the smart Point tool glues a
+      // tap near the curve (within the 8 px threshold).
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Point'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + const Offset(200, 103));
+      await tester.pump();
+      expect(objectCount(), 4);
+      expect(
+        container
+            .read(constructionProvider)
+            .construction
+            .objects
+            .whereType<PointOnObject>()
+            .single
+            .position,
+        const Vec2(200, -100),
+        reason: 'the tap projects onto the segment, not a free point at 103',
+      );
 
-    // Away from any curve the same tool drops a free point.
-    await tester.tapAt(origin + const Offset(200, 300));
-    await tester.pump();
-    expect(objectCount(), 5);
-  });
+      // Away from any curve the same tool drops a free point.
+      await tester.tapAt(origin + const Offset(200, 300));
+      await tester.pump();
+      expect(objectCount(), 5);
+    },
+  );
 
-  testWidgets(
-      'perpendicular via the menu: tap the line, tap empty canvas, one '
+  testWidgets('perpendicular via the menu: tap the line, tap empty canvas, one '
       'undo unit', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -579,8 +635,9 @@ void main() {
     expect(objectCount(), 3, reason: 'point + perpendicular undo together');
   });
 
-  testWidgets('angle bisector via the menu: three taps, one undo unit',
-      (tester) async {
+  testWidgets('angle bisector via the menu: three taps, one undo unit', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -603,8 +660,9 @@ void main() {
     expect(objectCount(), 0);
   });
 
-  testWidgets('angle bisector via two segment taps: one object, no points',
-      (tester) async {
+  testWidgets('angle bisector via two segment taps: one object, no points', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final construction = container.read(constructionProvider).construction;
     // Two segments meeting at (100, -100) (screen y 100), like an angle
@@ -622,8 +680,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
-    await tester
-        .tap(find.text('Angle bisector'));
+    await tester.tap(find.text('Angle bisector'));
     await tester.pumpAndSettle();
 
     // Mid-segment taps, away from every endpoint.
@@ -637,8 +694,11 @@ void main() {
     expect(objectCount(), 6, reason: 'exactly the bisector — no points');
     final bisector = construction.objects.last;
     expect(objectKindLabel(bisector), 'Angle bisector');
-    expect(construction.objects.whereType<GeoPoint>().length, 3,
-        reason: 'no glued by-product points on the segments');
+    expect(
+      construction.objects.whereType<GeoPoint>().length,
+      3,
+      reason: 'no glued by-product points on the segments',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
@@ -646,101 +706,106 @@ void main() {
   });
 
   testWidgets(
-      'segment-ratio point via the menu: cancel does nothing, "1/4" builds '
-      'the interpolated point', (tester) async {
-    await pumpEditor(tester);
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    'segment-ratio point via the menu: cancel does nothing, "1/4" builds '
+    'the interpolated point',
+    (tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    // Cancelling the ratio dialog activates nothing.
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Segment-ratio point…'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    expect(objectCount(), 0);
+      // Cancelling the ratio dialog activates nothing.
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Segment-ratio point…'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      expect(objectCount(), 0);
 
-    // Fraction input works; two taps commit one undo unit.
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Segment-ratio point…'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '1/4');
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
+      // Fraction input works; two taps commit one undo unit.
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Segment-ratio point…'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '1/4');
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
 
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    expect(objectCount(), 0,
-        reason: 'first endpoint is only collected, not committed');
-    await tester.tapAt(origin + const Offset(300, 100));
-    await tester.pump();
-    expect(objectCount(), 3, reason: '2 free points + the ratio point');
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      expect(
+        objectCount(),
+        0,
+        reason: 'first endpoint is only collected, not committed',
+      );
+      await tester.tapAt(origin + const Offset(300, 100));
+      await tester.pump();
+      expect(objectCount(), 3, reason: '2 free points + the ratio point');
 
-    // World is y-up with the origin at the canvas top-left, so the taps
-    // sit at (100, -100) and (300, -100); t = 1/4 lands at (150, -100).
-    final ratioPoint = container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .whereType<SegmentRatioPoint>()
-        .single;
-    expect(ratioPoint.ratio, 0.25);
-    expect(ratioPoint.position, const Vec2(150, -100));
+      // World is y-up with the origin at the canvas top-left, so the taps
+      // sit at (100, -100) and (300, -100); t = 1/4 lands at (150, -100).
+      final ratioPoint = container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<SegmentRatioPoint>()
+          .single;
+      expect(ratioPoint.ratio, 0.25);
+      expect(ratioPoint.position, const Vec2(150, -100));
 
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(objectCount(), 0);
-  });
-
-  testWidgets(
-      'three-point circle via the circles menu: three taps, one undo unit, '
-      'and the circles icon (not the lines one) is highlighted',
-      (tester) async {
-    await pumpEditor(tester);
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-
-    await tester.tap(find.byIcon(Icons.circle_outlined));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Circle through three points'));
-    await tester.pumpAndSettle();
-
-    // Both menus activate a ThreePointTool; the highlight must follow
-    // the builder, so only the circles icon lights up.
-    final theme = Theme.of(tester.element(find.byType(AppBar)));
-    Color? iconColor(IconData icon) =>
-        tester.widget<Icon>(find.byIcon(icon)).color;
-    expect(iconColor(Icons.circle_outlined), theme.colorScheme.primary);
-    expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));
-
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(300, 100));
-    await tester.pump();
-    expect(objectCount(), 0, reason: 'no commit until the third point');
-    await tester.tapAt(origin + const Offset(100, 300));
-    await tester.pump();
-    expect(objectCount(), 4, reason: '3 free points + the circle');
-
-    // Right angle at the first tap, so the circumcircle is centered on
-    // the hypotenuse midpoint (world is y-up: taps sit at y < 0).
-    final circle = container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .whereType<ThreePointCircle>()
-        .single;
-    expect(circle.circle!.center.closeTo(const Vec2(200, -200)), isTrue);
-
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(objectCount(), 0);
-  });
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(objectCount(), 0);
+    },
+  );
 
   testWidgets(
-      'compass via the circles menu: radius from the first two taps, '
+    'three-point circle via the circles menu: three taps, one undo unit, '
+    'and the circles icon (not the lines one) is highlighted',
+    (tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+      await tester.tap(find.byIcon(Icons.circle_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Circle through three points'));
+      await tester.pumpAndSettle();
+
+      // Both menus activate a ThreePointTool; the highlight must follow
+      // the builder, so only the circles icon lights up.
+      final theme = Theme.of(tester.element(find.byType(AppBar)));
+      Color? iconColor(IconData icon) =>
+          tester.widget<Icon>(find.byIcon(icon)).color;
+      expect(iconColor(Icons.circle_outlined), theme.colorScheme.primary);
+      expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));
+
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(300, 100));
+      await tester.pump();
+      expect(objectCount(), 0, reason: 'no commit until the third point');
+      await tester.tapAt(origin + const Offset(100, 300));
+      await tester.pump();
+      expect(objectCount(), 4, reason: '3 free points + the circle');
+
+      // Right angle at the first tap, so the circumcircle is centered on
+      // the hypotenuse midpoint (world is y-up: taps sit at y < 0).
+      final circle = container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<ThreePointCircle>()
+          .single;
+      expect(circle.circle!.center.closeTo(const Vec2(200, -200)), isTrue);
+
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(objectCount(), 0);
+    },
+  );
+
+  testWidgets('compass via the circles menu: radius from the first two taps, '
       'centered on the third', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -773,8 +838,9 @@ void main() {
     expect(objectCount(), 0);
   });
 
-  testWidgets('ray via the two-point menu: two taps, one undo unit',
-      (tester) async {
+  testWidgets('ray via the two-point menu: two taps, one undo unit', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -794,8 +860,9 @@ void main() {
     expect(objectCount(), 0);
   });
 
-  testWidgets('arc via the circles menu: three taps, one undo unit',
-      (tester) async {
+  testWidgets('arc via the circles menu: three taps, one undo unit', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -821,17 +888,18 @@ void main() {
         .single;
     expect(arc.isDefined, isTrue);
     expect(arc.circle!.center.closeTo(const Vec2(200, -77.5)), isTrue);
-    expect(arc.containsAngle(arc.circle!.angleAt(const Vec2(200, -180))),
-        isTrue,
-        reason: 'the drawn branch passes the via point');
+    expect(
+      arc.containsAngle(arc.circle!.angleAt(const Vec2(200, -180))),
+      isTrue,
+      reason: 'the drawn branch passes the via point',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 0);
   });
 
-  testWidgets(
-      'sector via the circles menu: center, rim (radius + start), '
+  testWidgets('sector via the circles menu: center, rim (radius + start), '
       'then the angle point', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -858,17 +926,20 @@ void main() {
     expect(sector.circle!.center.closeTo(const Vec2(200, -200)), isTrue);
     expect(sector.circle!.radius, closeTo(100, 1e-9));
     expect(sector.startAngle, closeTo(0, 1e-9));
-    expect(sector.sweep, closeTo(math.pi / 2, 1e-9),
-        reason: 'the third tap is straight up from the center (world '
-            'is y-up), a quarter turn CCW from the rim');
+    expect(
+      sector.sweep,
+      closeTo(math.pi / 2, 1e-9),
+      reason:
+          'the third tap is straight up from the center (world '
+          'is y-up), a quarter turn CCW from the rim',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 0);
   });
 
-  testWidgets(
-      'vertex angle via the angles menu: three taps, one undo unit, '
+  testWidgets('vertex angle via the angles menu: three taps, one undo unit, '
       'and the angles icon is highlighted', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -902,16 +973,18 @@ void main() {
         .whereType<VertexAngle>()
         .single;
     expect(angle.angle!.vertex.closeTo(const Vec2(100, -100)), isTrue);
-    expect(angle.angle!.measure, closeTo(math.pi / 2, 1e-9),
-        reason: 'CCW from the +x arm to the +y arm (world is y-up)');
+    expect(
+      angle.angle!.measure,
+      closeTo(math.pi / 2, 1e-9),
+      reason: 'CCW from the +x arm to the +y arm (world is y-up)',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 0);
   });
 
-  testWidgets(
-      'line angle via the angles menu: tap two existing lines, '
+  testWidgets('line angle via the angles menu: tap two existing lines, '
       'marks the acute angle at their crossing', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -929,8 +1002,11 @@ void main() {
 
     await makeLine(const Offset(100, 100), const Offset(300, 100));
     await makeLine(const Offset(100, 100), const Offset(100, 300));
-    expect(objectCount(), 5,
-        reason: 'the second line reuses the shared corner point');
+    expect(
+      objectCount(),
+      5,
+      reason: 'the second line reuses the shared corner point',
+    );
 
     await tester.tap(find.byIcon(Icons.square_foot));
     await tester.pumpAndSettle();
@@ -959,61 +1035,62 @@ void main() {
   });
 
   testWidgets(
-      'move/select mode: tap selects, shift-tap toggles, empty tap clears',
-      (tester) async {
-    await pumpEditor(tester);
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    'move/select mode: tap selects, shift-tap toggles, empty tap clears',
+    (tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    // Two points, then back to move/select mode.
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Point'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(200, 100));
-    await tester.pump();
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
-    await tester.pump();
+      // Two points, then back to move/select mode.
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Point'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(200, 100));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
+      await tester.pump();
 
-    final ids = [
-      for (final object
-          in container.read(constructionProvider).construction.objects)
-        object.id,
-    ];
-    Set<String> selection() => container.read(selectionProvider);
+      final ids = [
+        for (final object
+            in container.read(constructionProvider).construction.objects)
+          object.id,
+      ];
+      Set<String> selection() => container.read(selectionProvider);
 
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    expect(selection(), {ids[0]});
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      expect(selection(), {ids[0]});
 
-    // A plain click moves the selection rather than growing it.
-    await tester.tapAt(origin + const Offset(200, 100));
-    await tester.pump();
-    expect(selection(), {ids[1]});
+      // A plain click moves the selection rather than growing it.
+      await tester.tapAt(origin + const Offset(200, 100));
+      await tester.pump();
+      expect(selection(), {ids[1]});
 
-    // Shift-click adds…
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    expect(selection(), {ids[0], ids[1]});
+      // Shift-click adds…
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      expect(selection(), {ids[0], ids[1]});
 
-    // …and removes.
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    expect(selection(), {ids[1]});
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      // …and removes.
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      expect(selection(), {ids[1]});
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
 
-    // Empty canvas clears (even a shift-click keeps nothing to toggle).
-    await tester.tapAt(origin + const Offset(400, 300));
-    await tester.pump();
-    expect(selection(), isEmpty);
-  });
+      // Empty canvas clears (even a shift-click keeps nothing to toggle).
+      await tester.tapAt(origin + const Offset(400, 300));
+      await tester.pump();
+      expect(selection(), isEmpty);
+    },
+  );
 
-  testWidgets(
-      'long-press toggles an object in the selection — the touch '
-      'shift-click; empty-canvas long-press keeps the selection',
-      (tester) async {
+  testWidgets('long-press toggles an object in the selection — the touch '
+      'shift-click; empty-canvas long-press keeps the selection', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -1080,8 +1157,9 @@ void main() {
     expect(container.read(selectionProvider), isEmpty);
   });
 
-  testWidgets('taps while a tool is active never touch the selection',
-      (tester) async {
+  testWidgets('taps while a tool is active never touch the selection', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -1115,8 +1193,7 @@ void main() {
     expect(container.read(selectionProvider), selected);
   });
 
-  testWidgets(
-      'rubber band from empty canvas selects what it encloses; a band '
+  testWidgets('rubber band from empty canvas selects what it encloses; a band '
       'over nothing clears', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -1170,14 +1247,18 @@ void main() {
     const viewport = CanvasViewport(state);
     final construction = container.read(constructionProvider).construction;
     construction
-      ..add(FreePoint(
-        id: 'inside',
-        position: viewport.screenToWorld(const Offset(200, 120)),
-      ))
-      ..add(FreePoint(
-        id: 'below',
-        position: viewport.screenToWorld(const Offset(200, 200)),
-      ));
+      ..add(
+        FreePoint(
+          id: 'inside',
+          position: viewport.screenToWorld(const Offset(200, 120)),
+        ),
+      )
+      ..add(
+        FreePoint(
+          id: 'below',
+          position: viewport.screenToWorld(const Offset(200, 200)),
+        ),
+      );
     await tester.pump();
 
     final band = await tester.startGesture(origin + const Offset(100, 100));
@@ -1189,8 +1270,9 @@ void main() {
     expect(container.read(selectionProvider), {'inside'});
   });
 
-  testWidgets('shift rubber band adds to the selection instead of replacing',
-      (tester) async {
+  testWidgets('shift rubber band adds to the selection instead of replacing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -1227,8 +1309,7 @@ void main() {
     expect(container.read(selectionProvider), {ids[0], ids[1]});
   });
 
-  testWidgets(
-      'drags starting on an object, or with a tool active, do not '
+  testWidgets('drags starting on an object, or with a tool active, do not '
       'rubber band', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -1253,8 +1334,7 @@ void main() {
 
     // Move/select mode, but the drag starts on the point itself: that is
     // a future move-drag, not a band.
-    final onObject =
-        await tester.startGesture(origin + const Offset(100, 100));
+    final onObject = await tester.startGesture(origin + const Offset(100, 100));
     await onObject.moveTo(origin + const Offset(300, 300));
     await tester.pump();
     await onObject.up();
@@ -1262,8 +1342,9 @@ void main() {
     expect(container.read(selectionProvider), isEmpty);
   });
 
-  testWidgets('dragging a free point moves it; one undo restores it',
-      (tester) async {
+  testWidgets('dragging a free point moves it; one undo restores it', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -1286,57 +1367,67 @@ void main() {
     final drag = await tester.startGesture(origin + const Offset(100, 100));
     await drag.moveTo(origin + const Offset(250, 180));
     await tester.pump();
-    expect(point().position, const Vec2(250, -180),
-        reason: 'the preview tracks the pointer frame by frame');
+    expect(
+      point().position,
+      const Vec2(250, -180),
+      reason: 'the preview tracks the pointer frame by frame',
+    );
     await drag.up();
     await tester.pump();
     expect(point().position, const Vec2(250, -180));
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(point().position, const Vec2(100, -100),
-        reason: 'the whole gesture is one undo unit');
+    expect(
+      point().position,
+      const Vec2(100, -100),
+      reason: 'the whole gesture is one undo unit',
+    );
   });
 
   testWidgets(
-      'dragging a segment rigidly translates its endpoints, one undo unit',
-      (tester) async {
-    await pumpEditor(tester);
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    'dragging a segment rigidly translates its endpoints, one undo unit',
+    (tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.timeline));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Segment'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(300, 100));
-    await tester.pump();
-    container.read(toolProvider.notifier).deactivate(); // move/select mode
-    await tester.pump();
+      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Segment'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(300, 100));
+      await tester.pump();
+      container.read(toolProvider.notifier).deactivate(); // move/select mode
+      await tester.pump();
 
-    List<Vec2> endpoints() => [
-          for (final object in container
-              .read(constructionProvider)
-              .construction
-              .objects
-              .whereType<FreePoint>())
-            object.position,
-        ];
+      List<Vec2> endpoints() => [
+        for (final object
+            in container
+                .read(constructionProvider)
+                .construction
+                .objects
+                .whereType<FreePoint>())
+          object.position,
+      ];
 
-    // Grab the segment between its endpoints and drag.
-    final drag = await tester.startGesture(origin + const Offset(200, 100));
-    await drag.moveTo(origin + const Offset(220, 160));
-    await tester.pump();
-    await drag.up();
-    await tester.pump();
-    expect(endpoints(), [const Vec2(120, -160), const Vec2(320, -160)],
-        reason: 'both defining points shift by the drag delta');
+      // Grab the segment between its endpoints and drag.
+      final drag = await tester.startGesture(origin + const Offset(200, 100));
+      await drag.moveTo(origin + const Offset(220, 160));
+      await tester.pump();
+      await drag.up();
+      await tester.pump();
+      expect(endpoints(), [
+        const Vec2(120, -160),
+        const Vec2(320, -160),
+      ], reason: 'both defining points shift by the drag delta');
 
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(endpoints(), [const Vec2(100, -100), const Vec2(300, -100)]);
-  });
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(endpoints(), [const Vec2(100, -100), const Vec2(300, -100)]);
+    },
+  );
 
   testWidgets('a derived point refuses to drag', (tester) async {
     await pumpEditor(tester);
@@ -1372,67 +1463,75 @@ void main() {
   });
 
   testWidgets(
-      'dragging a point-on-object slides it along its curve, one undo unit',
-      (tester) async {
-    await pumpEditor(tester);
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    'dragging a point-on-object slides it along its curve, one undo unit',
+    (tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    // A horizontal segment, then a point constrained onto it.
-    await tester.tap(find.byIcon(Icons.timeline));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Segment'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(origin + const Offset(100, 100));
-    await tester.pump();
-    await tester.tapAt(origin + const Offset(300, 100));
-    await tester.pump();
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Point'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(origin + const Offset(200, 100));
-    await tester.pump();
-    container.read(toolProvider.notifier).deactivate(); // move/select mode
-    await tester.pump();
+      // A horizontal segment, then a point constrained onto it.
+      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Segment'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(300, 100));
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Point'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + const Offset(200, 100));
+      await tester.pump();
+      container.read(toolProvider.notifier).deactivate(); // move/select mode
+      await tester.pump();
 
-    PointOnObject point() => container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .whereType<PointOnObject>()
-        .single;
-    expect(point().position, const Vec2(200, -100));
+      PointOnObject point() => container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<PointOnObject>()
+          .single;
+      expect(point().position, const Vec2(200, -100));
 
-    // Drag well past the pan slop (~36 px), pulling away from the segment:
-    // the point must slide along it, not leave it (and not translate the
-    // segment's endpoints).
-    final drag = await tester.startGesture(origin + const Offset(200, 100));
-    await drag.moveTo(origin + const Offset(260, 220));
-    await tester.pump();
-    expect(point().position, const Vec2(260, -100),
-        reason: 'the preview projects the pointer onto the carrier');
-    await drag.up();
-    await tester.pump();
-    expect(point().position, const Vec2(260, -100));
+      // Drag well past the pan slop (~36 px), pulling away from the segment:
+      // the point must slide along it, not leave it (and not translate the
+      // segment's endpoints).
+      final drag = await tester.startGesture(origin + const Offset(200, 100));
+      await drag.moveTo(origin + const Offset(260, 220));
+      await tester.pump();
+      expect(
+        point().position,
+        const Vec2(260, -100),
+        reason: 'the preview projects the pointer onto the carrier',
+      );
+      await drag.up();
+      await tester.pump();
+      expect(point().position, const Vec2(260, -100));
 
-    final endpoints = container
-        .read(constructionProvider)
-        .construction
-        .objects
-        .whereType<FreePoint>()
-        .map((p) => p.position)
-        .toList();
-    expect(endpoints, [const Vec2(100, -100), const Vec2(300, -100)],
-        reason: 'sliding the constrained point never moves the curve');
+      final endpoints = container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<FreePoint>()
+          .map((p) => p.position)
+          .toList();
+      expect(endpoints, [
+        const Vec2(100, -100),
+        const Vec2(300, -100),
+      ], reason: 'sliding the constrained point never moves the curve');
 
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(point().position, const Vec2(200, -100),
-        reason: 'the whole slide is one undo unit');
-  });
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(
+        point().position,
+        const Vec2(200, -100),
+        reason: 'the whole slide is one undo unit',
+      );
+    },
+  );
 
-  testWidgets(
-      'dragging a compass circle moves only its center — the radius '
+  testWidgets('dragging a compass circle moves only its center — the radius '
       'points stay put', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -1451,13 +1550,14 @@ void main() {
     await tester.pump();
 
     List<Vec2> freePositions() => [
-          for (final object in container
+      for (final object
+          in container
               .read(constructionProvider)
               .construction
               .objects
               .whereType<FreePoint>())
-            object.position,
-        ];
+        object.position,
+    ];
 
     // Grab the rim (radius 50, right of the center) and drag.
     final drag = await tester.startGesture(origin + const Offset(350, 200));
@@ -1465,11 +1565,11 @@ void main() {
     await tester.pump();
     await drag.up();
     await tester.pump();
-    expect(freePositions(), [
-      const Vec2(100, -100),
-      const Vec2(150, -100),
-      const Vec2(330, -260),
-    ], reason: 'only the center translates; the radius pair is a measurement');
+    expect(
+      freePositions(),
+      [const Vec2(100, -100), const Vec2(150, -100), const Vec2(330, -260)],
+      reason: 'only the center translates; the radius pair is a measurement',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
@@ -1480,8 +1580,7 @@ void main() {
     ], reason: 'the whole drag is one undo unit');
   });
 
-  testWidgets(
-      'dragging a circumcircle vertex recomputes the circle, and undo '
+  testWidgets('dragging a circumcircle vertex recomputes the circle, and undo '
       'restores it', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -1512,8 +1611,11 @@ void main() {
     final drag = await tester.startGesture(origin + const Offset(200, 250));
     await drag.moveTo(origin + const Offset(200, 320));
     await tester.pump();
-    expect(circle().circle!.center, isNot(centerBefore),
-        reason: 'the preview recomputes dependents frame by frame');
+    expect(
+      circle().circle!.center,
+      isNot(centerBefore),
+      reason: 'the preview recomputes dependents frame by frame',
+    );
     await drag.up();
     await tester.pump();
 
@@ -1523,18 +1625,22 @@ void main() {
       Vec2(300, -100),
       Vec2(200, -320),
     ]) {
-      expect(moved.center.distanceTo(vertex),
-          closeTo(moved.radius, defaultEpsilon));
+      expect(
+        moved.center.distanceTo(vertex),
+        closeTo(moved.radius, defaultEpsilon),
+      );
     }
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(circle().circle!.center.closeTo(centerBefore), isTrue,
-        reason: 'undoing the drag restores the dependent too');
+    expect(
+      circle().circle!.center.closeTo(centerBefore),
+      isTrue,
+      reason: 'undoing the drag restores the dependent too',
+    );
   });
 
-  testWidgets(
-      'double-clicking the active group icon deactivates the tool and '
+  testWidgets('double-clicking the active group icon deactivates the tool and '
       'stops point placement', (tester) async {
     await pumpEditor(tester);
     final toolButton = find.byIcon(Icons.control_point);
@@ -1584,8 +1690,7 @@ void main() {
     expect(screenAfter.dy - screenBefore.dy, closeTo(-100, 1e-9));
 
     // Scrolling back restores the exact original pan.
-    await tester
-        .sendEventToBinding(pointer.scroll(const Offset(-40, -100)));
+    await tester.sendEventToBinding(pointer.scroll(const Offset(-40, -100)));
     await tester.pump();
     expect(container.read(viewportProvider).pan, before.state.pan);
   });
@@ -1610,10 +1715,16 @@ void main() {
       closeTo(math.exp(100 * GeometryCanvas.scrollZoomPerPixel), 1e-9),
     );
     final focalAfter = after.worldToScreen(fixedWorld);
-    expect(focalAfter.dx, closeTo(cursor.dx - origin.dx, 1e-6),
-        reason: 'the world point under the cursor must not move');
-    expect(focalAfter.dy, closeTo(cursor.dy - origin.dy, 1e-6),
-        reason: 'the world point under the cursor must not move');
+    expect(
+      focalAfter.dx,
+      closeTo(cursor.dx - origin.dx, 1e-6),
+      reason: 'the world point under the cursor must not move',
+    );
+    expect(
+      focalAfter.dy,
+      closeTo(cursor.dy - origin.dy, 1e-6),
+      reason: 'the world point under the cursor must not move',
+    );
 
     // Scrolling back down by the same amount restores 100 % exactly
     // (exponential mapping is symmetric).
@@ -1639,14 +1750,21 @@ void main() {
     final after = CanvasViewport(container.read(viewportProvider));
     expect(after.state.scale, closeTo(1.25, 1e-9));
     final focalAfter = after.worldToScreen(fixedWorld);
-    expect(focalAfter.dx, closeTo(cursor.dx - origin.dx, 1e-6),
-        reason: 'the world point under the cursor must not move');
-    expect(focalAfter.dy, closeTo(cursor.dy - origin.dy, 1e-6),
-        reason: 'the world point under the cursor must not move');
+    expect(
+      focalAfter.dx,
+      closeTo(cursor.dx - origin.dx, 1e-6),
+      reason: 'the world point under the cursor must not move',
+    );
+    expect(
+      focalAfter.dy,
+      closeTo(cursor.dy - origin.dy, 1e-6),
+      reason: 'the world point under the cursor must not move',
+    );
   });
 
-  testWidgets('scroll pan works with a tool active and adds nothing',
-      (tester) async {
+  testWidgets('scroll pan works with a tool active and adds nothing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
@@ -1670,8 +1788,9 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final cursor = origin + const Offset(240, 180);
-    final fixedWorld =
-        const CanvasViewport(ViewportState()).screenToWorld(cursor - origin);
+    final fixedWorld = const CanvasViewport(
+      ViewportState(),
+    ).screenToWorld(cursor - origin);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
     final pointer = TestPointer(1, PointerDeviceKind.mouse);
@@ -1683,14 +1802,23 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
     final after = CanvasViewport(container.read(viewportProvider));
-    expect(after.state.rotation, closeTo(0.6, 1e-9),
-        reason: 'scroll-up must turn counterclockwise at 0.003 rad/px');
+    expect(
+      after.state.rotation,
+      closeTo(0.6, 1e-9),
+      reason: 'scroll-up must turn counterclockwise at 0.003 rad/px',
+    );
     expect(after.state.scale, 1, reason: 'Alt+scroll never zooms');
     final focalAfter = after.worldToScreen(fixedWorld);
-    expect(focalAfter.dx, closeTo(cursor.dx - origin.dx, 1e-6),
-        reason: 'the world point under the cursor must not move');
-    expect(focalAfter.dy, closeTo(cursor.dy - origin.dy, 1e-6),
-        reason: 'the world point under the cursor must not move');
+    expect(
+      focalAfter.dx,
+      closeTo(cursor.dx - origin.dx, 1e-6),
+      reason: 'the world point under the cursor must not move',
+    );
+    expect(
+      focalAfter.dy,
+      closeTo(cursor.dy - origin.dy, 1e-6),
+      reason: 'the world point under the cursor must not move',
+    );
 
     // Quiet period passes: 0.6 rad is a deliberate angle, no snap.
     await tester.pump(const Duration(milliseconds: 300));
@@ -1711,11 +1839,17 @@ void main() {
     await tester.pump();
     await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
 
-    expect(container.read(viewportProvider).rotation, closeTo(0.03, 1e-9),
-        reason: 'the angle applies immediately, snap comes later');
+    expect(
+      container.read(viewportProvider).rotation,
+      closeTo(0.03, 1e-9),
+      reason: 'the angle applies immediately, snap comes later',
+    );
     await tester.pump(const Duration(milliseconds: 300));
-    expect(container.read(viewportProvider).rotation, 0,
-        reason: 'close enough to straight is straight');
+    expect(
+      container.read(viewportProvider).rotation,
+      0,
+      reason: 'close enough to straight is straight',
+    );
   });
 
   testWidgets('a trackpad pan-zoom twist rotates the view (native '
@@ -1723,8 +1857,9 @@ void main() {
     await pumpEditor(tester);
     final center = tester.getCenter(find.byType(GeometryCanvas));
 
-    final gesture =
-        await tester.createGesture(kind: PointerDeviceKind.trackpad);
+    final gesture = await tester.createGesture(
+      kind: PointerDeviceKind.trackpad,
+    );
     await gesture.panZoomStart(center);
     await tester.pump();
     // Cumulative rotation samples like macOS reports them: clockwise-
@@ -1737,8 +1872,11 @@ void main() {
     await tester.pump();
 
     final state = container.read(viewportProvider);
-    expect(state.rotation, greaterThan(0.2),
-        reason: 'pan-zoom rotation must reach the twist gate');
+    expect(
+      state.rotation,
+      greaterThan(0.2),
+      reason: 'pan-zoom rotation must reach the twist gate',
+    );
     expect(state.rotation, lessThanOrEqualTo(0.5));
     expect(state.scale, closeTo(1, 1e-9));
     expect(container.read(selectionProvider), isEmpty);
@@ -1746,15 +1884,16 @@ void main() {
   });
 
   testWidgets('the compass chip floats on the canvas top-right while '
-      'rotated and levels the view about the canvas center',
-      (tester) async {
+      'rotated and levels the view about the canvas center', (tester) async {
     await pumpEditor(tester);
     const compass = ValueKey('compass-button');
-    expect(find.byKey(compass), findsNothing,
-        reason: 'a level view shows no compass');
+    expect(
+      find.byKey(compass),
+      findsNothing,
+      reason: 'a level view shows no compass',
+    );
 
-    const rotated =
-        ViewportState(pan: Vec2(3, 4), scale: 2, rotation: 0.5);
+    const rotated = ViewportState(pan: Vec2(3, 4), scale: 2, rotation: 0.5);
     container.read(viewportProvider.notifier).set(rotated);
     await tester.pump();
     expect(find.byKey(compass), findsOneWidget);
@@ -1763,21 +1902,25 @@ void main() {
     // from its top-right corner, with a live degrees readout.
     final canvasRect = tester.getRect(find.byType(GeometryCanvas));
     final chipRect = tester.getRect(find.byKey(compass));
-    expect(chipRect.top, canvasRect.top + 12,
-        reason: 'the compass floats over the canvas, not the app bar');
+    expect(
+      chipRect.top,
+      canvasRect.top + 12,
+      reason: 'the compass floats over the canvas, not the app bar',
+    );
     expect(chipRect.right, canvasRect.right - 12);
     expect(chipRect.left, greaterThan(canvasRect.left));
     expect(chipRect.bottom, lessThan(canvasRect.bottom));
     expect(
-        find.descendant(of: find.byKey(compass), matching: find.text('29°')),
-        findsOneWidget,
-        reason: '0.5 rad reads as 29°');
+      find.descendant(of: find.byKey(compass), matching: find.text('29°')),
+      findsOneWidget,
+      reason: '0.5 rad reads as 29°',
+    );
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-    final centerLocal =
-        tester.getCenter(find.byType(GeometryCanvas)) - origin;
-    final centerWorld =
-        const CanvasViewport(rotated).screenToWorld(centerLocal);
+    final centerLocal = tester.getCenter(find.byType(GeometryCanvas)) - origin;
+    final centerWorld = const CanvasViewport(
+      rotated,
+    ).screenToWorld(centerLocal);
 
     await tester.tap(find.byKey(compass));
     await tester.pump();
@@ -1785,23 +1928,33 @@ void main() {
     final leveled = container.read(viewportProvider);
     expect(leveled.rotation, 0);
     expect(leveled.scale, 2, reason: 'leveling never rezooms');
-    final centerAfter =
-        CanvasViewport(leveled).worldToScreen(centerWorld);
-    expect(centerAfter.dx, closeTo(centerLocal.dx, 1e-6),
-        reason: 'the view pivots about the canvas center');
-    expect(centerAfter.dy, closeTo(centerLocal.dy, 1e-6),
-        reason: 'the view pivots about the canvas center');
-    expect(find.byKey(compass), findsNothing,
-        reason: 'level again — the compass retires');
+    final centerAfter = CanvasViewport(leveled).worldToScreen(centerWorld);
+    expect(
+      centerAfter.dx,
+      closeTo(centerLocal.dx, 1e-6),
+      reason: 'the view pivots about the canvas center',
+    );
+    expect(
+      centerAfter.dy,
+      closeTo(centerLocal.dy, 1e-6),
+      reason: 'the view pivots about the canvas center',
+    );
+    expect(
+      find.byKey(compass),
+      findsNothing,
+      reason: 'level again — the compass retires',
+    );
   });
 
-  testWidgets('pinch zooms about the fingers, and never rubber-bands',
-      (tester) async {
+  testWidgets('pinch zooms about the fingers, and never rubber-bands', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final focal = tester.getCenter(find.byType(GeometryCanvas));
-    final fixedWorld =
-        const CanvasViewport(ViewportState()).screenToWorld(focal - origin);
+    final fixedWorld = const CanvasViewport(
+      ViewportState(),
+    ).screenToWorld(focal - origin);
 
     // Two fingers 80 px apart spreading to 200 px in small alternating
     // steps (real pinches interleave per-finger moves the same way; big
@@ -1827,10 +1980,16 @@ void main() {
     expect(after.state.scale, greaterThan(1.5));
     expect(after.state.scale, lessThan(3.0));
     final focalWorldOnScreen = after.worldToScreen(fixedWorld);
-    expect((focalWorldOnScreen - (focal - origin)).distance, lessThan(10),
-        reason: 'the world point between the fingers must stay put');
-    expect(container.read(selectionProvider), isEmpty,
-        reason: 'a pinch must not open a rubber band');
+    expect(
+      (focalWorldOnScreen - (focal - origin)).distance,
+      lessThan(10),
+      reason: 'the world point between the fingers must stay put',
+    );
+    expect(
+      container.read(selectionProvider),
+      isEmpty,
+      reason: 'a pinch must not open a rubber band',
+    );
     expect(objectCount(), 0);
   });
 
@@ -1839,8 +1998,9 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final center = tester.getCenter(find.byType(GeometryCanvas));
-    final fixedWorld =
-        const CanvasViewport(ViewportState()).screenToWorld(center - origin);
+    final fixedWorld = const CanvasViewport(
+      ViewportState(),
+    ).screenToWorld(center - origin);
 
     // Fingers 100 px above/below the center walking a quarter circle
     // counterclockwise on screen (decreasing screen angle φ — screen y
@@ -1868,13 +2028,22 @@ void main() {
     // recognizer slop): solidly positive (counterclockwise), short of π/2.
     expect(after.state.rotation, greaterThan(1.0));
     expect(after.state.rotation, lessThanOrEqualTo(math.pi / 2 + 0.01));
-    expect(after.state.scale, closeTo(1, 0.01),
-        reason: 'fingers kept their span — a twist must not zoom');
+    expect(
+      after.state.scale,
+      closeTo(1, 0.01),
+      reason: 'fingers kept their span — a twist must not zoom',
+    );
     final focalAfter = after.worldToScreen(fixedWorld);
-    expect((focalAfter - (center - origin)).distance, lessThan(10),
-        reason: 'the world point between the fingers must stay put');
-    expect(container.read(selectionProvider), isEmpty,
-        reason: 'a twist must not open a rubber band');
+    expect(
+      (focalAfter - (center - origin)).distance,
+      lessThan(10),
+      reason: 'the world point between the fingers must stay put',
+    );
+    expect(
+      container.read(selectionProvider),
+      isEmpty,
+      reason: 'a twist must not open a rubber band',
+    );
     expect(objectCount(), 0);
   });
 
@@ -1902,12 +2071,16 @@ void main() {
     await g2.up();
     await tester.pump();
 
-    expect(container.read(viewportProvider).rotation, 0,
-        reason: 'an unarmed twist must leave the view exactly level');
+    expect(
+      container.read(viewportProvider).rotation,
+      0,
+      reason: 'an unarmed twist must leave the view exactly level',
+    );
   });
 
-  testWidgets('mouse pointers never twist — rotation is touch-only',
-      (tester) async {
+  testWidgets('mouse pointers never twist — rotation is touch-only', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final center = tester.getCenter(find.byType(GeometryCanvas));
 
@@ -1932,8 +2105,9 @@ void main() {
     expect(container.read(viewportProvider).rotation, 0);
   });
 
-  testWidgets('two-finger drag pans without zooming or banding',
-      (tester) async {
+  testWidgets('two-finger drag pans without zooming or banding', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final center = tester.getCenter(find.byType(GeometryCanvas));
     final before = container.read(viewportProvider);
@@ -2003,8 +2177,11 @@ void main() {
     expect(after.pan.x, closeTo(-60, 1e-6));
     expect(after.pan.y, closeTo(-30, 1e-6));
     expect(after.scale, 1);
-    expect(point.position, positionBefore,
-        reason: 'space-drag pans the viewport, never the grabbed object');
+    expect(
+      point.position,
+      positionBefore,
+      reason: 'space-drag pans the viewport, never the grabbed object',
+    );
     expect(container.read(selectionProvider), isEmpty);
   });
 
@@ -2024,24 +2201,31 @@ void main() {
 
     // Wander off *rotated*, so fit demonstrably recovers the
     // construction — and (Phase 61) demonstrably keeps the angle.
-    container.read(viewportProvider.notifier).set(
-        const ViewportState(pan: Vec2(5000, 5000), scale: 7, rotation: 0.9));
+    container
+        .read(viewportProvider.notifier)
+        .set(
+          const ViewportState(pan: Vec2(5000, 5000), scale: 7, rotation: 0.9),
+        );
     await tester.pump();
 
     await tester.tap(find.byIcon(Icons.fit_screen));
     await tester.pump();
     final canvasSize = tester.getSize(find.byType(GeometryCanvas));
     final fitted = CanvasViewport(container.read(viewportProvider));
-    expect(fitted.state.rotation, 0.9,
-        reason: 'fit frames, the compass levels — the angle is kept');
+    expect(
+      fitted.state.rotation,
+      0.9,
+      reason: 'fit frames, the compass levels — the angle is kept',
+    );
     final points = container
         .read(constructionProvider)
         .construction
         .objects
         .whereType<FreePoint>()
         .toList();
-    final onScreen =
-        points.map((p) => fitted.worldToScreen(p.position)).toList();
+    final onScreen = points
+        .map((p) => fitted.worldToScreen(p.position))
+        .toList();
     for (final screen in onScreen) {
       expect(screen.dx, inInclusiveRange(0, canvasSize.width));
       expect(screen.dy, inInclusiveRange(0, canvasSize.height));
@@ -2102,8 +2286,9 @@ void main() {
     return point;
   }
 
-  testWidgets('dragging a label stores its offset — one undo unit',
-      (tester) async {
+  testWidgets('dragging a label stores its offset — one undo unit', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final point = addNamedPoint();
@@ -2114,15 +2299,21 @@ void main() {
     final drag = await tester.startGesture(origin + const Offset(110, 88));
     await drag.moveTo(origin + const Offset(140, 118));
     await tester.pump();
-    expect(point.attributes.labelDx, 6,
-        reason: 'the preview must not mutate the construction per frame');
+    expect(
+      point.attributes.labelDx,
+      6,
+      reason: 'the preview must not mutate the construction per frame',
+    );
     await drag.up();
     await tester.pump();
 
     expect(point.attributes.labelDx, 36);
     expect(point.attributes.labelDy, 12);
-    expect(point.position, const Vec2(100, -100),
-        reason: 'a label drag never moves the object');
+    expect(
+      point.position,
+      const Vec2(100, -100),
+      reason: 'a label drag never moves the object',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
@@ -2154,8 +2345,11 @@ void main() {
     // Inside the text rect (top-left local (150, 62), 12 px line).
     await tester.tapAt(origin + const Offset(160, 68));
     await tester.pump();
-    expect(container.read(selectionProvider), {'d'},
-        reason: 'the text is the measurement\'s body');
+    expect(
+      container.read(selectionProvider),
+      {'d'},
+      reason: 'the text is the measurement\'s body',
+    );
 
     // An empty tap still clears — the text rect is not sticky.
     await tester.tapAt(origin + const Offset(400, 300));
@@ -2176,16 +2370,18 @@ void main() {
     await tester.pump();
     await drag.up();
     await tester.pump();
-    expect(distance.attributes.labelDy, 2,
-        reason: '-38 start offset + 40 px drag down');
+    expect(
+      distance.attributes.labelDy,
+      2,
+      reason: '-38 start offset + 40 px drag down',
+    );
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(distance.attributes.labelDy, -38);
   });
 
-  testWidgets('a label drag clamps to the max offset radius',
-      (tester) async {
+  testWidgets('a label drag clamps to the max offset radius', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final point = addNamedPoint();
@@ -2197,16 +2393,16 @@ void main() {
     await drag.up();
     await tester.pump();
 
-    final offset = Offset(
-      point.attributes.labelDx,
-      point.attributes.labelDy,
+    final offset = Offset(point.attributes.labelDx, point.attributes.labelDy);
+    expect(
+      offset.distance,
+      moreOrLessEquals(GeometryCanvas.labelOffsetMaxPx, epsilon: 0.001),
     );
-    expect(offset.distance,
-        moreOrLessEquals(GeometryCanvas.labelOffsetMaxPx, epsilon: 0.001));
   });
 
-  testWidgets('a cancelled label drag rolls back without a command',
-      (tester) async {
+  testWidgets('a cancelled label drag rolls back without a command', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final point = addNamedPoint();
@@ -2223,12 +2419,16 @@ void main() {
     final undoIcon = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.undo),
     );
-    expect(undoIcon.onPressed, isNull,
-        reason: 'nothing was committed, so there is nothing to undo');
+    expect(
+      undoIcon.onPressed,
+      isNull,
+      reason: 'nothing was committed, so there is nothing to undo',
+    );
   });
 
-  testWidgets('labels are not draggable while a tool is active',
-      (tester) async {
+  testWidgets('labels are not draggable while a tool is active', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final point = addNamedPoint();
@@ -2269,8 +2469,9 @@ void main() {
     return segment;
   }
 
-  testWidgets('dragging an endpoint live-updates the painted value',
-      (tester) async {
+  testWidgets('dragging an endpoint live-updates the painted value', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final segment = addMeasuredSegment();
@@ -2280,8 +2481,11 @@ void main() {
     final drag = await tester.startGesture(origin + const Offset(200, 100));
     await drag.moveTo(origin + const Offset(250, 100));
     await tester.pump();
-    expect(labelText(segment), '150.00',
-        reason: 'the value follows the drag preview frame by frame');
+    expect(
+      labelText(segment),
+      '150.00',
+      reason: 'the value follows the drag preview frame by frame',
+    );
     await drag.up();
     await tester.pump();
     expect(labelText(segment), '150.00');
@@ -2291,8 +2495,9 @@ void main() {
     expect(labelText(segment), '100.00');
   });
 
-  testWidgets('a value-only label is draggable like a name label',
-      (tester) async {
+  testWidgets('a value-only label is draggable like a name label', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final segment = addMeasuredSegment();
@@ -2309,8 +2514,11 @@ void main() {
 
     expect(segment.attributes.labelDx, 36);
     expect(segment.attributes.labelDy, 12);
-    expect(segment.start, const Vec2(100, -100),
-        reason: 'a label drag never moves the object');
+    expect(
+      segment.start,
+      const Vec2(100, -100),
+      reason: 'a label drag never moves the object',
+    );
   });
 
   testWidgets('G L then tap a circle, then a line: the whole circle '
@@ -2347,8 +2555,7 @@ void main() {
     // defining points; then the mirror.
     await tester.tapAt(origin + const Offset(100, 150));
     await tester.pump();
-    expect(objectCount(), 6,
-        reason: 'nothing commits until the mirror lands');
+    expect(objectCount(), 6, reason: 'nothing commits until the mirror lands');
     await tester.tapAt(origin + const Offset(250, 250));
     await tester.pump();
 
@@ -2363,8 +2570,10 @@ void main() {
     expect(image.center, isA<ReflectedPoint>());
     expect(image.circle!.radius, closeTo(source.circle!.radius, 1e-9));
     expect(
-      image.circle!.center
-          .closeTo(source.circle!.center + const Vec2(0, -200), 1e-9),
+      image.circle!.center.closeTo(
+        source.circle!.center + const Vec2(0, -200),
+        1e-9,
+      ),
       isTrue,
       reason: 'mirrored across the line 100 px below the center',
     );
@@ -2390,13 +2599,19 @@ void main() {
     final nearby = origin + const Offset(212, 200);
     await tester.tapAt(nearby, kind: PointerDeviceKind.mouse);
     await tester.pump();
-    expect(container.read(selectionProvider), isEmpty,
-        reason: '12 px is outside the 8-px mouse radius');
+    expect(
+      container.read(selectionProvider),
+      isEmpty,
+      reason: '12 px is outside the 8-px mouse radius',
+    );
 
     await tester.tapAt(nearby, kind: PointerDeviceKind.touch);
     await tester.pump();
-    expect(container.read(selectionProvider), {'a'},
-        reason: '12 px is inside the 16-px touch radius');
+    expect(
+      container.read(selectionProvider),
+      {'a'},
+      reason: '12 px is inside the 16-px touch radius',
+    );
   });
 
   group('DeleteTool taps (Phase 41)', () {
@@ -2438,8 +2653,11 @@ void main() {
 
       container.read(commandStackProvider.notifier).undo();
       expect(has('s'), isTrue);
-      expect(container.read(commandStackProvider).canUndo, isFalse,
-          reason: 'one tap = one undo step');
+      expect(
+        container.read(commandStackProvider).canUndo,
+        isFalse,
+        reason: 'one tap = one undo step',
+      );
     });
 
     testWidgets('a cascading tap asks first; Cancel leaves everything and '
@@ -2456,8 +2674,11 @@ void main() {
       expect(has('a'), isTrue);
       expect(has('s'), isTrue);
       expect(container.read(commandStackProvider).canUndo, isFalse);
-      expect(container.read(toolProvider).tool, isA<DeleteTool>(),
-          reason: 'a cancelled dialog keeps delete mode active');
+      expect(
+        container.read(toolProvider).tool,
+        isA<DeleteTool>(),
+        reason: 'a cancelled dialog keeps delete mode active',
+      );
     });
 
     testWidgets('confirming a cascading tap removes hit and dependents in '
@@ -2476,8 +2697,11 @@ void main() {
       container.read(commandStackProvider.notifier).undo();
       expect(has('a'), isTrue);
       expect(has('s'), isTrue);
-      expect(container.read(commandStackProvider).canUndo, isFalse,
-          reason: 'the cascade rode one command');
+      expect(
+        container.read(commandStackProvider).canUndo,
+        isFalse,
+        reason: 'the cascade rode one command',
+      );
     });
 
     testWidgets('an empty tap deletes nothing and never retargets the '
@@ -2489,8 +2713,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(objectCount(), 3);
-      expect(container.read(selectionProvider), {'b'},
-          reason: 'the active tool owns the tap; no selection clear');
+      expect(
+        container.read(selectionProvider),
+        {'b'},
+        reason: 'the active tool owns the tap; no selection clear',
+      );
       expect(container.read(commandStackProvider).canUndo, isFalse);
     });
   });

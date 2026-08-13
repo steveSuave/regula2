@@ -20,20 +20,20 @@ void main() {
 
   // A 3–4–5 hypotenuse, so the value part is a clean '5.00'.
   Segment segment(ObjectAttributes attributes) => Segment(
-        id: 's',
-        point1: FreePoint(id: 'a', position: const Vec2(0, 0)),
-        point2: FreePoint(id: 'b', position: const Vec2(3, 4)),
-        attributes: attributes,
-      );
+    id: 's',
+    point1: FreePoint(id: 'a', position: const Vec2(0, 0)),
+    point2: FreePoint(id: 'b', position: const Vec2(3, 4)),
+    attributes: attributes,
+  );
 
   // A right angle at the origin: (5,0) → (0,0) → (0,7), CCW 90°.
   VertexAngle angle(ObjectAttributes attributes) => VertexAngle(
-        id: 'v',
-        arm1: FreePoint(id: 'a1', position: const Vec2(5, 0)),
-        vertex: FreePoint(id: 'vx', position: const Vec2(0, 0)),
-        arm2: FreePoint(id: 'a2', position: const Vec2(0, 7)),
-        attributes: attributes,
-      );
+    id: 'v',
+    arm1: FreePoint(id: 'a1', position: const Vec2(5, 0)),
+    vertex: FreePoint(id: 'vx', position: const Vec2(0, 0)),
+    arm2: FreePoint(id: 'a2', position: const Vec2(0, 7)),
+    attributes: attributes,
+  );
 
   group('labelText', () {
     test('named + labelVisible without showValue: bare name', () {
@@ -59,11 +59,13 @@ void main() {
       );
       expect(
         labelText(
-          segment(const ObjectAttributes(
-            name: 'c',
-            labelVisible: false,
-            showValue: true,
-          )),
+          segment(
+            const ObjectAttributes(
+              name: 'c',
+              labelVisible: false,
+              showValue: true,
+            ),
+          ),
         ),
         '5.00',
         reason: 'labelVisible off hides only the name part',
@@ -142,8 +144,11 @@ void main() {
         references: const [],
         attributes: const ObjectAttributes(name: 'a', labelVisible: true),
       );
-      expect(labelText(text), 'AB = 5.00 cm',
-          reason: 'prefixing the name would read as a bogus equation chain');
+      expect(
+        labelText(text),
+        'AB = 5.00 cm',
+        reason: 'prefixing the name would read as a bogus equation chain',
+      );
     });
 
     test('an area measurement formats through formatArea', () {
@@ -204,21 +209,27 @@ void main() {
     )!;
     expect(large.width, greaterThan(normal.width));
     expect(large.height, greaterThan(normal.height));
-    expect(large.topLeft, normal.topLeft,
-        reason: 'size changes the extent, not the anchor offset');
+    expect(
+      large.topLeft,
+      normal.topLeft,
+      reason: 'size changes the extent, not the anchor offset',
+    );
   });
 
   group('angle labels sit on the bisector past the arc (Phase 63)', () {
     // The fixture angle opens from +x to +y, so the world bisector is 45°
     // up-right; on the default (unrotated, y-flipped) viewport that's
     // screen direction (√2/2, −√2/2).
-    ObjectAttributes attrs({double radius = 28, double dx = 0, double dy = 0}) =>
-        ObjectAttributes(
-          showValue: true,
-          angleMarkerRadius: radius,
-          labelDx: dx,
-          labelDy: dy,
-        );
+    ObjectAttributes attrs({
+      double radius = 28,
+      double dx = 0,
+      double dy = 0,
+    }) => ObjectAttributes(
+      showValue: true,
+      angleMarkerRadius: radius,
+      labelDx: dx,
+      labelDy: dy,
+    );
 
     Offset vertexScreen() => viewport.worldToScreen(const Vec2(0, 0));
 
@@ -227,12 +238,18 @@ void main() {
       final toCenter = rect.center - vertexScreen();
       expect(toCenter.dx, greaterThan(0));
       expect(toCenter.dy, lessThan(0), reason: 'up-right on screen');
-      expect(toCenter.dx, closeTo(-toCenter.dy, 0.001),
-          reason: 'centered on the 45° bisector');
+      expect(
+        toCenter.dx,
+        closeTo(-toCenter.dy, 0.001),
+        reason: 'centered on the 45° bisector',
+      );
       // The rect's nearest corner to the vertex must clear the arc.
       final near = Offset(rect.left, rect.bottom) - vertexScreen();
-      expect(near.distance, greaterThanOrEqualTo(28),
-          reason: 'the near edge sits past the marker radius');
+      expect(
+        near.distance,
+        greaterThanOrEqualTo(28),
+        reason: 'the near edge sits past the marker radius',
+      );
     });
 
     test('a larger marker radius pushes the label farther out', () {
@@ -256,8 +273,11 @@ void main() {
       segment(const ObjectAttributes(showValue: true)),
       viewport,
     );
-    expect(rect, isNotNull,
-        reason: 'the value text must be grabbable for label dragging');
+    expect(
+      rect,
+      isNotNull,
+      reason: 'the value text must be grabbable for label dragging',
+    );
   });
 
   test('an undefined segment paints no value rect', () {

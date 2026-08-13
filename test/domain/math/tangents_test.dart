@@ -31,8 +31,11 @@ void main() {
     test('strictly inside yields no tangent points', () {
       final circle = CircleEq(const Vec2(2, 3), 5);
       expect(tangentPointsToCircle(const Vec2(3, 4), circle), isEmpty);
-      expect(tangentPointsToCircle(circle.center, circle), isEmpty,
-          reason: 'the center has no direction, let alone tangents');
+      expect(
+        tangentPointsToCircle(circle.center, circle),
+        isEmpty,
+        reason: 'the center has no direction, let alone tangents',
+      );
     });
 
     test('a degenerate radius yields no tangent points', () {
@@ -49,15 +52,18 @@ void main() {
     // the center so the branch geometry still varies freely.
     (Vec2, CircleEq) outsideCase(Vec2 p, CircleEq circle) {
       final offset = p - circle.center;
-      final direction =
-          offset.normSquared == 0 ? const Vec2(1, 0) : offset.normalized();
+      final direction = offset.normSquared == 0
+          ? const Vec2(1, 0)
+          : offset.normalized();
       final external =
           circle.center + direction * (circle.radius + 1 + offset.norm);
       return (external, circle);
     }
 
-    Glados2(any.vec2, any.circleEq).test('tangent points lie on the circle',
-        (p, generatedCircle) {
+    Glados2(any.vec2, any.circleEq).test('tangent points lie on the circle', (
+      p,
+      generatedCircle,
+    ) {
       final (external, circle) = outsideCase(p, generatedCircle);
       final points = tangentPointsToCircle(external, circle);
       expect(points, hasLength(2));
@@ -68,26 +74,27 @@ void main() {
     });
 
     Glados2(any.vec2, any.circleEq).test(
-        'the radius to a tangent point is perpendicular to the tangent line',
-        (p, generatedCircle) {
-      final (external, circle) = outsideCase(p, generatedCircle);
-      for (final t in tangentPointsToCircle(external, circle)) {
-        final radius = t - circle.center;
-        final tangent = t - external;
-        final cosine =
-            radius.dot(tangent) / (radius.norm * tangent.norm);
-        expect(cosine, closeTo(0, 1e-8));
-      }
-    });
+      'the radius to a tangent point is perpendicular to the tangent line',
+      (p, generatedCircle) {
+        final (external, circle) = outsideCase(p, generatedCircle);
+        for (final t in tangentPointsToCircle(external, circle)) {
+          final radius = t - circle.center;
+          final tangent = t - external;
+          final cosine = radius.dot(tangent) / (radius.norm * tangent.norm);
+          expect(cosine, closeTo(0, 1e-8));
+        }
+      },
+    );
 
     Glados2(any.vec2, any.circleEq).test(
-        'the first point lies left of the directed center → external line',
-        (p, generatedCircle) {
-      final (external, circle) = outsideCase(p, generatedCircle);
-      final points = tangentPointsToCircle(external, circle);
-      final toExternal = external - circle.center;
-      expect(toExternal.cross(points[0] - circle.center), isPositive);
-      expect(toExternal.cross(points[1] - circle.center), isNegative);
-    });
+      'the first point lies left of the directed center → external line',
+      (p, generatedCircle) {
+        final (external, circle) = outsideCase(p, generatedCircle);
+        final points = tangentPointsToCircle(external, circle);
+        final toExternal = external - circle.center;
+        expect(toExternal.cross(points[0] - circle.center), isPositive);
+        expect(toExternal.cross(points[1] - circle.center), isNegative);
+      },
+    );
   });
 }

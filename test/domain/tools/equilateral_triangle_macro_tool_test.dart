@@ -40,16 +40,11 @@ void main() {
       final construction = Construction();
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
-      final result =
-          tool.onInput(const ToolInput(Vec2(2, 0))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(2, 0))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(
-        construction.length,
-        6,
-        reason: '2 free corners + apex + 3 sides',
-      );
+      expect(construction.length, 6, reason: '2 free corners + apex + 3 sides');
       expect(
         apex(construction).position!.closeTo(Vec2(1, math.sqrt(3)), 1e-12),
         isTrue,
@@ -97,8 +92,7 @@ void main() {
     test('dragging a corner keeps the triangle equilateral', () {
       final construction = Construction();
       tool.onInput(const ToolInput(Vec2(0, 0)));
-      (tool.onInput(const ToolInput(Vec2(2, 0))) as ToolCommitted)
-          .command
+      (tool.onInput(const ToolInput(Vec2(2, 0))) as ToolCommitted).command
           .apply(construction);
       final a = corners(construction)[0];
 
@@ -118,7 +112,8 @@ void main() {
       construction.add(a);
       construction.add(b);
       ToolResult tap(FreePoint point) => tool.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(a);
       (tap(b) as ToolCommitted).command.apply(construction);
@@ -128,10 +123,16 @@ void main() {
       tap(a);
       (tap(b) as ToolCommitted).command.apply(construction);
 
-      expect(construction.objects.whereType<RotatedPoint>().single, same(apex),
-          reason: 'the apex is reused, not stacked');
-      expect(construction.length, before + 3,
-          reason: 'only the three side segments are re-added');
+      expect(
+        construction.objects.whereType<RotatedPoint>().single,
+        same(apex),
+        reason: 'the apex is reused, not stacked',
+      );
+      expect(
+        construction.length,
+        before + 3,
+        reason: 'only the three side segments are re-added',
+      );
     });
   });
 }

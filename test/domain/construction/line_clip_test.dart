@@ -312,11 +312,11 @@ void main() {
       return ([a, b, c, d, l1, l2, crossing, bisector], bisector, crossing);
     }
 
-    test('the crossing of the parent lines counts, either parent order',
-        () {
+    test('the crossing of the parent lines counts, either parent order', () {
       for (final swapped in [false, true]) {
-        final (objects, bisector, crossing) =
-            bisectorScene(swapCrossingParents: swapped);
+        final (objects, bisector, crossing) = bisectorScene(
+          swapCrossingParents: swapped,
+        );
         final glued = PointOnObject.near(
           id: 'g',
           curve: bisector,
@@ -367,11 +367,14 @@ void main() {
       );
       // Only the glued point is incident; one point → infinite.
       expect(
-        lineClipSpan(
-          [...objects.where((o) => o.id != 'x'), e, f, other, otherCrossing,
-              glued],
-          bisector,
-        ),
+        lineClipSpan([
+          ...objects.where((o) => o.id != 'x'),
+          e,
+          f,
+          other,
+          otherCrossing,
+          glued,
+        ], bisector),
         isNull,
       );
     });
@@ -435,11 +438,7 @@ void main() {
         curve: ray,
         position: Vec2(9, 0),
       );
-      expectSpan(
-        lineClipSpan([a, b, ray, glued], ray),
-        Vec2(0, 0),
-        Vec2(9, 0),
-      );
+      expectSpan(lineClipSpan([a, b, ray, glued], ray), Vec2(0, 0), Vec2(9, 0));
     });
 
     test('with only the defining points the through point clamps', () {

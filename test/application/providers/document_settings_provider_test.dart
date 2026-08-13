@@ -12,7 +12,10 @@ void main() {
 
   group('documentSettingsProvider', () {
     test('defaults to axes and grid off', () {
-      expect(container.read(documentSettingsProvider), const DocumentSettings());
+      expect(
+        container.read(documentSettingsProvider),
+        const DocumentSettings(),
+      );
       expect(container.read(documentSettingsProvider).showAxes, isFalse);
       expect(container.read(documentSettingsProvider).showGrid, isFalse);
     });
@@ -64,7 +67,10 @@ void main() {
       );
 
       notifier.reset();
-      expect(container.read(documentSettingsProvider), const DocumentSettings());
+      expect(
+        container.read(documentSettingsProvider),
+        const DocumentSettings(),
+      );
     });
   });
 
@@ -78,7 +84,10 @@ void main() {
         const DocumentSettings(showAxes: true),
         isNot(const DocumentSettings(showGrid: true)),
       );
-      expect(const DocumentSettings(), isNot(const DocumentSettings(showAxes: true)));
+      expect(
+        const DocumentSettings(),
+        isNot(const DocumentSettings(showAxes: true)),
+      );
     });
   });
 }

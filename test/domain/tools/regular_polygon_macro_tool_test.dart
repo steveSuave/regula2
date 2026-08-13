@@ -14,10 +14,8 @@ import 'package:regula/domain/tools/tool.dart';
 void main() {
   late int nextId;
 
-  RegularPolygonMacroTool toolFor(int sides) => RegularPolygonMacroTool(
-        newId: () => 'n${nextId++}',
-        sideCount: sides,
-      );
+  RegularPolygonMacroTool toolFor(int sides) =>
+      RegularPolygonMacroTool(newId: () => 'n${nextId++}', sideCount: sides);
 
   setUp(() => nextId = 0);
 
@@ -30,9 +28,9 @@ void main() {
   }
 
   List<Vec2> vertexPositions(Construction c) => [
-        for (final o in c.objects)
-          if (o case final GeoPoint p) p.position!,
-      ];
+    for (final o in c.objects)
+      if (o case final GeoPoint p) p.position!,
+  ];
 
   /// Equal sides and equal distances to the vertex centroid on the
   /// current positions.
@@ -61,8 +59,7 @@ void main() {
       final tool = toolFor(4);
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
-      final result =
-          tool.onInput(const ToolInput(Vec2(2, 0))) as ToolCommitted;
+      final result = tool.onInput(const ToolInput(Vec2(2, 0))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
@@ -71,8 +68,7 @@ void main() {
         8,
         reason: '2 free + 2 derived vertices + 4 sides',
       );
-      final derived =
-          construction.objects.whereType<RotatedPoint>().toList();
+      final derived = construction.objects.whereType<RotatedPoint>().toList();
       expect(derived[0].position!.closeTo(const Vec2(2, 2), 1e-12), isTrue);
       expect(derived[1].position!.closeTo(const Vec2(0, 2), 1e-12), isTrue);
       expectRegular(construction, 4);
@@ -102,10 +98,7 @@ void main() {
     test('three sides reproduce the equilateral apex', () {
       final construction = buildPolygon(3, const Vec2(0, 0), const Vec2(2, 0));
       final apex = construction.objects.whereType<RotatedPoint>().single;
-      expect(
-        apex.position!.closeTo(Vec2(1, math.sqrt(3)), 1e-12),
-        isTrue,
-      );
+      expect(apex.position!.closeTo(Vec2(1, math.sqrt(3)), 1e-12), isTrue);
     });
   });
 
@@ -118,7 +111,8 @@ void main() {
       construction.add(b);
       final tool = toolFor(6);
       ToolResult tap(FreePoint point) => tool.onInput(
-          ToolInput(point.position, hit: point, objects: construction.objects));
+        ToolInput(point.position, hit: point, objects: construction.objects),
+      );
 
       tap(a);
       (tap(b) as ToolCommitted).command.apply(construction);
@@ -129,10 +123,16 @@ void main() {
       tap(a);
       (tap(b) as ToolCommitted).command.apply(construction);
 
-      expect(construction.objects.whereType<RotatedPoint>().toList(), ring,
-          reason: 'every chained vertex is reused, none stacked');
-      expect(construction.length, before + 6,
-          reason: 'only the six side segments are re-added');
+      expect(
+        construction.objects.whereType<RotatedPoint>().toList(),
+        ring,
+        reason: 'every chained vertex is reused, none stacked',
+      );
+      expect(
+        construction.length,
+        before + 6,
+        reason: 'only the six side segments are re-added',
+      );
     });
   });
 }

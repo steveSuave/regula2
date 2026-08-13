@@ -27,10 +27,7 @@ void main() {
     test('rejects fewer than 3 vertices', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(1, 0));
-      expect(
-        () => Polygon(id: 'p', vertices: [a, b]),
-        throwsArgumentError,
-      );
+      expect(() => Polygon(id: 'p', vertices: [a, b]), throwsArgumentError);
       expect(() => Polygon(id: 'p', vertices: []), throwsArgumentError);
     });
 

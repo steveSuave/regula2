@@ -45,63 +45,67 @@ void main() {
     // collinearity gate always passes. Each property skips the midpoint's
     // ill-conditioned neighborhood (|2t − 1| < 0.05), where the conjugate
     // shoots toward infinity and tolerances test floating point only.
-    final harmonicParameter =
-        any.intInRange(-2000, 2001).map((i) => i / 1000);
+    final harmonicParameter = any.intInRange(-2000, 2001).map((i) => i / 1000);
     bool nearMidpoint(double t) => (2 * t - 1).abs() < 0.05;
 
     Glados3(any.vec2, any.vec2, harmonicParameter).test(
-        'cross-ratio (A,B;C,D) is −1', (a, b, t) {
-      if (a.closeTo(b, 1e-3) || nearMidpoint(t)) {
-        return;
-      }
-      if (t.abs() < 1e-3 || (1 - t).abs() < 1e-3) {
-        return; // endpoints are fixed points: both signed ratios degenerate
-      }
-      final c = a + (b - a) * t;
-      final d = harmonicConjugate(a, b, c);
-      if (d == null) {
-        return; // c landed inside the midpoint guard band
-      }
-      // Signed ratios along AB: AC/CB = −AD/DB.
-      final ab = b - a;
-      double param(Vec2 p) => (p - a).dot(ab) / ab.normSquared;
-      final tc = param(c);
-      final td = param(d);
-      final ratioC = tc / (1 - tc);
-      final ratioD = td / (1 - td);
-      expect(ratioC / ratioD, closeTo(-1, 1e-6));
-    });
+      'cross-ratio (A,B;C,D) is −1',
+      (a, b, t) {
+        if (a.closeTo(b, 1e-3) || nearMidpoint(t)) {
+          return;
+        }
+        if (t.abs() < 1e-3 || (1 - t).abs() < 1e-3) {
+          return; // endpoints are fixed points: both signed ratios degenerate
+        }
+        final c = a + (b - a) * t;
+        final d = harmonicConjugate(a, b, c);
+        if (d == null) {
+          return; // c landed inside the midpoint guard band
+        }
+        // Signed ratios along AB: AC/CB = −AD/DB.
+        final ab = b - a;
+        double param(Vec2 p) => (p - a).dot(ab) / ab.normSquared;
+        final tc = param(c);
+        final td = param(d);
+        final ratioC = tc / (1 - tc);
+        final ratioD = td / (1 - td);
+        expect(ratioC / ratioD, closeTo(-1, 1e-6));
+      },
+    );
 
     Glados3(any.vec2, any.vec2, harmonicParameter).test(
-        'the conjugate lies on line AB', (a, b, t) {
-      if (a.closeTo(b, 1e-3) || nearMidpoint(t)) {
-        return;
-      }
-      final c = a + (b - a) * t;
-      final d = harmonicConjugate(a, b, c);
-      if (d == null) {
-        return;
-      }
-      expect(isCollinear(a, b, d, 1e-6), isTrue);
-    });
+      'the conjugate lies on line AB',
+      (a, b, t) {
+        if (a.closeTo(b, 1e-3) || nearMidpoint(t)) {
+          return;
+        }
+        final c = a + (b - a) * t;
+        final d = harmonicConjugate(a, b, c);
+        if (d == null) {
+          return;
+        }
+        expect(isCollinear(a, b, d, 1e-6), isTrue);
+      },
+    );
 
     Glados3(any.vec2, any.vec2, harmonicParameter).test(
-        'the map is an involution: conjugate of the conjugate is C',
-        (a, b, t) {
-      if (a.closeTo(b, 1e-3) || nearMidpoint(t)) {
-        return;
-      }
-      final c = a + (b - a) * t;
-      final d = harmonicConjugate(a, b, c);
-      if (d == null) {
-        return;
-      }
-      final back = harmonicConjugate(a, b, d);
-      if (back == null) {
-        return; // d landed within the midpoint guard of the reverse map
-      }
-      final scale = (b - a).norm;
-      expect(back.distanceTo(c) / scale, lessThan(1e-6));
-    });
+      'the map is an involution: conjugate of the conjugate is C',
+      (a, b, t) {
+        if (a.closeTo(b, 1e-3) || nearMidpoint(t)) {
+          return;
+        }
+        final c = a + (b - a) * t;
+        final d = harmonicConjugate(a, b, c);
+        if (d == null) {
+          return;
+        }
+        final back = harmonicConjugate(a, b, d);
+        if (back == null) {
+          return; // d landed within the midpoint guard of the reverse map
+        }
+        final scale = (b - a).norm;
+        expect(back.distanceTo(c) / scale, lessThan(1e-6));
+      },
+    );
   });
 }

@@ -68,8 +68,11 @@ void main() {
     addPoint('b', const Vec2(300, -200));
     await tester.pump();
 
-    expect(find.textContaining('Next name'), findsNothing,
-        reason: 'no chip without the tool');
+    expect(
+      find.textContaining('Next name'),
+      findsNothing,
+      reason: 'no chip without the tool',
+    );
 
     await activate(tester, '');
     expect(find.text('Next name: A'), findsOneWidget);
@@ -99,13 +102,15 @@ void main() {
 
     await activate(tester, '');
     await tapWorld(tester, const Offset(500, 400));
-    expect(find.text('Next name: A'), findsOneWidget,
-        reason: 'missing the point consumes nothing');
+    expect(
+      find.text('Next name: A'),
+      findsOneWidget,
+      reason: 'missing the point consumes nothing',
+    );
     expect(container.read(commandStackProvider).canUndo, isFalse);
   });
 
-  testWidgets('a naming string runs out and the chip says so',
-      (tester) async {
+  testWidgets('a naming string runs out and the chip says so', (tester) async {
     await pumpEditor(tester);
     addPoint('a', const Vec2(100, -200));
     addPoint('b', const Vec2(300, -200));

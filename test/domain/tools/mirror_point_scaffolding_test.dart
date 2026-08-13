@@ -15,14 +15,17 @@ void main() {
   /// A, B spanning the axis segment, P off it, and the mirror chain —
   /// all in one construction so drags recompute.
   ({Construction construction, FreePoint a, FreePoint p, GeoPoint mirrored})
-      buildMirror({required Vec2 pPosition}) {
+  buildMirror({required Vec2 pPosition}) {
     final construction = Construction();
     final a = FreePoint(id: 'a', position: const Vec2(0, 0));
     final b = FreePoint(id: 'b', position: const Vec2(4, 0));
     final p = FreePoint(id: 'p', position: pPosition);
     final axis = Segment(id: 'axis', point1: a, point2: b);
-    final (:scaffolding, :mirrored) =
-        mirrorPointAcross(point: p, axis: axis, newId: newId);
+    final (:scaffolding, :mirrored) = mirrorPointAcross(
+      point: p,
+      axis: axis,
+      newId: newId,
+    );
     construction
       ..add(a)
       ..add(b)
@@ -35,49 +38,62 @@ void main() {
 
   group('mirrorPointAcross', () {
     test('produces the exact reflection across the axis carrier', () {
-      final (construction: _, a: _, p: _, :mirrored) =
-          buildMirror(pPosition: const Vec2(1, 3));
+      final (construction: _, a: _, p: _, :mirrored) = buildMirror(
+        pPosition: const Vec2(1, 3),
+      );
       expect(mirrored.position, const Vec2(1, -3));
     });
 
     test('a point on the axis mirrors onto itself', () {
-      final (construction: _, a: _, p: _, :mirrored) =
-          buildMirror(pPosition: const Vec2(2, 0));
+      final (construction: _, a: _, p: _, :mirrored) = buildMirror(
+        pPosition: const Vec2(2, 0),
+      );
       expect(mirrored.position, const Vec2(2, 0));
     });
 
-    test('follows the point continuously across the axis — no branch flip',
-        () {
-      final (:construction, a: _, :p, :mirrored) =
-          buildMirror(pPosition: const Vec2(1, 3));
+    test('follows the point continuously across the axis — no branch flip', () {
+      final (:construction, a: _, :p, :mirrored) = buildMirror(
+        pPosition: const Vec2(1, 3),
+      );
 
       construction.moveFreePoint(p.id, const Vec2(1, 0.5));
       expect(mirrored.position, const Vec2(1, -0.5));
       construction.moveFreePoint(p.id, const Vec2(1, -2));
-      expect(mirrored.position, const Vec2(1, 2),
-          reason: 'crossing the axis swaps sides smoothly');
+      expect(
+        mirrored.position,
+        const Vec2(1, 2),
+        reason: 'crossing the axis swaps sides smoothly',
+      );
     });
 
     test('undefined axis leaves the mirror undefined, and it recovers', () {
-      final (:construction, :a, p: _, :mirrored) =
-          buildMirror(pPosition: const Vec2(1, 3));
+      final (:construction, :a, p: _, :mirrored) = buildMirror(
+        pPosition: const Vec2(1, 3),
+      );
 
       construction.moveFreePoint(a.id, const Vec2(4, 0));
-      expect(mirrored.position, isNull,
-          reason: 'coincident axis endpoints have no carrier');
+      expect(
+        mirrored.position,
+        isNull,
+        reason: 'coincident axis endpoints have no carrier',
+      );
 
       construction.moveFreePoint(a.id, const Vec2(0, 0));
       expect(mirrored.position, const Vec2(1, -3));
     });
 
     test('scaffolding is hidden, the mirror image is visible', () {
-      final (:construction, a: _, p: _, :mirrored) =
-          buildMirror(pPosition: const Vec2(1, 3));
+      final (:construction, a: _, p: _, :mirrored) = buildMirror(
+        pPosition: const Vec2(1, 3),
+      );
       final scaffolding = construction.objects.where(
         (o) => !o.attributes.visible,
       );
-      expect(scaffolding, hasLength(2),
-          reason: 'the perpendicular and its foot');
+      expect(
+        scaffolding,
+        hasLength(2),
+        reason: 'the perpendicular and its foot',
+      );
       expect(mirrored.attributes.visible, isTrue);
     });
   });

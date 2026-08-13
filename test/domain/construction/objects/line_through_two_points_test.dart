@@ -55,8 +55,11 @@ void main() {
       final l = LineThroughTwoPoints(id: 'l', point1: a, point2: inf);
       expect(l.isDefined, isTrue);
       expect(l.line!.contains(const Vec2(1, 2)), isTrue);
-      expect(l.line!.contains(const Vec2(4, 6)), isTrue,
-          reason: 'runs in the direction (3, 4)');
+      expect(
+        l.line!.contains(const Vec2(4, 6)),
+        isTrue,
+        reason: 'runs in the direction (3, 4)',
+      );
     });
 
     test('projectively coincident parents at different complex scales: '
@@ -75,28 +78,32 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(2, 1));
       final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       expect(ProjLine.lift(l.line!).closeTo(l.projLine!), isTrue);
-      expect(l.line!.direction.dot(const Vec2(2, 1)), greaterThan(0),
-          reason: 'V1 orientation runs point1 → point2');
+      expect(
+        l.line!.direction.dot(const Vec2(2, 1)),
+        greaterThan(0),
+        reason: 'V1 orientation runs point1 → point2',
+      );
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-        'recompute is invariant under complex rescaling of a parent',
-        (p, q, k) {
-      if (p.closeTo(q, 1e-3)) {
-        return;
-      }
-      final plain = LineThroughTwoPoints(
-        id: 'l1',
-        point1: StubProjectivePoint(ProjPoint.lift(p)),
-        point2: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      final scaled = LineThroughTwoPoints(
-        id: 'l2',
-        point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
-        point2: StubProjectivePoint(ProjPoint.lift(q)),
-      );
-      expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
-      expect(scaled.line!.closeTo(plain.line!), isTrue);
-    });
+      'recompute is invariant under complex rescaling of a parent',
+      (p, q, k) {
+        if (p.closeTo(q, 1e-3)) {
+          return;
+        }
+        final plain = LineThroughTwoPoints(
+          id: 'l1',
+          point1: StubProjectivePoint(ProjPoint.lift(p)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        final scaled = LineThroughTwoPoints(
+          id: 'l2',
+          point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        expect(scaled.projLine!.closeTo(plain.projLine!), isTrue);
+        expect(scaled.line!.closeTo(plain.line!), isTrue);
+      },
+    );
   });
 }

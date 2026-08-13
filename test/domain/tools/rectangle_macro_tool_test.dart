@@ -25,9 +25,9 @@ void main() {
     final construction = Construction();
     tool.onInput(const ToolInput(Vec2(0, 0)));
     tool.onInput(const ToolInput(Vec2(4, 0)));
-    (tool.onInput(const ToolInput(Vec2(5, 3))) as ToolCommitted)
-        .command
-        .apply(construction);
+    (tool.onInput(const ToolInput(Vec2(5, 3))) as ToolCommitted).command.apply(
+      construction,
+    );
     return construction;
   }
 
@@ -56,23 +56,35 @@ void main() {
       final construction = Construction();
 
       expect(tool.onInput(const ToolInput(Vec2(0, 0))), isA<ToolAccepted>());
-      expect(tool.onInput(const ToolInput(Vec2(4, 0))), isA<ToolAccepted>(),
-          reason: 'the second corner does not commit — the height is pending');
-      final result =
-          tool.onInput(const ToolInput(Vec2(5, 3))) as ToolCommitted;
+      expect(
+        tool.onInput(const ToolInput(Vec2(4, 0))),
+        isA<ToolAccepted>(),
+        reason: 'the second corner does not commit — the height is pending',
+      );
+      final result = tool.onInput(const ToolInput(Vec2(5, 3))) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
-      expect(construction.length, 11,
-          reason: '2 free points + 4 sides + 2 perpendiculars + parallel '
-              '+ C + D');
-      expect(cornerC(construction).position, const Vec2(4, 3),
-          reason: 'C is the tap projected onto the perpendicular through B');
+      expect(
+        construction.length,
+        11,
+        reason:
+            '2 free points + 4 sides + 2 perpendiculars + parallel '
+            '+ C + D',
+      );
+      expect(
+        cornerC(construction).position,
+        const Vec2(4, 3),
+        reason: 'C is the tap projected onto the perpendicular through B',
+      );
       expect(cornerD(construction).position, const Vec2(0, 3));
 
       result.command.undo(construction);
-      expect(construction.isEmpty, isTrue,
-          reason: 'the whole rectangle is one undo unit');
+      expect(
+        construction.isEmpty,
+        isTrue,
+        reason: 'the whole rectangle is one undo unit',
+      );
     });
 
     test('the height tap never consumes an existing point', () {
@@ -86,8 +98,11 @@ void main() {
           tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
       result.command.apply(construction);
 
-      expect(cornerC(construction).position, const Vec2(4, 3),
-          reason: 'the hit point only donates its position');
+      expect(
+        cornerC(construction).position,
+        const Vec2(4, 3),
+        reason: 'the hit point only donates its position',
+      );
 
       result.command.undo(construction);
       expect(construction.objects, [e]);
@@ -96,10 +111,14 @@ void main() {
     test('scaffolding is hidden, corners and sides are visible', () {
       final construction = buildRectangle();
 
-      final hidden =
-          construction.objects.where((o) => !o.attributes.visible).toList();
-      expect(hidden, hasLength(3),
-          reason: 'two perpendiculars and the parallel');
+      final hidden = construction.objects
+          .where((o) => !o.attributes.visible)
+          .toList();
+      expect(
+        hidden,
+        hasLength(3),
+        reason: 'two perpendiculars and the parallel',
+      );
 
       final visible = construction.objects.where((o) => o.attributes.visible);
       expect(visible.whereType<Segment>(), hasLength(4));
@@ -123,8 +142,11 @@ void main() {
       final a = freeCorners(construction)[0];
 
       construction.moveFreePoint(a.id, const Vec2(4, 0));
-      expect(cornerC(construction).position, isNull,
-          reason: 'coincident A and B leave the perpendicular undefined');
+      expect(
+        cornerC(construction).position,
+        isNull,
+        reason: 'coincident A and B leave the perpendicular undefined',
+      );
       expect(cornerD(construction).position, isNull);
 
       construction.moveFreePoint(a.id, const Vec2(0, 0));
@@ -138,8 +160,11 @@ void main() {
       tool.reset();
 
       expect(tool.previewPositions, isEmpty);
-      expect(tool.onInput(const ToolInput(Vec2(9, 9))), isA<ToolAccepted>(),
-          reason: 'the next tap starts a fresh collection, not a commit');
+      expect(
+        tool.onInput(const ToolInput(Vec2(9, 9))),
+        isA<ToolAccepted>(),
+        reason: 'the next tap starts a fresh collection, not a commit',
+      );
     });
   });
 }

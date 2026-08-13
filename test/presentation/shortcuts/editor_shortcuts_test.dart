@@ -131,8 +131,9 @@ void main() {
     expect(activeTool(), isNull);
   });
 
-  testWidgets('Esc and undo are two-stage while a tool holds pending input',
-      (tester) async {
+  testWidgets('Esc and undo are two-stage while a tool holds pending input', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
     final construction = container.read(constructionProvider).construction;
@@ -145,8 +146,11 @@ void main() {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    expect(activeTool(), isA<TwoPointTool>(),
-        reason: 'the tool survives the first undo');
+    expect(
+      activeTool(),
+      isA<TwoPointTool>(),
+      reason: 'the tool survives the first undo',
+    );
     expect(activeTool()!.hasPartialInput, isFalse);
     expect(construction.length, 3, reason: 'the stack was not touched');
 
@@ -160,16 +164,20 @@ void main() {
     expect(activeTool()!.hasPartialInput, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    expect(activeTool(), isA<TwoPointTool>(),
-        reason: 'the first Esc only clears the pending point');
+    expect(
+      activeTool(),
+      isA<TwoPointTool>(),
+      reason: 'the first Esc only clears the pending point',
+    );
     expect(activeTool()!.hasPartialInput, isFalse);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     expect(activeTool(), isNull, reason: 'the second Esc leaves the tool');
   });
 
-  testWidgets('the app-bar undo button is two-stage like Ctrl+Z',
-      (tester) async {
+  testWidgets('the app-bar undo button is two-stage like Ctrl+Z', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
     final construction = container.read(constructionProvider).construction;
@@ -181,8 +189,11 @@ void main() {
 
     await tester.tap(undoButton);
     await tester.pump();
-    expect(activeTool(), isA<TwoPointTool>(),
-        reason: 'the first press only clears the pending point');
+    expect(
+      activeTool(),
+      isA<TwoPointTool>(),
+      reason: 'the first press only clears the pending point',
+    );
     expect(activeTool()!.hasPartialInput, isFalse);
     expect(construction.length, 3, reason: 'the stack was not touched');
 
@@ -191,8 +202,9 @@ void main() {
     expect(construction.length, 2, reason: 'the second press pops the stack');
   });
 
-  testWidgets('the undo button enables for pending input on an empty stack',
-      (tester) async {
+  testWidgets('the undo button enables for pending input on an empty stack', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final undoButton = find.widgetWithIcon(IconButton, Icons.undo);
     IconButton button() => tester.widget<IconButton>(undoButton);
@@ -201,8 +213,11 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
     tapWorld(10, 10);
     await tester.pump();
-    expect(button().onPressed, isNotNull,
-        reason: 'a pending point is consumable even with an empty stack');
+    expect(
+      button().onPressed,
+      isNotNull,
+      reason: 'a pending point is consumable even with an empty stack',
+    );
 
     await tester.tap(undoButton);
     await tester.pump();
@@ -210,8 +225,7 @@ void main() {
     expect(button().onPressed, isNull, reason: 'nothing left to consume');
   });
 
-  testWidgets('B activates the two-mode angle bisector tool',
-      (tester) async {
+  testWidgets('B activates the two-mode angle bisector tool', (tester) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
     expect(activeTool(), isA<AngleBisectorTool>());
@@ -223,8 +237,7 @@ void main() {
     expect(activeTool(), isA<AngleTool>());
   });
 
-  testWidgets('⇧B builds a perpendicular bisector end to end',
-      (tester) async {
+  testWidgets('⇧B builds a perpendicular bisector end to end', (tester) async {
     await pumpEditor(tester);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
@@ -240,8 +253,11 @@ void main() {
         .toList();
     expect(objects.last, isA<PerpendicularBisectorLine>());
     final bisector = objects.last as PerpendicularBisectorLine;
-    expect(bisector.line!.contains(const Vec2(2, 7)), isTrue,
-        reason: 'vertical bisector of the horizontal pair at x = 2');
+    expect(
+      bisector.line!.contains(const Vec2(2, 7)),
+      isTrue,
+      reason: 'vertical bisector of the horizontal pair at x = 2',
+    );
   });
 
   testWidgets('G F builds a projection point end to end', (tester) async {
@@ -264,17 +280,24 @@ void main() {
     tools.handleInput(ToolInput(const Vec2(2, 0), hit: line));
     tools.handleInput(const ToolInput(Vec2(1, 3)));
 
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<ProjectionPoint>());
     final foot = objects.last as ProjectionPoint;
-    expect(foot.position!.closeTo(const Vec2(1, 0)), isTrue,
-        reason: 'the foot of the perpendicular from (1, 3) onto y = 0');
+    expect(
+      foot.position!.closeTo(const Vec2(1, 0)),
+      isTrue,
+      reason: 'the foot of the perpendicular from (1, 3) onto y = 0',
+    );
   });
 
   testWidgets('G H asks for the ratio; OK activates the dilate transform '
-      'and builds a homothetic point end to end, cancel activates nothing',
-      (tester) async {
+      'and builds a homothetic point end to end, cancel activates nothing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
@@ -287,8 +310,11 @@ void main() {
 
     tapWorld(4, 2); // the point, then the center
     tapWorld(0, 0);
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<HomotheticPoint>());
     final image = objects.last as HomotheticPoint;
     expect(image.ratio, -0.5);
@@ -299,8 +325,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    expect(activeTool(), isA<TransformObjectTool>(),
-        reason: 'cancel leaves the previous tool active');
+    expect(
+      activeTool(),
+      isA<TransformObjectTool>(),
+      reason: 'cancel leaves the previous tool active',
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
@@ -308,8 +337,11 @@ void main() {
     await tester.enterText(find.byType(TextField), '0');
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    expect((activeTool()! as TransformObjectTool).ratio, -0.5,
-        reason: 'ratio 0 would collapse onto the center — reads as cancel');
+    expect(
+      (activeTool()! as TransformObjectTool).ratio,
+      -0.5,
+      reason: 'ratio 0 would collapse onto the center — reads as cancel',
+    );
   });
 
   testWidgets('G 4 builds a harmonic conjugate end to end', (tester) async {
@@ -321,12 +353,18 @@ void main() {
     tapWorld(0, 0);
     tapWorld(4, 0);
     tapWorld(1, 0);
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<HarmonicConjugatePoint>());
     final conjugate = objects.last as HarmonicConjugatePoint;
-    expect(conjugate.position!.closeTo(const Vec2(-2, 0)), isTrue,
-        reason: 'the fourth harmonic of the quarter point');
+    expect(
+      conjugate.position!.closeTo(const Vec2(-2, 0)),
+      isTrue,
+      reason: 'the fourth harmonic of the quarter point',
+    );
   });
 
   testWidgets('D measures a distance end to end', (tester) async {
@@ -336,8 +374,11 @@ void main() {
 
     tapWorld(0, 0);
     tapWorld(3, 4);
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<DistanceMeasurement>());
     expect((objects.last as DistanceMeasurement).value, 5);
   });
@@ -363,8 +404,11 @@ void main() {
     container
         .read(toolProvider.notifier)
         .handleInput(ToolInput(const Vec2(3, 1), hit: polygon));
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<AreaMeasurement>());
     expect((objects.last as AreaMeasurement).value, 6);
   });
@@ -389,8 +433,11 @@ void main() {
     container
         .read(toolProvider.notifier)
         .handleInput(ToolInput(const Vec2(2, 1), hit: line));
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<SlopeMeasurement>());
     expect((objects.last as SlopeMeasurement).value, closeTo(0.5, 1e-12));
   });
@@ -418,16 +465,25 @@ void main() {
     final tools = container.read(toolProvider.notifier);
     tools.handleInput(ToolInput(const Vec2(2, 0), hit: driver));
     tools.handleInput(ToolInput(const Vec2(3, 0), hit: traced));
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<Locus>());
     final locus = objects.last as Locus;
     expect(locus.driver, same(driver));
     expect(locus.samples!.whereType<Vec2>(), hasLength(128));
-    expect(locus.attributes.name, isNotEmpty,
-        reason: 'auto-named from the lowercase pool');
-    expect(locus.attributes.labelVisible, isFalse,
-        reason: 'curve convention: named, label hidden until revealed');
+    expect(
+      locus.attributes.name,
+      isNotEmpty,
+      reason: 'auto-named from the lowercase pool',
+    );
+    expect(
+      locus.attributes.labelVisible,
+      isFalse,
+      reason: 'curve convention: named, label hidden until revealed',
+    );
   });
 
   testWidgets('⇧C asks for the radius; OK builds a circle by radius end '
@@ -456,8 +512,11 @@ void main() {
     expect((tool! as FixedRadiusCircleTool).radius, 2.5);
 
     tapWorld(1, 1);
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<FixedRadiusCircle>());
     expect((objects.last as FixedRadiusCircle).circle!.radius, 2.5);
   });
@@ -493,8 +552,9 @@ void main() {
     );
   });
 
-  testWidgets('G N chords to the tangent tool, one pair = both tangents',
-      (tester) async {
+  testWidgets('G N chords to the tangent tool, one pair = both tangents', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final stack = container.read(commandStackProvider.notifier);
     final c = FreePoint(id: 'c', position: const Vec2(0, 0));
@@ -583,8 +643,11 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     final tool = activeTool();
     expect(tool, isA<PointAndLineTool>());
-    expect((tool as PointAndLineTool).build, ParallelLine.new,
-        reason: 'plain T is the perpendicular variant');
+    expect(
+      (tool as PointAndLineTool).build,
+      ParallelLine.new,
+      reason: 'plain T is the perpendicular variant',
+    );
   });
 
   testWidgets('⇧G/⇧X toggle grid and axes; the leaders stay chord-only', (
@@ -759,8 +822,9 @@ void main() {
     expect(stamp.minVertices, 4);
   });
 
-  testWidgets('G 9 and G ⇧ I activate the triangle-circle tools',
-      (tester) async {
+  testWidgets('G 9 and G ⇧ I activate the triangle-circle tools', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
@@ -786,8 +850,9 @@ void main() {
     );
   });
 
-  testWidgets('G ⇧ A and G X activate the circle-relation tools',
-      (tester) async {
+  testWidgets('G ⇧ A and G X activate the circle-relation tools', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
@@ -860,10 +925,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
     tool = activeTool();
     expect(tool, isA<TransformObjectTool>());
-    expect(
-      (tool! as TransformObjectTool).transform,
-      ObjectTransform.translate,
-    );
+    expect((tool! as TransformObjectTool).transform, ObjectTransform.translate);
   });
 
   testWidgets('G T asks for the angle; OK in degrees activates the rotate '
@@ -888,10 +950,7 @@ void main() {
     final tool = activeTool();
     expect(tool, isA<TransformObjectTool>());
     expect((tool! as TransformObjectTool).angle, closeTo(-0.7853981, 1e-6));
-    expect(
-      (tool as TransformObjectTool).transform,
-      ObjectTransform.rotate,
-    );
+    expect((tool as TransformObjectTool).transform, ObjectTransform.rotate);
   });
 
   testWidgets('G D asks for the angle size; OK in degrees activates the '
@@ -1024,10 +1083,7 @@ void main() {
     construction
       ..add(a)
       ..add(b);
-    construction.setAttributes(
-      'b',
-      const ObjectAttributes(visible: false),
-    );
+    construction.setAttributes('b', const ObjectAttributes(visible: false));
     container.read(selectionProvider.notifier).selectMany(['a', 'b']);
     await tester.pump();
 
@@ -1036,16 +1092,26 @@ void main() {
 
     expect(activeTool(), isA<VisibilityTool>());
     expect(a.attributes.visible, isFalse);
-    expect(container.read(selectionProvider), {'a', 'b'},
-        reason: 'hiding keeps the selection — the tree/inspector is the '
-            'way back (Phase 7 precedent)');
+    expect(
+      container.read(selectionProvider),
+      {'a', 'b'},
+      reason:
+          'hiding keeps the selection — the tree/inspector is the '
+          'way back (Phase 7 precedent)',
+    );
 
     container.read(commandStackProvider.notifier).undo();
     expect(a.attributes.visible, isTrue);
-    expect(b.attributes.visible, isFalse,
-        reason: 'b was hidden before H and the undo must not reveal it');
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'the whole selection hid in one command');
+    expect(
+      b.attributes.visible,
+      isFalse,
+      reason: 'b was hidden before H and the undo must not reveal it',
+    );
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'the whole selection hid in one command',
+    );
   });
 
   testWidgets('H with an empty or all-hidden selection puts nothing on the '
@@ -1053,24 +1119,27 @@ void main() {
     await pumpEditor(tester);
     final construction = container.read(constructionProvider).construction;
     construction.add(FreePoint(id: 'a', position: Vec2.zero));
-    construction.setAttributes(
-      'a',
-      const ObjectAttributes(visible: false),
-    );
+    construction.setAttributes('a', const ObjectAttributes(visible: false));
     await tester.pump();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
     expect(activeTool(), isA<VisibilityTool>());
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'no selection, nothing to hide');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'no selection, nothing to hide',
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'an all-hidden selection has nothing to hide');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'an all-hidden selection has nothing to hide',
+    );
   });
 
   testWidgets('Shift+H with a selection performs no on-activation action', (
@@ -1088,9 +1157,13 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
 
     expect(activeTool(), isA<VisibilityTool>());
-    expect(a.attributes.visible, isTrue,
-        reason: 'toggling a mixed selection is ambiguous — Show/Hide '
-            'only ever acts per tap');
+    expect(
+      a.attributes.visible,
+      isTrue,
+      reason:
+          'toggling a mixed selection is ambiguous — Show/Hide '
+          'only ever acts per tap',
+    );
     expect(container.read(commandStackProvider).canUndo, isFalse);
   });
 
@@ -1115,8 +1188,11 @@ void main() {
     await tester.pump();
 
     expect(p.attributes.visible, isFalse, reason: 'the selection hid');
-    expect(p.position.x, closeTo(160, 1),
-        reason: 'the move survived the tool switch (Phase 30b)');
+    expect(
+      p.position.x,
+      closeTo(160, 1),
+      reason: 'the move survived the tool switch (Phase 30b)',
+    );
 
     container.read(commandStackProvider.notifier).undo();
     expect(p.attributes.visible, isTrue, reason: 'first undo = the hide');
@@ -1127,37 +1203,45 @@ void main() {
   });
 
   testWidgets(
-      'Shift+H mid-drag commits the move as one undo step (Phase 30b)', (
-    tester,
-  ) async {
-    await pumpEditor(tester);
-    final p = FreePoint(id: 'p', position: const Vec2(100, -100));
-    container.read(constructionProvider).construction.add(p);
-    await tester.pump();
+    'Shift+H mid-drag commits the move as one undo step (Phase 30b)',
+    (tester) async {
+      await pumpEditor(tester);
+      final p = FreePoint(id: 'p', position: const Vec2(100, -100));
+      container.read(constructionProvider).construction.add(p);
+      await tester.pump();
 
-    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-    final gesture = await tester.startGesture(origin + const Offset(100, 100));
-    await tester.pump(const Duration(milliseconds: 50));
-    await gesture.moveBy(const Offset(60, 0));
-    await tester.pump();
-    expect(p.position.x, closeTo(160, 1), reason: 'drag preview applied');
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+      final gesture = await tester.startGesture(
+        origin + const Offset(100, 100),
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+      await gesture.moveBy(const Offset(60, 0));
+      await tester.pump();
+      expect(p.position.x, closeTo(160, 1), reason: 'drag preview applied');
 
-    // The tool switch arrives while the pointer is still down — the
-    // common "shortcut a beat before releasing" case.
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.pump();
-    await gesture.up();
-    await tester.pump();
+      // The tool switch arrives while the pointer is still down — the
+      // common "shortcut a beat before releasing" case.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+      await gesture.up();
+      await tester.pump();
 
-    expect(activeTool(), isA<VisibilityTool>());
-    expect(p.position.x, closeTo(160, 1),
-        reason: 'the move must survive the tool switch');
-    container.read(commandStackProvider.notifier).undo();
-    expect(p.position.x, closeTo(100, 1),
-        reason: 'the drag-so-far is one command');
-  });
+      expect(activeTool(), isA<VisibilityTool>());
+      expect(
+        p.position.x,
+        closeTo(160, 1),
+        reason: 'the move must survive the tool switch',
+      );
+      container.read(commandStackProvider.notifier).undo();
+      expect(
+        p.position.x,
+        closeTo(100, 1),
+        reason: 'the drag-so-far is one command',
+      );
+    },
+  );
 
   testWidgets('Esc mid-drag still aborts: preview rolls back, no command', (
     tester,
@@ -1180,8 +1264,11 @@ void main() {
     await tester.pump();
 
     expect(p.position.x, closeTo(100, 1), reason: 'Esc aborts the drag');
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'an aborted drag leaves nothing to undo');
+    expect(
+      container.read(commandStackProvider).canUndo,
+      isFalse,
+      reason: 'an aborted drag leaves nothing to undo',
+    );
   });
 
   testWidgets('Del deletes a self-contained selection without asking', (
@@ -1223,16 +1310,22 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     var pan = container.read(viewportProvider).pan;
-    expect(pan.x, lessThan(0),
-        reason: '→ moves the drawing right, so the camera looks left');
+    expect(
+      pan.x,
+      lessThan(0),
+      reason: '→ moves the drawing right, so the camera looks left',
+    );
     expect(pan.y, 0);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp);
     await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowUp);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowUp);
     pan = container.read(viewportProvider).pan;
-    expect(pan.y, lessThan(0),
-        reason: '↑ moves the drawing up, camera down (world y-up)');
+    expect(
+      pan.y,
+      lessThan(0),
+      reason: '↑ moves the drawing up, camera down (world y-up)',
+    );
     expect(
       pan.y,
       -2 * 32,
@@ -1337,8 +1430,11 @@ void main() {
     // No canvas click in between: leaving the field must hand focus
     // back to the shortcut layer by itself.
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
-    expect(activeTool(), isA<PointTool>(),
-        reason: 'shortcuts must not stay dead after a rename');
+    expect(
+      activeTool(),
+      isA<PointTool>(),
+      reason: 'shortcuts must not stay dead after a rename',
+    );
   });
 
   testWidgets('shortcuts revive after leaving the name field unchanged', (
@@ -1355,7 +1451,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
-    expect(activeTool(), isA<PointTool>(),
-        reason: 'an unchanged commit must also hand focus back');
+    expect(
+      activeTool(),
+      isA<PointTool>(),
+      reason: 'an unchanged commit must also hand focus back',
+    );
   });
 }
