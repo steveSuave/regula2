@@ -1,0 +1,32 @@
+test/domain/projective/circles_test.dart
+  s_a50d2ee0ff8e14::t_7716b284a4fd58 1-45,49-71,75-114,119-160,176-188,192-197,199,202-207,217-238,241-261,264-266,298-330,332-347,353-358,363-365,374-377,404,410,413-430,434-437,439-447
+  s_a50d2ee0ff8e14::t_4eb177643005ea 200-201
+  s_a50d2ee0ff8e14::t_f52a69321e8c87 46-48,72-74,115-118,161-175,189-191,198,208-216,239-240,262-263,267-297,348-352,359-362,366-373,378-403,405-409,411-412,431-433,438
+  s_a50d2ee0ff8e14::t_ca5d4a5367b601 331
+lib/domain/projective/conic_matrix.dart
+  s_a50d2ee0ff8e14::t_f52a69321e8c87 16-20,23-27,61-67,72-83,89-96,174-175,201-204,394-397,417-420,425
+  s_a50d2ee0ff8e14::t_d3e40669c4887e 206-228
+  s_a50d2ee0ff8e14::t_3b03d0854074bb 323-328,330-339
+  s_a50d2ee0ff8e14::t_ace5b65a77eab1 205
+lib/domain/projective/circles.dart
+  s_a50d2ee0ff8e14::t_904662b8ac2bf8 1-82,84-105,107-116,120,128-141,143,147-171,180-217
+  s_a50d2ee0ff8e14::t_f52a69321e8c87 83,106,121-127,172-179
+  s_a50d2ee0ff8e14::t_e67edb497b1227 142,144-146
+  s_a50d2ee0ff8e14::t_35cfe88fabd327 117-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b58ce0b19d51cdb562bf2d486aa45efa6b4e4675",
+  "prompts": {},
+  "sessions": {
+    "s_a50d2ee0ff8e14": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff413812-b77e-4ca3-8563-0ea5ee1809fe",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
