@@ -1,0 +1,44 @@
+lib/domain/construction/objects/polar_line.dart
+  s_3e0054677c6d28::t_087b2afd84592a 2-3,12-21,35,38-40,49-65,67-71
+lib/domain/construction/objects/radical_axis_line.dart
+  s_3e0054677c6d28::t_678a53a1fbd9ab 2-4,11-19,36,39-41,50-72
+lib/domain/construction/objects/intersection_point.dart
+  s_3e0054677c6d28::t_112e7771391d66 192,196-205,214-217
+  s_3e0054677c6d28::t_21cc5c49cc8ced 206-213
+test/domain/projective/circles_test.dart
+  s_3e0054677c6d28::t_14d73573505817 9
+  s_3e0054677c6d28::t_c4172b96c816d2 448-535
+test/domain/construction/objects/tangent_line_test.dart
+  s_3e0054677c6d28::t_a42825141cc99b 171-283
+  s_3e0054677c6d28::t_f1fd096b11428f 3,7-9,11-17
+lib/domain/projective/circles.dart
+  s_3e0054677c6d28::t_e186f9d14eec7f 24
+  s_3e0054677c6d28::t_ebf494ce4bc1a6 219-241
+test/domain/construction/objects/intersection_point_test.dart
+  s_3e0054677c6d28::t_1e71939e506a23 537-565
+lib/domain/construction/objects/tangent_line.dart
+  s_3e0054677c6d28::t_d0a4533bbc0772 5
+  s_3e0054677c6d28::t_cb65417843667d 2-4,12-14,16-27,46,49-51,60-69,73-75,79-115
+test/domain/construction/objects/radical_axis_line_test.dart
+  s_3e0054677c6d28::t_d59b36af215c6b 92-183
+  s_3e0054677c6d28::t_31ee706e718cd5 1,6-7,10-15
+test/domain/construction/objects/polar_line_test.dart
+  s_3e0054677c6d28::t_7833e4012eed7e 99-171
+  s_3e0054677c6d28::t_8c3b1316a192b8 1,8-9,12-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0a2544698337f2af909cf54f33d1fafd0de4f035",
+  "prompts": {},
+  "sessions": {
+    "s_3e0054677c6d28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac7877ab-3784-4ac5-b1ee-c3569e705d35",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
