@@ -8,6 +8,30 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 111 (V2 Session 13) — 2026-08-13
+
+**Done**
+- Merged `phase-111-point-on-object` to `main`.
+- **Phase 112 complete** on `phase-112-consumers` — the consumer kinds are the *metric boundary*: they read the parents' projective accessors and project into the chart themselves, because their outputs (angles, lengths, areas, outlines, rendered text) are chart quantities by definition (M-CK later re-founds measurement on cross-ratios at exactly this boundary).
+- **Migrated**: `VertexAngle`, `Polygon`, `DistanceMeasurement` (parent `projPoint` → `toVec2`), `LengthMeasurement`, `AreaMeasurement` (subject `conic` → `toCircleEq`), `ExpressionText` via `text_evaluator.dart` (all point/circle accessors; at-infinity or line-pair references render `?`), `LineAngle` (vertex = projective meet; `intersections.dart` import dropped), `SlopeMeasurement`.
+- **V2 semantics changes** (tests updated, all documented in kind docs):
+  1. `SlopeMeasurement`: a vertical carrier reports `double.infinity` and stays *defined* — rendered `—` by `formatLength`'s new non-finite guard; undefined only without a chart carrier (ℓ∞, complex). The slope tool test now expects a defined infinite commit.
+  2. `LineAngle`: V1's absolute 1e-9 direction band is gone — nearly-parallel-but-crossing carriers mark their genuine tiny wedge (the old "falls back +1/+1 while parallel" test actually exercised near-*coincident* lines through the origin; it now tests exact coincidence, plus a new test pinning the tiny-wedge behaviour).
+  3. `VertexAngle` deliberately stays undefined for an arm at infinity: a point at infinity is a direction *without a sign*, so a signed wedge there would break rescaling invariance — don't "improve" it.
+- **Grep gate exceeded**: zero `intersections.dart` importers remain in `lib/` (the gate allowed `locus.dart`, which never imported it directly) — Phase 121's deletion is test-side only. Remaining affine reads in object files are the documented `orientedAlong` anchor derivations (`_v1Direction`-style), extent metadata, and §Parameterization chart reads.
+- New per-kind Phase 112 tests: at-infinity/complex/line-pair parents → undefined, rescaling-invariance glados (VertexAngle measure, LineAngle legacy fold, DistanceMeasurement value/anchor, LengthMeasurement circumference), evaluator accessors, `formatLength` non-finite. Suite 1989 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Merge `phase-112-consumers`; then Phase 113 — SPIKE 3 / Tracing I: scaffolding (`lib/domain/projective/tracing/`, `DragPath`, `TracedBranch`, `Construction.recomputeAlongPath`, SoA buffers per Phase 101, feature flag + static-solve bail, toy-harness tests). Budget generously per PLAN — hardest phase per line.
+
+**Gotchas**
+- `SlopeMeasurement.value == double.infinity` flows into `ExpressionText` arithmetic via bare-name sugar and renders `Infinity` in templates (pre-existing `toStringAsFixed` behaviour, same as a `{1/0}` expression) — only the *label* path renders `—`. Revisit if users hit it.
+- The consumer kinds now go undefined at ~1e9 relative magnitude (the `toVec2` at-infinity cutoff) where V1 had no ceiling — same wall as `Midpoint.position` (session 108 note); harmless for measurements, and the right realness gate once tracing complexifies parents' stored values (the actual payoff of this phase).
+- `formatLength` renders any non-finite as `—`, NaN included — that's load-bearing for slope; don't "tighten" it to infinities only without checking.
+- The `LineAngle` legacy acute fold (null signs) is orientation-free, so it tolerates un-anchored carriers (stubs); the signed wedge does not — sign conventions need the kinds' anchored `line` projections, like `TwoLineBisectorLine`.
+
+---
+
 ## Session 110 (V2 Session 12) — 2026-08-13
 
 **Done**
