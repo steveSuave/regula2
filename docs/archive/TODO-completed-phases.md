@@ -622,3 +622,15 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Migrate: `FreePoint` (stores `ProjPoint`, drag sets it real), `Midpoint`, `LineThroughTwoPoints`, `Segment`, `Ray` (projective carrier, real-extent metadata unchanged), `ParallelLine` (meet with line at infinity → join), `PerpendicularLine` / `PerpendicularBisectorLine` (conjugate directions w.r.t. I,J), `Centroid`, `Orthocenter`, circumcenter-as-point
 - [x] Existing suite green (the spec); per-kind glados: recompute invariant under complex rescaling of parent homogeneous coords
 - [x] New V2-semantics tests: old degeneracies that now correctly yield points at infinity, marked as such
+
+## Phase 108 — Object batch 2: transforms as projective maps
+
+- [x] `proj_transform.dart`: 3×3 complex matrix; apply to point, line, conic (congruence)
+- [x] Migrate: `ReflectedPoint`, `CentralReflectionPoint`, `RotatedPoint`, `TranslatedPoint`, `HomotheticPoint`, `ProjectionPoint`, `SegmentRatioPoint`, `HarmonicConjugatePoint` (cross-ratio, natively)
+- [x] Glados: transform∘inverse = id; conic transforms consistently with its points (`pᵀAp=0` preserved); old-vs-new agreement on real inputs
+
+## Phase 109 — Object batch 3: circles as conics
+
+- [x] Migrate all circle kinds to store `ConicMatrix`: `ThreePointCircle`, `CompassCircle`, `DiameterCircle`, `FixedRadiusCircle`, `ApolloniusCircle`, `TriangleCircle` (nine-point natively; incircle rides along project-compute-lift), `Arc`, `Sector` carriers; `CircleCenter` from polar structure (pole of ℓ∞); `circle` getter becomes projection (center/radius when the conic is a real circle)
+- [x] Glados: every migrated circle's conic passes through I,J; center/radius projection round-trips against old computation
+- [x] Three collinear points now yield the degenerate line-conic instead of undefined (isDefined projection handles rendering until Phase 119)
