@@ -1,0 +1,33 @@
+lib/domain/construction/objects/intersection_point.dart
+  s_3e0054677c6d28::t_5a0745fcd1b03a 6-8,13-21,23-27,34-43,81,85-88,90-96,104-106,111-120,122-139,149-171,173-193,195
+  s_3e0054677c6d28::t_e3aeb3135776bf 4
+  s_3e0054677c6d28::t_4f0746947edaa0 5
+  s_3e0054677c6d28::t_1674abc4080927 140-148,172,194,196-205,207-208
+lib/domain/projective/tolerances.dart
+  s_3e0054677c6d28::t_c4b706e1b0b21d 75
+  s_3e0054677c6d28::t_dd23957e82b559 65-74
+lib/domain/projective/conic_matrix.dart
+  s_3e0054677c6d28::t_c3a8de6affeff0 29-39
+test/domain/projective/conic_matrix_test.dart
+  s_3e0054677c6d28::t_fdb2ad573feaf0 89-117
+test/domain/construction/objects/intersection_point_test.dart
+  s_3e0054677c6d28::t_2c09fe98a3652b 1,6-7,9-15,192-353,355-362,364-382,384-427,429-447,449-450,452-465,467-546,548-571
+  s_3e0054677c6d28::t_0885fd13d89e25 354,363,383,428,448,451,466,547
+  s_3e0054677c6d28::t_15d1c4b750e4a0 572
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1af4510e4c83a96df8268b364adb77a62c701eae",
+  "prompts": {},
+  "sessions": {
+    "s_3e0054677c6d28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac7877ab-3784-4ac5-b1ee-c3569e705d35",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
