@@ -1,0 +1,71 @@
+lib/domain/construction/objects/compass_circle.dart
+  s_a50d2ee0ff8e14::t_22393548c95fd9 2-3,12-17,33,36-38,47-57
+lib/domain/construction/objects/three_point_circle.dart
+  s_a50d2ee0ff8e14::t_796f330b96f461 2-3,8-16,32,35-37,46-55,59-61
+lib/domain/construction/objects/triangle_circle.dart
+  s_a50d2ee0ff8e14::t_4894e5ddf210b3 2-3,10-17,33,36-38,45-47,51-66
+lib/domain/construction/objects/nine_point_circle.dart
+  s_a50d2ee0ff8e14::t_11269f3f6cd026 1-4,11-15,26-27
+lib/domain/construction/objects/point_on_object.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 51-56,58-67,93-104
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 33
+lib/domain/construction/objects/circle_center.dart
+  s_a50d2ee0ff8e14::t_88912e07ae935c 2-3,9-17,25-28,31,37-40
+  s_a50d2ee0ff8e14::t_feac31a832dc70 19
+lib/domain/construction/objects/circle_center_point.dart
+  s_a50d2ee0ff8e14::t_e624ef5fc0c1d1 2-3,11-16,30,33-35,44-53
+test/domain/construction/geo_object_bridge_test.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 21,33-37,42-46,51-55,116-123,137-141
+  s_a50d2ee0ff8e14::t_a0de51571357ae 107-110,112-115,124-125
+  s_a50d2ee0ff8e14::t_9315396877449c 10-11
+lib/domain/construction/objects/fixed_radius_circle.dart
+  s_a50d2ee0ff8e14::t_96fc94b5ada36b 2-3,11-18,41,44-46,55-64
+lib/domain/construction/objects/expression_text.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 25-26
+lib/domain/construction/objects/free_point.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 17
+lib/domain/construction/objects/diameter_circle.dart
+  s_a50d2ee0ff8e14::t_5eb6e98232c5ed 2-3,13-18,32,35-37,46-55
+lib/domain/construction/objects/intersection_point.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 96,100
+lib/domain/construction/objects/locus.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 288,297-303,382,487-491,573-575,617,641
+lib/domain/construction/objects/apollonius_circle.dart
+  s_a50d2ee0ff8e14::t_952ab7550c0dec 2-3,10-20,36,39-41,50-61,65-67
+lib/domain/construction/objects/line_angle.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 36
+lib/domain/construction/objects/arc.dart
+  s_a50d2ee0ff8e14::t_29ef828f842d30 4-5,13,18-25,41,46-48,93-102,108-119,121
+lib/domain/construction/objects/orthocenter.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 23-26
+lib/domain/construction/objects/radical_axis_line.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 20
+lib/domain/construction/objects/area_measurement.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 57-58
+lib/domain/construction/objects/length_measurement.dart
+  s_a50d2ee0ff8e14::t_feac31a832dc70 66
+lib/domain/projective/conic_matrix.dart
+  s_a50d2ee0ff8e14::t_8499822e84e901 319-337,341-343,346-348,353
+  s_a50d2ee0ff8e14::t_3294a39937f3ad 340
+lib/domain/construction/objects/sector.dart
+  s_a50d2ee0ff8e14::t_18beb820507ab1 4-5,14-21,40,45-47,98-114,120-128,130
+lib/domain/construction/objects/inscribed_circle.dart
+  s_a50d2ee0ff8e14::t_f2e6c2f64c1f4c 3-4,10-15,26-33,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e186864d7a768a7ec08d1fb0b4c656a5b26a1ca2",
+  "prompts": {},
+  "sessions": {
+    "s_a50d2ee0ff8e14": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff413812-b77e-4ca3-8563-0ea5ee1809fe",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
