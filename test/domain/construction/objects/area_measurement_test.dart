@@ -11,6 +11,7 @@ import 'package:regula/domain/construction/objects/line_through_two_points.dart'
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 
@@ -156,6 +157,26 @@ void main() {
       polygon.recompute();
       area.recompute();
       expect(area.isDefined, isTrue);
+    });
+  });
+
+  group('projective semantics (Phase 112)', () {
+    test('a degenerate line-pair carrier (collinear three-point circle) '
+        'leaves the area undefined', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 0));
+      final circle = ThreePointCircle(
+        id: 'k',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
+      expect(circle.conic, isNotNull);
+
+      final area = AreaMeasurement(id: 'area', subject: circle);
+      expect(area.isDefined, isFalse);
+      expect(area.value, isNull);
     });
   });
 }

@@ -1,10 +1,14 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../../projective_stubs.dart';
+import '../../projective/generators.dart';
 
 void main() {
   group('DistanceMeasurement', () {
@@ -75,5 +79,34 @@ void main() {
       distance.recompute();
       expect(distance.isDefined, isTrue);
     });
+  });
+
+  group('projective semantics (Phase 112)', () {
+    test('a parent at infinity leaves the measurement undefined', () {
+      final a = FreePoint(id: 'a', position: const Vec2(1, 2));
+      final inf = StubProjectivePoint(ProjPoint.real(3, 4, 0));
+      final distance = DistanceMeasurement(id: 'm', point1: a, point2: inf);
+      expect(distance.isDefined, isFalse);
+      expect(distance.value, isNull);
+      expect(distance.anchor, isNull);
+    });
+
+    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
+      'value and anchor are invariant under complex rescaling of a parent',
+      (p, q, k) {
+        final plain = DistanceMeasurement(
+          id: 'm1',
+          point1: StubProjectivePoint(ProjPoint.lift(p)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        final scaled = DistanceMeasurement(
+          id: 'm2',
+          point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+          point2: StubProjectivePoint(ProjPoint.lift(q)),
+        );
+        expect(scaled.value!, closeTo(plain.value!, 1e-6));
+        expect(scaled.anchor!.closeTo(plain.anchor!, 1e-6), isTrue);
+      },
+    );
   });
 }

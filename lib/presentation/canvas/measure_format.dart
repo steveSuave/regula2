@@ -13,8 +13,11 @@ const int defaultLengthDecimals = 2;
 const int defaultAngleDecimals = 1;
 
 /// A length in world units, [decimals] decimals (default 2): `3.14`.
-String formatLength(double length, {int? decimals}) =>
-    length.toStringAsFixed(decimals ?? defaultLengthDecimals);
+/// A non-finite value renders `—` (Phase 112: `SlopeMeasurement` reports
+/// an infinite slope for vertical carriers instead of going undefined).
+String formatLength(double length, {int? decimals}) => length.isFinite
+    ? length.toStringAsFixed(decimals ?? defaultLengthDecimals)
+    : '—';
 
 /// An angle in radians, rendered in degrees with [decimals] decimals
 /// (default 1): `90.0°`.

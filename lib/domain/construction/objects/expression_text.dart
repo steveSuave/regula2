@@ -15,6 +15,11 @@ import '../text_template.dart';
 /// `MacroCommand`, keeping id and attributes) — [content] and the parent
 /// list are fixed for the object's lifetime like every other derived
 /// object's.
+///
+/// Migrated (Phase 112): all geometric reads live in `text_evaluator.dart`,
+/// which reads the references' projective views and projects them into the
+/// chart there; a complex or at-infinity reference renders `?` like an
+/// undefined one.
 class ExpressionText extends GeoText {
   ExpressionText({
     required super.id,

@@ -11,10 +11,14 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/construction/text_evaluator.dart';
 import 'package:regula/domain/math/expression.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../projective_stubs.dart';
 
 FreePoint point(String id, double x, double y, {String? name}) => FreePoint(
   id: id,
@@ -187,6 +191,36 @@ void main() {
         () => bindReferences([''], [anonymous]),
         throwsA(isA<FormatException>()),
       );
+    });
+  });
+
+  group('projective semantics (Phase 112)', () {
+    test('accessors of an at-infinity reference yield null — rendered ?', () {
+      final inf = StubProjectivePoint(ProjPoint.real(1, 2, 0));
+      final a = FreePoint(id: 'a', position: const Vec2(1, 1));
+      final env = GeoObjectEnv({'P': inf, 'A': a});
+      expect(env.objectFunction('x', ['P']), isNull);
+      expect(env.objectFunction('y', ['P']), isNull);
+      expect(env.objectFunction('dist', ['A', 'P']), isNull);
+      expect(env.objectFunction('angle', ['A', 'P', 'A']), isNull);
+    });
+
+    test('circle accessors of a degenerate line-pair carrier yield null', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 0));
+      final circle = ThreePointCircle(
+        id: 'k',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
+      expect(circle.conic, isNotNull);
+
+      final env = GeoObjectEnv({'k': circle});
+      expect(env.objectFunction('radius', ['k']), isNull);
+      expect(env.objectFunction('len', ['k']), isNull);
+      expect(env.objectFunction('area', ['k']), isNull);
     });
   });
 }

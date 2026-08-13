@@ -4,6 +4,12 @@ import '../geo_object.dart';
 /// The live distance between two points, displayed as canvas text at
 /// their midpoint. Undefined while either point is (point–line distance
 /// is deferred, per PLAN).
+///
+/// Migrated (Phase 112): reads the parents' projective views and projects
+/// them into the chart itself — Euclidean distance is a chart quantity
+/// (the metric boundary; M-CK re-founds measurement on cross-ratios
+/// later). A parent that is complex or at infinity leaves the measurement
+/// undefined.
 class DistanceMeasurement extends GeoMeasurement {
   DistanceMeasurement({
     required super.id,
@@ -31,8 +37,8 @@ class DistanceMeasurement extends GeoMeasurement {
 
   @override
   void recompute() {
-    final p1 = point1.position;
-    final p2 = point2.position;
+    final p1 = point1.projPoint?.toVec2();
+    final p2 = point2.projPoint?.toVec2();
     if (p1 == null || p2 == null) {
       _value = null;
       _anchor = null;

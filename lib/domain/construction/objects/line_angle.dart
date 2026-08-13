@@ -1,5 +1,4 @@
 import '../../math/angle_geometry.dart';
-import '../../math/intersections.dart';
 import '../../math/vec2.dart';
 import '../geo_object.dart';
 import '../object_attributes.dart';
@@ -23,6 +22,18 @@ import '../object_attributes.dart';
 /// rays work as parents through their carriers, so the marked vertex can
 /// sit outside their drawn extent, matching `IntersectionPoint`'s
 /// deferred-clipping caveat.
+///
+/// Migrated (Phase 112): the vertex is the projective meet of the
+/// carriers, projected into the chart — parallel carriers meet at
+/// infinity, coincident carriers on the zero triple, and both project to
+/// null, so "no vertex to mark" falls out of the projection (V1's
+/// absolute `intersectLineLine` parallel band is gone; near-parallel
+/// carriers mark a genuine faraway vertex, at-infinity within `toVec2`'s
+/// relative tolerance goes undefined). The wedge *directions* stay reads
+/// of the parents' anchored affine projections — [sign1]/[sign2] are ray
+/// concepts relative to the canonical carrier orientations, which only
+/// `GeoLine.line` (via `orientedAlong`) carries; same sanctioned chart
+/// read as `TwoLineBisectorLine`'s branch anchoring.
 class LineAngle extends GeoAngle {
   LineAngle({
     required super.id,
@@ -60,10 +71,11 @@ class LineAngle extends GeoAngle {
     var s2 = 1;
     final l1 = line1.line;
     final l2 = line2.line;
-    if (l1 != null && l2 != null) {
-      final crossing = intersectLineLine(l1, l2);
-      if (crossing.isNotEmpty) {
-        final v = crossing.single;
+    final p1 = line1.projLine;
+    final p2 = line2.projLine;
+    if (l1 != null && l2 != null && p1 != null && p2 != null) {
+      final v = p1.meet(p2).toVec2();
+      if (v != null) {
         s1 = (tap1 - v).dot(l1.direction) < 0 ? -1 : 1;
         s2 = (tap2 - v).dot(l2.direction) < 0 ? -1 : 1;
       }
@@ -99,25 +111,25 @@ class LineAngle extends GeoAngle {
   void recompute() {
     final l1 = line1.line;
     final l2 = line2.line;
-    if (l1 == null || l2 == null) {
+    final p1 = line1.projLine;
+    final p2 = line2.projLine;
+    if (l1 == null || l2 == null || p1 == null || p2 == null) {
       _angle = null;
       return;
     }
-    final crossing = intersectLineLine(l1, l2);
-    if (crossing.isEmpty) {
+    // Parallel carriers meet at infinity, coincident ones on the zero
+    // triple — both project to null: no vertex to mark.
+    final vertex = p1.meet(p2).toVec2();
+    if (vertex == null) {
       _angle = null;
       return;
     }
     final s1 = sign1;
     final s2 = sign2;
     _angle = (s1 == null || s2 == null)
-        ? AngleGeometry.betweenLines(
-            crossing.single,
-            l1.direction,
-            l2.direction,
-          )
+        ? AngleGeometry.betweenLines(vertex, l1.direction, l2.direction)
         : AngleGeometry.betweenHalfLines(
-            crossing.single,
+            vertex,
             l1.direction * s1.toDouble(),
             l2.direction * s2.toDouble(),
           );

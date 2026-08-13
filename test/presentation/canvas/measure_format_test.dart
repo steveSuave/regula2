@@ -18,6 +18,12 @@ void main() {
       expect(formatLength(3, decimals: 5), '3.00000');
       expect(formatLength(3.14159, decimals: null), '3.14');
     });
+
+    test('non-finite values render — (Phase 112: infinite slopes)', () {
+      expect(formatLength(double.infinity), '—');
+      expect(formatLength(double.negativeInfinity), '—');
+      expect(formatLength(double.nan), '—');
+    });
   });
 
   group('formatAngle', () {

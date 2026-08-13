@@ -20,6 +20,13 @@ import 'sector.dart';
 /// polygon's area is the absolute shoelace value, so a self-intersecting
 /// loop reports its alternating region sum's magnitude (documented at
 /// [polygonSignedArea]).
+///
+/// Migrated (Phase 112): circle subjects are read through their conic and
+/// projected to center-and-radius form here — area is a chart quantity
+/// (the metric boundary). A carrier that is not a real circle (degenerate
+/// line pair, complex) leaves the measurement undefined; extents stay
+/// affine metadata. Polygon subjects read [GeoPolygon.polygonVertices],
+/// which is itself the vertex projection a migrated `Polygon` computes.
 class AreaMeasurement extends GeoMeasurement {
   AreaMeasurement({
     required super.id,
@@ -51,6 +58,8 @@ class AreaMeasurement extends GeoMeasurement {
 
   @override
   void recompute() {
+    _value = null;
+    _anchor = null;
     switch (subject) {
       case GeoPolygon(:final polygonVertices?):
         _value = polygonSignedArea(polygonVertices).abs();
@@ -61,13 +70,17 @@ class AreaMeasurement extends GeoMeasurement {
       // full-circle case. Both centroids sit on the extent's bisector at
       // a fraction of the radius; the guards are the θ → 0 limits of the
       // exact formulas, where numerator and denominator both vanish.
-      case Sector(:final circle?, :final startAngle?, :final sweep?):
+      case Sector(:final conic?, :final startAngle?, :final sweep?):
+        final circle = conic.toCircleEq();
+        if (circle == null) return;
         final r = circle.radius;
         _value = r * r * sweep / 2;
         // Wedge centroid: (4r/(3θ))·sin(θ/2) from the center; → 2r/3.
         final t = sweep < 1e-6 ? 2 / 3 : 4 * math.sin(sweep / 2) / (3 * sweep);
         _anchor = circle.center.lerp(circle.pointAt(startAngle + sweep / 2), t);
-      case Arc(:final circle?, :final startAngle?, :final sweep?):
+      case Arc(:final conic?, :final startAngle?, :final sweep?):
+        final circle = conic.toCircleEq();
+        if (circle == null) return;
         final r = circle.radius;
         final theta = sweep.abs();
         _value = r * r * (theta - math.sin(theta)) / 2;
@@ -77,12 +90,13 @@ class AreaMeasurement extends GeoMeasurement {
         final half = math.sin(theta / 2);
         final t = lens < 1e-9 ? 1.0 : 4 * half * half * half / (3 * lens);
         _anchor = circle.center.lerp(circle.pointAt(startAngle + sweep / 2), t);
-      case GeoCircle(:final circle?):
+      case GeoCircle(:final conic?):
+        final circle = conic.toCircleEq();
+        if (circle == null) return;
         _value = math.pi * circle.radius * circle.radius;
         _anchor = circle.center;
       default:
-        _value = null;
-        _anchor = null;
+        break;
     }
   }
 }
