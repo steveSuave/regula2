@@ -1,0 +1,39 @@
+lib/domain/construction/objects/intersection_point.dart
+  s_3e0054677c6d28::t_7b838faa7b232b 178
+  s_3e0054677c6d28::t_d57ee7b21b9be7 149-156,163-166
+  s_3e0054677c6d28::t_c86c2fa6c7062a 200
+test/domain/construction/objects/angle_bisector_line_test.dart
+  s_3e0054677c6d28::t_416e7a216caefb 76-158
+  s_3e0054677c6d28::t_4b622653b12584 1,5-6,9-14
+test/domain/projective/euclidean_test.dart
+  s_3e0054677c6d28::t_c1dd5546ac71b9 2
+  s_3e0054677c6d28::t_ee8136c2ba83be 7
+  s_3e0054677c6d28::t_9c9c6b265946c7 281-383
+lib/domain/construction/objects/angle_bisector_line.dart
+  s_3e0054677c6d28::t_d1ae0554e33803 2-6,12-19,35,38-40,49-66,68-74
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_3e0054677c6d28::t_7d4a89a07107ee 3-5,13-17,20-26,61-65,84,87-89,98-129,132-138
+lib/domain/construction/objects/tangent_line.dart
+  s_3e0054677c6d28::t_3c445d1e523749 62-65
+lib/domain/projective/euclidean.dart
+  s_3e0054677c6d28::t_d6dd61efb55c1b 79-141
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_3e0054677c6d28::t_cd7ed486aa5907 5,8-11
+  s_3e0054677c6d28::t_8fdec6437d26cf 178-244
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f6f7cc204aa1ced729940fac40783805b09b58c9",
+  "prompts": {},
+  "sessions": {
+    "s_3e0054677c6d28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ac7877ab-3784-4ac5-b1ee-c3569e705d35",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
