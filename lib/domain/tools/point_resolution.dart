@@ -99,30 +99,35 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
 }
 
 /// The intersection branch of `curve1 ∩ curve2` nearest [tap], or null
-/// when the curves don't currently intersect (or a parent is undefined).
+/// when no branch is currently real and drawable (a real miss, a parent
+/// undefined).
 ///
-/// Probes both branch objects — throwaway [IntersectionPoint]s never added
-/// to a construction — so the choice rides `IntersectionPoint`'s
-/// documented deterministic branch ordering instead of re-deriving the
-/// intersection dispatch. A tie or a single intersection (tangency clamps
-/// both probes onto the same point) resolves to branch 0.
+/// Re-pointed at the projective candidates (Phase 110): the index is the
+/// canonical-order position in [intersectionCandidates] — exactly what
+/// `IntersectionPoint.branchIndex` addresses — and only real finite
+/// candidates take part. A tie (tangency doubles its point) resolves to
+/// the lower index.
 ({int index, double distance})? nearestIntersectionBranch(
   GeoObject curve1,
   GeoObject curve2,
   Vec2 tap,
 ) {
-  IntersectionPoint probe(int branch) => IntersectionPoint(
-        curve1: curve1,
-        curve2: curve2,
-        branchIndex: branch,
-        id: 'branch-probe-$branch',
-      );
-  final p0 = probe(0).position;
-  final p1 = probe(1).position;
-  if (p0 == null || p1 == null) {
+  final candidates = intersectionCandidates(curve1, curve2);
+  int? bestIndex;
+  var bestDistance = double.infinity;
+  for (var i = 0; i < candidates.length; i++) {
+    final p = candidates[i].toVec2();
+    if (p == null) {
+      continue;
+    }
+    final d = p.distanceTo(tap);
+    if (d < bestDistance) {
+      bestDistance = d;
+      bestIndex = i;
+    }
+  }
+  if (bestIndex == null) {
     return null;
   }
-  final d0 = p0.distanceTo(tap);
-  final d1 = p1.distanceTo(tap);
-  return d1 < d0 ? (index: 1, distance: d1) : (index: 0, distance: d0);
+  return (index: bestIndex, distance: bestDistance);
 }
