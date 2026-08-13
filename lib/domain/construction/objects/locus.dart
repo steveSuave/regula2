@@ -285,8 +285,7 @@ class Locus extends GeoLocus {
         }
         current.add(parameterAt(slot));
       } else if (current != null) {
-        runs.add(
-            _Run(current, leftGap: leftGap, rightGap: parameterAt(slot)));
+        runs.add(_Run(current, leftGap: leftGap, rightGap: parameterAt(slot)));
         current = null;
       }
     }
@@ -295,8 +294,13 @@ class Locus extends GeoLocus {
       // non-cyclic host (open end); on a full-turn host the slot past it
       // is the gap the cyclic iteration started at, one unwrapped turn
       // up.
-      runs.add(_Run(current,
-          leftGap: leftGap, rightGap: cyclic ? parameterAt(n) : null));
+      runs.add(
+        _Run(
+          current,
+          leftGap: leftGap,
+          rightGap: cyclic ? parameterAt(n) : null,
+        ),
+      );
     }
     return runs;
   }
@@ -375,8 +379,7 @@ class Locus extends GeoLocus {
     }
 
     for (var segment = 0; segment < _maxWalkSegments; segment++) {
-      final params =
-          direction > 0 ? ascending : ascending.reversed.toList();
+      final params = direction > 0 ? ascending : ascending.reversed.toList();
       for (final t in params) {
         final p = _evalAt(t);
         if (p == null) {
@@ -481,9 +484,11 @@ class Locus extends GeoLocus {
     // 2 · halfSpan rung barely moves the driver, so early increments
     // *grow* toward the doubling regime and would spuriously trip the
     // decay rejection.
-    for (var distance = math.max(2 * halfSpan, (edge - center).abs());
-        distance <= _tailMaxDistance;
-        distance *= 2) {
+    for (
+      var distance = math.max(2 * halfSpan, (edge - center).abs());
+      distance <= _tailMaxDistance;
+      distance *= 2
+    ) {
       final position = _evalAt(edge + sign * distance);
       if (position == null) {
         return const [];
@@ -565,8 +570,9 @@ class Locus extends GeoLocus {
       _evalAt(tIn - (tOut - tIn) / 2);
       if (coalescing.candidateCount == 2) {
         flip = coalescing;
-        lo = bisect((position) =>
-            position != null && coalescing.candidateCount == 2);
+        lo = bisect(
+          (position) => position != null && coalescing.candidateCount == 2,
+        );
       }
     }
     final ladder = <double>[
@@ -608,9 +614,7 @@ class Locus extends GeoLocus {
           ];
         }
         const tau = 2 * math.pi;
-        return [
-          for (var i = 0; i < sampleCount; i++) tau * i / sampleCount,
-        ];
+        return [for (var i = 0; i < sampleCount; i++) tau * i / sampleCount];
       case GeoLine(:final line, :final parameterExtent):
         if (line == null) {
           return null;
@@ -634,8 +638,7 @@ class Locus extends GeoLocus {
           final sign = min != null ? 1 : -1;
           final outward = [
             for (var i = 0; i < sampleCount; i++)
-              edge +
-                  sign * halfSpan * math.tan(math.pi / 2 * i / sampleCount),
+              edge + sign * halfSpan * math.tan(math.pi / 2 * i / sampleCount),
           ];
           return sign > 0 ? outward : outward.reversed.toList();
         }

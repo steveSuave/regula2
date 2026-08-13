@@ -48,18 +48,23 @@ class PointOnObject extends GeoPoint {
     required Vec2 position,
   }) {
     final parameter = switch (curve) {
-      GeoLine(:final line?) && final GeoLine host =>
-        host.clampParameter(line.parameterAt(position)),
-      GeoCircle(:final circle?) && final GeoCircle host =>
-        host.clampAngle(circle.angleAt(position)),
+      GeoLine(:final line?) && final GeoLine host => host.clampParameter(
+        line.parameterAt(position),
+      ),
+      GeoCircle(:final circle?) && final GeoCircle host => host.clampAngle(
+        circle.angleAt(position),
+      ),
       GeoLine() || GeoCircle() => throw ArgumentError(
-          'Cannot project onto an undefined curve',
-        ),
-      GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
-      GeoLocus() || GeoText() =>
-        throw ArgumentError(
-          'PointOnObject requires a line or circle parent',
-        ),
+        'Cannot project onto an undefined curve',
+      ),
+      GeoPoint() ||
+      GeoAngle() ||
+      GeoPolygon() ||
+      GeoMeasurement() ||
+      GeoLocus() ||
+      GeoText() => throw ArgumentError(
+        'PointOnObject requires a line or circle parent',
+      ),
     };
     return PointOnObject(id: id, curve: curve, parameter: parameter);
   }
@@ -85,15 +90,18 @@ class PointOnObject extends GeoPoint {
   @override
   void recompute() {
     _position = switch (curve) {
-      GeoLine(:final line) && final GeoLine host =>
-        line?.pointAt(host.clampParameter(parameter)),
-      GeoCircle(:final circle) && final GeoCircle host =>
-        circle?.pointAt(host.clampAngle(parameter)),
-      GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
-      GeoLocus() || GeoText() =>
-        throw StateError(
-          'PointOnObject parent must be a curve',
-        ),
+      GeoLine(:final line) && final GeoLine host => line?.pointAt(
+        host.clampParameter(parameter),
+      ),
+      GeoCircle(:final circle) && final GeoCircle host => circle?.pointAt(
+        host.clampAngle(parameter),
+      ),
+      GeoPoint() ||
+      GeoAngle() ||
+      GeoPolygon() ||
+      GeoMeasurement() ||
+      GeoLocus() ||
+      GeoText() => throw StateError('PointOnObject parent must be a curve'),
     };
   }
 }

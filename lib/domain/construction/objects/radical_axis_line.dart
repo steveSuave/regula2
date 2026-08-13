@@ -17,9 +17,7 @@ class RadicalAxisLine extends GeoLine {
     super.attributes,
   }) {
     if (identical(circle1, circle2)) {
-      throw ArgumentError(
-        'RadicalAxisLine requires two distinct circles',
-      );
+      throw ArgumentError('RadicalAxisLine requires two distinct circles');
     }
     recompute();
   }

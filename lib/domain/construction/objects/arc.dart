@@ -1,7 +1,8 @@
 import '../../math/angle_geometry.dart';
 import '../../math/circle_eq.dart';
-import '../../math/triangle_centers.dart';
 import '../../math/vec2.dart';
+import '../../projective/circles.dart';
+import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
 /// The circular arc from [start] to [end] passing through [via].
@@ -9,12 +10,19 @@ import '../geo_object.dart';
 /// A [GeoCircle] via its carrier [circle] (the three points' circumcircle),
 /// so arcs participate in intersections like full circles do — clipping
 /// intersection points to the arc's extent is deferred, matching `Segment`
-/// and `Ray`. Undefined while the points are collinear (including any two
-/// coincident); recovers when a drag breaks the degeneracy.
+/// and `Ray`.
 ///
 /// The drawn extent is [startAngle] plus the signed [sweep]: whichever
 /// branch of the carrier contains [via]. Painter and hit tester must use
 /// those — the carrier alone is the full circle.
+///
+/// Migrated (Phase 109): the carrier is [circumcircleOf] on the parents'
+/// projective views; [circle] is its projection and the angular extent
+/// stays affine metadata read off that projection. Collinear (distinct)
+/// points now yield the degenerate line-pair carrier ([conic] non-null,
+/// [circle] and the angles null — [isDefined] still reads false);
+/// coincident points (within `projectiveEpsilon`, guarded before the
+/// kernel call) stay fully undefined. Recovery on drag is unchanged.
 class Arc extends GeoCircle {
   Arc({
     required super.id,
@@ -30,9 +38,13 @@ class Arc extends GeoCircle {
   final GeoPoint via;
   final GeoPoint end;
 
+  ConicMatrix? _conic;
   CircleEq? _circle;
   double? _startAngle;
   double? _sweep;
+
+  @override
+  ConicMatrix? get conic => _conic;
 
   @override
   CircleEq? get circle => _circle;
@@ -78,21 +90,34 @@ class Arc extends GeoCircle {
 
   @override
   void recompute() {
-    final s = start.position;
-    final v = via.position;
-    final e = end.position;
-    final center =
-        (s == null || v == null || e == null) ? null : circumcenter(s, v, e);
-    if (s == null || v == null || e == null || center == null) {
+    final s = start.projPoint;
+    final v = via.projPoint;
+    final e = end.projPoint;
+    if (s == null ||
+        v == null ||
+        e == null ||
+        s.closeTo(v) ||
+        v.closeTo(e) ||
+        s.closeTo(e)) {
+      _conic = null;
       _circle = null;
       _startAngle = null;
       _sweep = null;
       return;
     }
-    final circle = CircleEq.centerAndPoint(center, s);
-    _circle = circle;
-    final startAngle = circle.angleAt(s);
+    final k = circumcircleOf(s, v, e);
+    _conic = k.isZero ? null : k;
+    final circle = _circle = _conic?.toCircleEq();
+    final sp = start.position;
+    final vp = via.position;
+    final ep = end.position;
+    if (circle == null || sp == null || vp == null || ep == null) {
+      _startAngle = null;
+      _sweep = null;
+      return;
+    }
+    final startAngle = circle.angleAt(sp);
     _startAngle = startAngle;
-    _sweep = sweepThrough(startAngle, circle.angleAt(v), circle.angleAt(e));
+    _sweep = sweepThrough(startAngle, circle.angleAt(vp), circle.angleAt(ep));
   }
 }

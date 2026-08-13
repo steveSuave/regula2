@@ -20,6 +20,8 @@ class Orthocenter extends TriangleCenterPoint {
 
   @override
   ProjPoint computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) =>
-      perpendicularThrough(a, b.join(c))
-          .meet(perpendicularThrough(b, a.join(c)));
+      perpendicularThrough(
+        a,
+        b.join(c),
+      ).meet(perpendicularThrough(b, a.join(c)));
 }

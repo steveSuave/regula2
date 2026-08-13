@@ -316,26 +316,41 @@ class ConicMatrix {
 
   /// Projection to a center-and-radius circle — the rendering question.
   /// Returns the circle when this conic is real, has a circle's shape
-  /// (`xx ≈ yy`, `xy ≈ 0`, both relative at [eps]) and a real non-negative
-  /// squared radius; else null (non-circles, imaginary circles).
+  /// (`xx ≈ yy`, `xy ≈ 0`, relative at [eps] *to the quadratic block's
+  /// own scale*) and a real non-negative squared radius; else null
+  /// (non-circles, imaginary circles, degenerate line-conics).
+  ///
+  /// Judging the shape against the quadratic block — not the full matrix
+  /// norm — matters: a circle far from the origin (or huge) has
+  /// `xx ≪ xw` and would read "degenerate" under a whole-matrix relative
+  /// check, yet it is exactly circle-shaped and V1's affine kernel held
+  /// it as center + radius with no cutoff at all. Locus infinity tails
+  /// drive constructions there deliberately. Degenerate line-conics are
+  /// no risk: the Phase 109 circle constructors produce their vanishing
+  /// quadratic entries *exactly*, so they fail the `quadScale == 0` test,
+  /// not a tolerance.
+  ///
+  /// The center/radius arithmetic uses ratios of the raw entries (scale-
+  /// and phase-free once the shape checks pass) rather than chart
+  /// normalization, which costs an ulp: the circle constructors put `xx`
+  /// at a product of unit `w`s, and raw ratios keep integer centers and
+  /// radii bit-exact for them.
   CircleEq? toCircleEq([double eps = projectiveEpsilon]) {
     if (!isReal(eps)) return null;
-    // Normalized entries have magnitude ≤ 1, so the shape checks are
-    // relative; the center/radius arithmetic below uses ratios of the
-    // *raw* entries instead (equally scale- and phase-free), because
-    // dividing through by an arbitrary largest entry first costs an ulp —
-    // the circle constructors put `xx` at a product of unit `w`s, and the
-    // raw ratios keep integer centers and radii bit-exact for them.
-    final n = normalized;
-    if ((n.xx.re - n.yy.re).abs() > eps ||
-        n.xy.re.abs() > eps ||
-        n.xx.re.abs() <= eps) {
+    final quadScale = math.sqrt(math.max(xx.abs2, math.max(xy.abs2, yy.abs2)));
+    if (quadScale == 0 ||
+        (xx - yy).abs > eps * quadScale ||
+        xy.abs > eps * quadScale) {
       return null;
     }
+    // The checks leave |xx| within eps of quadScale, so dividing by xx is
+    // safe; the ratios can still overflow for extreme entry spreads —
+    // reject non-finite results rather than throwing in CircleEq.
     final cx = -(xw / xx).re;
     final cy = -(yw / xx).re;
     final f = (ww / xx).re;
     final r2 = cx * cx + cy * cy - f;
+    if (!cx.isFinite || !cy.isFinite || !r2.isFinite) return null;
     final r2Scale = math.max(1.0, cx * cx + cy * cy + f.abs());
     if (r2 < -eps * r2Scale) return null;
     return CircleEq(Vec2(cx, cy), math.sqrt(math.max(0, r2)));

@@ -33,9 +33,7 @@ class LineAngle extends GeoAngle {
     super.attributes,
   }) {
     if ((sign1 == null) != (sign2 == null)) {
-      throw ArgumentError(
-        'sign1 and sign2 must be both absent or both given',
-      );
+      throw ArgumentError('sign1 and sign2 must be both absent or both given');
     }
     final s1 = sign1;
     final s2 = sign2;

@@ -63,8 +63,7 @@ class LengthMeasurement extends GeoMeasurement {
     }
     final (start, sweep) = extent;
     final arcLength = circle.radius * sweep;
-    _value =
-        subject is Sector ? 2 * circle.radius + arcLength : arcLength;
+    _value = subject is Sector ? 2 * circle.radius + arcLength : arcLength;
     _anchor = circle.pointAt(start + sweep / 2);
   }
 }
