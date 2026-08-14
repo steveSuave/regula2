@@ -1,0 +1,47 @@
+lib/domain/construction/construction.dart
+  s_f73bd3fd2cd928::t_5407c58ca8535d 90-93,96-119,126,130-134,137,144-145,161-164,174-181,183-197,199-211,213,222-239
+  s_f73bd3fd2cd928::t_fc2aaffd1133b8 5-6
+  s_f73bd3fd2cd928::t_74c05dbeaa19ee 240-241
+benchmark/tracing_bench.dart
+  s_f73bd3fd2cd928::t_fbf87d331152a9 159-160,163-164
+  s_f73bd3fd2cd928::t_58d9723aa242b6 81
+  s_f73bd3fd2cd928::t_528a13273dd95c 1,9-10,15-17
+  s_f73bd3fd2cd928::t_14db2fd3c205d6 105-110,115-116,119-121
+lib/domain/construction/objects/intersection_point.dart
+  s_f73bd3fd2cd928::t_18eab79513984c 120-125,130
+  s_f73bd3fd2cd928::t_1d8936e2bb89ba 46-48
+lib/domain/tools/drag_session.dart
+  s_f73bd3fd2cd928::t_61082b15d0d728 191
+  s_f73bd3fd2cd928::t_69f7df02b003ab 179-182
+lib/domain/projective/tracing/trace_step_budget_exception.dart
+  s_f73bd3fd2cd928::t_ad409d1ac2bafe 1-30
+lib/domain/projective/tracing/traced_branch.dart
+  s_f73bd3fd2cd928::t_cad0f1432516d1 1,11-27,38-40,45,53-68,71-76,81-83,87-110,116-132,139-142,155-169,181-200
+  s_f73bd3fd2cd928::t_70a97cca64e390 201
+lib/domain/projective/tracing/tracing_flags.dart
+  s_f73bd3fd2cd928::t_6a30d08b9c7629 18-24
+test/domain/projective/tracing/traced_branch_test.dart
+  s_f73bd3fd2cd928::t_d85e877ec73e01 1-2,23-38,41,43,48-49,64-173,228-238
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_f73bd3fd2cd928::t_fc016e855636b7 14,66,74,80-84,86-87,97,102,109-114,123-125,127-128,143-144,146-148,150,157,172,177-183,185-187,189,192-232,265,275,338,351-352
+test/domain/tools/drag_session_tracing_test.dart
+  s_f73bd3fd2cd928::t_f56129c8935b78 105,108,118-131
+  s_f73bd3fd2cd928::t_2b2e40d52f84a3 56
+  s_f73bd3fd2cd928::t_3157b93388e938 132-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7740f7570bf09db8da3a14bb0ea33e855b9d3188",
+  "prompts": {},
+  "sessions": {
+    "s_f73bd3fd2cd928": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fad87ffd-1034-4b24-ad1b-033765efff78",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
