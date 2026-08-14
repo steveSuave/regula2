@@ -1,0 +1,84 @@
+docs/PLAN.md
+  s_7353ee9bfd60c8::t_bf39c6e70fd5e8 45
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_7353ee9bfd60c8::t_acc65dae9caa03 1011-1012
+  s_7353ee9bfd60c8::t_ab373e9f2bce61 919-1010,1013-1044,1046-1130,1132-1200
+  s_7353ee9bfd60c8::t_f83e1d7225337a 1131
+  s_7353ee9bfd60c8::t_572b75801037d3 1045
+lib/domain/tools/drag_session.dart
+  s_7353ee9bfd60c8::t_ef30f6a683067b 195-197
+  s_7353ee9bfd60c8::t_6f1726fd86acd8 135-175
+  s_7353ee9bfd60c8::t_6f227e4ea5e199 18
+  s_7353ee9bfd60c8::t_c9f3dddb6c6cdf 226-233
+  s_7353ee9bfd60c8::t_f7b48c49af476f 308
+  s_7353ee9bfd60c8::t_ea4802dd629317 206,208
+  s_7353ee9bfd60c8::t_a3a7eea6654d35 43-47
+  s_7353ee9bfd60c8::t_add5e5012f5e87 340
+  s_7353ee9bfd60c8::t_10f68004df33c1 423-427
+  s_7353ee9bfd60c8::t_8f7b21f280e388 479-487,493-494,496,502,504-518,520-528,530-531,537-538,540,547,555-557,559
+  s_7353ee9bfd60c8::t_7f538b687ab533 488-492
+  s_7353ee9bfd60c8::t_279561b6214ca8 284,294
+  s_7353ee9bfd60c8::t_b79c00ad324d3b 519,529
+lib/domain/projective/tracing/traced_branch.dart
+  s_7353ee9bfd60c8::t_e804c7e87240fc 106
+  s_7353ee9bfd60c8::t_822ca5ae8097b5 134
+  s_7353ee9bfd60c8::t_b9b7a098119a48 121
+  s_7353ee9bfd60c8::t_6df7a308802e48 152,161
+  s_7353ee9bfd60c8::t_400f216d68b8b2 81-90
+  s_7353ee9bfd60c8::t_64ee2e816f7664 227,234,239-242
+  s_7353ee9bfd60c8::t_eace204b4f0c40 41
+lib/domain/commands/set_point_on_object_parameter_command.dart
+  s_7353ee9bfd60c8::t_254b864157026f 3,13-19,25,31,33-34,36-41,44-49
+docs/TODO.md
+  s_7353ee9bfd60c8::t_1b11519d35fbb7 31-39
+test/domain/projective/tracing/singularity_test.dart
+  s_7353ee9bfd60c8::t_d5355d4cd2f7d2 230-243
+test/domain/tools/drag_session_tracing_test.dart
+  s_7353ee9bfd60c8::t_81c6589dfff477 3,9
+  s_7353ee9bfd60c8::t_0abde25e7a377a 214-345
+lib/domain/projective/tracing/singularity.dart
+  s_7353ee9bfd60c8::t_404136416d5872 108-115
+test/domain/commands/set_point_on_object_parameter_command_test.dart
+  s_7353ee9bfd60c8::t_a80526e4fffc68 5,7
+  s_7353ee9bfd60c8::t_5b44cdd92b91da 73-118
+lib/domain/construction/construction.dart
+  s_7353ee9bfd60c8::t_ebfbb36cd09543 533-537
+  s_7353ee9bfd60c8::t_e351eb1c4a5c98 575-582,586-595,601,605-612
+  s_7353ee9bfd60c8::t_3161b36ff4864b 5-6
+  s_7353ee9bfd60c8::t_0e9dd68706bea7 178,191
+  s_7353ee9bfd60c8::t_e204cea306a053 222,244
+  s_7353ee9bfd60c8::t_aa35dad76336bd 371
+  s_7353ee9bfd60c8::t_3614aba0d41d26 290-303,310
+  s_7353ee9bfd60c8::t_7ccfed6f6000dd 464
+  s_7353ee9bfd60c8::t_5e9b6ec9c6fe18 433-437
+  s_7353ee9bfd60c8::t_6559cd66c00490 328-333
+  s_7353ee9bfd60c8::t_198f8e0142d6d8 185-190,192-221,223-243,245-289,304-309,311-312
+  s_7353ee9bfd60c8::t_a82dffe3cbe554 423
+  s_7353ee9bfd60c8::t_88e8135ab705c5 431
+  s_7353ee9bfd60c8::t_62bd044dcf9ebf 466-467
+lib/domain/projective/complex.dart
+  s_7353ee9bfd60c8::t_3f66a3fcd11e88 94-113
+lib/domain/construction/objects/point_on_object.dart
+  s_7353ee9bfd60c8::t_f1d2a4f23fc539 102-112
+test/domain/projective/tracing/traced_branch_test.dart
+  s_7353ee9bfd60c8::t_973699445e6018 52-77
+test/domain/projective/complex_test.dart
+  s_7353ee9bfd60c8::t_871c383c9ca15a 230-251,256-262,264-276
+  s_7353ee9bfd60c8::t_23851108b28393 252-255,263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8f5d2b2e2a7175392d50342397688eff19cfecc7",
+  "prompts": {},
+  "sessions": {
+    "s_7353ee9bfd60c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "49aee461-d757-4f53-8288-a5ffcae2082b",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
