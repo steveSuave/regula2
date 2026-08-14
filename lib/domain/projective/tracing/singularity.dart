@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../../math/vec2.dart';
 import '../complex.dart';
 
 /// Singularity detection and complex-detour planning (Phase 115).
@@ -14,14 +15,17 @@ import '../complex.dart';
 /// bounded number of trials and lands on the far side with branch identity
 /// decided by continuity, not by a matching tie.
 ///
-/// **Detour orientation is fixed**: always through the *upper* half-plane
-/// of the path's own parameter (`Im t ≥ 0`, see [DetourArc.tAt]). That is
-/// the determinism the phase promises — the same drag always resolves the
-/// same way — and it composes correctly with reversal: a return pass
-/// parameterizes the reverse path, so its upper half-plane is the original
-/// path's lower one, the two detours wind zero net turns around the
-/// singularity, and a there-and-back drag restores every branch (identity
-/// monodromy — "no jump, no swap").
+/// **Detour orientation is fixed and recorded here**: which half-plane of
+/// the path parameter an arc walks is [detourOrientation] of the drag's
+/// direction — a deterministic, *odd* rule (reversing the drag flips it).
+/// Oddness is what makes reversal compose correctly: a return pass
+/// parameterizes the reverse path, so keeping one absolute half-plane
+/// would put its detour on the *other physical side* of the singularity —
+/// the round trip would wind once around it and swap the branches (the
+/// monodromy of the root split; the toy probe caught exactly this).
+/// Flipping the half-plane with the direction retraces the same physical
+/// side, winds zero net turns, and a there-and-back drag restores every
+/// branch (identity monodromy — "no jump, no swap").
 
 /// Trial-step size below which the controller is considered starving and
 /// a detour is attempted (a fraction of the unit path parameter). Steps
@@ -85,14 +89,31 @@ double? estimateSingularParameter({
   return tStar.isFinite && tStar > t2 ? tStar : null;
 }
 
+/// The detour orientation for a drag from [start] to [end]: `+1` walks
+/// arcs through the upper half-plane of the path parameter (`Im t > 0`),
+/// `−1` through the lower. The rule — descending or leftward drags
+/// detour upper — is arbitrary; what is load-bearing is that it is
+/// deterministic and *odd* (reversing the drag flips it), which is what
+/// makes a there-and-back drag an identity (see the library doc). A
+/// degenerate zero-direction path cannot starve the controller, so its
+/// value never matters.
+double detourOrientation(Vec2 start, Vec2 end) {
+  final dy = end.y - start.y;
+  if (dy != 0) {
+    return dy < 0 ? 1 : -1;
+  }
+  return end.x - start.x < 0 ? 1 : -1;
+}
+
 /// A semicircular detour in complex path parameter: the arc
-/// `t(θ) = center + radius·e^{iθ}`, walked from `θ = π` (the real [entry],
-/// where the starving pass sits) down to `θ = 0` (the real [exit], past
-/// the singularity). `Im t = radius·sin θ ≥ 0` throughout — the fixed
-/// upper-half-plane orientation (see the library doc for why that is both
-/// deterministic and reversal-consistent).
+/// `t(θ) = center + radius·(cos θ + i·orientation·sin θ)`, walked from
+/// `θ = π` (the real [entry], where the starving pass sits) down to
+/// `θ = 0` (the real [exit], past the singularity), keeping
+/// `orientation·Im t ≥ 0` throughout — one half-plane per arc, chosen by
+/// [detourOrientation] (see the library doc for why the choice must be
+/// odd in the drag direction).
 class DetourArc {
-  const DetourArc._(this.entry, this.radius);
+  const DetourArc._(this.entry, this.radius, this.orientation);
 
   /// The real parameter where the arc leaves the axis — the pass's last
   /// accepted `t`, so the traced state is already there.
@@ -100,6 +121,10 @@ class DetourArc {
 
   /// Half the real span the arc detours across.
   final double radius;
+
+  /// `+1` for the upper half-plane, `−1` for the lower (see
+  /// [detourOrientation]).
+  final double orientation;
 
   /// The arc's center on the real axis, at or past the estimated
   /// singularity.
@@ -114,7 +139,7 @@ class DetourArc {
   /// The complex path parameter at arc angle [theta] ∈ [0, π].
   Complex tAt(double theta) => Complex(
         center + radius * math.cos(theta),
-        radius * math.sin(theta),
+        orientation * radius * math.sin(theta),
       );
 
   /// Plans the arc from [entry] around the estimated singularity [tStar],
@@ -130,6 +155,7 @@ class DetourArc {
   static DetourArc? plan({
     required double entry,
     required double tStar,
+    required double orientation,
     double end = 1,
   }) {
     if (!tStar.isFinite || !(tStar > entry) || !(tStar < end)) {
@@ -139,11 +165,11 @@ class DetourArc {
       detourSafety * (tStar - entry),
       0.499 * (end - entry),
     );
-    final arc = DetourArc._(entry, radius);
+    final arc = DetourArc._(entry, radius, orientation);
     return arc.exit > tStar && arc.exit < end ? arc : null;
   }
 
   @override
-  String toString() =>
-      'DetourArc(entry: $entry, exit: $exit, radius: $radius)';
+  String toString() => 'DetourArc(entry: $entry, exit: $exit, '
+      'radius: $radius, orientation: $orientation)';
 }

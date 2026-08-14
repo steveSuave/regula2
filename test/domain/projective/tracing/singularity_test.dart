@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:glados/glados.dart';
+import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/tracing/singularity.dart';
 
 void main() {
@@ -112,7 +113,7 @@ void main() {
   group('DetourArc', () {
     test('plans a safety-margined arc strictly enclosing the singularity',
         () {
-      final arc = DetourArc.plan(entry: 0.3, tStar: 0.4)!;
+      final arc = DetourArc.plan(entry: 0.3, tStar: 0.4, orientation: 1)!;
       expect(arc.entry, 0.3);
       expect(arc.radius, closeTo(detourSafety * 0.1, 1e-15));
       expect(arc.center, closeTo(0.45, 1e-15));
@@ -122,7 +123,7 @@ void main() {
     });
 
     test('the exit is exactly real and bitwise equal to tAt(0)', () {
-      final arc = DetourArc.plan(entry: 0.25, tStar: 0.375)!;
+      final arc = DetourArc.plan(entry: 0.25, tStar: 0.375, orientation: 1)!;
       final end = arc.tAt(0);
       expect(end.re, arc.exit);
       expect(end.im, 0.0);
@@ -130,7 +131,7 @@ void main() {
 
     test('the arc stays in the closed upper half-plane and spans '
         'entry → exit', () {
-      final arc = DetourArc.plan(entry: 0.1, tStar: 0.3)!;
+      final arc = DetourArc.plan(entry: 0.1, tStar: 0.3, orientation: 1)!;
       expect(arc.tAt(math.pi).re, closeTo(arc.entry, 1e-15));
       expect(arc.tAt(math.pi).im.abs(), lessThan(1e-15 * arc.radius + 1e-30));
       for (var k = 0; k <= 16; k++) {
@@ -147,7 +148,7 @@ void main() {
         () {
       // Safety-margined radius would put the exit past 1; the shrunken
       // arc must still strictly enclose t* and stay strictly inside.
-      final arc = DetourArc.plan(entry: 0.5, tStar: 0.9)!;
+      final arc = DetourArc.plan(entry: 0.5, tStar: 0.9, orientation: 1)!;
       expect(arc.exit, lessThan(1));
       expect(arc.exit, greaterThan(0.9));
       expect(arc.entry, 0.5);
@@ -156,15 +157,15 @@ void main() {
     test('refuses arcs that cannot enclose: singular or near-singular '
         'endpoint, singularity behind the entry', () {
       // t* at or past the end: the pass would have to finish complex.
-      expect(DetourArc.plan(entry: 0.5, tStar: 1.0), isNull);
-      expect(DetourArc.plan(entry: 0.5, tStar: 1.2), isNull);
+      expect(DetourArc.plan(entry: 0.5, tStar: 1.0, orientation: 1), isNull);
+      expect(DetourArc.plan(entry: 0.5, tStar: 1.2, orientation: 1), isNull);
       // t* so close to the end the shrunken arc cannot get past it.
-      expect(DetourArc.plan(entry: 0.0, tStar: 0.9999), isNull);
+      expect(DetourArc.plan(entry: 0.0, tStar: 0.9999, orientation: 1), isNull);
       // t* behind or at the entry.
-      expect(DetourArc.plan(entry: 0.5, tStar: 0.5), isNull);
-      expect(DetourArc.plan(entry: 0.5, tStar: 0.4), isNull);
-      expect(DetourArc.plan(entry: 0.5, tStar: double.nan), isNull);
-      expect(DetourArc.plan(entry: 0.5, tStar: double.infinity), isNull);
+      expect(DetourArc.plan(entry: 0.5, tStar: 0.5, orientation: 1), isNull);
+      expect(DetourArc.plan(entry: 0.5, tStar: 0.4, orientation: 1), isNull);
+      expect(DetourArc.plan(entry: 0.5, tStar: double.nan, orientation: 1), isNull);
+      expect(DetourArc.plan(entry: 0.5, tStar: double.infinity, orientation: 1), isNull);
     });
 
     Glados2(
@@ -173,7 +174,7 @@ void main() {
     ).test('every planned arc strictly encloses t* inside (entry, 1)',
         (entry, fraction) {
       final tStar = entry + fraction * (1 - entry);
-      final arc = DetourArc.plan(entry: entry, tStar: tStar);
+      final arc = DetourArc.plan(entry: entry, tStar: tStar, orientation: 1);
       if (arc == null) {
         return;
       }
@@ -183,6 +184,48 @@ void main() {
       expect(arc.exit, lessThan(1));
       expect(arc.tAt(0).im, 0.0);
       expect(arc.tAt(0).re, arc.exit);
+    });
+
+    test('orientation −1 mirrors the arc into the lower half-plane, '
+        'endpoints unchanged', () {
+      final upper = DetourArc.plan(entry: 0.1, tStar: 0.3, orientation: 1)!;
+      final lower = DetourArc.plan(entry: 0.1, tStar: 0.3, orientation: -1)!;
+      expect(lower.entry, upper.entry);
+      expect(lower.exit, upper.exit);
+      for (var k = 0; k <= 16; k++) {
+        final theta = math.pi * k / 16;
+        expect(lower.tAt(theta).re, upper.tAt(theta).re);
+        expect(lower.tAt(theta).im, -upper.tAt(theta).im);
+        expect(lower.tAt(theta).im, lessThanOrEqualTo(0));
+      }
+      expect(lower.tAt(0).im, 0.0);
+      expect(lower.tAt(0).re, lower.exit);
+    });
+  });
+
+  group('detourOrientation', () {
+    test('is odd: reversing the drag flips the half-plane', () {
+      const pairs = [
+        (Vec2(0, 5), Vec2(0, 0)),
+        (Vec2(0, 0), Vec2(0, 5)),
+        (Vec2(-1, 2), Vec2(3, -4)),
+        (Vec2(0, 0), Vec2(7, 0)), // horizontal: decided by dx
+        (Vec2(7, 0), Vec2(0, 0)),
+      ];
+      for (final (start, end) in pairs) {
+        final forward = detourOrientation(start, end);
+        final back = detourOrientation(end, start);
+        expect(forward.abs(), 1.0);
+        expect(back, -forward, reason: '$start → $end');
+      }
+    });
+
+    test('descending and leftward drags detour upper (the recorded rule)',
+        () {
+      expect(detourOrientation(const Vec2(0, 5), const Vec2(0, 0)), 1);
+      expect(detourOrientation(const Vec2(0, 0), const Vec2(0, 5)), -1);
+      expect(detourOrientation(const Vec2(3, 0), const Vec2(0, 0)), 1);
+      expect(detourOrientation(const Vec2(0, 0), const Vec2(3, 0)), -1);
     });
   });
 }
