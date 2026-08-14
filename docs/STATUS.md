@@ -8,6 +8,28 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 116 (V2 Session 18) — 2026-08-14
+
+**Done**
+- **Phase 116b (constrained-point drags trace) complete** on `phase-116b-constrained-tracing`, merged to `main` — driven by a user bug report: Cinderella's own no-jump demo (C, D on a line, equal circles around each, E their intersection; `~/Downloads/construction.rgl`) jumped when C crossed D, because **C is a `PointOnObject` and slide drags never entered the tracing engine** (free-point drags only, a Phase 113 limitation nothing tracked).
+- **Parameter drive**: the tracing walk extracted into `_traceAlong` over `driveReal`/`driveComplex`/`orientation`; `recomputeAlongParameterPath` lerps the stored real parameter (real steps re-enter `recompute` → extent clamping exactly as static), detours evaluate the carrier's chart form at a complex parameter (`PointOnObject.tracedPosition`; `Complex.cos`/`sin` added for circle carriers — bitwise-real on the real axis via `exp(0) == 1`; PLAN §Parameterization clarified: pass-internal complex *evaluation*, never a complex parameter type). `detourOrientation1D` is the scalar odd rule. `_SlideDragSession` traces by default with the same bail/adoption/command capture (`SetPointOnObjectParameterCommand.branchChanges`, shared `_BranchSnapshot`).
+- **Engine fix 1 — gesture-scoped seed memory.** A preview frame ending *exactly* on a carrier degeneracy (C bitwise on D → coincident circles → no candidates) left the next pass nothing to seed from → static collapse → jump. Both trace entry points take `seedMemory`; completed passes write each seeded slot's final root back, seeding falls back to it when `projPoint` is null. Session-owned: cleared on bail, dies with the gesture — continuation state still never survives commit/save/bail.
+- **Engine fix 2 — coast-entry refusal (latent Phase 114 flaw).** The demo starved *deterministically*: the trial from t=0 to t=0.5 landed bitwise on the coincidence, every branch coasted, the trial was accepted with **zero checks**, and the slot froze on a root half a path stale — every later trial's motion (0.344) exceeded the 0.25 absolute cap forever. Rule: a *match→coast transition* is refused unless the trial spans ≤ 1e-5 of the path (`TracedBranch.hasCandidates`, checkpointed), so refinement localizes the degeneracy and a coast is always entered fresh. Coast→coast, seeded-undefined, and re-acquisition stay permissive.
+- The demo file now traces cleanly: E momentarily undefined at exact coincidence (honest — the circles are identical there), re-emerges on its own side, adoption + command capture make commit/undo/redo exact. Verified against the actual `.rgl` end to end before writing tests.
+- Suite 2083 green, analyze clean, `flutter build web` compiles, perf gate re-run: unchanged (PASS ~1% all targets).
+
+**Next**
+- Phase 117 — locus rewrite on tracing (orientation-convention revisit first, see TODO). Deferred from here: a coast-*starvation* detour (walking the arc around a carrier degeneracy in complex t instead of coasting over it — would make E defined *throughout* the Cinderella crossing) — 117+ material if loci want it; and near-identical-circle candidate hygiene (at d≈1e-3 the pencil leaks two junk near-I/J candidates past `isCircularPoint`; harmless to tracing — matching and per-branch separations ignore them — but static `candidates[branchIndex]` addressing relies on the real pair sorting first, worth a look in 119–121).
+
+**Gotchas**
+- **The coast-entry span floor (1e-5) is load-bearing** — without it the Cinderella crossing starves (pinned by the engine tests). It composes with budgets: localizing a degeneracy costs ~17 refusals per crossing; a path with a tangency (~90 trials) *and* an exact-degeneracy crossing could approach the 128 budget.
+- Seed memory must never outlive its gesture: it resurrects identity across *undefined* stretches only (live `projPoint` always wins), and a static solve in between (bail) invalidates it — both sessions clear it in their catch. Don't hoist it into the Construction.
+- The parameter drive captures the carrier's chart form **once per pass** — sound because a parameter drag never moves the carrier. A future multi-drive (rigid translations) cannot reuse this shape.
+- `Complex.cos/sin` use raw `(e^x ± e^−x)/2` for cosh/sinh — absolute error ~1 ulp of 1, exact at 0; fine for detour matching (absolute precision is what matters there), but don't reuse them where *relative* accuracy of tiny sinh matters.
+- Extent clamping never sees complex parameters: real steps clamp inside `recompute`, the complex evaluator deliberately doesn't. A clamped stretch can't starve (position constant ⇒ separations constant).
+
+---
+
 ## Session 115 (V2 Session 17) — 2026-08-14
 
 **Done**

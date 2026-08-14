@@ -227,4 +227,51 @@ void main() {
       expect(z.closeTo(w, eps), w.closeTo(z, eps));
     });
   });
+
+  group('cos and sin (Phase 116b)', () {
+    test('bitwise real on the real axis: cos/sin of Complex(a) have '
+        're == math.cos/sin(a) exactly and zero imaginary part', () {
+      for (final a in [0.0, 0.3, -1.7, math.pi / 2, 12.34, -0.0]) {
+        final z = Complex(a);
+        expect(z.cos.re, math.cos(a));
+        expect(z.cos.im.abs(), 0.0);
+        expect(z.sin.re, math.sin(a));
+        expect(z.sin.im.abs(), 0.0);
+      }
+    });
+
+    test('known complex values against the hyperbolic identities', () {
+      // cos(i) = cosh 1, sin(i) = i·sinh 1.
+      final cosh1 = (math.exp(1) + math.exp(-1)) / 2;
+      final sinh1 = (math.exp(1) - math.exp(-1)) / 2;
+      expect(Complex.i.cos, closeToComplex(Complex(cosh1)));
+      expect(Complex.i.sin, closeToComplex(Complex(0, sinh1)));
+    });
+
+    Glados(any.complex).test('Pythagorean identity: sin²z + cos²z = 1', (z) {
+      // The identity cancels terms of size ~e^{2|im|}, so bound |im| to
+      // keep the cancellation error under the tolerance (cosh/sinh grow
+      // exponentially).
+      if (z.im.abs() > 5) return;
+      final s = z.sin;
+      final c = z.cos;
+      expect(s * s + c * c, closeToComplex(Complex.one, looseEps));
+    });
+
+    Glados2(any.complex, any.complex).test(
+        'angle addition: sin(z+w) = sin z·cos w + cos z·sin w', (z, w) {
+      if (z.im.abs() > 5 || w.im.abs() > 5) return;
+      expect(
+        (z + w).sin,
+        closeToComplex(z.sin * w.cos + z.cos * w.sin, looseEps),
+      );
+    });
+
+    Glados(any.complex).test('conjugate symmetry: cos(conj z) = conj(cos z)',
+        (z) {
+      if (z.im.abs() > 20) return;
+      expect(z.conj.cos, closeToComplex(z.cos.conj));
+      expect(z.conj.sin, closeToComplex(z.sin.conj));
+    });
+  });
 }

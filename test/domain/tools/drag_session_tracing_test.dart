@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/commands/move_free_point_command.dart';
+import 'package:regula/domain/commands/set_point_on_object_parameter_command.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/tracing/tracing_flags.dart';
 import 'package:regula/domain/tools/drag_session.dart';
@@ -208,5 +210,137 @@ void main() {
     final command = session.end();
     expect(command, isA<MoveFreePointCommand>());
     expect(center.position, const Vec2(0, 5));
+  });
+
+  group('slide-drag tracing (Phase 116b): the Cinderella demo rig', () {
+    late Construction demo;
+    late PointOnObject c;
+    late IntersectionPoint e0;
+    late IntersectionPoint e1;
+    late double startParameter;
+
+    /// C and D constrained to the line y = 0, equal radius-6 circles
+    /// around each, E0/E1 their intersections. Sliding C across D (at
+    /// x = −2) flips the canonical circle∩circle order under roots that
+    /// never approach each other; at exact coincidence E is undefined.
+    setUp(() {
+      demo = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(-10, 0));
+      final b2 = FreePoint(id: 'b', position: const Vec2(10, 0));
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b2);
+      demo
+        ..add(a)
+        ..add(b2)
+        ..add(line);
+      final form = line.line!;
+      c = PointOnObject(
+        id: 'C',
+        curve: line,
+        parameter: form.parameterAt(const Vec2(5, 0)),
+      );
+      final d = PointOnObject(
+        id: 'D',
+        curve: line,
+        parameter: form.parameterAt(const Vec2(-2, 0)),
+      );
+      final circleC = FixedRadiusCircle(id: 'kC', center: c, radius: 6);
+      final circleD = FixedRadiusCircle(id: 'kD', center: d, radius: 6);
+      e0 = IntersectionPoint(
+        id: 'E0',
+        curve1: circleD,
+        curve2: circleC,
+        branchIndex: 0,
+      );
+      e1 = IntersectionPoint(
+        id: 'E1',
+        curve1: circleD,
+        curve2: circleC,
+        branchIndex: 1,
+      );
+      demo
+        ..add(c)
+        ..add(d)
+        ..add(circleC)
+        ..add(circleD)
+        ..add(e0)
+        ..add(e1);
+      startParameter = c.parameter;
+    });
+
+    double ySide(IntersectionPoint p) => p.position!.y.sign;
+
+    test('previews hold E on its side across the crossing; the command '
+        'carries the adoption and replays it under commit/undo/redo', () {
+      final side0 = ySide(e0);
+      final side1 = ySide(e1);
+      expect(side0, isNot(side1));
+
+      final session = DragSession.start(demo, c, const Vec2(5, 0))!;
+      for (var x = 3.0; x >= -9; x -= 2) {
+        session.update(Vec2(x, 0));
+        expect(ySide(e0), side0, reason: 'x = $x');
+        expect(ySide(e1), side1, reason: 'x = $x');
+      }
+      expect(c.position!.closeTo(const Vec2(-9, 0)), isTrue);
+      expect(e0.branchIndex, 1);
+      expect(session.traceStats!.bailed, isFalse);
+
+      final command = session.end()! as SetPointOnObjectParameterCommand;
+      expect(
+        command.branchChanges,
+        unorderedEquals(const [
+          (id: 'E0', from: 0, to: 1),
+          (id: 'E1', from: 1, to: 0),
+        ]),
+      );
+      // Rollback exact: parameter and branch indices restored.
+      expect(c.parameter, startParameter);
+      expect(e0.branchIndex, 0);
+      expect(ySide(e0), side0);
+
+      command.apply(demo);
+      expect(c.position!.closeTo(const Vec2(-9, 0)), isTrue);
+      expect(e0.branchIndex, 1);
+      expect(ySide(e0), side0);
+      expect(ySide(e1), side1);
+
+      command.undo(demo);
+      expect(c.parameter, startParameter);
+      expect(e0.branchIndex, 0);
+      expect(ySide(e0), side0);
+
+      command.apply(demo);
+      expect(ySide(e0), side0);
+    });
+
+    test('a preview frame landing exactly on D: E is honestly undefined '
+        'for that frame, and seed memory carries identity across it', () {
+      final side0 = ySide(e0);
+      final session = DragSession.start(demo, c, const Vec2(5, 0))!;
+      session.update(const Vec2(-2, 0));
+      // The circles coincide bitwise: no discrete intersection exists.
+      expect(e0.position, isNull);
+      session.update(const Vec2(-9, 0));
+      // Re-emerged on its own side — the gesture's seed memory bridged
+      // the undefined frame boundary.
+      expect(ySide(e0), side0);
+      expect(e0.branchIndex, 1);
+
+      session.cancel();
+      expect(c.parameter, startParameter);
+      expect(e0.branchIndex, 0);
+      expect(ySide(e0), side0);
+    });
+
+    test('flag off: the same slide relabels statically at the crossing — '
+        'the discriminator that pins what tracing fixes', () {
+      TracingFlags.dragTracing = false;
+      final side0 = ySide(e0);
+      final session = DragSession.start(demo, c, const Vec2(5, 0))!;
+      session.update(const Vec2(-9, 0));
+      expect(ySide(e0), -side0);
+      expect(e0.branchIndex, 0);
+      session.cancel();
+    });
   });
 }

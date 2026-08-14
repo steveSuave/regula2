@@ -227,5 +227,19 @@ void main() {
       expect(detourOrientation(const Vec2(3, 0), const Vec2(0, 0)), 1);
       expect(detourOrientation(const Vec2(0, 0), const Vec2(3, 0)), -1);
     });
+
+    test('the 1D rule (parameter drives) is odd and matches the horizontal '
+        'convention', () {
+      expect(detourOrientation1D(5, 0), 1);
+      expect(detourOrientation1D(0, 5), -1);
+      expect(detourOrientation1D(-2, -7), 1);
+      for (final (from, to) in const [(0.0, 5.0), (3.0, -4.0), (1.5, 1.6)]) {
+        expect(detourOrientation1D(from, to), -detourOrientation1D(to, from));
+        expect(
+          detourOrientation1D(from, to),
+          detourOrientation(Vec2(from, 0), Vec2(to, 0)),
+        );
+      }
+    });
   });
 }

@@ -15,6 +15,7 @@ import '../construction/objects/intersection_point.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/grid_snap.dart';
 import '../math/vec2.dart';
+import '../projective/proj_point.dart';
 import '../projective/tracing/drag_path.dart';
 import '../projective/tracing/tracing_flags.dart';
 
@@ -39,7 +40,11 @@ import '../projective/tracing/tracing_flags.dart';
 ///   exactly (see [end]);
 /// - a [PointOnObject] slides along its host curve — the pointer is
 ///   projected onto the curve each frame and the point's analytic
-///   parameter re-set → [SetPointOnObjectParameterCommand];
+///   parameter re-set → [SetPointOnObjectParameterCommand]; with tracing
+///   on, each frame resolves through
+///   `Construction.recomputeAlongParameterPath` with the same branch
+///   adoption, command capture and static bail as a free point
+///   (Phase 116b);
 /// - any *other* derived point does not drag ([start] returns null): its
 ///   position is its constraint's business — an intersection lives where
 ///   its parents cross;
@@ -127,6 +132,47 @@ abstract class DragSession {
   void cancel();
 }
 
+/// The drag-session side of branch adoption (Phases 116/116b): the
+/// pre-drag [IntersectionPoint.branchIndex] of everything downstream of
+/// a traced drag's mutable object. Traced preview frames adopt indices
+/// in place, so [restore] puts them back before a rollback's recompute
+/// and [diff] turns the net adoptions into the gesture command's
+/// [BranchChange]s. Objects that vanished under the session (an undo
+/// mid-drag) are skipped everywhere.
+class _BranchSnapshot {
+  _BranchSnapshot(this._construction, String pointId) {
+    for (final id in _construction.transitiveDependentsOf(pointId)) {
+      final object = _construction.byId(id);
+      if (object is IntersectionPoint) {
+        _start[id] = object.branchIndex;
+      }
+    }
+  }
+
+  /// For untraced sessions: nothing snapshotted, [restore] and [diff]
+  /// are no-ops.
+  _BranchSnapshot.empty(this._construction);
+
+  final Construction _construction;
+  final Map<String, int> _start = {};
+
+  void restore() {
+    for (final entry in _start.entries) {
+      final object = _construction.byId(entry.key);
+      if (object is IntersectionPoint) {
+        object.branchIndex = entry.value;
+      }
+    }
+  }
+
+  List<BranchChange> diff() => [
+        for (final entry in _start.entries)
+          if (_construction.byId(entry.key) case final IntersectionPoint point
+              when point.branchIndex != entry.value)
+            (id: entry.key, from: entry.value, to: point.branchIndex),
+      ];
+}
+
 /// A free point moving itself, or a derived non-point rigidly translating
 /// its free-point ancestors.
 class _TranslateDragSession implements DragSession {
@@ -146,14 +192,9 @@ class _TranslateDragSession implements DragSession {
     // the session snapshots the start indices of every intersection the
     // drag can touch: rollback restores them like the positions, and
     // [end] diffs them into the command's branch changes.
-    if (_isFreePoint && _traceDrags) {
-      for (final id in _construction.transitiveDependentsOf(_pointIds.single)) {
-        final object = _construction.byId(id);
-        if (object is IntersectionPoint) {
-          _startBranchIndexes[id] = object.branchIndex;
-        }
-      }
-    }
+    _branches = _isFreePoint && _traceDrags
+        ? _BranchSnapshot(_construction, _pointIds.single)
+        : _BranchSnapshot.empty(_construction);
   }
 
   final Construction _construction;
@@ -162,10 +203,9 @@ class _TranslateDragSession implements DragSession {
   final List<String> _pointIds;
   final Map<String, Vec2> _startPositions;
 
-  /// Pre-drag [IntersectionPoint.branchIndex] of every intersection
-  /// downstream of the dragged point — populated only for traced
+  /// Pre-drag branch indices — populated only for traced
   /// single-free-point drags (see the constructor).
-  final Map<String, int> _startBranchIndexes = {};
+  late final _BranchSnapshot _branches;
 
   /// Non-zero only for a single free point (see [DragSession.start]).
   final double _gridSnapStep;
@@ -182,6 +222,14 @@ class _TranslateDragSession implements DragSession {
   /// Null until the first traced update (the gesture starts from the
   /// point's start position).
   Vec2? _lastPreview;
+
+  /// Gesture-scoped continuation memory: each traced pass writes back
+  /// the roots it followed, so a later pass can re-seed an intersection
+  /// that is undefined at its start (the previous frame ended exactly on
+  /// a carrier degeneracy). Cleared on a bail — after a static solve the
+  /// remembered identity no longer describes the construction — and dies
+  /// with the session, so no continuation state outlives the gesture.
+  final Map<String, ProjPoint> _seedMemory = {};
 
   TraceFrameStats? _traceStats;
 
@@ -233,6 +281,7 @@ class _TranslateDragSession implements DragSession {
         id,
         DragPath(from, target),
         stepBudget: TracingFlags.dragStepBudget,
+        seedMemory: _seedMemory,
       );
       _traceStats = (
         accepted: result.acceptedSteps,
@@ -242,6 +291,7 @@ class _TranslateDragSession implements DragSession {
       );
     } catch (_) {
       _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
+      _seedMemory.clear();
       _construction.moveFreePoint(id, target);
     }
   }
@@ -255,12 +305,7 @@ class _TranslateDragSession implements DragSession {
       final to = _freePointPosition;
       // Diff the branch adoptions the traced previews left behind,
       // before rollback restores the start indices.
-      final branchChanges = <BranchChange>[
-        for (final entry in _startBranchIndexes.entries)
-          if (_construction.byId(entry.key) case final IntersectionPoint point
-              when point.branchIndex != entry.value)
-            (id: entry.key, from: entry.value, to: point.branchIndex),
-      ];
+      final branchChanges = _branches.diff();
       _rollback();
       // A snapped drag can quantize back onto its start — nothing to
       // undo, unless the loop crossed degeneracies with a net branch
@@ -292,12 +337,7 @@ class _TranslateDragSession implements DragSession {
   /// session — an undo mid-drag can remove them — are skipped rather
   /// than thrown on.
   void _rollback() {
-    for (final entry in _startBranchIndexes.entries) {
-      final object = _construction.byId(entry.key);
-      if (object is IntersectionPoint) {
-        object.branchIndex = entry.value;
-      }
-    }
+    _branches.restore();
     for (final id in _pointIds) {
       if (_construction.contains(id)) {
         _construction.moveFreePoint(id, _startPositions[id]!);
@@ -380,7 +420,11 @@ class _SlideDragSession implements DragSession {
     this._grabOffset,
     this._project,
     this._clamp,
-  ) : _parameter = _startParameter;
+  ) : _parameter = _startParameter {
+    _branches = _traceDrags
+        ? _BranchSnapshot(_construction, _pointId)
+        : _BranchSnapshot.empty(_construction);
+  }
 
   /// Null when the host curve is undefined — nothing to slide on (the hit
   /// tester skips undefined objects, so this is belt and braces).
@@ -432,28 +476,75 @@ class _SlideDragSession implements DragSession {
   final double Function(Vec2) _project;
   final double Function(double) _clamp;
 
+  /// Whether previews resolve through `recomputeAlongParameterPath`
+  /// (Phase 116b) — the parameter-drive sibling of the free-point
+  /// session's tracing. Captured once per gesture, like there.
+  final bool _traceDrags = TracingFlags.dragTracing;
+
+  /// Pre-drag branch indices — populated only when tracing (see the
+  /// constructor).
+  late final _BranchSnapshot _branches;
+
+  /// Gesture-scoped continuation memory, exactly as in
+  /// [_TranslateDragSession]: bridges frames whose boundary state leaves
+  /// an intersection undefined; cleared on bail, dies with the session.
+  final Map<String, ProjPoint> _seedMemory = {};
+
+  TraceFrameStats? _traceStats;
+
   @override
-  TraceFrameStats? get traceStats => null;
+  TraceFrameStats? get traceStats => _traceStats;
 
   double _parameter;
 
   @override
   void update(Vec2 pointer) {
+    final from = _parameter;
     _parameter = _clamp(_project(pointer) + _grabOffset);
-    _construction.setPointOnObjectParameter(_pointId, _parameter);
+    if (!_traceDrags) {
+      _construction.setPointOnObjectParameter(_pointId, _parameter);
+      return;
+    }
+    // One traced preview frame, anchored at the previous frame's
+    // parameter so branch matching is continuous across pointer events.
+    // The static bail stands, exactly as for free-point drags: whatever
+    // goes wrong inside the engine, the frame falls back to the static
+    // solve and the gesture carries on.
+    try {
+      final result = _construction.recomputeAlongParameterPath(
+        _pointId,
+        from,
+        _parameter,
+        stepBudget: TracingFlags.dragStepBudget,
+        seedMemory: _seedMemory,
+      );
+      _traceStats = (
+        accepted: result.acceptedSteps,
+        rejected: result.rejectedSteps,
+        detours: result.detours,
+        bailed: false,
+      );
+    } catch (_) {
+      _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
+      _seedMemory.clear();
+      _construction.setPointOnObjectParameter(_pointId, _parameter);
+    }
   }
 
   @override
   Command? end() {
     final parameter = _parameter;
+    // Diff the branch adoptions before rollback restores the indices.
+    final branchChanges = _branches.diff();
     _rollback();
-    if (parameter == _startParameter) {
+    if (parameter == _startParameter && branchChanges.isEmpty) {
       return null;
     }
     return SetPointOnObjectParameterCommand(
       pointId: _pointId,
       from: _startParameter,
       to: parameter,
+      branchChanges: branchChanges,
     );
   }
 
@@ -461,8 +552,11 @@ class _SlideDragSession implements DragSession {
   void cancel() => _rollback();
 
   /// Restores the start parameter verbatim (float-exact, like the
-  /// command). Skipped if the point vanished under the session.
+  /// command), and the pre-drag branch indices any traced previews
+  /// adopted away — indices first, so the recompute re-selects the
+  /// original branches. Skipped if the point vanished under the session.
   void _rollback() {
+    _branches.restore();
     if (_construction.contains(_pointId)) {
       _construction.setPointOnObjectParameter(_pointId, _startParameter);
     }

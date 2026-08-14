@@ -916,4 +916,286 @@ void main() {
       expect(p1.branchIndex, 1);
     });
   });
+
+  group('recomputeAlongParameterPath (Phase 116b): the parameter drive', () {
+    /// The Cinderella no-jump demo: C and D constrained to the line
+    /// y = 0, an equal circle around each, E0/E1 the circle∩circle pair
+    /// (parent order circleD, circleC — like the original file). Sliding
+    /// C across D reverses the directed center line, flipping canonical
+    /// order under roots that never approach each other (they sit at
+    /// ±√(r² − d²/4) on the perpendicular bisector); at exact
+    /// coincidence the circles are identical and E is undefined.
+    /// Returns (construction, C, D, E0, E1); C sits at x = 5, D at
+    /// x = −2, radii 6.
+    (
+      Construction,
+      PointOnObject,
+      PointOnObject,
+      IntersectionPoint,
+      IntersectionPoint,
+    ) cinderellaRig() {
+      final construction = Construction();
+      final a = fp('a', -10, 0);
+      final b = fp('b', 10, 0);
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(line);
+      final form = line.line!;
+      final c = PointOnObject(
+        id: 'C',
+        curve: line,
+        parameter: form.parameterAt(const Vec2(5, 0)),
+      );
+      final d = PointOnObject(
+        id: 'D',
+        curve: line,
+        parameter: form.parameterAt(const Vec2(-2, 0)),
+      );
+      final circleC = FixedRadiusCircle(id: 'kC', center: c, radius: 6);
+      final circleD = FixedRadiusCircle(id: 'kD', center: d, radius: 6);
+      final e0 = IntersectionPoint(
+        id: 'E0',
+        curve1: circleD,
+        curve2: circleC,
+        branchIndex: 0,
+      );
+      final e1 = IntersectionPoint(
+        id: 'E1',
+        curve1: circleD,
+        curve2: circleC,
+        branchIndex: 1,
+      );
+      construction
+        ..add(c)
+        ..add(d)
+        ..add(circleC)
+        ..add(circleD)
+        ..add(e0)
+        ..add(e1);
+      return (construction, c, d, e0, e1);
+    }
+
+    double ySide(IntersectionPoint p) => p.position!.y.sign;
+
+    test('validation: rejects non-constrained-point ids and non-positive '
+        'budgets', () {
+      final (construction, c, _, _, _) = cinderellaRig();
+      expect(
+        () => construction.recomputeAlongParameterPath('l', 0, 1),
+        throwsArgumentError,
+      );
+      expect(
+        () => construction.recomputeAlongParameterPath(
+          'C',
+          c.parameter,
+          c.parameter + 1,
+          stepBudget: 0,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('the Cinderella demo: sliding C across D never swaps E — sides '
+        'hold at every observed step, the flip is adopted, and the static '
+        'solve then reproduces the traced branch', () {
+      final (construction, c, d, e0, e1) = cinderellaRig();
+      final side0 = ySide(e0);
+      final side1 = ySide(e1);
+      expect(side0, isNot(side1));
+
+      // Across D (at parameter for x = −2) to x = −9. The interior
+      // parameter where C == D is hit or straddled by dyadic trials;
+      // either way the sides must never flip while E is defined.
+      final line = construction.byId('l')! as LineThroughTwoPoints;
+      final to = line.line!.parameterAt(const Vec2(-9, 0));
+      construction.recomputeAlongParameterPath(
+        'C',
+        c.parameter,
+        to,
+        onStep: (_) {
+          if (e0.position != null) {
+            expect(ySide(e0), side0);
+            expect(ySide(e1), side1);
+          }
+        },
+      );
+
+      expect(c.position!.closeTo(const Vec2(-9, 0)), isTrue);
+      expect(ySide(e0), side0);
+      expect(ySide(e1), side1);
+      // The directed center line reversed: canonical order flipped and
+      // the pass adopted it.
+      expect(e0.branchIndex, 1);
+      expect(e1.branchIndex, 0);
+      // A static recompute — commit, bail, reload — re-selects the
+      // traced branch.
+      construction.setPointOnObjectParameter('C', to);
+      expect(ySide(e0), side0);
+      expect(ySide(e1), side1);
+      expect(d.position!.closeTo(const Vec2(-2, 0)), isTrue);
+    });
+
+    test('seed memory bridges a pass boundary that lands exactly on the '
+        'degeneracy: identity survives the undefined frame; without it, '
+        'the next pass relabels statically', () {
+      final (construction, c, _, e0, e1) = cinderellaRig();
+      final side0 = ySide(e0);
+      final form = (construction.byId('l')! as LineThroughTwoPoints).line!;
+      final atD = form.parameterAt(const Vec2(-2, 0));
+      final past = form.parameterAt(const Vec2(-9, 0));
+
+      // With memory: frame 1 ends on coincident circles (E undefined,
+      // roots remembered), frame 2 re-seeds from memory and E re-emerges
+      // on its own side, adoption recorded.
+      final memory = <String, ProjPoint>{};
+      construction.recomputeAlongParameterPath(
+        'C',
+        c.parameter,
+        atD,
+        seedMemory: memory,
+      );
+      expect(e0.position, isNull);
+      expect(memory, contains('E0'));
+      construction.recomputeAlongParameterPath(
+        'C',
+        atD,
+        past,
+        seedMemory: memory,
+      );
+      expect(ySide(e0), side0);
+      expect(e0.branchIndex, 1);
+
+      // The discriminator, on a fresh rig: the same two passes without
+      // memory lose the identity at the undefined boundary — the second
+      // pass has nothing to seed, collapses to the static solve, and the
+      // pre-drag branchIndex lands E0 on the other side. If this ever
+      // holds sides, the rig no longer separates memory from statics.
+      final (construction2, c2, _, e0b, _) = cinderellaRig();
+      construction2.recomputeAlongParameterPath('C', c2.parameter, atD);
+      expect(e0b.position, isNull);
+      construction2.recomputeAlongParameterPath('C', atD, past);
+      expect(ySide(e0b), -side0);
+    });
+
+    test('a tangency slide detours and crosses (line carrier): same '
+        'canonical shape as the free-point drag, driven by parameter', () {
+      // A vertical carrier x = 0, the circle's center constrained to it,
+      // sliding down from y = 5 to y = 0 across the tangency with the
+      // baseline at y = 3 — the parameter-drive twin of the Phase 115
+      // canonical test.
+      final construction = Construction();
+      final a = fp('a', -10, 0);
+      final b = fp('b', 10, 0);
+      final v1 = fp('v1', 0, -10);
+      final v2 = fp('v2', 0, 10);
+      final baseline = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final carrier = LineThroughTwoPoints(id: 'v', point1: v1, point2: v2);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(v1)
+        ..add(v2)
+        ..add(baseline)
+        ..add(carrier);
+      final form = carrier.line!;
+      final m = PointOnObject(
+        id: 'M',
+        curve: carrier,
+        parameter: form.parameterAt(const Vec2(0, 5)),
+      );
+      final circle = FixedRadiusCircle(id: 'k', center: m, radius: 3);
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: baseline,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final p1 = IntersectionPoint(
+        id: 'p1',
+        curve1: baseline,
+        curve2: circle,
+        branchIndex: 1,
+      );
+      construction
+        ..add(m)
+        ..add(circle)
+        ..add(p0)
+        ..add(p1);
+      final seed0 = p0.projPoint!;
+      final seed1 = p1.projPoint!;
+      final top = m.parameter;
+      final bottom = form.parameterAt(const Vec2(0, 0));
+
+      final down = construction.recomputeAlongParameterPath('M', top, bottom);
+      expect(down.detours, 1);
+      // Crossed and real, endpoint = static solve, labels included.
+      final tracked0 = p0.projPoint!;
+      final tracked1 = p1.projPoint!;
+      expect(p0.position, isNotNull);
+      expect(p1.position, isNotNull);
+      construction.setPointOnObjectParameter('M', bottom);
+      expect(p0.projPoint!.closeTo(tracked0, 1e-6), isTrue);
+      expect(p1.projPoint!.closeTo(tracked1, 1e-6), isTrue);
+
+      // There and back is an identity: the 1D orientation rule is odd.
+      final up = construction.recomputeAlongParameterPath('M', bottom, top);
+      expect(up.detours, 1);
+      expect(p0.projPoint!.closeTo(seed0, 1e-9), isTrue);
+      expect(p1.projPoint!.closeTo(seed1, 1e-9), isTrue);
+      expect(chartIm(p0.projPoint!).sign, chartIm(seed0).sign);
+      expect(chartIm(p1.projPoint!).sign, chartIm(seed1).sign);
+    });
+
+    test('a circle-carrier drive detours through tangency: the chart form '
+        'continues through complex cos/sin', () {
+      // The center rides a circle of radius 5 about the origin; its
+      // radius-3 circle crosses tangency with the baseline y = 0 where
+      // 5·sin θ = 3 (θ ≈ 0.6435), between the slide's θ = 1.2 and 0.3.
+      final construction = Construction();
+      final a = fp('a', -10, 0);
+      final b = fp('b', 10, 0);
+      final hub = fp('h', 0, 0);
+      final baseline = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final carrier = FixedRadiusCircle(id: 'c5', center: hub, radius: 5);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(hub)
+        ..add(baseline)
+        ..add(carrier);
+      final m = PointOnObject(id: 'M', curve: carrier, parameter: 1.2);
+      final circle = FixedRadiusCircle(id: 'k', center: m, radius: 3);
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: baseline,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final p1 = IntersectionPoint(
+        id: 'p1',
+        curve1: baseline,
+        curve2: circle,
+        branchIndex: 1,
+      );
+      construction
+        ..add(m)
+        ..add(circle)
+        ..add(p0)
+        ..add(p1);
+      expect(p0.position, isNull); // still a miss at θ = 1.2
+
+      final result = construction.recomputeAlongParameterPath('M', 1.2, 0.3);
+      expect(result.detours, 1);
+      expect(p0.position, isNotNull);
+      expect(p1.position, isNotNull);
+      // Endpoint = static solve, labels included.
+      final tracked0 = p0.projPoint!;
+      final tracked1 = p1.projPoint!;
+      construction.setPointOnObjectParameter('M', 0.3);
+      expect(p0.projPoint!.closeTo(tracked0, 1e-6), isTrue);
+      expect(p1.projPoint!.closeTo(tracked1, 1e-6), isTrue);
+    });
+  });
 }

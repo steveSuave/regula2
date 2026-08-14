@@ -38,6 +38,7 @@ class TracedBranch {
   double _separation = double.infinity;
   double _motion = 0;
   int _matchedIndex = -1;
+  bool _hasCandidates = false;
 
   /// Whether a tracing pass currently owns this slot.
   bool get isActive => _active;
@@ -77,6 +78,16 @@ class TracedBranch {
   /// across branches on the same curve pair to refuse collisions.
   int get matchedIndex => _matchedIndex;
 
+  /// Whether the owner's candidate set was non-empty at the last [seed]
+  /// or [follow] — false after [coast] (and after seeding on an empty
+  /// set). The step controller reads it to refuse a *match→coast
+  /// transition* on a wide trial (Phase 116b): candidates vanishing
+  /// under a large step means the trial absorbed an unchecked crossing
+  /// of a carrier degeneracy, and the retained root would go stale by
+  /// the whole span — refusal forces refinement, so a coast is always
+  /// entered with a fresh root.
+  bool get hasCandidates => _hasCandidates;
+
   /// Activates the slot on [p] — the tracked identity at the start of a
   /// tracing pass (typically the owner's current root, however it was
   /// selected). [candidates] should be the owner's candidate set at the
@@ -92,6 +103,7 @@ class TracedBranch {
     _separation = _minPairwiseSeparation(candidates);
     _motion = 0;
     _matchedIndex = -1;
+    _hasCandidates = candidates.isNotEmpty;
     allowComplexCarriers = false;
     _active = true;
   }
@@ -106,6 +118,7 @@ class TracedBranch {
     final matched = candidates[index];
     _motion = math.sqrt(measure);
     _matchedIndex = index;
+    _hasCandidates = true;
     _store(matched);
     _separation = _minPairwiseSeparation(candidates);
     return matched;
@@ -118,6 +131,7 @@ class TracedBranch {
   void coast() {
     _motion = 0;
     _matchedIndex = -1;
+    _hasCandidates = false;
     _separation = double.infinity;
   }
 
@@ -135,6 +149,7 @@ class TracedBranch {
         _separation,
         _motion,
         _matchedIndex,
+        _hasCandidates,
       );
 
   /// Rolls the slot back to [state] (see [checkpoint]).
@@ -143,6 +158,7 @@ class TracedBranch {
     _separation = state._separation;
     _motion = state._motion;
     _matchedIndex = state._matchedIndex;
+    _hasCandidates = state._hasCandidates;
   }
 
   /// The index of the candidate projectively nearest the stored root, by
@@ -208,14 +224,20 @@ class TracedBranchCheckpoint {
     this._separation,
     this._motion,
     this._matchedIndex,
+    this._hasCandidates,
   );
 
   final Float64List _root;
   final double _separation;
   final double _motion;
   final int _matchedIndex;
+  final bool _hasCandidates;
 
   /// The candidate separation at the checkpointed step — half of it is
   /// the motion the Cinderella rule allows the next trial.
   double get separation => _separation;
+
+  /// [TracedBranch.hasCandidates] at the checkpointed step — the "was
+  /// matching" side of the match→coast transition refusal.
+  bool get hasCandidates => _hasCandidates;
 }

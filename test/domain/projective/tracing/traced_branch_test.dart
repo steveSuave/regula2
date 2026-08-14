@@ -49,6 +49,32 @@ void main() {
       expect(seededWith.separation, 1.0);
     });
 
+    test('hasCandidates tracks the last candidate set: true after a '
+        'candidate-ful seed or follow, false after coast or a bare seed, '
+        'and checkpoint/restore round-trips it (Phase 116b)', () {
+      final branch = TracedBranch()..seed(ProjPoint.real(0, 0, 1));
+      expect(branch.hasCandidates, isFalse);
+
+      branch.seed(
+        ProjPoint.real(0, 0, 1),
+        candidates: [ProjPoint.real(1, 0, 1)],
+      );
+      expect(branch.hasCandidates, isTrue);
+
+      final matching = branch.checkpoint();
+      expect(matching.hasCandidates, isTrue);
+
+      branch.coast();
+      expect(branch.hasCandidates, isFalse);
+
+      branch.restore(matching);
+      expect(branch.hasCandidates, isTrue);
+
+      branch.coast();
+      branch.follow([ProjPoint.real(2, 0, 1)]);
+      expect(branch.hasCandidates, isTrue);
+    });
+
     test('clear deactivates; a re-seed starts fresh', () {
       final branch = TracedBranch()..seed(ProjPoint.real(1, 2, 1));
       branch.follow([ProjPoint.real(3, 4, 1)]);

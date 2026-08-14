@@ -99,6 +99,17 @@ class PointOnObject extends GeoPoint {
   @override
   ProjPoint? get projPoint => _point;
 
+  /// The complex-detour mutation (Phase 116b), mirroring `FreePoint`'s:
+  /// stores a generally complex homogeneous position while a tracing
+  /// pass walks a *parameter* drag off the real axis. Only
+  /// `Construction.recomputeAlongParameterPath` may call this, with the
+  /// carrier's chart form evaluated at a complex parameter (`w` exactly
+  /// one), and the pass must leave the point real — its real steps
+  /// re-enter [recompute], which rebuilds [_point] from the stored real
+  /// [parameter] — before returning or throwing. The stored [parameter]
+  /// itself stays real throughout (PLAN §Parameterization).
+  set tracedPosition(ProjPoint value) => _point = value;
+
   @override
   Vec2? get position => switch (_point) {
     null => null,
