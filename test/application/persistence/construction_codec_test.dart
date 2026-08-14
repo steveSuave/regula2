@@ -10,6 +10,7 @@ import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
@@ -18,6 +19,7 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/drag_session.dart';
 
 import '../../kitchen_sink.dart';
 
@@ -213,6 +215,50 @@ void main() {
       final decoded = roundTrip(Construction());
       expect(decoded.construction.isEmpty, isTrue);
       expect(decoded.viewport, const ViewportState());
+    });
+
+    test('a committed traced drag saves its adopted branch: the reload '
+        'sits where the trace left it (Phase 116)', () {
+      // The relabel rig: dragging b past a flips the canonical conjugate
+      // order under motionless roots (±4i). The traced gesture adopts
+      // the flipped index into the committed construction, so the saved
+      // branchIndex *is* the canonical-order address of the tracked root
+      // — a reload reproduces traced identity with no tracing state in
+      // the file.
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(-10, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(10, 0));
+      final center = FreePoint(id: 'c', position: const Vec2(0, 5));
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final circle = FixedRadiusCircle(id: 'k', center: center, radius: 3);
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(center)
+        ..add(line)
+        ..add(circle)
+        ..add(p0);
+      double imSide(IntersectionPoint p) =>
+          (p.projPoint!.x / p.projPoint!.w).im.sign;
+      final side = imSide(p0);
+
+      final session =
+          DragSession.start(construction, b, const Vec2(10, 0))!;
+      session.update(const Vec2(-20, 0));
+      session.end()!.apply(construction);
+      expect(p0.branchIndex, 1);
+      expect(imSide(p0), side);
+
+      final decoded = roundTrip(construction).construction;
+      final reloaded = decoded.byId('p0')! as IntersectionPoint;
+      expect(reloaded.branchIndex, 1);
+      expect(imSide(reloaded), side);
     });
   });
 
