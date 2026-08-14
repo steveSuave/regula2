@@ -2,6 +2,8 @@ import 'dart:collection';
 
 import '../math/vec2.dart';
 import '../projective/tracing/drag_path.dart';
+import '../projective/tracing/trace_step_budget_exception.dart';
+import '../projective/tracing/traced_branch.dart';
 import 'geo_object.dart';
 import 'object_attributes.dart';
 import 'objects/expression_text.dart';
@@ -85,48 +87,62 @@ class Construction {
     _notify();
   }
 
-  /// Moves the free point [id] along [path] in [steps] uniform substeps,
-  /// recomputing its transitive dependents at every substep — the tracing
-  /// sibling of [moveFreePoint] (Phase 113, naive fixed-step; adaptive
-  /// stepping, root-collision refusal and complex detours arrive in
-  /// Phases 114–115).
+  /// Moves the free point [id] along [path] with adaptive substeps,
+  /// recomputing its transitive dependents at every accepted step — the
+  /// tracing sibling of [moveFreePoint] (Phase 114; complex detours
+  /// around degeneracies arrive in Phase 115).
   ///
   /// Before stepping, every affected [IntersectionPoint] whose tracked
-  /// candidate exists is seeded ([TracedBranch.seed]) with it; during the
-  /// pass their `recompute` follows the candidate nearest the tracked
-  /// root, so branch identity is held by continuity instead of canonical
-  /// re-selection. Slots are cleared before returning — [branchIndex]
-  /// stays untouched, so the *next static recompute* re-selects
-  /// canonically (the endpoint's tracked value persists only until then;
-  /// commands and save keep static semantics until Phase 116). Identity
-  /// chains across consecutive calls because each seeds from the value
-  /// the previous pass left behind.
+  /// candidate exists is seeded ([TracedBranch.seed], with its candidate
+  /// set at the path start); during the pass their `recompute` follows
+  /// the candidate nearest the tracked root, so branch identity is held
+  /// by continuity instead of canonical re-selection. Slots are cleared
+  /// before returning — [branchIndex] stays untouched, so the *next
+  /// static recompute* re-selects canonically (the endpoint's tracked
+  /// value persists only until then; commands and save keep static
+  /// semantics until Phase 116). Identity chains across consecutive calls
+  /// because each seeds from the value the previous pass left behind.
+  ///
+  /// **Step control (the Cinderella rule).** The first trial attempts the
+  /// whole path. A trial is accepted only if every traced root moved less
+  /// than *half its candidates' minimum pairwise separation at the
+  /// previous accepted step* — the condition under which nearest-root
+  /// matching provably cannot swap two branches. A refused trial is
+  /// rolled back ([TracedBranch.restore]) and retried at half the step;
+  /// an accepted step doubles it again (capped at the path end, which is
+  /// reached bitwise-exactly). Near a degeneracy the separation — and
+  /// with it the allowed motion — collapses, so the controller *starves*:
+  /// when accepted plus refused trials reach [stepBudget], the pass
+  /// throws [TraceStepBudgetException], leaving the point at the last
+  /// trial position with slots cleared; callers bail to a static solve
+  /// (the drag session does — PLAN §Risks). Returns the accepted/rejected
+  /// trial counts (the Phase 116 debug-overlay feed).
   ///
   /// Excluded from seeding: intersection points inside a [Locus.chain] —
   /// the sweep-and-restore recompute would drag their roots along the
   /// sweep (Phase 117 rewrites loci on tracing). Points whose candidate
   /// set is empty at the start stay static too: there is no identity to
   /// continue. When nothing seeds, the pass collapses to a single static
-  /// solve at the path's end.
+  /// solve at the path's end (reported as one accepted step).
   ///
   /// Matching continuity assumes `path.start` is where the point
   /// currently sits (drag sessions anchor each preview path at the
-  /// previous one's end). [onStep] fires after each substep's recompute —
-  /// the observation hook for the toy harness and the Phase 116 debug
-  /// overlay. Notifies once, like [moveFreePoint]. Throws [ArgumentError]
-  /// when [id] is not a [FreePoint] or [steps] < 1.
-  void recomputeAlongPath(
+  /// previous one's end). [onStep] fires after each *accepted* step's
+  /// recompute — the observation hook for the toy harness and the Phase
+  /// 116 debug overlay. Notifies once, like [moveFreePoint]. Throws
+  /// [ArgumentError] when [id] is not a [FreePoint] or [stepBudget] < 1.
+  ({int acceptedSteps, int rejectedSteps}) recomputeAlongPath(
     String id,
     DragPath path, {
-    int steps = 16,
+    int stepBudget = 128,
     void Function(double t)? onStep,
   }) {
     final object = _objects[id];
     if (object is! FreePoint) {
       throw ArgumentError('$id is not a FreePoint in this construction');
     }
-    if (steps < 1) {
-      throw ArgumentError.value(steps, 'steps', 'must be at least 1');
+    if (stepBudget < 1) {
+      throw ArgumentError.value(stepBudget, 'stepBudget', 'must be at least 1');
     }
     final affected = transitiveDependentsOf(id);
     final excluded = <GeoObject>{};
@@ -142,7 +158,10 @@ class Construction {
           !excluded.contains(o)) {
         final p = o.projPoint;
         if (p != null && !p.isZero) {
-          o.tracedBranch.seed(p);
+          o.tracedBranch.seed(
+            p,
+            candidates: intersectionCandidates(o.curve1, o.curve2),
+          );
           seeded.add(o);
         }
       }
@@ -152,20 +171,72 @@ class Construction {
         object.position = path.at(1);
         _recomputeAffected(affected);
         onStep?.call(1);
-        return;
+        return (acceptedSteps: 1, rejectedSteps: 0);
       }
-      for (var k = 1; k <= steps; k++) {
-        final t = k / steps;
-        object.position = path.at(t);
+      final checkpoints =
+          List<TracedBranchCheckpoint?>.filled(seeded.length, null);
+      void snapshot() {
+        for (var i = 0; i < seeded.length; i++) {
+          checkpoints[i] = seeded[i].tracedBranch.checkpoint();
+        }
+      }
+
+      snapshot();
+      var t = 0.0;
+      var step = 1.0;
+      var accepted = 0;
+      var rejected = 0;
+      while (t < 1) {
+        if (accepted + rejected >= stepBudget) {
+          throw TraceStepBudgetException(
+            tReached: t,
+            trials: accepted + rejected,
+          );
+        }
+        final trialT = t + step < 1 ? t + step : 1.0;
+        object.position = path.at(trialT);
         _recomputeAffected(affected);
-        onStep?.call(t);
+        if (_trialAccepted(seeded, checkpoints)) {
+          accepted++;
+          t = trialT;
+          step = step * 2 < 1 ? step * 2 : 1.0;
+          snapshot();
+          onStep?.call(trialT);
+        } else {
+          rejected++;
+          for (var i = 0; i < seeded.length; i++) {
+            seeded[i].tracedBranch.restore(checkpoints[i]!);
+          }
+          step /= 2;
+        }
       }
+      return (acceptedSteps: accepted, rejectedSteps: rejected);
     } finally {
       for (final o in seeded) {
         o.tracedBranch.clear();
       }
       _notify();
     }
+  }
+
+  /// The Cinderella acceptance rule over one trial's matches: every
+  /// followed root must have moved less than half its candidates'
+  /// separation at the previous accepted step ([checkpoints]). Coasting
+  /// branches (no candidates this trial) impose nothing. Written so a
+  /// NaN motion — degenerate norms upstream — refuses the trial rather
+  /// than accepting it.
+  static bool _trialAccepted(
+    List<IntersectionPoint> seeded,
+    List<TracedBranchCheckpoint?> checkpoints,
+  ) {
+    for (var i = 0; i < seeded.length; i++) {
+      final branch = seeded[i].tracedBranch;
+      if (branch.matchedIndex < 0) continue;
+      if (!(branch.motion < checkpoints[i]!.separation / 2)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /// Moves the text [id]'s world anchor to [anchor] and notifies.

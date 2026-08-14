@@ -15,8 +15,11 @@ abstract final class TracingFlags {
   /// `moveFreePoint` for that frame.
   static bool dragTracing = false;
 
-  /// Substeps per traced preview update. Preview paths are one pointer
-  /// event long, so a modest fixed count suffices until Phase 114's
-  /// adaptive controller replaces it.
-  static int dragSteps = 16;
+  /// Trial budget per traced preview update — the `stepBudget` handed to
+  /// `Construction.recomputeAlongPath` (Phase 114's adaptive controller;
+  /// this replaced the fixed `dragSteps` substep count). A smooth
+  /// one-pointer-event path resolves in a handful of trials; the budget
+  /// only bites when the controller starves against a degeneracy, where
+  /// exhaustion throws and the drag session bails to the static solve.
+  static int dragStepBudget = 128;
 }

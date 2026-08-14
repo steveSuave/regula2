@@ -11,6 +11,7 @@ import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/domain/projective/tracing/drag_path.dart';
+import 'package:regula/domain/projective/tracing/trace_step_budget_exception.dart';
 
 void main() {
   FreePoint fp(String id, double x, double y) =>
@@ -62,7 +63,7 @@ void main() {
   }
 
   group('recomputeAlongPath: validation', () {
-    test('rejects non-free-point ids and non-positive step counts', () {
+    test('rejects non-free-point ids and non-positive step budgets', () {
       final (construction, _, _, _) = lineAndCircle(const Vec2(0, 1));
       const path = DragPath(Vec2(0, 1), Vec2(0, -1));
       expect(
@@ -70,18 +71,20 @@ void main() {
         throwsArgumentError,
       );
       expect(
-        () => construction.recomputeAlongPath('c', path, steps: 0),
+        () => construction.recomputeAlongPath('c', path, stepBudget: 0),
         throwsArgumentError,
       );
     });
   });
 
-  group('recomputeAlongPath: toy harness (line dragged across a circle)', () {
-    test('secant sweep: continuous histories, no branch swap, static '
-        'endpoint — identity chains across consecutive paths', () {
+  group('recomputeAlongPath: adaptive toy harness '
+      '(line dragged across a circle)', () {
+    test('secant sweep: every accepted step obeys the Cinderella bound, no '
+        'branch swap, static endpoint — identity chains across paths and a '
+        'smooth path costs few trials', () {
       final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 1));
-      final h0 = <ProjPoint>[];
-      final h1 = <ProjPoint>[];
+      final h0 = <ProjPoint>[p0.projPoint!];
+      final h1 = <ProjPoint>[p1.projPoint!];
       var notifications = 0;
       construction.addListener(() => notifications++);
       void record(double t) {
@@ -91,21 +94,24 @@ void main() {
 
       // Two consecutive legs, like two preview frames: the second seeds
       // from the value the first left behind.
-      construction.recomputeAlongPath(
+      final r1 = construction.recomputeAlongPath(
         'c',
         const DragPath(Vec2(0, 1), Vec2(0, 0)),
-        steps: 20,
         onStep: record,
       );
-      construction.recomputeAlongPath(
+      final r2 = construction.recomputeAlongPath(
         'c',
         const DragPath(Vec2(0, 0), Vec2(0, -1)),
-        steps: 20,
         onStep: record,
       );
 
       expect(notifications, 2);
-      expect(h0, hasLength(40));
+      // onStep fires once per accepted step, nothing per rejected trial.
+      expect(h0, hasLength(1 + r1.acceptedSteps + r2.acceptedSteps));
+      // The roots barely move over each leg, so the controller accepts
+      // whole paths after at most a couple of refinements.
+      expect(r1.acceptedSteps + r1.rejectedSteps, lessThanOrEqualTo(4));
+      expect(r2.acceptedSteps + r2.rejectedSteps, lessThanOrEqualTo(4));
       // The circle stays secant to the line throughout (|cy| ≤ 1 < 3), so
       // both branches are real everywhere and never change sides.
       for (final p in h0) {
@@ -114,11 +120,12 @@ void main() {
       for (final p in h1) {
         expect(p.toVec2()!.x, greaterThan(0));
       }
-      // Continuity: root motion per substep is far below the branch
-      // separation (~5.7 world units, chordal ~0.6).
+      // The acceptance rule itself: per accepted step, each root moved
+      // less than half the branch separation at the previous step
+      // (separation stays near chordal 0.6 on this rig).
       for (var i = 1; i < h0.length; i++) {
-        expect(chordal(h0[i - 1], h0[i]), lessThan(0.01));
-        expect(chordal(h1[i - 1], h1[i]), lessThan(0.01));
+        expect(chordal(h0[i - 1], h0[i]), lessThan(0.35));
+        expect(chordal(h1[i - 1], h1[i]), lessThan(0.35));
       }
       // No degeneracy was crossed, so the endpoint agrees with the static
       // solve including branch labels: x² = 9 − 1 at cy = −1.
@@ -133,20 +140,21 @@ void main() {
         'domain and the endpoint matches the static solve, labels included',
         () {
       // Center rides y = 5 while the line is y = 0: never intersects,
-      // both branches complex the whole way (x = cx ± 4i).
+      // both branches complex the whole way (x = cx ± 4i). The long
+      // horizontal path forces the controller to subdivide.
       final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
-      final h0 = <ProjPoint>[];
-      final h1 = <ProjPoint>[];
-      construction.recomputeAlongPath(
+      final h0 = <ProjPoint>[p0.projPoint!];
+      final h1 = <ProjPoint>[p1.projPoint!];
+      final result = construction.recomputeAlongPath(
         'c',
-        const DragPath(Vec2(0, 5), Vec2(4, 5)),
-        steps: 40,
+        const DragPath(Vec2(0, 5), Vec2(40, 5)),
         onStep: (_) {
           h0.add(p0.projPoint!);
           h1.add(p1.projPoint!);
         },
       );
 
+      expect(h0, hasLength(1 + result.acceptedSteps));
       final sign0 = chartIm(h0.first).sign;
       final sign1 = chartIm(h1.first).sign;
       expect(sign0, isNot(sign1));
@@ -156,51 +164,72 @@ void main() {
         expect(p0.position, isNull);
         expect(chartIm(h0[i]).sign, sign0);
         expect(chartIm(h1[i]).sign, sign1);
-        if (i > 0) {
-          expect(chordal(h0[i - 1], h0[i]), lessThan(0.05));
-          expect(chordal(h1[i - 1], h1[i]), lessThan(0.05));
-        }
       }
       // No realness transition happened, so labels are preserved: a
       // fresh static solve at the endpoint picks the same roots.
       final tracked0 = p0.projPoint!;
       final tracked1 = p1.projPoint!;
-      construction.moveFreePoint('c', const Vec2(4, 5));
+      construction.moveFreePoint('c', const Vec2(40, 5));
       expect(p0.projPoint!.closeTo(tracked0), isTrue);
       expect(p1.projPoint!.closeTo(tracked1), isTrue);
     });
 
-    test('through a tangency: histories stay continuous at fixed-step '
-        'resolution and the endpoint lands in the static candidate set', () {
-      // Center descends from y = 5 to y = 0: complex pair → tangency at
-      // cy = 3 → real secant pair. 799 steps never hit cy = 3 exactly and
-      // bound the √-sized crossing step below chordal 0.25 (√(6h)).
+    test('near-tangency approach: the controller is forced to halve and '
+        'still matches — endpoint equals the static solve, labels included',
+        () {
+      // Descend from y = 5 toward the tangency at y = 3, stopping just
+      // above it: the conjugate pair shrinks toward the touch point, the
+      // separation collapses with it, and the whole-path trial (and its
+      // first refinements) violate the Cinderella bound.
       final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
-      final h0 = <ProjPoint>[];
-      final h1 = <ProjPoint>[];
-      construction.recomputeAlongPath(
+      final sign0 = chartIm(p0.projPoint!).sign;
+      final sign1 = chartIm(p1.projPoint!).sign;
+      final result = construction.recomputeAlongPath(
         'c',
-        const DragPath(Vec2(0, 5), Vec2(0, 0)),
-        steps: 799,
-        onStep: (_) {
-          h0.add(p0.projPoint!);
-          h1.add(p1.projPoint!);
-        },
+        const DragPath(Vec2(0, 5), Vec2(0, 3.05)),
       );
 
-      for (var i = 1; i < h0.length; i++) {
-        expect(chordal(h0[i - 1], h0[i]), lessThan(0.25));
-        expect(chordal(h1[i - 1], h1[i]), lessThan(0.25));
-      }
-      // Endpoint agrees with the static solve up to branch labels: each
-      // tracked root is one of x = ±3. Which label each branch carries —
-      // and whether both grabbed the same root — is deliberately not
-      // asserted: at the tangency the conjugate-to-real handoff is a
-      // nearest-neighbour tie; collision refusal is Phase 114, the
-      // deterministic complex detour Phase 115.
-      expect(p0.position!.x.abs(), closeTo(3, 1e-9));
-      expect(p0.position!.y.abs(), closeTo(0, 1e-9));
-      expect(p1.position!.x.abs(), closeTo(3, 1e-9));
+      expect(result.rejectedSteps, greaterThan(0));
+      expect(chartIm(p0.projPoint!).sign, sign0);
+      expect(chartIm(p1.projPoint!).sign, sign1);
+      final tracked0 = p0.projPoint!;
+      final tracked1 = p1.projPoint!;
+      construction.moveFreePoint('c', const Vec2(0, 3.05));
+      expect(p0.projPoint!.closeTo(tracked0), isTrue);
+      expect(p1.projPoint!.closeTo(tracked1), isTrue);
+    });
+
+    test('through a tangency: the step controller starves against the '
+        'degeneracy and throws, leaving a cleanly bail-able state', () {
+      // Crossing y = 3 collapses the branch separation to zero, so the
+      // allowed motion per step collapses with it: accepted steps creep
+      // toward t* = 0.4 without ever crossing (each trial that would
+      // cross moves a root at least its full distance to the touch
+      // point — strictly refused). The budget is kept small enough that
+      // the creep stays far from floating-point noise around the strict
+      // inequality; the deterministic crossing is Phase 115's detour.
+      final (construction, center, p0, p1) = lineAndCircle(const Vec2(0, 5));
+      expect(
+        () => construction.recomputeAlongPath(
+          'c',
+          const DragPath(Vec2(0, 5), Vec2(0, 0)),
+          stepBudget: 40,
+        ),
+        throwsA(isA<TraceStepBudgetException>().having(
+          (e) => e.tReached,
+          'tReached',
+          allOf(greaterThan(0.2), lessThan(0.4)),
+        )),
+      );
+
+      // The pass cleaned up: slots inactive, and the caller's static bail
+      // (moveFreePoint to the intended target) fully recovers.
+      expect(p0.tracedBranch.isActive, isFalse);
+      expect(p1.tracedBranch.isActive, isFalse);
+      expect(center.position.y, lessThan(5));
+      construction.moveFreePoint('c', const Vec2(0, 0));
+      expect(p0.position!.closeTo(Vec2(-3, 0)), isTrue);
+      expect(p1.position!.closeTo(Vec2(3, 0)), isTrue);
     });
   });
 
@@ -233,10 +262,9 @@ void main() {
       expect(ip.projPoint, isNull);
 
       final observedTs = <double>[];
-      construction.recomputeAlongPath(
+      final result = construction.recomputeAlongPath(
         'b',
         const DragPath(Vec2(0, 0), Vec2(4, 4)),
-        steps: 20,
         onStep: (t) {
           observedTs.add(t);
           expect(ip.tracedBranch.isActive, isFalse);
@@ -244,6 +272,7 @@ void main() {
       );
 
       expect(observedTs, [1.0]);
+      expect(result, (acceptedSteps: 1, rejectedSteps: 0));
       // Bitwise-exact endpoint, like moveFreePoint.
       expect(b.position, const Vec2(4, 4));
       expect(ip.position!.closeTo(Vec2.zero), isTrue);
@@ -306,10 +335,9 @@ void main() {
       expect(untracked.projPoint, isNotNull);
 
       var observed = 0;
-      construction.recomputeAlongPath(
+      final result = construction.recomputeAlongPath(
         'g',
         const DragPath(Vec2(0, 10), Vec2(0, 9)),
-        steps: 5,
         onStep: (_) {
           observed++;
           // Both depend on the dragged point, but the locus-chain member
@@ -320,7 +348,8 @@ void main() {
         },
       );
 
-      expect(observed, 5);
+      expect(observed, result.acceptedSteps);
+      expect(observed, greaterThan(0));
       expect(untracked.tracedBranch.isActive, isFalse);
     });
   });

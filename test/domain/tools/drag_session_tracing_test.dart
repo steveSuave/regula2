@@ -53,7 +53,7 @@ void main() {
 
   tearDown(() {
     TracingFlags.dragTracing = false;
-    TracingFlags.dragSteps = 16;
+    TracingFlags.dragStepBudget = 128;
   });
 
   double imSide(IntersectionPoint p) =>
@@ -102,15 +102,33 @@ void main() {
 
   test('flag on: a failing traced frame bails to the static solve', () {
     TracingFlags.dragTracing = true;
-    // steps = 0 makes recomputeAlongPath throw on every frame — the
+    // Budget 0 makes recomputeAlongPath throw on every frame — the
     // harshest stand-in for an engine failure. The gesture must not
     // notice: previews land statically, the command still commits.
-    TracingFlags.dragSteps = 0;
+    TracingFlags.dragStepBudget = 0;
     final session = DragSession.start(construction, center, const Vec2(0, 5))!;
     session.update(const Vec2(0, 1));
     expect(center.position, const Vec2(0, 1));
     // Static solve at cy = 1: real intersections at x = ±√8.
     expect(p0.position!.closeTo(Vec2(-2.8284271247461903, 0)), isTrue);
+    final command = session.end();
+    expect(command, isA<MoveFreePointCommand>());
+    expect(center.position, const Vec2(0, 5));
+  });
+
+  test('flag on: a drag through tangency starves the step controller and '
+      'bails to the static solve without the gesture noticing', () {
+    TracingFlags.dragTracing = true;
+    // One pointer event dragging the circle's center from (0,5) to the
+    // far side of the tangency at cy = 3: the adaptive controller creeps
+    // toward the degeneracy, exhausts its budget, throws — and the
+    // session's static bail resolves the frame like any other failure
+    // (Phase 115's complex detour makes this frame traceable instead).
+    final session = DragSession.start(construction, center, const Vec2(0, 5))!;
+    session.update(const Vec2(0, 1));
+    expect(center.position, const Vec2(0, 1));
+    expect(p0.position!.closeTo(Vec2(-2.8284271247461903, 0)), isTrue);
+    expect(p0.tracedBranch.isActive, isFalse);
     final command = session.end();
     expect(command, isA<MoveFreePointCommand>());
     expect(center.position, const Vec2(0, 5));
