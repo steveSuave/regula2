@@ -1,10 +1,13 @@
 import 'dart:collection';
 
 import '../math/vec2.dart';
+import '../projective/tracing/drag_path.dart';
 import 'geo_object.dart';
 import 'object_attributes.dart';
 import 'objects/expression_text.dart';
 import 'objects/free_point.dart';
+import 'objects/intersection_point.dart';
+import 'objects/locus.dart';
 import 'objects/point_on_object.dart';
 
 /// The construction graph — the single source of truth for the app.
@@ -80,6 +83,89 @@ class Construction {
     object.position = position;
     _recomputeDependentsOf(id);
     _notify();
+  }
+
+  /// Moves the free point [id] along [path] in [steps] uniform substeps,
+  /// recomputing its transitive dependents at every substep — the tracing
+  /// sibling of [moveFreePoint] (Phase 113, naive fixed-step; adaptive
+  /// stepping, root-collision refusal and complex detours arrive in
+  /// Phases 114–115).
+  ///
+  /// Before stepping, every affected [IntersectionPoint] whose tracked
+  /// candidate exists is seeded ([TracedBranch.seed]) with it; during the
+  /// pass their `recompute` follows the candidate nearest the tracked
+  /// root, so branch identity is held by continuity instead of canonical
+  /// re-selection. Slots are cleared before returning — [branchIndex]
+  /// stays untouched, so the *next static recompute* re-selects
+  /// canonically (the endpoint's tracked value persists only until then;
+  /// commands and save keep static semantics until Phase 116). Identity
+  /// chains across consecutive calls because each seeds from the value
+  /// the previous pass left behind.
+  ///
+  /// Excluded from seeding: intersection points inside a [Locus.chain] —
+  /// the sweep-and-restore recompute would drag their roots along the
+  /// sweep (Phase 117 rewrites loci on tracing). Points whose candidate
+  /// set is empty at the start stay static too: there is no identity to
+  /// continue. When nothing seeds, the pass collapses to a single static
+  /// solve at the path's end.
+  ///
+  /// Matching continuity assumes `path.start` is where the point
+  /// currently sits (drag sessions anchor each preview path at the
+  /// previous one's end). [onStep] fires after each substep's recompute —
+  /// the observation hook for the toy harness and the Phase 116 debug
+  /// overlay. Notifies once, like [moveFreePoint]. Throws [ArgumentError]
+  /// when [id] is not a [FreePoint] or [steps] < 1.
+  void recomputeAlongPath(
+    String id,
+    DragPath path, {
+    int steps = 16,
+    void Function(double t)? onStep,
+  }) {
+    final object = _objects[id];
+    if (object is! FreePoint) {
+      throw ArgumentError('$id is not a FreePoint in this construction');
+    }
+    if (steps < 1) {
+      throw ArgumentError.value(steps, 'steps', 'must be at least 1');
+    }
+    final affected = transitiveDependentsOf(id);
+    final excluded = <GeoObject>{};
+    for (final o in _objects.values) {
+      if (o is Locus) {
+        excluded.addAll(o.chain);
+      }
+    }
+    final seeded = <IntersectionPoint>[];
+    for (final o in _objects.values) {
+      if (o is IntersectionPoint &&
+          affected.contains(o.id) &&
+          !excluded.contains(o)) {
+        final p = o.projPoint;
+        if (p != null && !p.isZero) {
+          o.tracedBranch.seed(p);
+          seeded.add(o);
+        }
+      }
+    }
+    try {
+      if (seeded.isEmpty) {
+        object.position = path.at(1);
+        _recomputeAffected(affected);
+        onStep?.call(1);
+        return;
+      }
+      for (var k = 1; k <= steps; k++) {
+        final t = k / steps;
+        object.position = path.at(t);
+        _recomputeAffected(affected);
+        onStep?.call(t);
+      }
+    } finally {
+      for (final o in seeded) {
+        o.tracedBranch.clear();
+      }
+      _notify();
+    }
   }
 
   /// Moves the text [id]'s world anchor to [anchor] and notifies.
@@ -202,6 +288,12 @@ class Construction {
     if (affected.isEmpty) {
       return;
     }
+    _recomputeAffected(affected);
+  }
+
+  /// Recomputes the objects in [affected], in insertion (= topological)
+  /// order.
+  void _recomputeAffected(Set<String> affected) {
     for (final object in _objects.values) {
       if (affected.contains(object.id)) {
         object.recompute();

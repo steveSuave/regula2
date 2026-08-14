@@ -641,3 +641,9 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Migrate: `TangentLine` (polar-based, always 2), `PolarLine`, `RadicalAxisLine` (line through the two non-I/J common points — now a one-liner via `radicalAxisOf`), `AngleBisectorLine`, `TwoLineBisectorLine` (old ordering guarantee kept, anchored to affine orientations)
 - [x] `point_resolution.dart` snap-to-intersection re-pointed at real candidates
 - [x] All existing branch-ordering tests stay green; glados: intersection points incident to both parents always (in ℂ); tangency = double root
+
+## Phase 111 — `PointOnObject` + parameterization on projective carriers
+
+- [x] Decision recorded in PLAN: parameters stay real in the affine chart (arc-length on real lines, angle on real circles — gluing is a UI concept on the rendered curve); general real conics via stereographic parameterization; hyperbola-at-infinity as clamped extents
+- [x] Migrate: `PointOnObject` (stores the lifted chart evaluation; chart-less carriers → undefined). The other two items on this line were already done when the phase opened: `Arc`/`Sector` extents stayed affine metadata in Phase 109, `TriangleCenterPoint` migrated in Phase 107
+- [x] Glados: `pointAt(parameterAt(p))` projections stable; glued point stays on carrier under parent perturbation

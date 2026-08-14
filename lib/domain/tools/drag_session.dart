@@ -14,6 +14,8 @@ import '../construction/objects/free_point.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/grid_snap.dart';
 import '../math/vec2.dart';
+import '../projective/tracing/drag_path.dart';
+import '../projective/tracing/tracing_flags.dart';
 
 /// One in-progress drag gesture in move/select mode.
 ///
@@ -26,7 +28,11 @@ import '../math/vec2.dart';
 /// either; drop it.
 ///
 /// What drags:
-/// - a [FreePoint] moves itself → [MoveFreePointCommand];
+/// - a [FreePoint] moves itself → [MoveFreePointCommand] — with
+///   `TracingFlags.dragTracing` on, each preview frame resolves through
+///   `Construction.recomputeAlongPath` so intersection branches follow
+///   their roots (Phase 113; static bail on any failure, and the
+///   committed command still applies statically until Phase 116);
 /// - a [PointOnObject] slides along its host curve — the pointer is
 ///   projected onto the curve each frame and the point's analytic
 ///   parameter re-set → [SetPointOnObjectParameterCommand];
@@ -125,6 +131,19 @@ class _TranslateDragSession implements DragSession {
   /// Non-zero only for a single free point (see [DragSession.start]).
   final double _gridSnapStep;
 
+  /// Whether previews resolve through `recomputeAlongPath` (Phase 113).
+  /// Captured from [TracingFlags.dragTracing] at session start so one
+  /// gesture never mixes resolution modes. Single free points only —
+  /// rigid translations move several roots at once, which the naive
+  /// single-path walk cannot continue yet.
+  final bool _traceDrags = TracingFlags.dragTracing;
+
+  /// The previous traced preview's end — where the next preview path
+  /// starts, so branch matching is continuous across pointer events.
+  /// Null until the first traced update (the gesture starts from the
+  /// point's start position).
+  Vec2? _lastPreview;
+
   Vec2 _delta = Vec2.zero;
 
   /// Where the free point sits for the current [_delta] — the one place
@@ -142,11 +161,35 @@ class _TranslateDragSession implements DragSession {
   void update(Vec2 pointer) {
     _delta = pointer - _grabStart;
     if (_isFreePoint) {
-      _construction.moveFreePoint(_pointIds.single, _freePointPosition);
+      if (_traceDrags) {
+        _tracedUpdate(_freePointPosition);
+      } else {
+        _construction.moveFreePoint(_pointIds.single, _freePointPosition);
+      }
       return;
     }
     for (final id in _pointIds) {
       _construction.moveFreePoint(id, _startPositions[id]! + _delta);
+    }
+  }
+
+  /// One traced preview frame: continue branches along the path from the
+  /// previous preview position to [target]. The static-solve bail (PLAN
+  /// §Risks) stands in every phase: whatever goes wrong inside the
+  /// tracing engine, the frame falls back to the canonical static solve
+  /// and the gesture carries on.
+  void _tracedUpdate(Vec2 target) {
+    final id = _pointIds.single;
+    final from = _lastPreview ?? _startPositions[id]!;
+    _lastPreview = target;
+    try {
+      _construction.recomputeAlongPath(
+        id,
+        DragPath(from, target),
+        steps: TracingFlags.dragSteps,
+      );
+    } catch (_) {
+      _construction.moveFreePoint(id, target);
     }
   }
 

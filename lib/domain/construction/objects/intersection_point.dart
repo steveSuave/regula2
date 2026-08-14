@@ -6,6 +6,7 @@ import '../../projective/conic_intersection.dart';
 import '../../projective/conic_matrix.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/tolerances.dart';
+import '../../projective/tracing/traced_branch.dart';
 import '../geo_object.dart';
 
 /// One intersection point of two curves (lines and/or circles).
@@ -39,8 +40,11 @@ import '../geo_object.dart';
 /// relative realness predicate alone.
 ///
 /// Canonical ordering is still re-derived every recompute, so a branch
-/// can swap sides through a degeneracy mid-drag — branch identity held by
-/// continuation arrives with tracing (Phases 113–116).
+/// can swap sides through a degeneracy mid-drag; while [tracedBranch] is
+/// active (inside a `Construction.recomputeAlongPath` pass only), branch
+/// identity is instead held by continuity — [recompute] follows the
+/// candidate nearest the tracked root (Phase 113 scaffolding; adaptive
+/// steps, collision refusal and complex detours harden it in 114–116).
 ///
 /// Segments intersect via their infinite carrier line for now — clipping
 /// to the segment's extent is a later refinement (tracked in PLAN).
@@ -78,6 +82,14 @@ class IntersectionPoint extends GeoPoint {
   /// value. Everything else must treat it as fixed at creation.
   int branchIndex;
 
+  /// Tracing slot (Phase 113). Seeded, stepped and cleared exclusively by
+  /// `Construction.recomputeAlongPath`; inactive at all other times, so
+  /// nothing outside a tracing pass ever observes non-canonical branch
+  /// selection. Objects inside a `Locus` chain are never seeded — the
+  /// sweep-and-restore recompute would drag the root along the sweep
+  /// (that machinery dissolves when Phase 117 rewrites loci on tracing).
+  final TracedBranch tracedBranch = TracedBranch();
+
   ProjPoint? _point;
   int _candidateCount = 0;
 
@@ -103,9 +115,20 @@ class IntersectionPoint extends GeoPoint {
   void recompute() {
     final candidates = intersectionCandidates(curve1, curve2);
     _candidateCount = _distinctRealCount(candidates);
-    _point = candidates.isEmpty
-        ? null
-        : candidates[math.min(branchIndex, candidates.length - 1)];
+    if (candidates.isEmpty) {
+      // Slot untouched on a momentarily candidate-free step (coincident
+      // carriers, an undefined parent): matching resumes from the last
+      // tracked root when candidates return.
+      _point = null;
+      return;
+    }
+    if (tracedBranch.isActive) {
+      final tracked = candidates[tracedBranch.nearestIndexAmong(candidates)];
+      tracedBranch.update(tracked);
+      _point = tracked;
+      return;
+    }
+    _point = candidates[math.min(branchIndex, candidates.length - 1)];
   }
 
   static int _distinctRealCount(List<ProjPoint> candidates) {
