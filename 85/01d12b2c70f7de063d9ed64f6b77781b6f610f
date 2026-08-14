@@ -1,0 +1,31 @@
+lib/domain/construction/objects/locus.dart
+  s_9ad28c987280c4::t_1f4794ac5d3bc5 214-222,228-238,641-644,682-686,883
+  s_9ad28c987280c4::t_8e38b92c43cb92 4-7,9,14,19-27,29-37,39-74,77-82,117-119,144-147,156-162,168-184,188-199,201-207,210-211,213,239-253,255,257-267,270-274,278,283,286-295,298-299,303-304,307-311,314-326,329-332,335-336,363-374,376,379-383,385-386,389-390,392-404,406-410,412-465,471-472,474-495,500-507,512-521,524-528,530-554,556-584,590,592-640,645-681,687-692,695-699,701-707,710-711,713-718,721-725,727-731,733-738,740-882,884-1241
+  s_9ad28c987280c4::t_72e457c23e3aa3 254,256,411
+lib/domain/construction/objects/point_on_object.dart
+  s_9ad28c987280c4::t_8e38b92c43cb92 102-111,119-121
+lib/domain/projective/tracing/traced_branch.dart
+  s_9ad28c987280c4::t_d6e88b84b37a0c 37-41,96-111,114-141,154,174,191,195-198,230,235,245-252
+  s_9ad28c987280c4::t_d33b29d5d7bff9 112-113
+  s_9ad28c987280c4::t_cbd5aaf2e38611 253
+test/application/persistence/locus_fixture_regression_test.dart
+  s_9ad28c987280c4::t_21be2a50a05acc 161-163,166-167,169-172
+test/domain/projective/tracing/traced_branch_test.dart
+  s_9ad28c987280c4::t_e08603035c178a 318-412
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8501d12b2c70f7de063d9ed64f6b77781b6f610f",
+  "prompts": {},
+  "sessions": {
+    "s_9ad28c987280c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7ef45577-d43e-439d-a7bd-f073c22f6780",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
