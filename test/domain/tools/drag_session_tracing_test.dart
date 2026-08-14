@@ -9,9 +9,10 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/tracing/tracing_flags.dart';
 import 'package:regula/domain/tools/drag_session.dart';
 
-/// Phase 113: the drag-tracing opt-in. The flag is dark by default (the
-/// whole rest of the suite runs static previews); these tests flip it on
-/// around a session and always restore it.
+/// Phase 113's drag-tracing wiring, default-on since Phase 116: traced
+/// previews, per-frame branch adoption, and the gesture's one command
+/// carrying the net adoptions. Tests that need the flag off (or a
+/// starved budget) set it explicitly; tearDown restores the defaults.
 void main() {
   late Construction construction;
   late FreePoint b;
@@ -52,17 +53,16 @@ void main() {
   });
 
   tearDown(() {
-    TracingFlags.dragTracing = false;
+    TracingFlags.dragTracing = true;
     TracingFlags.dragStepBudget = 128;
   });
 
   double imSide(IntersectionPoint p) =>
       (p.projPoint!.x / p.projPoint!.w).im.sign;
 
-  test('flag on: previews hold branch identity where the static solve '
-      'relabels — dragging b past a flips the canonical conjugate order, '
-      'the traced root never moves', () {
-    TracingFlags.dragTracing = true;
+  test('previews hold branch identity where the static solve relabels — '
+      'dragging b past a flips the canonical conjugate order, the traced '
+      'root never moves (default on: the flag is never touched)', () {
     final side0 = imSide(p0);
     final side1 = imSide(p1);
     expect(side0, isNot(side1));
@@ -81,27 +81,97 @@ void main() {
       expect(p0.tracedBranch.isActive, isFalse);
     }
     expect(b.position, const Vec2(-20, 0));
+    // The overlay feed: a smooth frame's counts, not a bail.
+    final stats = session.traceStats!;
+    expect(stats.accepted, greaterThanOrEqualTo(1));
+    expect(stats.detours, 0);
+    expect(stats.bailed, isFalse);
 
-    final command = session.end();
-    expect(command, isA<MoveFreePointCommand>());
-    // Rollback is exact and static: pre-drag state bitwise, branchIndex
-    // untouched by the traced previews.
+    final command = session.end()! as MoveFreePointCommand;
+    // The gesture's one command carries the adoption the crossing left
+    // behind: each branch re-addressed to its flipped canonical index.
+    expect(
+      command.branchChanges,
+      unorderedEquals(const [
+        (id: 'p0', from: 0, to: 1),
+        (id: 'p1', from: 1, to: 0),
+      ]),
+    );
+    // Rollback is exact and static: pre-drag state bitwise, the adopted
+    // branch indices restored alongside the positions.
     expect(b.position, const Vec2(10, 0));
     expect(p0.branchIndex, 0);
     expect(imSide(p0), side0);
 
-    // The discriminator: the same move resolved statically lands p0 on
-    // the *other* conjugate side, because canonical order follows the
-    // flipped direction anchor. If this ever fails, the rig no longer
-    // separates continuity from canonical order — fix the rig, not the
-    // tracing.
+    // The discriminator: the same move resolved statically (without the
+    // command's branch changes) lands p0 on the *other* conjugate side,
+    // because canonical order follows the flipped direction anchor. If
+    // this ever fails, the rig no longer separates continuity from
+    // canonical order — fix the rig, not the tracing.
     construction.moveFreePoint('b', const Vec2(-20, 0));
     expect(imSide(p0), -side0);
     expect(imSide(p1), -side1);
   });
 
-  test('flag on: a failing traced frame bails to the static solve', () {
-    TracingFlags.dragTracing = true;
+  test('commit, undo and redo replay traced identity: applying the '
+      'command lands each branch where the trace left it, in both '
+      'directions', () {
+    final side0 = imSide(p0);
+    final side1 = imSide(p1);
+    final session = DragSession.start(construction, b, const Vec2(10, 0))!;
+    session.update(const Vec2(-20, 0));
+    final command = session.end()!;
+
+    command.apply(construction);
+    expect(b.position, const Vec2(-20, 0));
+    expect(p0.branchIndex, 1);
+    expect(imSide(p0), side0);
+    expect(imSide(p1), side1);
+
+    command.undo(construction);
+    expect(b.position, const Vec2(10, 0));
+    expect(p0.branchIndex, 0);
+    expect(imSide(p0), side0);
+    expect(imSide(p1), side1);
+
+    command.apply(construction);
+    expect(p0.branchIndex, 1);
+    expect(imSide(p0), side0);
+  });
+
+  test('cancel restores the adopted branch indices with the positions', () {
+    final side0 = imSide(p0);
+    final session = DragSession.start(construction, b, const Vec2(10, 0))!;
+    session.update(const Vec2(-20, 0));
+    expect(p0.branchIndex, 1);
+
+    session.cancel();
+    expect(b.position, const Vec2(10, 0));
+    expect(p0.branchIndex, 0);
+    expect(imSide(p0), side0);
+  });
+
+  test('a bailing frame heals to the adopted branch, not the pre-drag '
+      'one: identity crossed in an earlier frame survives the static '
+      'solve', () {
+    final side0 = imSide(p0);
+    final side1 = imSide(p1);
+    final session = DragSession.start(construction, b, const Vec2(10, 0))!;
+    // Frame 1 crosses a and adopts the flipped indices.
+    session.update(const Vec2(-20, 0));
+    expect(p0.branchIndex, 1);
+    // Frame 2 is forced to bail (budget 0 throws before tracing): the
+    // static solve re-selects by the *adopted* index, so each branch
+    // stays on its conjugate side instead of jumping back.
+    TracingFlags.dragStepBudget = 0;
+    session.update(const Vec2(-25, 0));
+    expect(b.position, const Vec2(-25, 0));
+    expect(imSide(p0), side0);
+    expect(imSide(p1), side1);
+    session.cancel();
+  });
+
+  test('a failing traced frame bails to the static solve', () {
     // Budget 0 makes recomputeAlongPath throw on every frame — the
     // harshest stand-in for an engine failure. The gesture must not
     // notice: previews land statically, the command still commits.
@@ -111,24 +181,30 @@ void main() {
     expect(center.position, const Vec2(0, 1));
     // Static solve at cy = 1: real intersections at x = ±√8.
     expect(p0.position!.closeTo(Vec2(-2.8284271247461903, 0)), isTrue);
+    // The overlay feed records the bail.
+    expect(session.traceStats!.bailed, isTrue);
     final command = session.end();
     expect(command, isA<MoveFreePointCommand>());
     expect(center.position, const Vec2(0, 5));
   });
 
-  test('flag on: a drag through tangency starves the step controller and '
-      'bails to the static solve without the gesture noticing', () {
-    TracingFlags.dragTracing = true;
+  test('a drag through tangency resolves in one pointer event — the '
+      'complex detour crosses it, and the gesture commits like any '
+      'other frame', () {
     // One pointer event dragging the circle's center from (0,5) to the
-    // far side of the tangency at cy = 3: the adaptive controller creeps
-    // toward the degeneracy, exhausts its budget, throws — and the
-    // session's static bail resolves the frame like any other failure
-    // (Phase 115's complex detour makes this frame traceable instead).
+    // far side of the tangency at cy = 3: the controller creeps to the
+    // detour trigger, walks the arc (Phase 115), and lands the frame on
+    // the static-solve endpoint. Under Phase 114 this frame starved and
+    // bailed; either way the gesture never noticed.
     final session = DragSession.start(construction, center, const Vec2(0, 5))!;
     session.update(const Vec2(0, 1));
     expect(center.position, const Vec2(0, 1));
     expect(p0.position!.closeTo(Vec2(-2.8284271247461903, 0)), isTrue);
     expect(p0.tracedBranch.isActive, isFalse);
+    // The overlay feed shows the crossing's one detour.
+    final stats = session.traceStats!;
+    expect(stats.detours, 1);
+    expect(stats.bailed, isFalse);
     final command = session.end();
     expect(command, isA<MoveFreePointCommand>());
     expect(center.position, const Vec2(0, 5));

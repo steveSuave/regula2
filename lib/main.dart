@@ -76,6 +76,7 @@ import 'presentation/canvas/label_declutter.dart';
 import 'presentation/canvas/label_obstacles.dart';
 import 'presentation/canvas/name_points_hint.dart';
 import 'presentation/canvas/region_pick_overlay.dart';
+import 'presentation/canvas/trace_stats_overlay.dart';
 import 'presentation/canvas/twist_gate.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/delete_selection.dart';
@@ -157,6 +158,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// UI state like [_showCheatSheet]; while set, `_handleShortcut`
   /// swallows everything except Esc (which cancels back to the dialog).
   bool _pickingExportRegion = false;
+
+  /// Whether the tracing debug overlay (Phase 116: per-drag-frame step
+  /// counts) is up. Same ephemeral-UI reasoning as [_showObjectTree].
+  bool _showTraceOverlay = false;
 
   /// The last drag-selected export region (canvas screen coordinates) and
   /// the last-used export options — kept so the dialog reopens where the
@@ -652,6 +657,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ref.read(documentSettingsProvider.notifier).toggleGrid();
       case AppAction.toggleSnapToGrid:
         ref.read(documentSettingsProvider.notifier).toggleSnapToGrid();
+      case AppAction.toggleTraceOverlay:
+        setState(() => _showTraceOverlay = !_showTraceOverlay);
       case AppAction.nudgeLeft:
         _nudgeView(const Offset(-_nudgeStep, 0));
       case AppAction.nudgeRight:
@@ -1310,6 +1317,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         children: [
                           GeometryCanvas(key: _canvasKey),
                           const NamePointsHint(),
+                          if (_showTraceOverlay) const TraceStatsOverlay(),
                           // Before the region-pick overlay, so an export
                           // pick owns the whole surface.
                           _compassChip(),

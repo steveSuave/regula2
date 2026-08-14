@@ -823,4 +823,97 @@ void main() {
       expect(p1.position!.closeTo(const Vec2(0, 2)), isTrue);
     });
   });
+
+  group('recomputeAlongPath: branch adoption (Phase 116)', () {
+    /// The relabel rig: a line through free a(−10,0) and free b — the
+    /// dragged point — and a fixed circle floating at (0,5) with radius
+    /// 3, so the branches are the conjugate pair x = ±4i for as long as
+    /// b stays on the axis. Dragging b past a reverses the direction
+    /// anchor b−a, which flips the canonical conjugate order while the
+    /// roots themselves sit still.
+    (Construction, IntersectionPoint, IntersectionPoint) relabelRig() {
+      final construction = Construction();
+      final a = fp('a', -10, 0);
+      final b = fp('b', 10, 0);
+      final center = fp('c', 0, 5);
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final circle = FixedRadiusCircle(id: 'k', center: center, radius: 3);
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final p1 = IntersectionPoint(
+        id: 'p1',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 1,
+      );
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(center)
+        ..add(line)
+        ..add(circle)
+        ..add(p0)
+        ..add(p1);
+      return (construction, p0, p1);
+    }
+
+    test('a pass that flips canonical order under still roots adopts the '
+        'flipped indices — the next static recompute reproduces the traced '
+        'branch', () {
+      final (construction, p0, p1) = relabelRig();
+      final side0 = chartIm(p0.projPoint!).sign;
+      final side1 = chartIm(p1.projPoint!).sign;
+      expect(side0, isNot(side1));
+
+      construction.recomputeAlongPath(
+        'b',
+        const DragPath(Vec2(10, 0), Vec2(-20, 0)),
+      );
+
+      // The tracked roots never moved, but their canonical addresses did
+      // — and the pass re-derived branchIndex to match.
+      expect(p0.branchIndex, 1);
+      expect(p1.branchIndex, 0);
+      expect(chartIm(p0.projPoint!).sign, side0);
+      expect(chartIm(p1.projPoint!).sign, side1);
+
+      // The payoff: a static recompute at the same state — a commit, a
+      // bail, a reload — now re-selects the traced branch instead of
+      // relabeling by the pre-drag index.
+      construction.moveFreePoint('b', const Vec2(-20, 0));
+      expect(chartIm(p0.projPoint!).sign, side0);
+      expect(chartIm(p1.projPoint!).sign, side1);
+    });
+
+    test('a pass that preserves canonical order adopts nothing: the '
+        'tangency crossing keeps both indices', () {
+      final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
+      final result = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(0, 5), Vec2(0, 0)),
+      );
+      expect(result.detours, 1);
+      expect(p0.branchIndex, 0);
+      expect(p1.branchIndex, 1);
+    });
+
+    test('a pass whose final step coasts adopts nothing: no candidates at '
+        'the end means no canonical address to re-derive', () {
+      // b ends exactly on a — the carrier line degenerates, candidates
+      // vanish, the branches coast to the end. branchIndex must survive
+      // untouched for the static solve to keep addressing sanely.
+      final (construction, p0, p1) = relabelRig();
+      construction.recomputeAlongPath(
+        'b',
+        const DragPath(Vec2(10, 0), Vec2(-10, 0)),
+      );
+      expect(p0.projPoint, isNull);
+      expect(p0.branchIndex, 0);
+      expect(p1.branchIndex, 1);
+    });
+  });
 }

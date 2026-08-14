@@ -8,6 +8,29 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 115 (V2 Session 17) — 2026-08-14
+
+**Done**
+- **Phase 116 (Tracing integration) complete** on `phase-116-tracing-integration`, four commits — traced drags are now the app's default behaviour:
+- **Default on + branch adoption**: `TracingFlags.dragTracing` defaults true (kept as the escape hatch). `recomputeAlongPath` ends every *completed* pass by adopting the branch each trace followed: `branchIndex` := the final accepted step's `matchedIndex` — the final step ran at t = 1 on real carriers, so that *is* the canonical-order index of the tracked root, making save re-derivation free. Guards: no adoption on a coast (matchedIndex −1), a double root (separation ≤ `doubleRootEpsilon` — the tie broke arbitrarily), an out-of-range index (future 4-candidate carriers), or a throwing pass. Consequence: static recomputes now *reproduce* the traced branch — the drag session's bail heals to the adopted branch (tested: a frame crossing the canonical flip, then a forced-bail frame, stays on its conjugate side), and commit/save/reload sit where the trace left off.
+- **Command capture**: new `Construction.setIntersectionBranch` primitive (re-point + recompute dependents); `MoveFreePointCommand.branchChanges` (`(id, from, to)` records, applied before the move so the closing `moveFreePoint` recomputes once over final indices) replays adoption under undo/redo. The session snapshots pre-drag indices of every downstream `IntersectionPoint` at start, restores them on rollback/cancel (indices before positions), and diffs them into the one command at `end()`; a zero-delta gesture with a net branch change still commits (a real re-pointing).
+- **Debug overlay**: ⇧O (`AppAction.toggleTraceOverlay`, viewport section) toggles `TraceStatsOverlay` — a canvas chip showing the last traced frame's accepted/rejected/detours or "static bail", fed by `DragSession.traceStats` → `ToolNotifier.lastTraceStats`, repainting live through the construction revision each preview frame bumps.
+- **Performance gate PASS** (`benchmark/run_tracing.sh`, 100-object stress, 48 branches, ms/frame static→traced): VM 0.064→0.065, AOT 0.078→0.118, js 0.080→0.100, wasm 0.076→0.120 — every target at ~1% of the 8 ms budget, 1.00 trials/frame, checksums identical; adoption is not measurable against Phase 114's numbers.
+- Tests: adoption on the direction-anchor relabel rig (drag b past a: indices flip 0↔1 under motionless conjugate roots, static recompute then reproduces the traced side), no-adoption on the order-preserving tangency crossing and on a coasting final step; `setIntersectionBranch` units; command replay; session commit/undo/redo identity, cancel restore, bail-heals-to-adopted; codec round-trip of a committed traced drag; overlay widget test. No existing jump-behaviour test needed loosening — none pinned commit-time relabeling. Suite 2067 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Phase 117 — locus rewrite on tracing: revisit the detour orientation convention first (decision recorded 2026-08-14, see TODO), then `Locus.recompute` as an adaptive tracing sweep, delete the 704-line special-case machinery, locus corpus as spec, goldens regenerated where the better curve differs.
+
+**Gotchas**
+- **Adoption is end-of-pass only and completed-pass only.** Mid-pass `branchIndex` is stale by design (identity lives in the slot); a throwing pass adopts nothing, so the bail's static solve re-selects by the *last adopted* index — that is what makes bail healing work. Don't adopt inside `traceArc` or on exception paths.
+- **Rollback order is load-bearing** in `DragSession._rollback`: branch indices restore *before* `moveFreePoint`, so the rollback recompute re-selects the original branches. Same principle in `MoveFreePointCommand.apply`: branches first, then the move recomputes everything once.
+- The double-root adoption guard reads `TracedBranch.separation` (min pairwise candidate distance at the last follow) — for 2-candidate sets that's exactly the tie distance; when 4-candidate conic∩conic carriers arrive (119–120) it goes conservative, which only ever *withholds* adoption. The `matchedIndex <= 1` guard is the other half of that future.
+- Tests that want static previews must set `TracingFlags.dragTracing = false` **and restore true** in tearDown (the whole suite now runs traced by default — only `drag_session_tracing_test.dart` currently opts out per-test).
+- A there-and-back gesture nets zero branch changes (reversal-identity, Phase 115) — the zero-delta-with-changes commit path exists for genuinely non-closing loops in the config space (crossing an odd number of canonical-flip surfaces); it is defensively coded but geometrically hard to rig, hence untested end to end.
+- `ToolNotifier.lastTraceStats` is deliberately not provider state (like `_drag` itself): the overlay watches the construction and reads it imperatively. Don't lift it into `ActiveToolState` — it would rebuild the toolbar every preview frame.
+
+---
+
 ## Session 114 (V2 Session 16) — 2026-08-14
 
 **Done**

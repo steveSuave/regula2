@@ -76,11 +76,17 @@ class IntersectionPoint extends GeoPoint {
 
   /// Which intersection branch this point tracks (see class doc).
   ///
-  /// Mutable under the same contract as `PointOnObject.parameter` during
-  /// a locus sweep only: `Locus.recompute`'s linkage continuation flips
-  /// it while tracing through a tangency and always restores it before
-  /// returning, so no listener, command or save ever observes a flipped
-  /// value. Everything else must treat it as fixed at creation.
+  /// Mutable in exactly two places. During a locus sweep,
+  /// `Locus.recompute`'s linkage continuation flips it while tracing
+  /// through a tangency and always restores it before returning, so no
+  /// listener, command or save observes a flipped value. And a tracing
+  /// pass (`Construction.recomputeAlongPath`) ends by *adopting* the
+  /// branch it followed — re-deriving the index as the canonical-order
+  /// position of the tracked root (Phase 116) — which is how traced
+  /// identity survives static recomputes, commits and saves; the drag
+  /// session captures adoptions in its one command
+  /// (`MoveFreePointCommand.branchChanges`), so undo/redo replay them
+  /// exactly. Everything else must treat it as fixed at creation.
   int branchIndex;
 
   /// Tracing slot (Phase 113). Seeded, stepped and cleared exclusively by

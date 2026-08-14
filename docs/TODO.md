@@ -14,12 +14,6 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 114 — Tracing II: adaptive step control + root matching
-
-- [x] Step controller (Cinderella rule): accept a step only if every root moved less than half its minimum pairwise separation at the previous step; else halve — plus an absolute per-step motion cap (0.25 chordal) the glados suite proved necessary: sep/2 alone is unsound on RP¹ (a wide step can swap branches *through the point at infinity* with motions just under the bound)
-- [x] Nearest-neighbour root matching with collision refusal (married-seed and coincident-double-root exemptions); per-pass step budget (`stepBudget`, default 128; `TracingFlags.dragStepBudget`) with graceful bail to static solve — exhaustion throws `TraceStepBudgetException`, the drag session bails; `recomputeAlongPath` returns accepted/rejected counts as the Phase 116 debug-overlay feed (the overlay itself is 116's item)
-- [x] Glados: random constructions × random smooth drags → no branch swaps; endpoint = static solve modulo matching; bounded step counts; adversarial near-tangency paths force halving and still match
-
 ## Phase 115 — Tracing III: degeneracy detection + complex detour
 
 - [x] Singularity detection: starvation trigger (trial step under `detourTriggerStep` *and* tightest separation under `detourTriggerSeparation`), singular parameter extrapolated from the last two accepted steps' separations via the collapse law s = C·√(t*−t) (`estimateSingularParameter` — provably *undershoots* on near-misses, the bias that keeps detours homotopic to the real path)
@@ -29,10 +23,10 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 116 — Tracing integration: default drag resolution + perf gate
 
-- [ ] `drag_session.dart` drives `recomputeAlongPath` by default; branch identity held by `TracedBranch` between recomputes
-- [ ] Save re-derives `branchIndex` from canonical order; jump-behaviour tests updated (documented spec change, STATUS notes)
-- [ ] Debug overlay showing step counts
-- [ ] **Performance gate** (standing from here on): ≤ 8 ms kernel time per drag frame on a 100-object stress construction (VM); js/wasm numbers recorded
+- [x] `drag_session.dart` drives `recomputeAlongPath` by default (`TracingFlags.dragTracing` defaults on; kept as the escape hatch for static-preview tests); branch identity held by `TracedBranch` between recomputes and **adopted** at every completed pass's end: `branchIndex` := the final step's `matchedIndex` (the canonical-order index of the tracked root), guarded against coasts, double-root ties and out-of-range indices — so static recomputes, mid-gesture bails and commits all re-select the traced branch
+- [x] Save re-derives `branchIndex` from canonical order — falls out of pass-end adoption (the saved index *is* the canonical address of the tracked root; codec unchanged, round-trip pinned). The gesture's one command carries the net re-pointings (`MoveFreePointCommand.branchChanges`, new `Construction.setIntersectionBranch` primitive), so undo/redo replay traced identity exactly; rollback/cancel restore pre-drag indices. No existing jump-behaviour test needed loosening — none pinned commit-time relabeling (STATUS notes)
+- [x] Debug overlay showing step counts: ⇧O (`AppAction.toggleTraceOverlay`) toggles a `TraceStatsOverlay` canvas chip — accepted/rejected/detours per traced frame, or "static bail" — fed by `DragSession.traceStats` through `ToolNotifier.lastTraceStats`, live mid-gesture via the construction revision
+- [x] **Performance gate** (standing from here on): ≤ 8 ms kernel time per drag frame on a 100-object stress construction (VM); js/wasm numbers recorded — PASS on every target at ~1% of budget (ms/frame static→traced: VM 0.064→0.065, AOT 0.078→0.118, js 0.080→0.100, wasm 0.076→0.120; 1.00 trials/frame, checksums identical; adoption adds nothing measurable vs Phase 114)
 
 ## Phase 117 — Locus rewrite on tracing
 

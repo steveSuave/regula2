@@ -660,3 +660,9 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Feature flag so `drag_session.dart` can opt in (`TracingFlags.dragTracing`, captured per gesture, single-free-point drags only); static-solve bail always available (any traced-frame failure falls back to `moveFreePoint`)
 - [x] Toy-harness tests: line dragged across a circle with fixed steps → continuous root histories (secant sweep, persistent complex miss, through-tangency); endpoint agrees with static solve up to branch labels — the tangency handoff is a genuine matching tie, deliberately unresolved until 114/115
 - [x] STATUS records whether SoA meets the frame-budget estimate on js/wasm (feeds 122) — boxed engine at 16 substeps uses ≤ 12% of the 8 ms gate on every target (`benchmark/run_tracing.sh`)
+
+## Phase 114 — Tracing II: adaptive step control + root matching
+
+- [x] Step controller (Cinderella rule): accept a step only if every root moved less than half its minimum pairwise separation at the previous step; else halve — plus an absolute per-step motion cap (0.25 chordal) the glados suite proved necessary: sep/2 alone is unsound on RP¹ (a wide step can swap branches *through the point at infinity* with motions just under the bound)
+- [x] Nearest-neighbour root matching with collision refusal (married-seed and coincident-double-root exemptions); per-pass step budget (`stepBudget`, default 128; `TracingFlags.dragStepBudget`) with graceful bail to static solve — exhaustion throws `TraceStepBudgetException`, the drag session bails; `recomputeAlongPath` returns accepted/rejected counts as the Phase 116 debug-overlay feed (the overlay itself is 116's item)
+- [x] Glados: random constructions × random smooth drags → no branch swaps; endpoint = static solve modulo matching; bounded step counts; adversarial near-tangency paths force halving and still match

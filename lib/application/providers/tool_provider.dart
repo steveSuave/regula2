@@ -49,6 +49,15 @@ class ToolNotifier extends _$ToolNotifier {
   /// nothing needs to watch the session itself.
   DragSession? _drag;
 
+  TraceFrameStats? _lastTraceStats;
+
+  /// The most recent traced preview frame's step counts, retained past
+  /// the gesture so the debug overlay can show what the last drag cost.
+  /// Null until a traced frame has run. Read imperatively (like [_drag],
+  /// this is not [state]): the overlay repaints on the construction's
+  /// revision, which every preview frame bumps.
+  TraceFrameStats? get lastTraceStats => _lastTraceStats;
+
   @override
   ActiveToolState build() {
     // A swapped-in construction (File > New / Open) invalidates any
@@ -121,7 +130,10 @@ class ToolNotifier extends _$ToolNotifier {
   }
 
   /// Previews the drag at [pointer] (world). No-op when nothing drags.
-  void updateDrag(Vec2 pointer) => _drag?.update(pointer);
+  void updateDrag(Vec2 pointer) {
+    _drag?.update(pointer);
+    _lastTraceStats = _drag?.traceStats ?? _lastTraceStats;
+  }
 
   /// Ends the drag: the session's preview is rolled back and its single
   /// start → end command executed (none when the pointer never moved).

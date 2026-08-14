@@ -11,6 +11,7 @@ import '../construction/geo_object.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/expression_text.dart';
 import '../construction/objects/free_point.dart';
+import '../construction/objects/intersection_point.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/grid_snap.dart';
 import '../math/vec2.dart';
@@ -29,10 +30,13 @@ import '../projective/tracing/tracing_flags.dart';
 ///
 /// What drags:
 /// - a [FreePoint] moves itself → [MoveFreePointCommand] — with
-///   `TracingFlags.dragTracing` on, each preview frame resolves through
-///   `Construction.recomputeAlongPath` so intersection branches follow
-///   their roots (Phase 113; static bail on any failure, and the
-///   committed command still applies statically until Phase 116);
+///   `TracingFlags.dragTracing` on (the default since Phase 116), each
+///   preview frame resolves through `Construction.recomputeAlongPath`
+///   so intersection branches follow their roots, with a static bail on
+///   any failure; each frame's pass adopts the branch it followed into
+///   `IntersectionPoint.branchIndex`, and the gesture's command carries
+///   the net adoptions so commit, undo and redo replay traced identity
+///   exactly (see [end]);
 /// - a [PointOnObject] slides along its host curve — the pointer is
 ///   projected onto the curve each frame and the point's analytic
 ///   parameter re-set → [SetPointOnObjectParameterCommand];
@@ -48,6 +52,17 @@ import '../projective/tracing/tracing_flags.dart';
 /// - any other object drags as a rigid translation of its free-point
 ///   ancestors → [TranslateObjectsCommand]: grab a circle's rim and the
 ///   whole circle moves because its defining points do.
+/// One traced preview frame's step-controller counts, plus whether the
+/// frame fell back to the static solve — the Phase 116 debug-overlay
+/// feed (`Construction.recomputeAlongPath` returns the counts; the drag
+/// session records them per frame).
+typedef TraceFrameStats = ({
+  int accepted,
+  int rejected,
+  int detours,
+  bool bailed,
+});
+
 abstract class DragSession {
   /// Starts dragging [target], grabbed at [grabStart] (world coordinates).
   /// Null when the target cannot drag (a derived point other than a
@@ -99,6 +114,11 @@ abstract class DragSession {
   /// Previews the gesture at [pointer] (world coordinates).
   void update(Vec2 pointer);
 
+  /// The most recent preview frame's tracing counts — null before the
+  /// first frame and for sessions that never trace (rigid translations,
+  /// slides, text anchors, or the flag off).
+  TraceFrameStats? get traceStats => null;
+
   /// Rolls the preview back and returns the gesture's one command, or
   /// null when the gesture ended where it started (nothing to undo).
   Command? end();
@@ -120,13 +140,32 @@ class _TranslateDragSession implements DragSession {
         _pointIds = [for (final point in points) point.id],
         _startPositions = {
           for (final point in points) point.id: point.position,
-        };
+        } {
+    // Traced previews adopt branch identity per frame (each pass leaves
+    // `branchIndex` re-derived under the tracked root — Phase 116), so
+    // the session snapshots the start indices of every intersection the
+    // drag can touch: rollback restores them like the positions, and
+    // [end] diffs them into the command's branch changes.
+    if (_isFreePoint && _traceDrags) {
+      for (final id in _construction.transitiveDependentsOf(_pointIds.single)) {
+        final object = _construction.byId(id);
+        if (object is IntersectionPoint) {
+          _startBranchIndexes[id] = object.branchIndex;
+        }
+      }
+    }
+  }
 
   final Construction _construction;
   final bool _isFreePoint;
   final Vec2 _grabStart;
   final List<String> _pointIds;
   final Map<String, Vec2> _startPositions;
+
+  /// Pre-drag [IntersectionPoint.branchIndex] of every intersection
+  /// downstream of the dragged point — populated only for traced
+  /// single-free-point drags (see the constructor).
+  final Map<String, int> _startBranchIndexes = {};
 
   /// Non-zero only for a single free point (see [DragSession.start]).
   final double _gridSnapStep;
@@ -143,6 +182,11 @@ class _TranslateDragSession implements DragSession {
   /// Null until the first traced update (the gesture starts from the
   /// point's start position).
   Vec2? _lastPreview;
+
+  TraceFrameStats? _traceStats;
+
+  @override
+  TraceFrameStats? get traceStats => _traceStats;
 
   Vec2 _delta = Vec2.zero;
 
@@ -185,12 +229,19 @@ class _TranslateDragSession implements DragSession {
     final from = _lastPreview ?? _startPositions[id]!;
     _lastPreview = target;
     try {
-      _construction.recomputeAlongPath(
+      final result = _construction.recomputeAlongPath(
         id,
         DragPath(from, target),
         stepBudget: TracingFlags.dragStepBudget,
       );
+      _traceStats = (
+        accepted: result.acceptedSteps,
+        rejected: result.rejectedSteps,
+        detours: result.detours,
+        bailed: false,
+      );
     } catch (_) {
+      _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
       _construction.moveFreePoint(id, target);
     }
   }
@@ -202,12 +253,27 @@ class _TranslateDragSession implements DragSession {
       final id = _pointIds.single;
       final from = _startPositions[id]!;
       final to = _freePointPosition;
+      // Diff the branch adoptions the traced previews left behind,
+      // before rollback restores the start indices.
+      final branchChanges = <BranchChange>[
+        for (final entry in _startBranchIndexes.entries)
+          if (_construction.byId(entry.key) case final IntersectionPoint point
+              when point.branchIndex != entry.value)
+            (id: entry.key, from: entry.value, to: point.branchIndex),
+      ];
       _rollback();
-      // A snapped drag can quantize back onto its start — nothing to undo.
-      if (delta == Vec2.zero || to == from) {
+      // A snapped drag can quantize back onto its start — nothing to
+      // undo, unless the loop crossed degeneracies with a net branch
+      // change, which is a real re-pointing to commit.
+      if ((delta == Vec2.zero || to == from) && branchChanges.isEmpty) {
         return null;
       }
-      return MoveFreePointCommand(pointId: id, from: from, to: to);
+      return MoveFreePointCommand(
+        pointId: id,
+        from: from,
+        to: to,
+        branchChanges: branchChanges,
+      );
     }
     _rollback();
     if (delta == Vec2.zero) {
@@ -220,9 +286,18 @@ class _TranslateDragSession implements DragSession {
   void cancel() => _rollback();
 
   /// Restores every dragged point's start position verbatim (float-exact,
-  /// like the commands). Points that vanished under the session — an
-  /// undo mid-drag can remove them — are skipped rather than thrown on.
+  /// like the commands), and the pre-drag branch indices any traced
+  /// previews adopted away — indices first, so the moves' recompute
+  /// re-selects the original branches. Objects that vanished under the
+  /// session — an undo mid-drag can remove them — are skipped rather
+  /// than thrown on.
   void _rollback() {
+    for (final entry in _startBranchIndexes.entries) {
+      final object = _construction.byId(entry.key);
+      if (object is IntersectionPoint) {
+        object.branchIndex = entry.value;
+      }
+    }
     for (final id in _pointIds) {
       if (_construction.contains(id)) {
         _construction.moveFreePoint(id, _startPositions[id]!);
@@ -244,6 +319,9 @@ class _TextAnchorDragSession implements DragSession {
   final String _textId;
   final Vec2 _startAnchor;
   final Vec2 _grabStart;
+
+  @override
+  TraceFrameStats? get traceStats => null;
 
   Vec2 _delta = Vec2.zero;
 
@@ -353,6 +431,9 @@ class _SlideDragSession implements DragSession {
   final double _grabOffset;
   final double Function(Vec2) _project;
   final double Function(double) _clamp;
+
+  @override
+  TraceFrameStats? get traceStats => null;
 
   double _parameter;
 
