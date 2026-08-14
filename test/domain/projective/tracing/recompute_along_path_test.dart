@@ -235,6 +235,61 @@ void main() {
       expect(p1.projPoint!.closeTo(tracked1), isTrue);
     });
 
+    test('through-infinity loophole (glados counterexample): a wide secant '
+        'step whose chordal wrap made the far branch look nearer is '
+        'refused by the motion cap — no swap', () {
+      // r = 2.1, center (−1.8, 0) → (1.7, 0.819): on the whole-path
+      // trial the left root (x = −3.9) sits chordally *closer* to the
+      // new right root (x = 3.63, quarter-turn away through the point at
+      // infinity of RP¹) than to its true continuation (x = −0.23), with
+      // both swapped motions just under sep/2 — the separation-relative
+      // rule alone accepted a silent branch swap. The absolute motion
+      // cap refuses the wide step; refined steps match correctly.
+      final construction = Construction();
+      final a = fp('a', -10, 0);
+      final b = fp('b', 10, 0);
+      final center = fp('c', -1.8, 0);
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final circle = FixedRadiusCircle(id: 'k', center: center, radius: 2.1);
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final p1 = IntersectionPoint(
+        id: 'p1',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 1,
+      );
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(center)
+        ..add(line)
+        ..add(circle)
+        ..add(p0)
+        ..add(p1);
+
+      const end = Vec2(1.7, 0.8190000000000001);
+      final result = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(-1.8, 0), end),
+        onStep: (_) {
+          final cx = center.position.x;
+          expect(p0.position!.x, lessThan(cx));
+          expect(p1.position!.x, greaterThan(cx));
+        },
+      );
+      expect(result.rejectedSteps, greaterThan(0));
+      final tracked0 = p0.projPoint!;
+      final tracked1 = p1.projPoint!;
+      construction.moveFreePoint('c', end);
+      expect(p0.projPoint!.closeTo(tracked0), isTrue);
+      expect(p1.projPoint!.closeTo(tracked1), isTrue);
+    });
+
     test('through a tangency: the step controller starves against the '
         'degeneracy and throws, leaving a cleanly bail-able state', () {
       // Crossing y = 3 collapses the branch separation to zero, so the

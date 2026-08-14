@@ -108,10 +108,12 @@ class Construction {
   /// whole path. A trial is accepted only if every traced root moved less
   /// than *half its candidates' minimum pairwise separation at the
   /// previous accepted step* — the condition under which nearest-root
-  /// matching provably cannot swap two branches — and no two
-  /// distinct-seeded branches on the same curve pair grabbed the same
-  /// candidate (collision refusal; see [_collisionFree]). A refused trial
-  /// is rolled back ([TracedBranch.restore]) and retried at half the step;
+  /// matching cannot silently merge two branches — and less than an
+  /// absolute cap ([_maxAcceptedMotion], which closes the rule's
+  /// through-infinity loophole), and no two distinct-seeded branches on
+  /// the same curve pair grabbed the same candidate (collision refusal;
+  /// see [_collisionFree]). A refused trial is rolled back
+  /// ([TracedBranch.restore]) and retried at half the step;
   /// an accepted step doubles it again (capped at the path end, which is
   /// reached bitwise-exactly). Near a degeneracy the separation — and
   /// with it the allowed motion — collapses, so the controller *starves*:
@@ -248,12 +250,27 @@ class Construction {
     }
   }
 
+  /// The largest chordal motion any accepted step may carry, regardless
+  /// of separation (sin of ~14.5° on the root's projective line). The
+  /// separation-relative bound alone is unsound at large steps: the
+  /// chordal metric is the geometry of RP¹, where two chart-distant
+  /// roots can be *close through the point at infinity* — a glados
+  /// counterexample had a quarter-turn step match each root to the other
+  /// branch with motions just under sep/2 (a silent swap the collision
+  /// check cannot see either, since the swapped match is a bijection).
+  /// Capping the accepted motion forces refinement long before that
+  /// ambiguity: within small steps, continuity decides correctly.
+  /// Legitimate through-infinity motion (a line∩line meet under a
+  /// parallel sweep) is not forbidden — it just refines into more steps.
+  static const double _maxAcceptedMotion = 0.25;
+
   /// The Cinderella acceptance rule over one trial's matches: every
   /// followed root must have moved less than half its candidates'
-  /// separation at the previous accepted step ([checkpoints]). Coasting
-  /// branches (no candidates this trial) impose nothing. Written so a
-  /// NaN motion — degenerate norms upstream — refuses the trial rather
-  /// than accepting it.
+  /// separation at the previous accepted step ([checkpoints]), and less
+  /// than [_maxAcceptedMotion] outright. Coasting branches (no
+  /// candidates this trial) impose nothing. Written so a NaN motion —
+  /// degenerate norms upstream — refuses the trial rather than
+  /// accepting it.
   static bool _trialAccepted(
     List<IntersectionPoint> seeded,
     List<TracedBranchCheckpoint?> checkpoints,
@@ -261,7 +278,9 @@ class Construction {
     for (var i = 0; i < seeded.length; i++) {
       final branch = seeded[i].tracedBranch;
       if (branch.matchedIndex < 0) continue;
-      if (!(branch.motion < checkpoints[i]!.separation / 2)) {
+      final allowed = checkpoints[i]!.separation / 2;
+      final cap = allowed < _maxAcceptedMotion ? allowed : _maxAcceptedMotion;
+      if (!(branch.motion < cap)) {
         return false;
       }
     }
