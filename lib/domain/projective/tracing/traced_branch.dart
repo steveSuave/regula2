@@ -34,6 +34,11 @@ class TracedBranch {
   /// `[x.re, x.im, y.re, y.im, w.re, w.im]` of the tracked root.
   final Float64List _root = Float64List(6);
 
+  double _balanceCx = 0;
+  double _balanceCy = 0;
+  double _balanceInvScale = 1;
+  bool _balanced = false;
+
   bool _active = false;
   double _separation = double.infinity;
   double _motion = 0;
@@ -88,6 +93,52 @@ class TracedBranch {
   /// entered with a fresh root.
   bool get hasCandidates => _hasCandidates;
 
+  /// Conjugates every measure this slot computes (matching, [motion],
+  /// [separation]) by the affine chart map `(x, y) ↦ ((x − cx)/scale,
+  /// (y − cy)/scale)` — homogeneously `[x : y : w] ↦ [(x − cx·w)/scale
+  /// : (y − cy·w)/scale : w]`, linear, so complex and infinite points
+  /// transform soundly.
+  ///
+  /// The raw chordal measure on `[x, y, 1]` lifts is the angle metric at
+  /// the *world origin*: two points far from the origin in a similar
+  /// direction are chordally close no matter how far apart they sit in
+  /// world terms, which degrades nearest matching and the Cinderella
+  /// bound for configurations living far out — exactly where a locus's
+  /// projective line sweeps go (the Phase 117 fixture had a branch
+  /// silently swap onto a candidate 300 world units away because both
+  /// sat ~700 from the origin). Balancing re-centers the metric on the
+  /// figure. Identity by default — drag tracing, whose geometry lives
+  /// on screen, is bitwise unaffected until a caller opts in. Reset by
+  /// [clear], so balance never leaks across passes; set it before
+  /// [seed] so the seed separation is measured under it.
+  void setBalance({required double cx, required double cy, required double scale}) {
+    if (!(scale > 0) || !scale.isFinite || !cx.isFinite || !cy.isFinite) {
+      throw ArgumentError('Balance needs finite cx/cy and a positive scale');
+    }
+    _balanceCx = cx;
+    _balanceCy = cy;
+    _balanceInvScale = 1 / scale;
+    _balanced = cx != 0 || cy != 0 || scale != 1;
+  }
+
+  ProjPoint _balance(ProjPoint p) {
+    if (!_balanced) {
+      return p;
+    }
+    final k = _balanceInvScale;
+    return ProjPoint(
+      (p.x - p.w.scale(_balanceCx)).scale(k),
+      (p.y - p.w.scale(_balanceCy)).scale(k),
+      p.w,
+    );
+  }
+
+  /// The balanced chordal distance from the stored root to [p] — the
+  /// instance counterpart of [chordalDistance] under this slot's
+  /// balance.
+  double distanceFrom(ProjPoint p) =>
+      chordalDistance(_balance(root), _balance(p));
+
   /// Activates the slot on [p] — the tracked identity at the start of a
   /// tracing pass (typically the owner's current root, however it was
   /// selected). [candidates] should be the owner's candidate set at the
@@ -100,7 +151,7 @@ class TracedBranch {
       throw ArgumentError('Cannot seed a traced branch on the zero triple');
     }
     _store(p);
-    _separation = _minPairwiseSeparation(candidates);
+    _separation = _pairwiseSeparation(candidates);
     _motion = 0;
     _matchedIndex = -1;
     _hasCandidates = candidates.isNotEmpty;
@@ -120,7 +171,7 @@ class TracedBranch {
     _matchedIndex = index;
     _hasCandidates = true;
     _store(matched);
-    _separation = _minPairwiseSeparation(candidates);
+    _separation = _pairwiseSeparation(candidates);
     return matched;
   }
 
@@ -137,9 +188,14 @@ class TracedBranch {
 
   /// Deactivates the slot; the owner reverts to static branch selection.
   /// The stored coordinates are kept but mean nothing until re-seeded.
+  /// The balance resets to identity — it never outlives its pass.
   void clear() {
     _active = false;
     allowComplexCarriers = false;
+    _balanceCx = 0;
+    _balanceCy = 0;
+    _balanceInvScale = 1;
+    _balanced = false;
   }
 
   /// The slot's state, for the step controller to [restore] when it
@@ -171,12 +227,12 @@ class TracedBranch {
       _nearest(candidates).$1;
 
   (int, double) _nearest(List<ProjPoint> candidates) {
-    final p = root;
+    final p = _balance(root);
     final pNorm2 = p.norm2;
     var best = 0;
     var bestMeasure = double.infinity;
     for (var i = 0; i < candidates.length; i++) {
-      final c = candidates[i];
+      final c = _balance(candidates[i]);
       final measure = p.join(c).norm2 / (pNorm2 * c.norm2);
       if (measure < bestMeasure) {
         bestMeasure = measure;
@@ -184,6 +240,15 @@ class TracedBranch {
       }
     }
     return (best, bestMeasure);
+  }
+
+  double _pairwiseSeparation(List<ProjPoint> candidates) {
+    if (!_balanced) {
+      return _minPairwiseSeparation(candidates);
+    }
+    return _minPairwiseSeparation(
+      [for (final c in candidates) _balance(c)],
+    );
   }
 
   /// The chordal distance between two points — the sqrt of the

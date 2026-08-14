@@ -16,6 +16,7 @@ import 'objects/free_point.dart';
 import 'objects/intersection_point.dart';
 import 'objects/locus.dart';
 import 'objects/point_on_object.dart';
+import 'trace_acceptance.dart';
 
 /// The construction graph — the single source of truth for the app.
 ///
@@ -121,10 +122,10 @@ class Construction {
   /// than *half its candidates' minimum pairwise separation at the
   /// previous accepted step* — the condition under which nearest-root
   /// matching cannot silently merge two branches — and less than an
-  /// absolute cap ([_maxAcceptedMotion], which closes the rule's
+  /// absolute cap ([maxAcceptedMotion], which closes the rule's
   /// through-infinity loophole), and no two distinct-seeded branches on
   /// the same curve pair grabbed the same candidate (collision refusal;
-  /// see [_collisionFree]). A refused trial is rolled back
+  /// see `trace_acceptance.dart`). A refused trial is rolled back
   /// ([TracedBranch.restore]) and retried at half the step;
   /// an accepted step doubles it again (capped at the path end, which is
   /// reached bitwise-exactly).
@@ -343,29 +344,8 @@ class Construction {
     // Collision refusal (Phase 114): two branches on the same ordered
     // curve pair must never silently grab the same candidate — that is
     // nearest matching gone ambiguous (a tie the Cinderella bound cannot
-    // see after a coast lifted it). Pairs whose seeds already coincide
-    // are exempt: they legitimately travel together (duplicate branch
-    // objects, a pass starting on a tangency) and no step size could
-    // ever separate their matches.
-    final checkPairs = <(TracedBranch, TracedBranch)>[];
-    {
-      final byPair = <(GeoObject, GeoObject), List<IntersectionPoint>>{};
-      for (final o in seeded) {
-        byPair.putIfAbsent((o.curve1, o.curve2), () => []).add(o);
-      }
-      for (final group in byPair.values) {
-        for (var i = 0; i < group.length; i++) {
-          for (var j = i + 1; j < group.length; j++) {
-            final a = group[i].tracedBranch;
-            final b = group[j].tracedBranch;
-            if (TracedBranch.chordalDistance(a.root, b.root) >
-                doubleRootEpsilon) {
-              checkPairs.add((a, b));
-            }
-          }
-        }
-      }
-    }
+    // see after a coast lifted it). See `trace_acceptance.dart`.
+    final checkPairs = collisionCheckPairs(seeded);
     try {
       if (seeded.isEmpty) {
         driveReal(1);
@@ -395,7 +375,7 @@ class Construction {
       var tPrev = 0.0;
       var sepPrev = double.infinity;
       var tCurr = 0.0;
-      var sepCurr = _minSeparation(seeded);
+      var sepCurr = minSeparation(seeded);
 
       void restoreAll() {
         for (var i = 0; i < seeded.length; i++) {
@@ -430,12 +410,12 @@ class Construction {
             final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
             driveComplex(arc.tAt(trialTheta));
             _recomputeAffected(affected);
-            if (_trialAccepted(
+            if (trialAccepted(
                   seeded,
                   checkpoints,
                   (theta - trialTheta) * arc.radius,
                 ) &&
-                _collisionFree(checkPairs)) {
+                collisionFree(checkPairs)) {
               accepted++;
               theta = trialTheta;
               dTheta = dTheta * 2 < theta ? dTheta * 2 : theta;
@@ -463,8 +443,8 @@ class Construction {
         final trialT = t + step < 1 ? t + step : 1.0;
         driveReal(trialT);
         _recomputeAffected(affected);
-        if (_trialAccepted(seeded, checkpoints, trialT - t) &&
-            _collisionFree(checkPairs)) {
+        if (trialAccepted(seeded, checkpoints, trialT - t) &&
+            collisionFree(checkPairs)) {
           accepted++;
           t = trialT;
           step = step * 2 < 1 ? step * 2 : 1.0;
@@ -472,7 +452,7 @@ class Construction {
           tPrev = tCurr;
           sepPrev = sepCurr;
           tCurr = t;
-          sepCurr = _minSeparation(seeded);
+          sepCurr = minSeparation(seeded);
           onStep?.call(trialT);
         } else {
           rejected++;
@@ -508,7 +488,7 @@ class Construction {
               tPrev = t;
               sepPrev = double.infinity;
               tCurr = t;
-              sepCurr = _minSeparation(seeded);
+              sepCurr = minSeparation(seeded);
               onStep?.call(t);
             }
           }
@@ -543,101 +523,6 @@ class Construction {
       }
       _notify();
     }
-  }
-
-  /// The largest chordal motion any accepted step may carry, regardless
-  /// of separation (sin of ~14.5° on the root's projective line). The
-  /// separation-relative bound alone is unsound at large steps: the
-  /// chordal metric is the geometry of RP¹, where two chart-distant
-  /// roots can be *close through the point at infinity* — a glados
-  /// counterexample had a quarter-turn step match each root to the other
-  /// branch with motions just under sep/2 (a silent swap the collision
-  /// check cannot see either, since the swapped match is a bijection).
-  /// Capping the accepted motion forces refinement long before that
-  /// ambiguity: within small steps, continuity decides correctly.
-  /// Legitimate through-infinity motion (a line∩line meet under a
-  /// parallel sweep) is not forbidden — it just refines into more steps.
-  static const double _maxAcceptedMotion = 0.25;
-
-  /// The tightest candidate separation across the seeded slots at the
-  /// current state — the collapse-law sample singularity estimation
-  /// reads (infinite when every slot is unconstrained, e.g. single-root
-  /// line∩line branches, which keeps estimation quiet).
-  static double _minSeparation(List<IntersectionPoint> seeded) {
-    var min = double.infinity;
-    for (final o in seeded) {
-      final s = o.tracedBranch.separation;
-      if (s < min) min = s;
-    }
-    return min;
-  }
-
-  /// The widest trial span (in path-parameter units) that may *enter* a
-  /// coast: a match→coast transition on a wider trial is refused (see
-  /// [_trialAccepted]). Matches [detourTriggerStep]'s scale — by the
-  /// time refinement is this fine, the carrier degeneracy is localized
-  /// and the root retained on coast entry is fresh to within one
-  /// tiny step's motion.
-  static const double _maxCoastEntrySpan = 1e-5;
-
-  /// The Cinderella acceptance rule over one trial's matches: every
-  /// followed root must have moved less than half its candidates'
-  /// separation at the previous accepted step ([checkpoints]), and less
-  /// than [_maxAcceptedMotion] outright. A branch coasting this trial
-  /// (no candidates) imposes nothing — *unless* it was matching at the
-  /// previous accepted step and [span] exceeds [_maxCoastEntrySpan]: a
-  /// wide trial whose endpoint kills the candidates has absorbed an
-  /// unchecked crossing of a carrier degeneracy (the Phase 116b
-  /// Cinderella demo starved on exactly this — a half-path trial landing
-  /// bitwise on the circles' coincidence froze the slot on a stale
-  /// root), so it is refused and refinement localizes the degeneracy
-  /// first. Coast→coast and seeded-while-undefined branches stay
-  /// permissive, as does re-acquisition. Written so a NaN motion —
-  /// degenerate norms upstream — refuses the trial rather than
-  /// accepting it.
-  static bool _trialAccepted(
-    List<IntersectionPoint> seeded,
-    List<TracedBranchCheckpoint?> checkpoints,
-    double span,
-  ) {
-    for (var i = 0; i < seeded.length; i++) {
-      final branch = seeded[i].tracedBranch;
-      if (branch.matchedIndex < 0) {
-        if (!branch.hasCandidates &&
-            checkpoints[i]!.hasCandidates &&
-            span > _maxCoastEntrySpan) {
-          return false;
-        }
-        continue;
-      }
-      final allowed = checkpoints[i]!.separation / 2;
-      final cap = allowed < _maxAcceptedMotion ? allowed : _maxAcceptedMotion;
-      if (!(branch.motion < cap)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /// Collision refusal over the distinct-seeded [pairs] on a shared curve
-  /// pair: refuse the trial when both grabbed the same candidate while
-  /// the candidate set held a genuinely distinct alternative. When the
-  /// candidates coincide anyway ([TracedBranch.separation] within
-  /// `doubleRootEpsilon` — a double root), riding the touch point
-  /// together is correct and halving could not separate the matches, so
-  /// the grab is benign. (Separation is the set's minimum pairwise
-  /// distance — for today's two-candidate sets that *is* the distance to
-  /// the alternative; once conic∩conic carriers expose four real
-  /// candidates (Phases 119–120) it is a conservative proxy.)
-  static bool _collisionFree(List<(TracedBranch, TracedBranch)> pairs) {
-    for (final (a, b) in pairs) {
-      if (a.matchedIndex >= 0 &&
-          a.matchedIndex == b.matchedIndex &&
-          a.separation > doubleRootEpsilon) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /// Re-points the intersection point [id] at [branchIndex] and
