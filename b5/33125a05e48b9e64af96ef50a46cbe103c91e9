@@ -1,0 +1,39 @@
+lib/domain/construction/objects/free_point.dart
+  s_80f04b07312589::t_58fd81ee058695 10-17
+  s_80f04b07312589::t_232bb6e0a32de0 34-41
+test/domain/construction/objects/intersection_point_test.dart
+  s_80f04b07312589::t_c101887d1eb066 1-2
+  s_80f04b07312589::t_5ebe2a774e984a 617
+  s_80f04b07312589::t_6464295a7eb7d3 10,12
+  s_80f04b07312589::t_c02963d1b656a4 642
+  s_80f04b07312589::t_101f5b0364568b 606-616,618-641,643-716
+test/domain/construction/objects/free_point_test.dart
+  s_80f04b07312589::t_6fd70bb1346790 46-65
+lib/domain/projective/tracing/traced_branch.dart
+  s_80f04b07312589::t_95ee0a8d7fb0f3 126-129
+  s_80f04b07312589::t_16328786e68799 45-55
+  s_80f04b07312589::t_e664cd21ef19c6 95
+lib/domain/construction/objects/intersection_point.dart
+  s_80f04b07312589::t_2317869cf2433d 179-192,195-199,204-207
+  s_80f04b07312589::t_67f448c4c833cb 117-122
+  s_80f04b07312589::t_4e7400a91eb162 216,218,222-225
+  s_80f04b07312589::t_54108f1f738dab 244-248,251-254
+test/domain/projective/tracing/traced_branch_test.dart
+  s_80f04b07312589::t_824307e3dfc43f 27-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b533125a05e48b9e64af96ef50a46cbe103c91e9",
+  "prompts": {},
+  "sessions": {
+    "s_80f04b07312589": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "700b6378-cf13-41da-bb21-d9aa0b41161a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
