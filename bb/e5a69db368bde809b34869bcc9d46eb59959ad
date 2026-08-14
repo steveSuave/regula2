@@ -1,0 +1,24 @@
+test/domain/projective/tracing/tracing_properties_test.dart
+  s_f73bd3fd2cd928::t_404bee363bbea4 1-183
+lib/domain/construction/construction.dart
+  s_f73bd3fd2cd928::t_2fa98fed2c0360 111-116
+  s_f73bd3fd2cd928::t_6ca68c29240d65 253-266,269-273,281-283
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_f73bd3fd2cd928::t_d84fc19e895773 238-292
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "bbe5a69db368bde809b34869bcc9d46eb59959ad",
+  "prompts": {},
+  "sessions": {
+    "s_f73bd3fd2cd928": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fad87ffd-1034-4b24-ad1b-033765efff78",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
