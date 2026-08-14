@@ -234,6 +234,48 @@ void main() {
       branch.follow(const [candidate]);
       // join((0,0,1),(3,0,1)) = (0,3,0) — norm2 9 over 1·10.
       expect(branch.motion, closeTo(math.sqrt(9 / 10), 1e-15));
+      expect(
+        branch.motion,
+        TracedBranch.chordalDistance(
+          ProjPoint.real(0, 0, 1),
+          ProjPoint.real(3, 0, 1),
+        ),
+      );
     });
+  });
+
+  group('TracedBranch.chordalDistance', () {
+    test('hand value, symmetry, zero on projectively equal points', () {
+      final p = ProjPoint.real(0, 0, 1);
+      final q = ProjPoint.real(3, 0, 1);
+      expect(
+        TracedBranch.chordalDistance(p, q),
+        closeTo(math.sqrt(9 / 10), 1e-15),
+      );
+      expect(
+        TracedBranch.chordalDistance(q, p),
+        TracedBranch.chordalDistance(p, q),
+      );
+      expect(
+        TracedBranch.chordalDistance(q, q.scaledBy(const Complex(0.5, 2))),
+        0,
+      );
+    });
+
+    Glados2(any.projPoint, any.nonZeroComplex).test(
+      'is invariant under rescaling either argument',
+      (p, k) {
+        final q = ProjPoint.real(4, 1, 1);
+        final d = TracedBranch.chordalDistance(p, q);
+        expect(
+          TracedBranch.chordalDistance(p.scaledBy(k), q),
+          closeTo(d, 1e-9 + d * 1e-9),
+        );
+        expect(
+          TracedBranch.chordalDistance(p, q.scaledBy(k)),
+          closeTo(d, 1e-9 + d * 1e-9),
+        );
+      },
+    );
   });
 }

@@ -155,18 +155,23 @@ class TracedBranch {
     return (best, bestMeasure);
   }
 
+  /// The chordal distance between two points — the sqrt of the
+  /// scale-invariant measure `|p × q|² / (|p|²·|q|²)` that all tracing
+  /// comparisons ([nearestIndexAmong], [motion], [separation]) are built
+  /// on. Zero exactly on projectively equal points, usable on complex and
+  /// infinite ones, invariant under rescaling either argument.
+  static double chordalDistance(ProjPoint p, ProjPoint q) =>
+      math.sqrt(p.join(q).norm2 / (p.norm2 * q.norm2));
+
   static double _minPairwiseSeparation(List<ProjPoint> candidates) {
-    var min2 = double.infinity;
+    var min = double.infinity;
     for (var i = 0; i < candidates.length; i++) {
-      final ci = candidates[i];
-      final n2i = ci.norm2;
       for (var j = i + 1; j < candidates.length; j++) {
-        final cj = candidates[j];
-        final measure = ci.join(cj).norm2 / (n2i * cj.norm2);
-        if (measure < min2) min2 = measure;
+        final d = chordalDistance(candidates[i], candidates[j]);
+        if (d < min) min = d;
       }
     }
-    return math.sqrt(min2);
+    return min;
   }
 
   void _store(ProjPoint p) {

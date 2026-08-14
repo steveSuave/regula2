@@ -13,6 +13,42 @@ import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/domain/projective/tracing/drag_path.dart';
 import 'package:regula/domain/projective/tracing/trace_step_budget_exception.dart';
 
+/// A puppet intersection point: real parents wire it into the graph (and
+/// their real candidates give the seed its separation), but its own
+/// candidates are scripted, so the controller's collision path can be
+/// driven deterministically — real geometry only reaches a matching
+/// ambiguity through exact ties or coast re-acquisitions, which adaptive
+/// steps cannot be made to hit reliably (resolving them for real is
+/// Phase 115's detour). Mirrors the real `recompute`'s traced/static
+/// split exactly.
+class _ScriptedIntersectionPoint extends IntersectionPoint {
+  _ScriptedIntersectionPoint({
+    required super.id,
+    required super.curve1,
+    required super.curve2,
+    required super.branchIndex,
+    required this.staticCandidates,
+    required this.tracedCandidates,
+  });
+
+  final List<ProjPoint> staticCandidates;
+  final List<ProjPoint> tracedCandidates;
+  ProjPoint? _tracked;
+
+  @override
+  ProjPoint? get projPoint => _tracked;
+
+  @override
+  void recompute() {
+    if (tracedBranch.isActive) {
+      _tracked = tracedBranch.follow(tracedCandidates);
+      return;
+    }
+    _tracked =
+        staticCandidates[math.min(branchIndex, staticCandidates.length - 1)];
+  }
+}
+
 void main() {
   FreePoint fp(String id, double x, double y) =>
       FreePoint(id: id, position: Vec2(x, y));
@@ -230,6 +266,119 @@ void main() {
       construction.moveFreePoint('c', const Vec2(0, 0));
       expect(p0.position!.closeTo(Vec2(-3, 0)), isTrue);
       expect(p1.position!.closeTo(Vec2(3, 0)), isTrue);
+    });
+  });
+
+  group('recomputeAlongPath: collision refusal (scripted candidates)', () {
+    // Seeds sit at x = 0 and x = 0.05 on the axis (distinct — a real
+    // check pair); the parents' real candidates (x = 2, 8) give the seed
+    // a chordal separation of ~0.33, so scripted motions of ~0.1 pass
+    // the Cinderella bound and the collision check alone decides.
+    final seeds = [ProjPoint.real(0, 0, 1), ProjPoint.real(0.05, 0, 1)];
+
+    (Construction, _ScriptedIntersectionPoint, _ScriptedIntersectionPoint)
+        scriptedRig({
+      required int branchA,
+      required int branchB,
+      required List<ProjPoint> tracedCandidates,
+    }) {
+      final construction = Construction();
+      final d = fp('d', 0, 0);
+      final g = fp('g', 10, 0);
+      final center = fp('o', 5, 0);
+      final line = LineThroughTwoPoints(id: 'l', point1: d, point2: g);
+      final circle = FixedRadiusCircle(id: 'k', center: center, radius: 3);
+      final a = _ScriptedIntersectionPoint(
+        id: 'sa',
+        curve1: line,
+        curve2: circle,
+        branchIndex: branchA,
+        staticCandidates: seeds,
+        tracedCandidates: tracedCandidates,
+      );
+      final b = _ScriptedIntersectionPoint(
+        id: 'sb',
+        curve1: line,
+        curve2: circle,
+        branchIndex: branchB,
+        staticCandidates: seeds,
+        tracedCandidates: tracedCandidates,
+      );
+      construction
+        ..add(d)
+        ..add(g)
+        ..add(center)
+        ..add(line)
+        ..add(circle)
+        ..add(a)
+        ..add(b);
+      return (construction, a, b);
+    }
+
+    const path = DragPath(Vec2(0, 0), Vec2(1, 0));
+
+    test('two distinct-seeded branches grabbing the same candidate refuse '
+        'the step, and with no step size resolving it the budget starves',
+        () {
+      // Both seeds are nearest x = 0.1 while a genuinely distinct
+      // alternative exists at x = 5 — matching went ambiguous, so every
+      // trial must be refused rather than silently merging the branches.
+      final (construction, a, b) = scriptedRig(
+        branchA: 0,
+        branchB: 1,
+        tracedCandidates: [ProjPoint.real(0.1, 0, 1), ProjPoint.real(5, 0, 1)],
+      );
+      final accepted = <double>[];
+      expect(
+        () => construction.recomputeAlongPath(
+          'd',
+          path,
+          stepBudget: 25,
+          onStep: accepted.add,
+        ),
+        throwsA(isA<TraceStepBudgetException>()
+            .having((e) => e.tReached, 'tReached', 0)
+            .having((e) => e.trials, 'trials', 25)),
+      );
+      expect(accepted, isEmpty);
+      expect(a.tracedBranch.isActive, isFalse);
+      expect(b.tracedBranch.isActive, isFalse);
+    });
+
+    test('a shared grab of coincident candidates (a double root) is benign',
+        () {
+      // The two candidates sit within doubleRootEpsilon of each other:
+      // there is no distinct alternative for halving to disambiguate,
+      // and riding the touch point together is correct.
+      final (construction, a, b) = scriptedRig(
+        branchA: 0,
+        branchB: 1,
+        tracedCandidates: [
+          ProjPoint.real(0.1, 0, 1),
+          ProjPoint.real(0.1 + 1e-8, 0, 1),
+        ],
+      );
+      final result = construction.recomputeAlongPath('d', path);
+      expect(result, (acceptedSteps: 1, rejectedSteps: 0));
+      expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
+      expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
+    });
+
+    test('branches seeded coincident are married and ride the same root '
+        'without refusal', () {
+      // Both objects deliberately track the same branch (both seeded on
+      // x = 0): matching them to the same candidate is faithful
+      // continuation, and no step size could ever separate them — the
+      // pair is exempt from the collision check.
+      final (construction, a, b) = scriptedRig(
+        branchA: 0,
+        branchB: 0,
+        tracedCandidates: [ProjPoint.real(0.1, 0, 1), ProjPoint.real(5, 0, 1)],
+      );
+      final result = construction.recomputeAlongPath('d', path);
+      expect(result, (acceptedSteps: 1, rejectedSteps: 0));
+      expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
+      expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
     });
   });
 

@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import '../math/vec2.dart';
+import '../projective/tolerances.dart';
 import '../projective/tracing/drag_path.dart';
 import '../projective/tracing/trace_step_budget_exception.dart';
 import '../projective/tracing/traced_branch.dart';
@@ -107,8 +108,10 @@ class Construction {
   /// whole path. A trial is accepted only if every traced root moved less
   /// than *half its candidates' minimum pairwise separation at the
   /// previous accepted step* — the condition under which nearest-root
-  /// matching provably cannot swap two branches. A refused trial is
-  /// rolled back ([TracedBranch.restore]) and retried at half the step;
+  /// matching provably cannot swap two branches — and no two
+  /// distinct-seeded branches on the same curve pair grabbed the same
+  /// candidate (collision refusal; see [_collisionFree]). A refused trial
+  /// is rolled back ([TracedBranch.restore]) and retried at half the step;
   /// an accepted step doubles it again (capped at the path end, which is
   /// reached bitwise-exactly). Near a degeneracy the separation — and
   /// with it the allowed motion — collapses, so the controller *starves*:
@@ -166,6 +169,32 @@ class Construction {
         }
       }
     }
+    // Collision refusal (Phase 114): two branches on the same ordered
+    // curve pair must never silently grab the same candidate — that is
+    // nearest matching gone ambiguous (a tie the Cinderella bound cannot
+    // see after a coast lifted it). Pairs whose seeds already coincide
+    // are exempt: they legitimately travel together (duplicate branch
+    // objects, a pass starting on a tangency) and no step size could
+    // ever separate their matches.
+    final checkPairs = <(TracedBranch, TracedBranch)>[];
+    {
+      final byPair = <(GeoObject, GeoObject), List<IntersectionPoint>>{};
+      for (final o in seeded) {
+        byPair.putIfAbsent((o.curve1, o.curve2), () => []).add(o);
+      }
+      for (final group in byPair.values) {
+        for (var i = 0; i < group.length; i++) {
+          for (var j = i + 1; j < group.length; j++) {
+            final a = group[i].tracedBranch;
+            final b = group[j].tracedBranch;
+            if (TracedBranch.chordalDistance(a.root, b.root) >
+                doubleRootEpsilon) {
+              checkPairs.add((a, b));
+            }
+          }
+        }
+      }
+    }
     try {
       if (seeded.isEmpty) {
         object.position = path.at(1);
@@ -196,7 +225,7 @@ class Construction {
         final trialT = t + step < 1 ? t + step : 1.0;
         object.position = path.at(trialT);
         _recomputeAffected(affected);
-        if (_trialAccepted(seeded, checkpoints)) {
+        if (_trialAccepted(seeded, checkpoints) && _collisionFree(checkPairs)) {
           accepted++;
           t = trialT;
           step = step * 2 < 1 ? step * 2 : 1.0;
@@ -233,6 +262,27 @@ class Construction {
       final branch = seeded[i].tracedBranch;
       if (branch.matchedIndex < 0) continue;
       if (!(branch.motion < checkpoints[i]!.separation / 2)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Collision refusal over the distinct-seeded [pairs] on a shared curve
+  /// pair: refuse the trial when both grabbed the same candidate while
+  /// the candidate set held a genuinely distinct alternative. When the
+  /// candidates coincide anyway ([TracedBranch.separation] within
+  /// `doubleRootEpsilon` — a double root), riding the touch point
+  /// together is correct and halving could not separate the matches, so
+  /// the grab is benign. (Separation is the set's minimum pairwise
+  /// distance — for today's two-candidate sets that *is* the distance to
+  /// the alternative; once conic∩conic carriers expose four real
+  /// candidates (Phases 119–120) it is a conservative proxy.)
+  static bool _collisionFree(List<(TracedBranch, TracedBranch)> pairs) {
+    for (final (a, b) in pairs) {
+      if (a.matchedIndex >= 0 &&
+          a.matchedIndex == b.matchedIndex &&
+          a.separation > doubleRootEpsilon) {
         return false;
       }
     }
