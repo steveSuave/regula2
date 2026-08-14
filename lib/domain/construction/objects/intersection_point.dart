@@ -114,7 +114,12 @@ class IntersectionPoint extends GeoPoint {
 
   @override
   void recompute() {
-    final candidates = intersectionCandidates(curve1, curve2);
+    final candidates = intersectionCandidates(
+      curve1,
+      curve2,
+      complexCarriers:
+          tracedBranch.isActive && tracedBranch.allowComplexCarriers,
+    );
     _candidateCount = _distinctRealCount(candidates);
     if (candidates.isEmpty) {
       // The slot coasts through a momentarily candidate-free step
@@ -171,21 +176,35 @@ class IntersectionPoint extends GeoPoint {
 /// world-unit epsilon band around tangency with a relative,
 /// root-noise-sized one.)
 ///
-/// A *non-real* parent carrier yields no candidates at all. A complex
-/// carrier (an undefined intersection's conjugate branch, the bisector
-/// over it) still passes through real points — its own vertex, say — and
-/// intersecting it would fabricate real geometry V1 rightly left
-/// undefined. Until tracing (Phase 113+) owns cross-complex
-/// continuation, static candidates exist only between real carriers;
-/// points at infinity and degenerate real conics are real and take part.
+/// A *non-real* parent carrier yields no candidates at all — unless
+/// [complexCarriers] is set. Statically, a complex carrier (an undefined
+/// intersection's conjugate branch, the bisector over it) still passes
+/// through real points — its own vertex, say — and intersecting it would
+/// fabricate real geometry V1 rightly left undefined; static candidates
+/// exist only between real carriers, while points at infinity and
+/// degenerate real conics are real and take part. A tracing pass's
+/// complex detour (Phase 115) is the one context where complex carriers
+/// are legitimate: the dragged point sits at a complex path parameter, so
+/// every affected carrier is the analytic continuation of a real one and
+/// its candidates continue the traced roots. The kernel functions are
+/// holomorphic throughout, so [complexCarriers] only skips the realness
+/// gates — nothing else changes (canonical *order* is meaningless on
+/// complex carriers, but a detour matches by continuity, never by order).
 ///
 /// Consumed by [IntersectionPoint] and the snap-to-intersection ladder.
-List<ProjPoint> intersectionCandidates(GeoObject curve1, GeoObject curve2) {
+List<ProjPoint> intersectionCandidates(
+  GeoObject curve1,
+  GeoObject curve2, {
+  bool complexCarriers = false,
+}) {
   switch ((curve1, curve2)) {
     case (final GeoLine a, final GeoLine b):
       final l1 = a.projLine;
       final l2 = b.projLine;
-      if (l1 == null || l2 == null || !l1.isReal() || !l2.isReal()) {
+      if (l1 == null || l2 == null) {
+        return const [];
+      }
+      if (!complexCarriers && (!l1.isReal() || !l2.isReal())) {
         return const [];
       }
       if (l1.closeTo(l2)) {
@@ -194,13 +213,16 @@ List<ProjPoint> intersectionCandidates(GeoObject curve1, GeoObject curve2) {
       final p = l1.meet(l2);
       return p.isZero ? const [] : [p];
     case (final GeoLine a, final GeoCircle b):
-      return _lineConicCandidates(a, b);
+      return _lineConicCandidates(a, b, complexCarriers);
     case (final GeoCircle a, final GeoLine b):
-      return _lineConicCandidates(b, a);
+      return _lineConicCandidates(b, a, complexCarriers);
     case (final GeoCircle a, final GeoCircle b):
       final c1 = a.conic;
       final c2 = b.conic;
-      if (c1 == null || c2 == null || !c1.isReal() || !c2.isReal()) {
+      if (c1 == null || c2 == null) {
+        return const [];
+      }
+      if (!complexCarriers && (!c1.isReal() || !c2.isReal())) {
         return const [];
       }
       return [
@@ -219,10 +241,17 @@ List<ProjPoint> intersectionCandidates(GeoObject curve1, GeoObject curve2) {
   }
 }
 
-List<ProjPoint> _lineConicCandidates(GeoLine line, GeoCircle circle) {
+List<ProjPoint> _lineConicCandidates(
+  GeoLine line,
+  GeoCircle circle,
+  bool complexCarriers,
+) {
   final l = line.projLine;
   final c = circle.conic;
-  if (l == null || c == null || !l.isReal() || !c.isReal()) {
+  if (l == null || c == null) {
+    return const [];
+  }
+  if (!complexCarriers && (!l.isReal() || !c.isReal())) {
     return const [];
   }
   final candidates = [

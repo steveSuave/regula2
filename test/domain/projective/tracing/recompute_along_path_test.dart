@@ -7,6 +7,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
+import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/proj_point.dart';
@@ -290,15 +291,19 @@ void main() {
       expect(p1.projPoint!.closeTo(tracked1), isTrue);
     });
 
-    test('through a tangency: the step controller starves against the '
-        'degeneracy and throws, leaving a cleanly bail-able state', () {
+    test('through a tangency with an insufficient budget: the creep '
+        'exhausts before the detour trigger is reached, and the pass '
+        'throws, leaving a cleanly bail-able state', () {
       // Crossing y = 3 collapses the branch separation to zero, so the
       // allowed motion per step collapses with it: accepted steps creep
-      // toward t* = 0.4 without ever crossing (each trial that would
-      // cross moves a root at least its full distance to the touch
-      // point — strictly refused). The budget is kept small enough that
-      // the creep stays far from floating-point noise around the strict
-      // inequality; the deterministic crossing is Phase 115's detour.
+      // toward t* = 0.4 (each trial that would cross moves a root at
+      // least its full distance to the touch point — strictly refused).
+      // Reaching the Phase 115 detour trigger takes ~17 halvings plus
+      // the interleaved accepts, so a budget of 40 exhausts first — the
+      // graceful-bail path survives exactly as in Phase 114 (the
+      // default budget crosses instead; see the complex-detour group).
+      // The small budget also keeps the creep far from floating-point
+      // noise around the strict inequality.
       final (construction, center, p0, p1) = lineAndCircle(const Vec2(0, 5));
       expect(
         () => construction.recomputeAlongPath(
@@ -414,7 +419,7 @@ void main() {
         ],
       );
       final result = construction.recomputeAlongPath('d', path);
-      expect(result, (acceptedSteps: 1, rejectedSteps: 0));
+      expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
       expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
       expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
     });
@@ -431,7 +436,7 @@ void main() {
         tracedCandidates: [ProjPoint.real(0.1, 0, 1), ProjPoint.real(5, 0, 1)],
       );
       final result = construction.recomputeAlongPath('d', path);
-      expect(result, (acceptedSteps: 1, rejectedSteps: 0));
+      expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
       expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
       expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
     });
@@ -476,7 +481,7 @@ void main() {
       );
 
       expect(observedTs, [1.0]);
-      expect(result, (acceptedSteps: 1, rejectedSteps: 0));
+      expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
       // Bitwise-exact endpoint, like moveFreePoint.
       expect(b.position, const Vec2(4, 4));
       expect(ip.position!.closeTo(Vec2.zero), isTrue);
@@ -555,6 +560,267 @@ void main() {
       expect(observed, result.acceptedSteps);
       expect(observed, greaterThan(0));
       expect(untracked.tracedBranch.isActive, isFalse);
+    });
+  });
+
+  group('recomputeAlongPath: complex detour (Phase 115)', () {
+    test('through a tangency: the pass detours and crosses — points go '
+        'complex, come back real, no jump, no swap, deterministic sides',
+        () {
+      // Same crossing that starves a 40-trial budget: with the default
+      // budget the controller creeps to the trigger, extrapolates
+      // t* = 0.4 from the collapsing separation, and walks the upper
+      // arc (downward drag). The conjugate pair splits real on the far
+      // side with the assignment continuity dictates: for this
+      // orientation the −i branch lands on x < 0.
+      final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
+      final minus = chartIm(p0.projPoint!) < 0 ? p0 : p1;
+      final plus = identical(minus, p0) ? p1 : p0;
+      final histories = <IntersectionPoint, List<ProjPoint>>{
+        p0: [p0.projPoint!],
+        p1: [p1.projPoint!],
+      };
+      final result = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(0, 5), Vec2(0, 0)),
+        onStep: (_) {
+          histories[p0]!.add(p0.projPoint!);
+          histories[p1]!.add(p1.projPoint!);
+        },
+      );
+
+      expect(result.detours, 1);
+      // No jump: every consecutive pair of observed real-step roots is
+      // chordally close — including the hop across the detour, whose
+      // arc is only as wide as the creep left it.
+      for (final history in histories.values) {
+        for (var i = 1; i < history.length; i++) {
+          expect(chordal(history[i - 1], history[i]), lessThan(0.3));
+        }
+      }
+      // Crossed and real: endpoint at x² = 9 with deterministic sides.
+      expect(minus.position!.closeTo(const Vec2(-3, 0)), isTrue);
+      expect(plus.position!.closeTo(const Vec2(3, 0)), isTrue);
+      // Endpoint = static solve, labels included.
+      final tracked0 = p0.projPoint!;
+      final tracked1 = p1.projPoint!;
+      construction.moveFreePoint('c', const Vec2(0, 0));
+      expect(p0.projPoint!.closeTo(tracked0, 1e-6), isTrue);
+      expect(p1.projPoint!.closeTo(tracked1, 1e-6), isTrue);
+    });
+
+    test('there and back across the tangency is an identity: each branch '
+        'returns to its own conjugate side (odd orientation, zero net '
+        'winding)', () {
+      final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
+      final seed0 = p0.projPoint!;
+      final seed1 = p1.projPoint!;
+
+      final down = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(0, 5), Vec2(0, 0)),
+      );
+      final up = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(0, 0), Vec2(0, 5)),
+      );
+
+      expect(down.detours, 1);
+      expect(up.detours, 1);
+      // A fixed absolute half-plane would swap the conjugates here (one
+      // net winding around the branch point); the odd orientation rule
+      // retraces the same physical side and restores both labels.
+      expect(p0.projPoint!.closeTo(seed0, 1e-9), isTrue);
+      expect(p1.projPoint!.closeTo(seed1, 1e-9), isTrue);
+      expect(chartIm(p0.projPoint!).sign, chartIm(seed0).sign);
+      expect(chartIm(p1.projPoint!).sign, chartIm(seed1).sign);
+    });
+
+    test('a co-traced regular pair rides the detour unharmed: no enclosed '
+        'singularity of its own means its endpoint equals the real-path '
+        'endpoint', () {
+      // The r = 3 circle's tangency at y = 3 forces the detour; a
+      // concentric r = 6 circle's intersections with the same line stay
+      // transverse the whole way (x = ±√(36 − y²), y ∈ [0, 5]). The
+      // detour drags them through complex parameters too — but encloses
+      // no singularity of *theirs*, so continuation is homotopic to the
+      // real path: same sides, same endpoint, no swap.
+      final (construction, center, _, _) = lineAndCircle(const Vec2(0, 5));
+      final line = construction.byId('l')!;
+      final outer = FixedRadiusCircle(id: 'k6', center: center, radius: 6);
+      final q0 = IntersectionPoint(
+        id: 'q0',
+        curve1: line,
+        curve2: outer,
+        branchIndex: 0,
+      );
+      final q1 = IntersectionPoint(
+        id: 'q1',
+        curve1: line,
+        curve2: outer,
+        branchIndex: 1,
+      );
+      construction
+        ..add(outer)
+        ..add(q0)
+        ..add(q1);
+
+      final result = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(0, 5), Vec2(0, 0)),
+        onStep: (_) {
+          // Never swapped at any observed real step.
+          expect(q0.position!.x, lessThan(0));
+          expect(q1.position!.x, greaterThan(0));
+        },
+      );
+
+      expect(result.detours, 1);
+      expect(q0.position!.closeTo(Vec2(-6, 0)), isTrue);
+      expect(q1.position!.closeTo(Vec2(6, 0)), isTrue);
+    });
+
+    test('the chord and perpendicular bisector of the traced pair stay '
+        'real, defined lines across the degenerate crossing', () {
+      // The Cinderella payoff demo in miniature: the join of a
+      // conjugate pair is real, and so is its perpendicular bisector —
+      // both keep rendering while the points are invisible, with no
+      // jump through the tangency. On this symmetric rig the bisector
+      // is x = 0 for the entire drag, complex phase included — pinned
+      // as a continuity check. (Inside the arc the points are not
+      // conjugates and both lines are momentarily complex, but the
+      // arc's interior is never observed — onStep fires at real
+      // parameters only.)
+      final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
+      final chord = LineThroughTwoPoints(id: 'chord', point1: p0, point2: p1);
+      final bisector = PerpendicularBisectorLine(
+        id: 'bisector',
+        point1: p0,
+        point2: p1,
+      );
+      construction
+        ..add(chord)
+        ..add(bisector);
+
+      final result = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(0, 5), Vec2(0, 0)),
+        onStep: (_) {
+          expect(chord.line, isNotNull);
+          final b = bisector.line!;
+          // A vertical line through the origin: a·0 + b·0 + c = 0 with
+          // no y component.
+          expect(b.direction.x.abs(), lessThan(1e-9));
+          expect(b.distanceTo(Vec2.zero), lessThan(1e-9));
+        },
+      );
+      expect(result.detours, 1);
+      expect(chord.line, isNotNull);
+      expect(bisector.line, isNotNull);
+    });
+
+    (Construction, IntersectionPoint, IntersectionPoint) circlePair(
+      Vec2 start,
+    ) {
+      final construction = Construction();
+      final c1 = fp('c1', 0, 0);
+      final c2 = fp('c2', start.x, start.y);
+      final k1 = FixedRadiusCircle(id: 'k1', center: c1, radius: 2);
+      final k2 = FixedRadiusCircle(id: 'k2', center: c2, radius: 2);
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: k1,
+        curve2: k2,
+        branchIndex: 0,
+      );
+      final p1 = IntersectionPoint(
+        id: 'p1',
+        curve1: k1,
+        curve2: k2,
+        branchIndex: 1,
+      );
+      construction
+        ..add(c1)
+        ..add(c2)
+        ..add(k1)
+        ..add(k2)
+        ..add(p0)
+        ..add(p1);
+      return (construction, p0, p1);
+    }
+
+    test('a near-miss is traced through on the real axis: no detour, no '
+        'swap, endpoint = static solve', () {
+      // Two r = 2 circles whose centers pass within 4 + 1e-6 — the
+      // conjugate roots nearly collide mid-path but never do. The
+      // Cinderella bound alone squeezes through; the detour trigger
+      // (both step and separation collapsed) never fires, so no arc is
+      // planned near the complex branch points and the labels are the
+      // real path's own.
+      const y = 4.0 + 1e-6;
+      final (construction, p0, p1) = circlePair(const Vec2(-6, y));
+      final s0 = chartIm(p0.projPoint!).sign;
+      final s1 = chartIm(p1.projPoint!).sign;
+      final result = construction.recomputeAlongPath(
+        'c2',
+        const DragPath(Vec2(-6, y), Vec2(6, y)),
+      );
+
+      expect(result.detours, 0);
+      expect(chartIm(p0.projPoint!).sign, s0);
+      expect(chartIm(p1.projPoint!).sign, s1);
+      final tracked0 = p0.projPoint!;
+      final tracked1 = p1.projPoint!;
+      construction.moveFreePoint('c2', const Vec2(6, y));
+      expect(p0.projPoint!.closeTo(tracked0, 1e-6), isTrue);
+      expect(p1.projPoint!.closeTo(tracked1, 1e-6), isTrue);
+    });
+
+    test('an ultra-tight near-miss starves cleanly rather than risking a '
+        'false detour', () {
+      // At 4 + 1e-10 the almost-collision sits below the scales the
+      // collapse-law samples can resolve; the undershooting estimate
+      // keeps every planned arc short of the closest approach, so the
+      // pass never winds around the complex branch points — it burns
+      // the budget and bails, and the static solve recovers. (A silent
+      // swap here would be wrong by ~1e-10 world units; a bail is
+      // honest.)
+      const y = 4.0 + 1e-10;
+      final (construction, p0, p1) = circlePair(const Vec2(-6, y));
+      expect(
+        () => construction.recomputeAlongPath(
+          'c2',
+          const DragPath(Vec2(-6, y), Vec2(6, y)),
+        ),
+        throwsA(isA<TraceStepBudgetException>()),
+      );
+      expect(p0.tracedBranch.isActive, isFalse);
+      expect(p1.tracedBranch.isActive, isFalse);
+      construction.moveFreePoint('c2', const Vec2(6, y));
+      expect(p0.projPoint, isNotNull);
+      expect(p1.projPoint, isNotNull);
+    });
+
+    test('a drag ending exactly on the tangency starves and bails: no '
+        'valid arc exists around a singular endpoint', () {
+      // t* sits at the path's end, so the pass would have to finish at
+      // a complex parameter; DetourArc.plan refuses and the controller
+      // creeps until the budget throws. The static bail lands both
+      // branches on the double root.
+      final (construction, p0, p1) = circlePair(const Vec2(0, 6));
+      expect(
+        () => construction.recomputeAlongPath(
+          'c2',
+          const DragPath(Vec2(0, 6), Vec2(0, 4)),
+        ),
+        throwsA(
+          isA<TraceStepBudgetException>()
+              .having((e) => e.tReached, 'tReached', greaterThan(0.99)),
+        ),
+      );
+      construction.moveFreePoint('c2', const Vec2(0, 4));
+      expect(p0.position!.closeTo(const Vec2(0, 2)), isTrue);
+      expect(p1.position!.closeTo(const Vec2(0, 2)), isTrue);
     });
   });
 }

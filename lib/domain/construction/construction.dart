@@ -1,8 +1,10 @@
 import 'dart:collection';
+import 'dart:math' as math;
 
 import '../math/vec2.dart';
 import '../projective/tolerances.dart';
 import '../projective/tracing/drag_path.dart';
+import '../projective/tracing/singularity.dart';
 import '../projective/tracing/trace_step_budget_exception.dart';
 import '../projective/tracing/traced_branch.dart';
 import 'geo_object.dart';
@@ -91,7 +93,7 @@ class Construction {
   /// Moves the free point [id] along [path] with adaptive substeps,
   /// recomputing its transitive dependents at every accepted step — the
   /// tracing sibling of [moveFreePoint] (Phase 114; complex detours
-  /// around degeneracies arrive in Phase 115).
+  /// around degeneracies since Phase 115).
   ///
   /// Before stepping, every affected [IntersectionPoint] whose tracked
   /// candidate exists is seeded ([TracedBranch.seed], with its candidate
@@ -115,13 +117,34 @@ class Construction {
   /// see [_collisionFree]). A refused trial is rolled back
   /// ([TracedBranch.restore]) and retried at half the step;
   /// an accepted step doubles it again (capped at the path end, which is
-  /// reached bitwise-exactly). Near a degeneracy the separation — and
-  /// with it the allowed motion — collapses, so the controller *starves*:
-  /// when accepted plus refused trials reach [stepBudget], the pass
-  /// throws [TraceStepBudgetException], leaving the point at the last
-  /// trial position with slots cleared; callers bail to a static solve
-  /// (the drag session does — PLAN §Risks). Returns the accepted/rejected
-  /// trial counts (the Phase 116 debug-overlay feed).
+  /// reached bitwise-exactly).
+  ///
+  /// **Complex detour (Phase 115).** Near a degeneracy *on* the path the
+  /// separation — and with it the allowed motion — collapses, so the
+  /// controller starves. When the trial step has shrunk under
+  /// [detourTriggerStep] while the tightest separation sits under
+  /// [detourTriggerSeparation], the singular parameter is extrapolated
+  /// from the last two accepted steps' separations
+  /// ([estimateSingularParameter]) and the pass walks a [DetourArc]: the
+  /// same interpolation continued holomorphically around the singularity
+  /// through the *upper half-plane* of the path's own parameter — the
+  /// fixed orientation that makes the crossing deterministic and a
+  /// there-and-back drag an identity (see `singularity.dart`). On the
+  /// arc the affected [IntersectionPoint]s accept complex carriers
+  /// ([TracedBranch.allowComplexCarriers], arc-scoped) and the identical
+  /// acceptance machinery walks it: away from the singularity the roots
+  /// stay separated, so the arc resolves in bounded trials, lands
+  /// exactly real, and real stepping resumes past the degeneracy —
+  /// through-tangency drags cross with no jump and no swap. When no
+  /// valid detour exists (the samples don't extrapolate, the singularity
+  /// sits at or past the path's end, or the arc itself exhausts the
+  /// budget) the pass throws [TraceStepBudgetException] once accepted
+  /// plus refused trials reach [stepBudget], leaving the point real (at
+  /// the last trial position, or back at the arc entry after a failed
+  /// arc) with slots cleared; callers bail to a static solve (the drag
+  /// session does — PLAN §Risks). Returns the accepted/rejected trial
+  /// counts and the number of completed detours (the Phase 116
+  /// debug-overlay feed).
   ///
   /// Excluded from seeding: intersection points inside a [Locus.chain] —
   /// the sweep-and-restore recompute would drag their roots along the
@@ -133,10 +156,12 @@ class Construction {
   /// Matching continuity assumes `path.start` is where the point
   /// currently sits (drag sessions anchor each preview path at the
   /// previous one's end). [onStep] fires after each *accepted* step's
-  /// recompute — the observation hook for the toy harness and the Phase
-  /// 116 debug overlay. Notifies once, like [moveFreePoint]. Throws
+  /// recompute at a real parameter — the arc's interior steps are
+  /// complex and silent; a completed detour fires once, at its exit —
+  /// the observation hook for the toy harness and the Phase 116 debug
+  /// overlay. Notifies once, like [moveFreePoint]. Throws
   /// [ArgumentError] when [id] is not a [FreePoint] or [stepBudget] < 1.
-  ({int acceptedSteps, int rejectedSteps}) recomputeAlongPath(
+  ({int acceptedSteps, int rejectedSteps, int detours}) recomputeAlongPath(
     String id,
     DragPath path, {
     int stepBudget = 128,
@@ -202,7 +227,7 @@ class Construction {
         object.position = path.at(1);
         _recomputeAffected(affected);
         onStep?.call(1);
-        return (acceptedSteps: 1, rejectedSteps: 0);
+        return (acceptedSteps: 1, rejectedSteps: 0, detours: 0);
       }
       final checkpoints =
           List<TracedBranchCheckpoint?>.filled(seeded.length, null);
@@ -217,6 +242,72 @@ class Construction {
       var step = 1.0;
       var accepted = 0;
       var rejected = 0;
+      var detours = 0;
+      // Separation samples at the last two accepted steps — the
+      // collapse-law data singularity estimation extrapolates. The
+      // infinite "previous" sample keeps estimation quiet until two
+      // genuine samples exist (after a detour they are reset the same
+      // way: the law restarts on the far side of the singularity).
+      var tPrev = 0.0;
+      var sepPrev = double.infinity;
+      var tCurr = 0.0;
+      var sepCurr = _minSeparation(seeded);
+      // One orientation per pass (the path has one direction): the odd
+      // rule that makes a there-and-back drag an identity.
+      final orientation = detourOrientation(path.start, path.end);
+
+      void restoreAll() {
+        for (var i = 0; i < seeded.length; i++) {
+          seeded[i].tracedBranch.restore(checkpoints[i]!);
+        }
+      }
+
+      /// Walks [arc] from θ = π (its entry — where the pass already
+      /// sits) down to θ = 0 (its real exit past the singularity) with
+      /// the identical acceptance machinery, complex carriers allowed
+      /// for the duration. Trials share the pass budget; exhaustion
+      /// mid-arc restores the real entry state and throws.
+      void traceArc(DetourArc arc) {
+        for (final o in seeded) {
+          o.tracedBranch.allowComplexCarriers = true;
+        }
+        try {
+          var theta = math.pi;
+          var dTheta = math.pi;
+          while (theta > 0) {
+            if (accepted + rejected >= stepBudget) {
+              for (final o in seeded) {
+                o.tracedBranch.allowComplexCarriers = false;
+              }
+              object.position = path.at(arc.entry);
+              _recomputeAffected(affected);
+              throw TraceStepBudgetException(
+                tReached: arc.entry,
+                trials: accepted + rejected,
+              );
+            }
+            final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
+            object.tracedPosition = path.evaluate(arc.tAt(trialTheta));
+            _recomputeAffected(affected);
+            if (_trialAccepted(seeded, checkpoints) &&
+                _collisionFree(checkPairs)) {
+              accepted++;
+              theta = trialTheta;
+              dTheta = dTheta * 2 < theta ? dTheta * 2 : theta;
+              snapshot();
+            } else {
+              rejected++;
+              restoreAll();
+              dTheta /= 2;
+            }
+          }
+        } finally {
+          for (final o in seeded) {
+            o.tracedBranch.allowComplexCarriers = false;
+          }
+        }
+      }
+
       while (t < 1) {
         if (accepted + rejected >= stepBudget) {
           throw TraceStepBudgetException(
@@ -232,16 +323,52 @@ class Construction {
           t = trialT;
           step = step * 2 < 1 ? step * 2 : 1.0;
           snapshot();
+          tPrev = tCurr;
+          sepPrev = sepCurr;
+          tCurr = t;
+          sepCurr = _minSeparation(seeded);
           onStep?.call(trialT);
         } else {
           rejected++;
-          for (var i = 0; i < seeded.length; i++) {
-            seeded[i].tracedBranch.restore(checkpoints[i]!);
-          }
+          restoreAll();
           step /= 2;
+          // Starvation ⇒ detour attempt: the step has collapsed while
+          // the tightest separation did — a root collision ahead on the
+          // real axis (a large separation would instead point at the
+          // absolute motion cap refining a legitimate sweep).
+          if (step < detourTriggerStep && sepCurr < detourTriggerSeparation) {
+            final tStar = estimateSingularParameter(
+              t1: tPrev,
+              s1: sepPrev,
+              t2: tCurr,
+              s2: sepCurr,
+            );
+            final arc = tStar == null
+                ? null
+                : DetourArc.plan(
+                    entry: t,
+                    tStar: tStar,
+                    orientation: orientation,
+                  );
+            if (arc != null) {
+              traceArc(arc);
+              detours++;
+              t = arc.exit;
+              // Resume at the arc's own scale: the roots just crossed a
+              // near-degeneracy, so accepted steps grow from there by
+              // doubling — restarting from the whole remaining path
+              // would burn ~30 refusals halving back down.
+              step = arc.radius;
+              tPrev = t;
+              sepPrev = double.infinity;
+              tCurr = t;
+              sepCurr = _minSeparation(seeded);
+              onStep?.call(t);
+            }
+          }
         }
       }
-      return (acceptedSteps: accepted, rejectedSteps: rejected);
+      return (acceptedSteps: accepted, rejectedSteps: rejected, detours: detours);
     } finally {
       for (final o in seeded) {
         o.tracedBranch.clear();
@@ -263,6 +390,19 @@ class Construction {
   /// Legitimate through-infinity motion (a line∩line meet under a
   /// parallel sweep) is not forbidden — it just refines into more steps.
   static const double _maxAcceptedMotion = 0.25;
+
+  /// The tightest candidate separation across the seeded slots at the
+  /// current state — the collapse-law sample singularity estimation
+  /// reads (infinite when every slot is unconstrained, e.g. single-root
+  /// line∩line branches, which keeps estimation quiet).
+  static double _minSeparation(List<IntersectionPoint> seeded) {
+    var min = double.infinity;
+    for (final o in seeded) {
+      final s = o.tracedBranch.separation;
+      if (s < min) min = s;
+    }
+    return min;
+  }
 
   /// The Cinderella acceptance rule over one trial's matches: every
   /// followed root must have moved less than half its candidates'

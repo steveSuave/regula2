@@ -42,6 +42,17 @@ class TracedBranch {
   /// Whether a tracing pass currently owns this slot.
   bool get isActive => _active;
 
+  /// Whether the owner's candidate computation may accept *complex*
+  /// carriers (Phase 115). Statically, intersecting a complex carrier
+  /// would fabricate geometry, so `intersectionCandidates` refuses them —
+  /// but while a complex detour walks the drag parameter off the real
+  /// axis, every affected carrier is legitimately complex and the
+  /// candidates are its analytic continuation. Set (and cleared) by the
+  /// pass strictly around the detour arc, never checkpointed: a refused
+  /// arc trial stays on the arc. Meaningless while not [isActive];
+  /// [seed] and [clear] reset it.
+  bool allowComplexCarriers = false;
+
   /// The tracked root as stored by the last [seed] or [follow].
   /// Meaningless while not [isActive].
   ProjPoint get root => ProjPoint(
@@ -81,6 +92,7 @@ class TracedBranch {
     _separation = _minPairwiseSeparation(candidates);
     _motion = 0;
     _matchedIndex = -1;
+    allowComplexCarriers = false;
     _active = true;
   }
 
@@ -111,7 +123,10 @@ class TracedBranch {
 
   /// Deactivates the slot; the owner reverts to static branch selection.
   /// The stored coordinates are kept but mean nothing until re-seeded.
-  void clear() => _active = false;
+  void clear() {
+    _active = false;
+    allowComplexCarriers = false;
+  }
 
   /// The slot's state, for the step controller to [restore] when it
   /// refuses a trial step.

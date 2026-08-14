@@ -24,6 +24,17 @@ void main() {
       expect(branch.matchedIndex, -1);
     });
 
+    test('allowComplexCarriers is arc-scoped: reset by seed and clear', () {
+      final branch = TracedBranch()..seed(ProjPoint.real(1, 2, 1));
+      expect(branch.allowComplexCarriers, isFalse);
+      branch.allowComplexCarriers = true;
+      branch.clear();
+      expect(branch.allowComplexCarriers, isFalse);
+      branch.allowComplexCarriers = true;
+      branch.seed(ProjPoint.real(1, 2, 1));
+      expect(branch.allowComplexCarriers, isFalse);
+    });
+
     test('seed without candidates leaves separation unconstrained; with '
         'candidates it records their minimum pairwise distance', () {
       final bare = TracedBranch()..seed(ProjPoint.real(0, 0, 1));

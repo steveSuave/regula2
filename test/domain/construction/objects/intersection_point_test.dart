@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
@@ -5,7 +7,9 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/intersections.dart';
+import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/circles.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/proj_line.dart';
@@ -598,6 +602,117 @@ void main() {
         expect(x.candidateCount, 2);
       },
     );
+  });
+
+  group('complex carriers (Phase 115)', () {
+    // The analytic continuation of the line y = 0 a little off the real
+    // axis: y = −iε in chart terms. Against the unit circle its
+    // intersection points are (±√(1+ε²), −iε) — complex, but continuous
+    // with (±1, 0) as ε → 0.
+    const eps = 1e-3;
+    final complexLine = StubProjectiveLine(
+      const ProjLine(Complex.zero, Complex.one, Complex(0, eps)),
+    );
+    final unitCircle = StubProjectiveCircle(
+      ConicMatrix.lift(CircleEq(Vec2.zero, 1)),
+    );
+
+    test('statically refused, accepted under the flag, and the candidates '
+        'continue the real ones', () {
+      expect(intersectionCandidates(complexLine, unitCircle), isEmpty);
+      final candidates = intersectionCandidates(
+        complexLine,
+        unitCircle,
+        complexCarriers: true,
+      );
+      expect(candidates, hasLength(2));
+      for (final p in candidates) {
+        // Incident to both carriers, and within O(ε) of a real root.
+        expect(p.isIncidentTo(complexLine.value!, 1e-9), isTrue);
+        expect(unitCircle.value!.containsPoint(p, 1e-9), isTrue);
+        final chartX = (p.x / p.w).re.abs();
+        expect(chartX, closeTo(1, 1e-5));
+        expect((p.y / p.w).im.abs(), closeTo(eps, 1e-5));
+      }
+    });
+
+    test('a complex circle carrier (detoured center) continues its real '
+        'intersections too', () {
+      final realLine = StubProjectiveLine(
+        ProjLine.lift(LineEq.throughPoints(Vec2.zero, const Vec2(1, 0))),
+      );
+      final detouredCircle = StubProjectiveCircle(
+        circleWithRadius(
+          const ProjPoint(Complex(0, eps), Complex(1, eps), Complex.one),
+          2,
+        ),
+      );
+      expect(intersectionCandidates(realLine, detouredCircle), isEmpty);
+      final candidates = intersectionCandidates(
+        realLine,
+        detouredCircle,
+        complexCarriers: true,
+      );
+      expect(candidates, hasLength(2));
+      // The real configuration (center (0,1), radius 2) meets y = 0 at
+      // x = ±√3; the detoured candidates sit within O(ε) of them.
+      for (final p in candidates) {
+        expect(detouredCircle.value!.containsPoint(p, 1e-9), isTrue);
+        expect((p.x / p.w).re.abs(), closeTo(math.sqrt(3), 5e-3));
+      }
+    });
+
+    test('complex line ∩ complex line meets under the flag', () {
+      final other = StubProjectiveLine(
+        const ProjLine(Complex.one, Complex(0, eps), Complex.zero),
+      );
+      expect(intersectionCandidates(complexLine, other), isEmpty);
+      final candidates = intersectionCandidates(
+        complexLine,
+        other,
+        complexCarriers: true,
+      );
+      expect(candidates, hasLength(1));
+      expect(candidates.single.isIncidentTo(complexLine.value!, 1e-9), isTrue);
+      expect(candidates.single.isIncidentTo(other.value!, 1e-9), isTrue);
+    });
+
+    test('an undefined carrier still yields nothing under the flag', () {
+      final undefinedLine = StubProjectiveLine(null);
+      expect(
+        intersectionCandidates(undefinedLine, unitCircle,
+            complexCarriers: true),
+        isEmpty,
+      );
+    });
+
+    test('IntersectionPoint.recompute reads the flag from its traced slot',
+        () {
+      final x = IntersectionPoint(
+        id: 'x',
+        curve1: complexLine,
+        curve2: unitCircle,
+        branchIndex: 0,
+      );
+      // Statically undefined: the carrier is complex.
+      expect(x.projPoint, isNull);
+
+      // An active slot alone keeps static refusal (real-axis tracing) —
+      // complex carriers open up only inside a detour arc.
+      x.tracedBranch.seed(ProjPoint.real(1, 0, 1));
+      x.recompute();
+      expect(x.projPoint, isNull);
+
+      x.tracedBranch.allowComplexCarriers = true;
+      x.recompute();
+      expect(x.projPoint, isNotNull);
+      expect((x.projPoint!.x / x.projPoint!.w).re, closeTo(1, 1e-5));
+      x.tracedBranch.clear();
+
+      // Cleared slot: static refusal again.
+      x.recompute();
+      expect(x.projPoint, isNull);
+    });
   });
 }
 
