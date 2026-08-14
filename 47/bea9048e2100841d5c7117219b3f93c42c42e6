@@ -1,0 +1,23 @@
+docs/TODO.md
+  s_bba3e8657c5f71::t_03963d493993d4 25-28
+docs/archive/TODO-completed-phases.md
+  s_bba3e8657c5f71::t_1b3f3246b96120 644-649
+docs/STATUS.md
+  s_bba3e8657c5f71::t_f3ba5c32efb62c 11-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "47bea9048e2100841d5c7117219b3f93c42c42e6",
+  "prompts": {},
+  "sessions": {
+    "s_bba3e8657c5f71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4601b19-2344-4b72-aeb1-36bc8a18d9bd",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
