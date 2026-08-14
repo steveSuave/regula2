@@ -14,7 +14,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   // Pure-Dart libraries the domain layer may use. Extend deliberately —
   // adding an entry is an architectural decision, not a chore.
-  const allowedDartLibs = {'dart:math', 'dart:collection'};
+  // `dart:typed_data` entered with Phase 113: the tracing engine's SoA
+  // `Float64List` buffers are the Phase 101 benchmark decision.
+  const allowedDartLibs = {'dart:math', 'dart:collection', 'dart:typed_data'};
   const allowedPackages = {
     'package:freezed_annotation/',
     'package:json_annotation/',
