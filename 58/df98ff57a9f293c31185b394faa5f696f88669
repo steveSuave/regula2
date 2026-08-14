@@ -1,0 +1,38 @@
+lib/domain/construction/construction.dart
+  s_bba3e8657c5f71::t_04e688a67e1def 4,9-10
+  s_bba3e8657c5f71::t_0da0b3237a1af9 88-170
+  s_bba3e8657c5f71::t_771ab5030b6557 291-296
+lib/domain/projective/tracing/drag_path.dart
+  s_bba3e8657c5f71::t_50acf36e773225 1-47
+lib/domain/construction/objects/intersection_point.dart
+  s_bba3e8657c5f71::t_c4704393b3f6b5 9
+  s_bba3e8657c5f71::t_6183d02502c271 85-92
+  s_bba3e8657c5f71::t_9a28bf55a840af 118-131
+  s_bba3e8657c5f71::t_940ae409d530ba 43-47
+test/domain/projective/tracing/drag_path_test.dart
+  s_bba3e8657c5f71::t_18350154d99245 1-75
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_bba3e8657c5f71::t_32a3dbec6f0305 1-327
+test/domain/layer_rule_test.dart
+  s_bba3e8657c5f71::t_24592b2ebdaf75 17-19
+lib/domain/projective/tracing/traced_branch.dart
+  s_bba3e8657c5f71::t_8e681cb9f8d17e 1-87
+test/domain/projective/tracing/traced_branch_test.dart
+  s_bba3e8657c5f71::t_74987287f2471a 1-99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "58df98ff57a9f293c31185b394faa5f696f88669",
+  "prompts": {},
+  "sessions": {
+    "s_bba3e8657c5f71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4601b19-2344-4b72-aeb1-36bc8a18d9bd",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
