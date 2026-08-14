@@ -1,0 +1,28 @@
+lib/domain/projective/tracing/tracing_flags.dart
+  s_bba3e8657c5f71::t_b5488ce2dd51e8 1-22
+lib/domain/tools/drag_session.dart
+  s_bba3e8657c5f71::t_dda80a517c0b4a 164-168,176-192
+  s_bba3e8657c5f71::t_e801c19e65477c 17-18
+  s_bba3e8657c5f71::t_37239731763cde 31-35
+  s_bba3e8657c5f71::t_c5f571b1c5f1c0 134-146
+  s_bba3e8657c5f71::t_1e001f8c5418ae 193-195
+test/domain/tools/drag_session_tracing_test.dart
+  s_bba3e8657c5f71::t_0d936cf784ab54 1-16,18-21,25-27,29-58,65-69,76,78-82,84-86,90-91,101-118
+  s_bba3e8657c5f71::t_8c7859efdaa9a1 17,22-24,28,59-64,70-75,77,83,87-89,92-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "236e99d816dd52fcb4bd5cb08fd0d039d25c0ddc",
+  "prompts": {},
+  "sessions": {
+    "s_bba3e8657c5f71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4601b19-2344-4b72-aeb1-36bc8a18d9bd",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
