@@ -653,3 +653,10 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Migrate: `VertexAngle`, `LineAngle`, `Polygon`, `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `SlopeMeasurement` (slope through infinity renders "—"), `ExpressionText`
 - [x] `Locus` deliberately untouched (rewritten in 117)
 - [x] Grep gate: no object file imports `intersections.dart` except `locus.dart` — exceeded: zero importers left in all of `lib/` (even `locus.dart` never imported it directly; Phase 121's deletion is test-side only). Every concrete kind except `Locus` reads projective accessors; remaining affine reads are the documented `orientedAlong` anchor derivations, extent metadata, and §Parameterization chart reads
+
+## Phase 113 — SPIKE 3 / Tracing I: scaffolding
+
+- [x] `lib/domain/projective/tracing/`: `DragPath` (real `t∈[0,1]`, complexifiable — evaluate is holomorphic in t), `TracedBranch` slots on intersection-bearing objects (`IntersectionPoint` only for now; slots active exclusively inside a tracing pass, locus-chain members excluded until 117), `Construction.recomputeAlongPath` (fixed-step naive, nearest-candidate matching, `branchIndex` untouched — commit semantics are Phase 116's), SoA `Float64List` buffers per the Phase 101 decision (storage shape; hot-loop rewrite is 122)
+- [x] Feature flag so `drag_session.dart` can opt in (`TracingFlags.dragTracing`, captured per gesture, single-free-point drags only); static-solve bail always available (any traced-frame failure falls back to `moveFreePoint`)
+- [x] Toy-harness tests: line dragged across a circle with fixed steps → continuous root histories (secant sweep, persistent complex miss, through-tangency); endpoint agrees with static solve up to branch labels — the tangency handoff is a genuine matching tie, deliberately unresolved until 114/115
+- [x] STATUS records whether SoA meets the frame-budget estimate on js/wasm (feeds 122) — boxed engine at 16 substeps uses ≤ 12% of the 8 ms gate on every target (`benchmark/run_tracing.sh`)

@@ -8,6 +8,31 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 114 (V2 Session 16) — 2026-08-14
+
+**Done**
+- **Phase 115 (Tracing III) complete** on `phase-115-complex-detour`, merged to `main`, three commits:
+- **Singularity detection + arc planning** (`lib/domain/projective/tracing/singularity.dart`): starvation trigger = trial step < `detourTriggerStep` (1e-5) *and* tightest branch separation < `detourTriggerSeparation` (1e-3); `estimateSingularParameter` extrapolates t* from the last two accepted steps' separations via the collapse law s = C·√(t*−t) (s² linear — exact on tangencies; on a near-miss s² = C²((t−a)² + b²) it provably *undershoots* the closest approach while samples are farther than b, so planned arcs exit before the complex branch points — homotopy safety by construction, pinned in tests). `DetourArc.plan`: radius = 1.5× the estimated distance, shrunk to fit strictly inside the path, strict enclosure re-checked; exit is bitwise-exactly real (cos 0 = 1, sin 0 = 0).
+- **Complex-carrier plumbing**: `FreePoint.tracedPosition` (complex homogeneous position, w ≡ 1, pass-internal only); `intersectionCandidates` gained `{complexCarriers}` which skips *only* the realness gates (the kernel is holomorphic by layer convention, so complex-carrier candidates are the analytic continuation of the real ones); wired through `TracedBranch.allowComplexCarriers`, arc-scoped (reset by seed/clear, never checkpointed) — real-axis tracing keeps Phase 114's static refusal bit-for-bit.
+- **Detour in `recomputeAlongPath`**: on starvation, plan and walk the arc θ: π → 0 with the *identical* acceptance machinery (a whole-arc jump is self-refused: motion to either exit root ≥ entry separation/2, so refinement is forced without special-casing; collision refusal is live on the arc). Trials share the pass budget; mid-arc exhaustion restores the real entry state before throwing; resume at `step = arc.radius` (restarting from the remainder burned ~30 refusals halving down). Return record gained `detours` (Phase 116 overlay feed).
+- **Orientation is the phase's recorded decision**: the toy probe caught that a fixed absolute half-plane swaps the conjugates on a there-and-back drag — the return pass parameterizes the reverse path, so its upper half-plane is the forward pass's lower one, and the round trip winds once around the branch point (monodromy). `detourOrientation` is an *odd* function of the drag direction (descending/leftward → upper); there-and-back now restores every branch bitwise.
+- **Canonical tests** (in `recompute_along_path_test.dart` + `singularity_test.dart`, 27 new): tangency crossing (detours = 1, deterministic sides — the −i branch lands x < 0 on a downward drag, endpoint = static solve, per-step chordal motion < 0.3); there-and-back identity; chord *and* perpendicular bisector of the conjugate pair stay real defined lines at every observed step; the no-enclosure property via a co-traced transverse pair (r = 6 circle) riding the r = 3 pair's detour to exactly its real-path endpoint; near-miss ladder on a circle∩circle rig (δ ≥ 1e-8 traces through real, no detour; δ ≤ 1e-10 starves cleanly — bails, never silently swaps); singular endpoint (drag *onto* tangency) starves and bails. The Phase 114 starve toy survives as the insufficient-budget path (budget 40 exhausts before the trigger; default 128 crosses).
+- Suite 2056 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Phase 116 — Tracing integration: `drag_session.dart` drives `recomputeAlongPath` by default, `TracedBranch` holds identity between recomputes, save re-derives `branchIndex` from canonical order (documented spec change), debug overlay (accepted/rejected/detours feed is ready), and the standing ≤ 8 ms perf gate on the 100-object stress construction.
+
+**Gotchas**
+- **The orientation rule must stay odd.** `detourOrientation` flips with the drag direction *on purpose*: keeping one absolute half-plane makes down-then-up wind once around the branch point and visibly exchange the two intersection objects (down-up-down would land p0 on the other side). Any future change must preserve oddness or record per-singularity orientations Cinderella-style.
+- A full tangency crossing costs ~90–95 trials of the 128 budget (creep in ~35, arc ~10, doubling ladder out ~28 accepts — the ladder is intrinsic: allowed motion grows as √(t−t*)). One crossing per preview path is safe; two would starve. Preview paths are per-pointer-event and the static bail heals, but Phase 116's perf work may want a higher budget or a cheaper re-expansion.
+- The ambiguity floor: near-misses tighter than ~1e-10 (path-parameter scale) starve and bail rather than risking a detour that encloses the complex branch points — deliberate: a silent swap there would be wrong by ~1e-10 world units, a bail is honest. Don't "fix" the ultra-tight-near-miss test by loosening the trigger or estimate guards; the undershoot bias in `estimateSingularParameter` is load-bearing (tested) and keeps spurious detours homotopic.
+- Landing *exactly* on a tangency (t* at the path end) cannot be detoured — the pass would have to finish at a complex parameter. `DetourArc.plan` refuses (`tStar < end` strict), the pass starves, bail recovers to the double root. Same for an exactly-tangent *seed* (separation 0 refuses every trial; samples never form).
+- `complexCarriers` skips realness gates only during the arc. During real-t tracing a complex carrier (e.g. a line through a currently-complex intersection) still yields no candidates and the branch coasts — Phase 114 semantics preserved exactly. Cross-complex continuation for *chains* of complex objects is future work (117+/M-CK), not smuggled in here.
+- Inside the arc the traced points are genuinely complex non-conjugates, so real dependents (chord, bisector) are momentarily complex/undefined — unobservable (onStep fires at real parameters only, one notify per pass), but don't add mid-arc observation hooks without accounting for it.
+- `DetourArc.tAt(0)` is bitwise `exit` and exactly real, and `DragPath.evaluate` at a real Complex t reproduces `path.at` bitwise (same lerp arithmetic) — the pass ends real with zero imaginary parts, no cleanup pass needed. Don't reorder those expressions.
+
+---
+
 ## Session 113 (V2 Session 15) — 2026-08-14
 
 **Done**

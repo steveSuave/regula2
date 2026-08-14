@@ -14,13 +14,6 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 113 — SPIKE 3 / Tracing I: scaffolding
-
-- [x] `lib/domain/projective/tracing/`: `DragPath` (real `t∈[0,1]`, complexifiable — evaluate is holomorphic in t), `TracedBranch` slots on intersection-bearing objects (`IntersectionPoint` only for now; slots active exclusively inside a tracing pass, locus-chain members excluded until 117), `Construction.recomputeAlongPath` (fixed-step naive, nearest-candidate matching, `branchIndex` untouched — commit semantics are Phase 116's), SoA `Float64List` buffers per the Phase 101 decision (storage shape; hot-loop rewrite is 122)
-- [x] Feature flag so `drag_session.dart` can opt in (`TracingFlags.dragTracing`, captured per gesture, single-free-point drags only); static-solve bail always available (any traced-frame failure falls back to `moveFreePoint`)
-- [x] Toy-harness tests: line dragged across a circle with fixed steps → continuous root histories (secant sweep, persistent complex miss, through-tangency); endpoint agrees with static solve up to branch labels — the tangency handoff is a genuine matching tie, deliberately unresolved until 114/115
-- [x] STATUS records whether SoA meets the frame-budget estimate on js/wasm (feeds 122) — boxed engine at 16 substeps uses ≤ 12% of the 8 ms gate on every target (`benchmark/run_tracing.sh`)
-
 ## Phase 114 — Tracing II: adaptive step control + root matching
 
 - [x] Step controller (Cinderella rule): accept a step only if every root moved less than half its minimum pairwise separation at the previous step; else halve — plus an absolute per-step motion cap (0.25 chordal) the glados suite proved necessary: sep/2 alone is unsound on RP¹ (a wide step can swap branches *through the point at infinity* with motions just under the bound)
@@ -29,10 +22,10 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 115 — Tracing III: degeneracy detection + complex detour
 
-- [ ] Singularity detection: root separation under tolerance / step-controller starvation
-- [ ] Path deformation: semicircular detour in complex `t` around the singular parameter; fixed detour orientation recorded (determinism)
-- [ ] Canonical tests: drag a line through tangency with a circle → intersection points go complex and return with no jump, no swap; bisector continuity across degenerate crossings
-- [ ] Property: detoured endpoint = real-path endpoint when no singularity is enclosed
+- [x] Singularity detection: starvation trigger (trial step under `detourTriggerStep` *and* tightest separation under `detourTriggerSeparation`), singular parameter extrapolated from the last two accepted steps' separations via the collapse law s = C·√(t*−t) (`estimateSingularParameter` — provably *undershoots* on near-misses, the bias that keeps detours homotopic to the real path)
+- [x] Path deformation: semicircular `DetourArc` in complex `t` (safety-margined radius, shrink-to-fit with strict enclosure, bitwise-real exit), walked by the identical acceptance machinery with arc-scoped complex carriers (`TracedBranch.allowComplexCarriers` → `intersectionCandidates(complexCarriers:)`, realness gates only — the kernel is holomorphic throughout); orientation recorded as `detourOrientation`'s *odd* drag-direction rule — a fixed absolute half-plane provably swaps conjugates on a there-and-back drag (one net winding; the probe caught it), oddness makes it a bitwise identity
+- [x] Canonical tests: line through tangency crosses with no jump, no swap, deterministic sides, endpoint = static solve; there-and-back identity; chord *and* perpendicular bisector of the conjugate pair stay real, defined lines across the crossing; near-misses trace through on the real axis (no detour) or starve cleanly — never a silent swap; singular endpoint starves and bails (no valid arc)
+- [x] Property: detoured endpoint = real-path endpoint when no singularity is enclosed — a co-traced transverse pair rides another pair's detour to exactly its real-path endpoint, no swap at any observed step
 
 ## Phase 116 — Tracing integration: default drag resolution + perf gate
 
