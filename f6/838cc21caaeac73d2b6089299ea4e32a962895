@@ -1,0 +1,46 @@
+lib/presentation/shortcuts/shortcut_table.dart
+  s_7353ee9bfd60c8::t_a830af16857b86 455-460
+  s_7353ee9bfd60c8::t_389a36be71bdd9 35
+  s_7353ee9bfd60c8::t_6e48bb1fbed0e6 454
+test/domain/tools/drag_session_tracing_test.dart
+  s_7353ee9bfd60c8::t_57c136ef492a64 85-88
+  s_7353ee9bfd60c8::t_8402692ed557de 204-207
+  s_7353ee9bfd60c8::t_398f6fa2099ade 84
+  s_7353ee9bfd60c8::t_613897374828bf 184-185
+lib/application/providers/tool_provider.dart
+  s_7353ee9bfd60c8::t_78b03a4a0063ad 52-60
+  s_7353ee9bfd60c8::t_a57706f4cb8f3b 133-136
+lib/presentation/canvas/trace_stats_overlay.dart
+  s_7353ee9bfd60c8::t_5a120a9bdb855d 1-57
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_7353ee9bfd60c8::t_03dc8dee369f4f 706-736
+  s_7353ee9bfd60c8::t_948cba52b0ca19 70
+lib/domain/tools/drag_session.dart
+  s_7353ee9bfd60c8::t_7d37bf3f4f0711 186-190
+  s_7353ee9bfd60c8::t_d870ac1e2b3d33 323-325
+  s_7353ee9bfd60c8::t_fdadd48f66578c 117-121
+  s_7353ee9bfd60c8::t_94a6783e00ef83 55-65
+  s_7353ee9bfd60c8::t_8d2a5c77709cb5 232,237-242,244
+  s_7353ee9bfd60c8::t_62b026ec88b619 435-437
+lib/main.dart
+  s_7353ee9bfd60c8::t_cecf639116188f 162-165
+  s_7353ee9bfd60c8::t_2017397e94176e 79
+  s_7353ee9bfd60c8::t_2fd645858fe390 1320
+  s_7353ee9bfd60c8::t_3904a0ab28a777 660-661
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f6838cc21caaeac73d2b6089299ea4e32a962895",
+  "prompts": {},
+  "sessions": {
+    "s_7353ee9bfd60c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "49aee461-d757-4f53-8288-a5ffcae2082b",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
