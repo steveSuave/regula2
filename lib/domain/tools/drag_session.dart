@@ -52,6 +52,17 @@ import '../projective/tracing/tracing_flags.dart';
 /// - any other object drags as a rigid translation of its free-point
 ///   ancestors → [TranslateObjectsCommand]: grab a circle's rim and the
 ///   whole circle moves because its defining points do.
+/// One traced preview frame's step-controller counts, plus whether the
+/// frame fell back to the static solve — the Phase 116 debug-overlay
+/// feed (`Construction.recomputeAlongPath` returns the counts; the drag
+/// session records them per frame).
+typedef TraceFrameStats = ({
+  int accepted,
+  int rejected,
+  int detours,
+  bool bailed,
+});
+
 abstract class DragSession {
   /// Starts dragging [target], grabbed at [grabStart] (world coordinates).
   /// Null when the target cannot drag (a derived point other than a
@@ -102,6 +113,11 @@ abstract class DragSession {
 
   /// Previews the gesture at [pointer] (world coordinates).
   void update(Vec2 pointer);
+
+  /// The most recent preview frame's tracing counts — null before the
+  /// first frame and for sessions that never trace (rigid translations,
+  /// slides, text anchors, or the flag off).
+  TraceFrameStats? get traceStats => null;
 
   /// Rolls the preview back and returns the gesture's one command, or
   /// null when the gesture ended where it started (nothing to undo).
@@ -167,6 +183,11 @@ class _TranslateDragSession implements DragSession {
   /// point's start position).
   Vec2? _lastPreview;
 
+  TraceFrameStats? _traceStats;
+
+  @override
+  TraceFrameStats? get traceStats => _traceStats;
+
   Vec2 _delta = Vec2.zero;
 
   /// Where the free point sits for the current [_delta] — the one place
@@ -208,12 +229,19 @@ class _TranslateDragSession implements DragSession {
     final from = _lastPreview ?? _startPositions[id]!;
     _lastPreview = target;
     try {
-      _construction.recomputeAlongPath(
+      final result = _construction.recomputeAlongPath(
         id,
         DragPath(from, target),
         stepBudget: TracingFlags.dragStepBudget,
       );
+      _traceStats = (
+        accepted: result.acceptedSteps,
+        rejected: result.rejectedSteps,
+        detours: result.detours,
+        bailed: false,
+      );
     } catch (_) {
+      _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
       _construction.moveFreePoint(id, target);
     }
   }
@@ -291,6 +319,9 @@ class _TextAnchorDragSession implements DragSession {
   final String _textId;
   final Vec2 _startAnchor;
   final Vec2 _grabStart;
+
+  @override
+  TraceFrameStats? get traceStats => null;
 
   Vec2 _delta = Vec2.zero;
 
@@ -400,6 +431,9 @@ class _SlideDragSession implements DragSession {
   final double _grabOffset;
   final double Function(Vec2) _project;
   final double Function(double) _clamp;
+
+  @override
+  TraceFrameStats? get traceStats => null;
 
   double _parameter;
 

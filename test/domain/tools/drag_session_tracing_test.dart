@@ -81,6 +81,11 @@ void main() {
       expect(p0.tracedBranch.isActive, isFalse);
     }
     expect(b.position, const Vec2(-20, 0));
+    // The overlay feed: a smooth frame's counts, not a bail.
+    final stats = session.traceStats!;
+    expect(stats.accepted, greaterThanOrEqualTo(1));
+    expect(stats.detours, 0);
+    expect(stats.bailed, isFalse);
 
     final command = session.end()! as MoveFreePointCommand;
     // The gesture's one command carries the adoption the crossing left
@@ -176,6 +181,8 @@ void main() {
     expect(center.position, const Vec2(0, 1));
     // Static solve at cy = 1: real intersections at x = ±√8.
     expect(p0.position!.closeTo(Vec2(-2.8284271247461903, 0)), isTrue);
+    // The overlay feed records the bail.
+    expect(session.traceStats!.bailed, isTrue);
     final command = session.end();
     expect(command, isA<MoveFreePointCommand>());
     expect(center.position, const Vec2(0, 5));
@@ -194,6 +201,10 @@ void main() {
     expect(center.position, const Vec2(0, 1));
     expect(p0.position!.closeTo(Vec2(-2.8284271247461903, 0)), isTrue);
     expect(p0.tracedBranch.isActive, isFalse);
+    // The overlay feed shows the crossing's one detour.
+    final stats = session.traceStats!;
+    expect(stats.detours, 1);
+    expect(stats.bailed, isFalse);
     final command = session.end();
     expect(command, isA<MoveFreePointCommand>());
     expect(center.position, const Vec2(0, 5));

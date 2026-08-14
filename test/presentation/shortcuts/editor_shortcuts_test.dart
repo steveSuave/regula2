@@ -67,6 +67,7 @@ import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+import 'package:regula/presentation/canvas/trace_stats_overlay.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../wide_window.dart';
@@ -700,6 +701,37 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
     expect(settings(), const DocumentSettings());
+  });
+
+  testWidgets('⇧O toggles the trace overlay; a traced drag fills in the '
+      'step counts (Phase 116)', (tester) async {
+    await pumpEditor(tester);
+    expect(find.byType(TraceStatsOverlay), findsNothing);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyO);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(find.byType(TraceStatsOverlay), findsOneWidget);
+    expect(find.text('trace: waiting for a traced drag'), findsOneWidget);
+
+    // A smooth free-point drag resolves each frame in one accepted trial.
+    final (a, _, _) = buildSmallConstruction();
+    final tools = container.read(toolProvider.notifier);
+    expect(tools.startDrag(a, Vec2.zero), isTrue);
+    tools.updateDrag(const Vec2(1, 1));
+    tools.endDrag();
+    await tester.pump();
+    expect(
+      find.text('trace: 1 accepted · 0 rejected · 0 detours'),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyO);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(find.byType(TraceStatsOverlay), findsNothing);
   });
 
   testWidgets('G leader chords reach constructions', (tester) async {

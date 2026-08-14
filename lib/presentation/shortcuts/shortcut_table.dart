@@ -32,6 +32,7 @@ enum AppAction {
   toggleAxes,
   toggleGrid,
   toggleSnapToGrid,
+  toggleTraceOverlay,
   nudgeLeft,
   nudgeRight,
   nudgeUp,
@@ -449,6 +450,13 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Snap to grid on/off',
     section: ShortcutSection.viewport,
     display: 'Ctrl/⌘ ⇧ G',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyO, shift: true)],
+    action: AppAction.toggleTraceOverlay,
+    label: 'Show/hide trace overlay (drag-tracing step counts)',
+    section: ShortcutSection.viewport,
+    display: '⇧ O',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.arrowLeft)],
