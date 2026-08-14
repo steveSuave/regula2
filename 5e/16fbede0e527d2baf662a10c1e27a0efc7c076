@@ -1,0 +1,21 @@
+lib/domain/projective/tracing/singularity.dart
+  s_80f04b07312589::t_63961c24b78a06 1-149
+test/domain/projective/tracing/singularity_test.dart
+  s_80f04b07312589::t_95a5042950b7c4 1-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5e16fbede0e527d2baf662a10c1e27a0efc7c076",
+  "prompts": {},
+  "sessions": {
+    "s_80f04b07312589": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "700b6378-cf13-41da-bb21-d9aa0b41161a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
