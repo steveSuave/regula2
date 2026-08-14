@@ -315,4 +315,99 @@ void main() {
       },
     );
   });
+
+  group('TracedBranch.setBalance', () {
+    // The origin-compression counterexample that motivated balancing
+    // (Phase 117): the root sits far from the world origin; candidate
+    // `far` is 10 world units away, candidate `parallel` is ~800 world
+    // units away but nearly collinear with the origin, so the raw
+    // chordal metric ranks it *nearer*. Balancing on the figure frame
+    // restores world-sane matching.
+    final root = ProjPoint.real(700, -400, 1);
+    final near = ProjPoint.real(710, -400, 1);
+    final parallel = ProjPoint.real(1400, -800, 1);
+
+    test('identity default keeps the raw origin-angle metric', () {
+      final branch = TracedBranch()..seed(root);
+      expect(
+        branch.nearestIndexAmong([near, parallel]),
+        1,
+        reason: 'the compression this group exists to document',
+      );
+      branch.clear();
+    });
+
+    test('balancing on the figure frame picks the world-near candidate',
+        () {
+      final branch = TracedBranch()
+        ..setBalance(cx: 700, cy: -400, scale: 100)
+        ..seed(root, candidates: [near, parallel]);
+      expect(branch.nearestIndexAmong([near, parallel]), 0);
+      expect(
+        branch.separation,
+        greaterThan(0.5),
+        reason: 'the seed separation is measured under the balance',
+      );
+      expect(
+        branch.distanceFrom(near),
+        closeTo(0.1 / math.sqrt(1.01), 1e-12),
+        reason: 'balanced chordal of a 10-unit offset at scale 100',
+      );
+      branch.clear();
+    });
+
+    test('clear resets the balance to identity', () {
+      final branch = TracedBranch()
+        ..setBalance(cx: 700, cy: -400, scale: 100)
+        ..seed(root)
+        ..clear()
+        ..seed(root);
+      expect(branch.nearestIndexAmong([near, parallel]), 1);
+      branch.clear();
+    });
+
+    test('transforms complex and infinite points soundly', () {
+      final branch = TracedBranch()
+        ..setBalance(cx: 700, cy: -400, scale: 100)
+        ..seed(root);
+      // An infinite point is direction-only: the translation part must
+      // not touch it (w = 0), only the (uniform) scale, which chordal
+      // invariance absorbs.
+      final infinite = ProjPoint.real(1, 0, 0);
+      expect(branch.distanceFrom(infinite), greaterThan(0));
+      expect(branch.distanceFrom(infinite), lessThanOrEqualTo(1));
+      // A conjugate pair stays equidistant under the (real) balance.
+      final plus = ProjPoint(
+        const Complex(710, 3),
+        const Complex(-400, 1),
+        Complex.one,
+      );
+      final minus = ProjPoint(
+        const Complex(710, -3),
+        const Complex(-400, -1),
+        Complex.one,
+      );
+      expect(
+        branch.distanceFrom(plus),
+        closeTo(branch.distanceFrom(minus), 1e-15),
+      );
+      branch.clear();
+    });
+
+    test('rejects non-finite frames and non-positive scales', () {
+      final branch = TracedBranch();
+      expect(
+        () => branch.setBalance(cx: 0, cy: 0, scale: 0),
+        throwsArgumentError,
+      );
+      expect(
+        () => branch.setBalance(cx: double.nan, cy: 0, scale: 1),
+        throwsArgumentError,
+      );
+      expect(
+        () => branch.setBalance(cx: 0, cy: double.infinity, scale: 1),
+        throwsArgumentError,
+      );
+    });
+  });
 }

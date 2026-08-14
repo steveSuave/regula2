@@ -99,13 +99,16 @@ class PointOnObject extends GeoPoint {
   @override
   ProjPoint? get projPoint => _point;
 
-  /// The complex-detour mutation (Phase 116b), mirroring `FreePoint`'s:
-  /// stores a generally complex homogeneous position while a tracing
-  /// pass walks a *parameter* drag off the real axis. Only
-  /// `Construction.recomputeAlongParameterPath` may call this, with the
-  /// carrier's chart form evaluated at a complex parameter (`w` exactly
-  /// one), and the pass must leave the point real — its real steps
-  /// re-enter [recompute], which rebuilds [_point] from the stored real
+  /// The sweep/detour mutation, mirroring `FreePoint`'s: stores a
+  /// homogeneous position directly, bypassing the stored [parameter].
+  /// Two callers are sanctioned: `Construction.recomputeAlongParameterPath`
+  /// (Phase 116b — a *parameter* drag's complex detour, the carrier's
+  /// chart form at a complex parameter, `w` exactly one) and the locus
+  /// sweep (Phase 117 — driving this point over its host's sweep domain,
+  /// `w` exactly one on interior chart evaluations and exactly zero at a
+  /// ray host's driver-at-infinity edge). Either pass must leave the
+  /// point real — real steps and the sweep's restore re-enter
+  /// [recompute], which rebuilds [_point] from the stored real
   /// [parameter] — before returning or throwing. The stored [parameter]
   /// itself stays real throughout (PLAN §Parameterization).
   set tracedPosition(ProjPoint value) => _point = value;
@@ -113,6 +116,9 @@ class PointOnObject extends GeoPoint {
   @override
   Vec2? get position => switch (_point) {
     null => null,
+    // The sanctioned mutations keep `w` exactly one or exactly zero
+    // (the locus sweep's driver-at-infinity edge — no chart position).
+    final p when p.w.re == 0 && p.w.im == 0 => null,
     // `w` is exactly one (the lift of a chart evaluation) — read the chart
     // coordinates back directly; `toVec2` would impose a relative
     // at-infinity cutoff V1 never had.

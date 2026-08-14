@@ -158,11 +158,18 @@ void main() {
       lessThan(1e-6),
       reason: 'and ends exactly on the image of C',
     );
+    // Since Phase 117 the walked samples are adaptive while coreSamples
+    // is the (canonical) scan slice — on a gapless bounded sweep that is
+    // every scan sample, and each lies on the same parabola piece.
     expect(
       locus.coreSamples,
-      hasLength(points.length),
-      reason: 'a bounded sweep has no far-out samples — all core',
+      hasLength(locus.sampleCount),
+      reason: 'a bounded sweep has no far-out samples — all scan is core',
     );
+    for (final p in locus.coreSamples!) {
+      expect((p.x - p.y * p.y / 4).abs(), lessThan(1e-6 * (1 + p.x.abs())));
+      expect(p.y, inInclusiveRange(-2 - 1e-9, 2 + 1e-9));
+    }
   });
 
   test('locus-miss-2.json (twin tangent points): one closed figure-eight, '
