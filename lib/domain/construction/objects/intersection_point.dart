@@ -43,8 +43,9 @@ import '../geo_object.dart';
 /// can swap sides through a degeneracy mid-drag; while [tracedBranch] is
 /// active (inside a `Construction.recomputeAlongPath` pass only), branch
 /// identity is instead held by continuity — [recompute] follows the
-/// candidate nearest the tracked root (Phase 113 scaffolding; adaptive
-/// steps, collision refusal and complex detours harden it in 114–116).
+/// candidate nearest the tracked root, and the pass's step controller
+/// reads the slot's motion/separation bookkeeping to keep that matching
+/// unambiguous (Phase 114; complex detours around degeneracies are 115).
 ///
 /// Segments intersect via their infinite carrier line for now — clipping
 /// to the segment's extent is a later refinement (tracked in PLAN).
@@ -116,16 +117,17 @@ class IntersectionPoint extends GeoPoint {
     final candidates = intersectionCandidates(curve1, curve2);
     _candidateCount = _distinctRealCount(candidates);
     if (candidates.isEmpty) {
-      // Slot untouched on a momentarily candidate-free step (coincident
-      // carriers, an undefined parent): matching resumes from the last
-      // tracked root when candidates return.
+      // The slot coasts through a momentarily candidate-free step
+      // (coincident carriers, an undefined parent): the root is kept and
+      // matching resumes from it when candidates return.
+      if (tracedBranch.isActive) {
+        tracedBranch.coast();
+      }
       _point = null;
       return;
     }
     if (tracedBranch.isActive) {
-      final tracked = candidates[tracedBranch.nearestIndexAmong(candidates)];
-      tracedBranch.update(tracked);
-      _point = tracked;
+      _point = tracedBranch.follow(candidates);
       return;
     }
     _point = candidates[math.min(branchIndex, candidates.length - 1)];

@@ -176,8 +176,10 @@ class _TranslateDragSession implements DragSession {
   /// One traced preview frame: continue branches along the path from the
   /// previous preview position to [target]. The static-solve bail (PLAN
   /// §Risks) stands in every phase: whatever goes wrong inside the
-  /// tracing engine, the frame falls back to the canonical static solve
-  /// and the gesture carries on.
+  /// tracing engine — including the step controller starving against a
+  /// degeneracy and throwing `TraceStepBudgetException` (Phase 114) —
+  /// the frame falls back to the canonical static solve and the gesture
+  /// carries on.
   void _tracedUpdate(Vec2 target) {
     final id = _pointIds.single;
     final from = _lastPreview ?? _startPositions[id]!;
@@ -186,7 +188,7 @@ class _TranslateDragSession implements DragSession {
       _construction.recomputeAlongPath(
         id,
         DragPath(from, target),
-        steps: TracingFlags.dragSteps,
+        stepBudget: TracingFlags.dragStepBudget,
       );
     } catch (_) {
       _construction.moveFreePoint(id, target);

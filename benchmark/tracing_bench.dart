@@ -1,4 +1,4 @@
-// Phase 113: naive fixed-step tracing cost per drag frame.
+// Phase 113/114: tracing cost per drag frame.
 //
 // Builds the 100-object stress construction the Phase 116 performance gate
 // is defined on (a dragged free point with everything downstream: a chain
@@ -6,12 +6,15 @@
 // with a baseline — 48 IntersectionPoints tracking roots), then measures:
 //
 //   static frame    one moveFreePoint solve — today's per-frame drag cost
-//   traced frame    recomputeAlongPath at the Phase 113 default 16 substeps
+//   traced frame    recomputeAlongPath under the Phase 114 adaptive step
+//                   controller (whole-path first trial, halve on refusal)
 //
 // The gate is ≤ 8 ms kernel time per drag frame (PLAN, Phase 116). This
 // harness runs the *boxed* engine — the SoA `Float64List` rewrite of the
 // hot loop is Phase 122's tick — so these numbers are the ceiling the SoA
-// pass later has to beat, and 16× the static solve is the expected shape.
+// pass later has to beat. On smooth frames the controller accepts the
+// whole path in one trial, so the expected shape is a small multiple of
+// the static solve (seeding + one matched recompute), not 16×.
 //
 // Run on VM (`dart run`), AOT, dart2js and dart2wasm via
 // `benchmark/run_tracing.sh`. Keep this file Flutter-free (domain imports
@@ -30,7 +33,6 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/tracing/drag_path.dart';
 
 const framesPerRun = 50;
-const stepsPerFrame = 16;
 
 /// 100 objects, everything downstream of the dragged point 'd': baseline
 /// y = 0 through a/b, then 24 layers of midpoint → circle → two
@@ -76,7 +78,7 @@ const stepsPerFrame = 16;
       ..add(deepest);
     prev = m;
   }
-  assert(construction.length == 100);
+  assert(construction.length == 100, 'the gate is defined on 100 objects');
   return (construction, deepest);
 }
 
@@ -100,19 +102,23 @@ double staticFrames(int n) {
   return acc;
 }
 
-/// [n] drag frames, each resolved through recomputeAlongPath at
-/// [stepsPerFrame] substeps with branch matching on all 48 slots.
+/// Trials the traced run spent, for the trials-per-frame report.
+var _acceptedTotal = 0;
+var _rejectedTotal = 0;
+
+/// [n] drag frames, each resolved through recomputeAlongPath under the
+/// adaptive controller, with branch matching on all 48 slots.
 double tracedFrames(int n) {
   final (construction, deepest) = buildStress();
   var from = const Vec2(0, 30);
   var acc = 0.0;
+  _acceptedTotal = 0;
+  _rejectedTotal = 0;
   for (var f = 0; f < n; f++) {
     final to = Vec2(0, f.isEven ? 29.5 : 30.5);
-    construction.recomputeAlongPath(
-      'd',
-      DragPath(from, to),
-      steps: stepsPerFrame,
-    );
+    final trials = construction.recomputeAlongPath('d', DragPath(from, to));
+    _acceptedTotal += trials.acceptedSteps;
+    _rejectedTotal += trials.rejectedSteps;
     from = to;
     acc += _probe(deepest);
   }
@@ -150,10 +156,12 @@ void main(List<String> args) {
 
   print('drag frames on the 100-object stress construction ($n frames):');
   final staticMs = _bench('  static x1', n, staticFrames);
-  final tracedMs = _bench('  traced x$stepsPerFrame', n, tracedFrames);
+  final tracedMs = _bench('  traced adaptive', n, tracedFrames);
+  final trialsPerFrame = (_acceptedTotal + _rejectedTotal) / n;
   print(
     'traced/static ${(tracedMs / staticMs).toStringAsFixed(2)}x'
-    '   substep ${(tracedMs / stepsPerFrame * 1000).toStringAsFixed(1)} µs'
+    '   ${trialsPerFrame.toStringAsFixed(2)} trials/frame'
+    ' (${(_rejectedTotal / n).toStringAsFixed(2)} rejected)'
     '   8 ms budget: ${tracedMs <= 8 ? 'PASS' : 'FAIL'}'
     ' (${(tracedMs / 8 * 100).toStringAsFixed(0)}% used)',
   );

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import '../complex.dart';
@@ -7,12 +8,23 @@ import '../proj_point.dart';
 /// homogeneous coordinates, carried between the substeps of a
 /// `Construction.recomputeAlongPath` pass.
 ///
-/// While [isActive], the owner's `recompute` picks the intersection
-/// candidate *nearest the stored root* (see [nearestIndexAmong]) instead
-/// of addressing the canonical order by `branchIndex` — that is the whole
-/// tracing idea: branch identity is held by continuity of the root, not
-/// by per-frame re-sorting. Outside a tracing pass the slot is inactive
-/// and the owner's static behaviour is untouched.
+/// While [isActive], the owner's `recompute` calls [follow] to pick the
+/// intersection candidate *nearest the stored root* instead of addressing
+/// the canonical order by `branchIndex` — that is the whole tracing idea:
+/// branch identity is held by continuity of the root, not by per-frame
+/// re-sorting. Outside a tracing pass the slot is inactive and the
+/// owner's static behaviour is untouched.
+///
+/// Besides the root, the slot keeps the two quantities the Phase 114 step
+/// controller reads: [motion] (how far the root moved at the last
+/// [follow]) and [separation] (how close the candidates were to each
+/// other). A trial step is accepted only if every root's motion stayed
+/// under half the separation recorded at the previous accepted step — the
+/// Cinderella rule — which is exactly the condition under which
+/// nearest-root matching provably cannot swap two branches (two roots
+/// each moving less than half their mutual distance cannot reach a common
+/// candidate). [checkpoint]/[restore] let the controller roll a refused
+/// trial back.
 ///
 /// Storage is a parallel-scalar `Float64List` (re/im per coordinate), the
 /// struct-of-arrays shape the Phase 101 benchmark pinned for the tracing
@@ -23,11 +35,14 @@ class TracedBranch {
   final Float64List _root = Float64List(6);
 
   bool _active = false;
+  double _separation = double.infinity;
+  double _motion = 0;
+  int _matchedIndex = -1;
 
   /// Whether a tracing pass currently owns this slot.
   bool get isActive => _active;
 
-  /// The tracked root as stored by the last [seed] or [update].
+  /// The tracked root as stored by the last [seed] or [follow].
   /// Meaningless while not [isActive].
   ProjPoint get root => ProjPoint(
         Complex(_root[0], _root[1]),
@@ -35,24 +50,85 @@ class TracedBranch {
         Complex(_root[4], _root[5]),
       );
 
+  /// The minimum pairwise chordal distance among the candidates seen at
+  /// the last [seed] or [follow] — the sqrt of the same scale-invariant
+  /// measure [nearestIndexAmong] minimizes. Infinity with fewer than two
+  /// candidates (a single root has nothing to swap with) and after
+  /// [coast] (matching restarts unconstrained when candidates return).
+  double get separation => _separation;
+
+  /// The chordal distance the tracked root moved at the last [follow];
+  /// zero after [seed] and [coast].
+  double get motion => _motion;
+
+  /// The candidate index matched at the last [follow]; −1 after [seed]
+  /// and [coast] (no match happened). The step controller compares it
+  /// across branches on the same curve pair to refuse collisions.
+  int get matchedIndex => _matchedIndex;
+
   /// Activates the slot on [p] — the tracked identity at the start of a
   /// tracing pass (typically the owner's current root, however it was
-  /// selected). Throws on the zero triple: it is no point, and nearest
-  /// matching against it is meaningless.
-  void seed(ProjPoint p) {
+  /// selected). [candidates] should be the owner's candidate set at the
+  /// same state, so [separation] constrains the pass's first trial like
+  /// every later one; omitting it leaves the first trial unconstrained.
+  /// Throws on the zero triple: it is no point, and nearest matching
+  /// against it is meaningless.
+  void seed(ProjPoint p, {List<ProjPoint> candidates = const []}) {
     if (p.isZero) {
       throw ArgumentError('Cannot seed a traced branch on the zero triple');
     }
     _store(p);
+    _separation = _minPairwiseSeparation(candidates);
+    _motion = 0;
+    _matchedIndex = -1;
     _active = true;
   }
 
-  /// Stores the root matched at the current substep.
-  void update(ProjPoint p) => _store(p);
+  /// Matches the stored root against [candidates], stores the nearest one
+  /// as the new root, and records [motion], [separation] and
+  /// [matchedIndex] for the step controller. Returns the matched
+  /// candidate. [candidates] must be non-empty and zero-triple-free, as
+  /// `intersectionCandidates` guarantees.
+  ProjPoint follow(List<ProjPoint> candidates) {
+    final (index, measure) = _nearest(candidates);
+    final matched = candidates[index];
+    _motion = math.sqrt(measure);
+    _matchedIndex = index;
+    _store(matched);
+    _separation = _minPairwiseSeparation(candidates);
+    return matched;
+  }
+
+  /// Records a candidate-free substep (a parent momentarily undefined or
+  /// coincident): the root is kept for matching to resume from, motion is
+  /// nothing, and [separation] resets to infinity so the re-acquisition
+  /// step, whose motion no continuous history can bound, is not refused.
+  void coast() {
+    _motion = 0;
+    _matchedIndex = -1;
+    _separation = double.infinity;
+  }
 
   /// Deactivates the slot; the owner reverts to static branch selection.
   /// The stored coordinates are kept but mean nothing until re-seeded.
   void clear() => _active = false;
+
+  /// The slot's state, for the step controller to [restore] when it
+  /// refuses a trial step.
+  TracedBranchCheckpoint checkpoint() => TracedBranchCheckpoint._(
+        Float64List.fromList(_root),
+        _separation,
+        _motion,
+        _matchedIndex,
+      );
+
+  /// Rolls the slot back to [state] (see [checkpoint]).
+  void restore(TracedBranchCheckpoint state) {
+    _root.setAll(0, state._root);
+    _separation = state._separation;
+    _motion = state._motion;
+    _matchedIndex = state._matchedIndex;
+  }
 
   /// The index of the candidate projectively nearest the stored root, by
   /// the scale-invariant chordal measure `|p × c|² / (|p|²·|c|²)` — the
@@ -60,7 +136,10 @@ class TracedBranch {
   /// candidates. Ties break to the lower index (deterministic; breaking
   /// them *well* is Phase 115's detour). [candidates] must be non-empty
   /// and zero-triple-free, as `intersectionCandidates` guarantees.
-  int nearestIndexAmong(List<ProjPoint> candidates) {
+  int nearestIndexAmong(List<ProjPoint> candidates) =>
+      _nearest(candidates).$1;
+
+  (int, double) _nearest(List<ProjPoint> candidates) {
     final p = root;
     final pNorm2 = p.norm2;
     var best = 0;
@@ -73,7 +152,26 @@ class TracedBranch {
         best = i;
       }
     }
-    return best;
+    return (best, bestMeasure);
+  }
+
+  /// The chordal distance between two points — the sqrt of the
+  /// scale-invariant measure `|p × q|² / (|p|²·|q|²)` that all tracing
+  /// comparisons ([nearestIndexAmong], [motion], [separation]) are built
+  /// on. Zero exactly on projectively equal points, usable on complex and
+  /// infinite ones, invariant under rescaling either argument.
+  static double chordalDistance(ProjPoint p, ProjPoint q) =>
+      math.sqrt(p.join(q).norm2 / (p.norm2 * q.norm2));
+
+  static double _minPairwiseSeparation(List<ProjPoint> candidates) {
+    var min = double.infinity;
+    for (var i = 0; i < candidates.length; i++) {
+      for (var j = i + 1; j < candidates.length; j++) {
+        final d = chordalDistance(candidates[i], candidates[j]);
+        if (d < min) min = d;
+      }
+    }
+    return min;
   }
 
   void _store(ProjPoint p) {
@@ -84,4 +182,25 @@ class TracedBranch {
     _root[4] = p.w.re;
     _root[5] = p.w.im;
   }
+}
+
+/// A [TracedBranch]'s state at an accepted step — taken by
+/// [TracedBranch.checkpoint], rolled back by [TracedBranch.restore] when
+/// the step controller refuses a trial.
+class TracedBranchCheckpoint {
+  TracedBranchCheckpoint._(
+    this._root,
+    this._separation,
+    this._motion,
+    this._matchedIndex,
+  );
+
+  final Float64List _root;
+  final double _separation;
+  final double _motion;
+  final int _matchedIndex;
+
+  /// The candidate separation at the checkpointed step — half of it is
+  /// the motion the Cinderella rule allows the next trial.
+  double get separation => _separation;
 }
