@@ -1,0 +1,21 @@
+benchmark/run_tracing.sh
+  s_bba3e8657c5f71::t_da539f0823f73e 1-23
+benchmark/tracing_bench.dart
+  s_bba3e8657c5f71::t_3349deeefd591b 1-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9678f8e7f5457988be38880c65d4bdc524c13311",
+  "prompts": {},
+  "sessions": {
+    "s_bba3e8657c5f71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4601b19-2344-4b72-aeb1-36bc8a18d9bd",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
