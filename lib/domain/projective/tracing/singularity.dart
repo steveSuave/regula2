@@ -105,6 +105,14 @@ double detourOrientation(Vec2 start, Vec2 end) {
   return end.x - start.x < 0 ? 1 : -1;
 }
 
+/// [detourOrientation] for a scalar drive (Phase 116b: a constrained
+/// point's parameter drag): decreasing drives detour upper. The same
+/// oddness requirement applies — reversing the drive must flip the
+/// half-plane, or a there-and-back slide would wind once around the
+/// singularity and swap the branches. Matches [detourOrientation] on a
+/// horizontal path, deliberately: both are "leftward → upper".
+double detourOrientation1D(double from, double to) => to - from < 0 ? 1 : -1;
+
 /// A semicircular detour in complex path parameter: the arc
 /// `t(θ) = center + radius·(cos θ + i·orientation·sin θ)`, walked from
 /// `θ = π` (the real [entry], where the starving pass sits) down to

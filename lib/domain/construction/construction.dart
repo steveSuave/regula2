@@ -2,6 +2,8 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import '../math/vec2.dart';
+import '../projective/complex.dart';
+import '../projective/proj_point.dart';
 import '../projective/tolerances.dart';
 import '../projective/tracing/drag_path.dart';
 import '../projective/tracing/singularity.dart';
@@ -173,12 +175,141 @@ class Construction {
     String id,
     DragPath path, {
     int stepBudget = 128,
+    Map<String, ProjPoint>? seedMemory,
     void Function(double t)? onStep,
   }) {
     final object = _objects[id];
     if (object is! FreePoint) {
       throw ArgumentError('$id is not a FreePoint in this construction');
     }
+    return _traceAlong(
+      id: id,
+      driveReal: (t) => object.position = path.at(t),
+      driveComplex: (t) => object.tracedPosition = path.evaluate(t),
+      orientation: detourOrientation(path.start, path.end),
+      stepBudget: stepBudget,
+      seedMemory: seedMemory,
+      onStep: onStep,
+    );
+  }
+
+  /// Moves the constrained point [id] along its host curve from
+  /// parameter [from] to [to] with the same adaptive tracing walk as
+  /// [recomputeAlongPath] — the parameter-drag drive (Phase 116b).
+  ///
+  /// Real steps set the (real) interpolated parameter and re-enter the
+  /// point's own `recompute`, so host extent clamping behaves exactly as
+  /// in [setPointOnObjectParameter] — and a clamped stretch cannot
+  /// starve the controller, since the position is constant there. A
+  /// complex detour instead evaluates the carrier's chart form at the
+  /// complex interpolated parameter (`PointOnObject.tracedPosition`,
+  /// pass-internal; the stored parameter stays real throughout — PLAN
+  /// §Parameterization). The carrier itself never moves during a
+  /// parameter drag, so its chart form is captured once per pass.
+  ///
+  /// Everything else — seeding, acceptance, collision refusal, detour
+  /// planning, branch adoption at pass end, bail semantics — is
+  /// [recomputeAlongPath]'s, verbatim; matching continuity likewise
+  /// assumes [from] is where the point currently sits. Throws
+  /// [ArgumentError] when [id] is not a [PointOnObject] or [stepBudget]
+  /// < 1.
+  ({int acceptedSteps, int rejectedSteps, int detours})
+      recomputeAlongParameterPath(
+    String id,
+    double from,
+    double to, {
+    int stepBudget = 128,
+    Map<String, ProjPoint>? seedMemory,
+    void Function(double t)? onStep,
+  }) {
+    final object = _objects[id];
+    if (object is! PointOnObject) {
+      throw ArgumentError('$id is not a PointOnObject in this construction');
+    }
+    final evaluate = _chartEvaluator(object);
+    return _traceAlong(
+      id: id,
+      driveReal: (t) {
+        // The two-product lerp form, like DragPath.at: bitwise-exact
+        // endpoints, so the commit's static solve lands identically.
+        object.parameter = from * (1 - t) + to * t;
+        object.recompute();
+      },
+      driveComplex: (t) {
+        final s = Complex.one - t;
+        object.tracedPosition = evaluate(s.scale(from) + t.scale(to));
+      },
+      orientation: detourOrientation1D(from, to),
+      stepBudget: stepBudget,
+      seedMemory: seedMemory,
+      onStep: onStep,
+    );
+  }
+
+  /// The holomorphic continuation of [object]'s carrier chart form —
+  /// mirrors `LineEq.pointAt` / `CircleEq.pointAt` operation for
+  /// operation, so a real-valued complex parameter reproduces the real
+  /// evaluation exactly (zero imaginary parts; a detour rejoins the real
+  /// axis bitwise). Extent clamping is deliberately absent: a complex
+  /// parameter cannot be clamped, and every real step re-enters the
+  /// clamping `recompute`. With a chartless carrier the evaluator
+  /// throws, but is unreachable: an undefined carrier leaves every
+  /// dependent candidate-free, nothing seeds, and the pass collapses to
+  /// the static solve without ever detouring.
+  static ProjPoint Function(Complex) _chartEvaluator(PointOnObject object) {
+    switch (object.curve) {
+      case GeoLine(line: final form?):
+        final anchor = form.pointOnLine;
+        final direction = form.direction;
+        return (p) => ProjPoint(
+              Complex(anchor.x) + p.scale(direction.x),
+              Complex(anchor.y) + p.scale(direction.y),
+              Complex.one,
+            );
+      case GeoCircle(circle: final form?):
+        final center = form.center;
+        final radius = form.radius;
+        return (p) => ProjPoint(
+              Complex(center.x) + p.cos.scale(radius),
+              Complex(center.y) + p.sin.scale(radius),
+              Complex.one,
+            );
+      default:
+        return (_) => throw StateError(
+              'No chart to continue: the carrier of ${object.id} is undefined',
+            );
+    }
+  }
+
+  /// The shared tracing walk (Phases 114–116) behind [recomputeAlongPath]
+  /// and [recomputeAlongParameterPath]: [driveReal] puts the dragged
+  /// object at real path parameter `t` (including its own recompute, if
+  /// it needs one), [driveComplex] at a complex `t` during a detour arc;
+  /// [orientation] is the drive's odd detour orientation. See
+  /// [recomputeAlongPath] for the full contract.
+  /// [seedMemory], when provided, is *gesture-scoped* continuation state
+  /// (Phase 116b): a pass whose start state leaves an intersection
+  /// undefined — the previous preview frame ended exactly on a carrier
+  /// degeneracy, coincident circles say — has no live root to seed from,
+  /// and without help identity would reset to the canonical solve when
+  /// the point re-emerges. Seeding falls back to the memory's root (the
+  /// value the *previous pass in the same gesture* left there — a
+  /// completed pass writes every seeded slot's final root back), so
+  /// matching resumes across the undefined stretch exactly as a coast
+  /// resumes within one pass. The caller owns the map's lifetime and
+  /// must not let it outlive its drag gesture (the drag session clears
+  /// it on bail and drops it at gesture end) — continuation state never
+  /// survives a commit, save or bail, per the Phase 115 architecture
+  /// notes.
+  ({int acceptedSteps, int rejectedSteps, int detours}) _traceAlong({
+    required String id,
+    required void Function(double t) driveReal,
+    required void Function(Complex t) driveComplex,
+    required double orientation,
+    required int stepBudget,
+    Map<String, ProjPoint>? seedMemory,
+    void Function(double t)? onStep,
+  }) {
     if (stepBudget < 1) {
       throw ArgumentError.value(stepBudget, 'stepBudget', 'must be at least 1');
     }
@@ -194,7 +325,12 @@ class Construction {
       if (o is IntersectionPoint &&
           affected.contains(o.id) &&
           !excluded.contains(o)) {
-        final p = o.projPoint;
+        // A live root wins; an undefined intersection falls back to the
+        // gesture's seed memory so identity bridges a degenerate frame
+        // boundary (the candidate list is empty there, leaving the seed
+        // separation infinite — the first trial is unconstrained, like
+        // a coast re-acquisition).
+        final p = o.projPoint ?? seedMemory?[o.id];
         if (p != null && !p.isZero) {
           o.tracedBranch.seed(
             p,
@@ -232,7 +368,7 @@ class Construction {
     }
     try {
       if (seeded.isEmpty) {
-        object.position = path.at(1);
+        driveReal(1);
         _recomputeAffected(affected);
         onStep?.call(1);
         return (acceptedSteps: 1, rejectedSteps: 0, detours: 0);
@@ -260,9 +396,6 @@ class Construction {
       var sepPrev = double.infinity;
       var tCurr = 0.0;
       var sepCurr = _minSeparation(seeded);
-      // One orientation per pass (the path has one direction): the odd
-      // rule that makes a there-and-back drag an identity.
-      final orientation = detourOrientation(path.start, path.end);
 
       void restoreAll() {
         for (var i = 0; i < seeded.length; i++) {
@@ -287,7 +420,7 @@ class Construction {
               for (final o in seeded) {
                 o.tracedBranch.allowComplexCarriers = false;
               }
-              object.position = path.at(arc.entry);
+              driveReal(arc.entry);
               _recomputeAffected(affected);
               throw TraceStepBudgetException(
                 tReached: arc.entry,
@@ -295,9 +428,13 @@ class Construction {
               );
             }
             final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
-            object.tracedPosition = path.evaluate(arc.tAt(trialTheta));
+            driveComplex(arc.tAt(trialTheta));
             _recomputeAffected(affected);
-            if (_trialAccepted(seeded, checkpoints) &&
+            if (_trialAccepted(
+                  seeded,
+                  checkpoints,
+                  (theta - trialTheta) * arc.radius,
+                ) &&
                 _collisionFree(checkPairs)) {
               accepted++;
               theta = trialTheta;
@@ -324,9 +461,10 @@ class Construction {
           );
         }
         final trialT = t + step < 1 ? t + step : 1.0;
-        object.position = path.at(trialT);
+        driveReal(trialT);
         _recomputeAffected(affected);
-        if (_trialAccepted(seeded, checkpoints) && _collisionFree(checkPairs)) {
+        if (_trialAccepted(seeded, checkpoints, trialT - t) &&
+            _collisionFree(checkPairs)) {
           accepted++;
           t = trialT;
           step = step * 2 < 1 ? step * 2 : 1.0;
@@ -392,6 +530,11 @@ class Construction {
             branch.separation > doubleRootEpsilon) {
           o.branchIndex = branch.matchedIndex;
         }
+        // Refresh the gesture's seed memory with the root the completed
+        // pass leaves behind — a coasting slot retains its last followed
+        // root, which is exactly what the next pass must resume from
+        // when the intersection is undefined at its start.
+        seedMemory?[o.id] = branch.root;
       }
       return (acceptedSteps: accepted, rejectedSteps: rejected, detours: detours);
     } finally {
@@ -429,20 +572,44 @@ class Construction {
     return min;
   }
 
+  /// The widest trial span (in path-parameter units) that may *enter* a
+  /// coast: a match→coast transition on a wider trial is refused (see
+  /// [_trialAccepted]). Matches [detourTriggerStep]'s scale — by the
+  /// time refinement is this fine, the carrier degeneracy is localized
+  /// and the root retained on coast entry is fresh to within one
+  /// tiny step's motion.
+  static const double _maxCoastEntrySpan = 1e-5;
+
   /// The Cinderella acceptance rule over one trial's matches: every
   /// followed root must have moved less than half its candidates'
   /// separation at the previous accepted step ([checkpoints]), and less
-  /// than [_maxAcceptedMotion] outright. Coasting branches (no
-  /// candidates this trial) impose nothing. Written so a NaN motion —
+  /// than [_maxAcceptedMotion] outright. A branch coasting this trial
+  /// (no candidates) imposes nothing — *unless* it was matching at the
+  /// previous accepted step and [span] exceeds [_maxCoastEntrySpan]: a
+  /// wide trial whose endpoint kills the candidates has absorbed an
+  /// unchecked crossing of a carrier degeneracy (the Phase 116b
+  /// Cinderella demo starved on exactly this — a half-path trial landing
+  /// bitwise on the circles' coincidence froze the slot on a stale
+  /// root), so it is refused and refinement localizes the degeneracy
+  /// first. Coast→coast and seeded-while-undefined branches stay
+  /// permissive, as does re-acquisition. Written so a NaN motion —
   /// degenerate norms upstream — refuses the trial rather than
   /// accepting it.
   static bool _trialAccepted(
     List<IntersectionPoint> seeded,
     List<TracedBranchCheckpoint?> checkpoints,
+    double span,
   ) {
     for (var i = 0; i < seeded.length; i++) {
       final branch = seeded[i].tracedBranch;
-      if (branch.matchedIndex < 0) continue;
+      if (branch.matchedIndex < 0) {
+        if (!branch.hasCandidates &&
+            checkpoints[i]!.hasCandidates &&
+            span > _maxCoastEntrySpan) {
+          return false;
+        }
+        continue;
+      }
       final allowed = checkpoints[i]!.separation / 2;
       final cap = allowed < _maxAcceptedMotion ? allowed : _maxAcceptedMotion;
       if (!(branch.motion < cap)) {

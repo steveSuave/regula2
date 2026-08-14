@@ -91,6 +91,26 @@ class Complex {
     return Complex(im.abs() / (2 * t), im >= 0 ? t : -t);
   }
 
+  /// The complex cosine, `cos(a+bi) = cos a·cosh b − i·sin a·sinh b`
+  /// (Phase 116b: circle carriers continued to complex angles). Bitwise
+  /// `Complex(cos(re), ±0)` on the real axis — `cosh 0` is exactly 1 and
+  /// `sinh 0` exactly 0, so a detour entering and leaving the axis meets
+  /// the real evaluation exactly.
+  Complex get cos =>
+      Complex(math.cos(re) * _cosh(im), -math.sin(re) * _sinh(im));
+
+  /// The complex sine, `sin(a+bi) = sin a·cosh b + i·cos a·sinh b`.
+  /// Bitwise-real on the real axis, like [cos].
+  Complex get sin =>
+      Complex(math.sin(re) * _cosh(im), math.cos(re) * _sinh(im));
+
+  // dart:math has no hyperbolic functions; exp(0) is exactly 1, so both
+  // are bitwise-exact at 0 (cosh → 1, sinh → 0), which [cos]/[sin]'s
+  // real-axis guarantee rides on.
+  static double _cosh(double x) => (math.exp(x) + math.exp(-x)) / 2;
+
+  static double _sinh(double x) => (math.exp(x) - math.exp(-x)) / 2;
+
   bool get isFinite => re.isFinite && im.isFinite;
 
   bool get isNaN => re.isNaN || im.isNaN;

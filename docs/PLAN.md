@@ -42,7 +42,7 @@ Rejected alternatives: an affine-canonical bridge (projective computed lazily fr
 - **General real conics** (needed by Phase 119 rendering and Phase 120 five-point conics): stereographic parameterization — project from a chosen real point on the conic; rational in t, so evaluation is polynomial in homogeneous coordinates. Ellipses close up (t ∈ ℝ ∪ {∞}, one glue point), parabolas touch infinity once, hyperbolas twice.
 - **Hyperbola at infinity**: no gluing through the asymptotic parameter values — each branch is a clamped real extent, like a segment. The UI never walks a parameter across infinity.
 
-Rejected: projective parameters (RP¹ homogeneous pairs) or complex parameters. They make extent clamping, drag-to-parameter mapping, and persistence ambiguous for no payoff — analytic continuation operates on object values along the drag path, not on carrier parameters.
+Rejected: projective parameters (RP¹ homogeneous pairs) or complex parameters. They make extent clamping, drag-to-parameter mapping, and persistence ambiguous for no payoff — analytic continuation operates on object values along the drag path, not on carrier parameters. (Clarified in Phase 116b: a traced *parameter drag* interpolates the real stored parameter, and a detour evaluates the dragged point's chart form at a complex path parameter strictly inside one pass — the value-path continuation above, never a complex parameter type: the stored parameter, clamping and persistence stay real throughout.)
 
 ## Kernel track (Phases 100–122)
 
