@@ -647,3 +647,9 @@ Fully-completed phase checklists rotated out of `docs/TODO.md` on 2026-08-10. Ev
 - [x] Decision recorded in PLAN: parameters stay real in the affine chart (arc-length on real lines, angle on real circles — gluing is a UI concept on the rendered curve); general real conics via stereographic parameterization; hyperbola-at-infinity as clamped extents
 - [x] Migrate: `PointOnObject` (stores the lifted chart evaluation; chart-less carriers → undefined). The other two items on this line were already done when the phase opened: `Arc`/`Sector` extents stayed affine metadata in Phase 109, `TriangleCenterPoint` migrated in Phase 107
 - [x] Glados: `pointAt(parameterAt(p))` projections stable; glued point stays on carrier under parent perturbation
+
+## Phase 112 — Object batch 4: consumers
+
+- [x] Migrate: `VertexAngle`, `LineAngle`, `Polygon`, `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `SlopeMeasurement` (slope through infinity renders "—"), `ExpressionText`
+- [x] `Locus` deliberately untouched (rewritten in 117)
+- [x] Grep gate: no object file imports `intersections.dart` except `locus.dart` — exceeded: zero importers left in all of `lib/` (even `locus.dart` never imported it directly; Phase 121's deletion is test-side only). Every concrete kind except `Locus` reads projective accessors; remaining affine reads are the documented `orientedAlong` anchor derivations, extent metadata, and §Parameterization chart reads

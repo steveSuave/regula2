@@ -8,6 +8,30 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 113 (V2 Session 15) — 2026-08-14
+
+**Done**
+- **Phase 114 (Tracing II) complete** on `phase-114-adaptive-tracing`, merged to `main`, three commits:
+- **Adaptive step controller (Cinderella rule)**: `recomputeAlongPath` drops uniform substeps for accept/halve control — first trial attempts the whole path; a trial is accepted only if every traced root's chordal motion stayed under half its candidates' minimum pairwise separation at the previous accepted step; refusal restores the slots (`TracedBranch.checkpoint`/`restore`) and halves, acceptance doubles (path end reached bitwise-exactly). `TracedBranch` grew the bookkeeping (`follow` = match + motion/separation/matchedIndex, `coast` for candidate-free substeps, `seed` now takes the start candidates so the first trial is constrained). Budget exhaustion (`stepBudget`, default 128; flag `TracingFlags.dragStepBudget`, replaces `dragSteps`) throws `TraceStepBudgetException`; the drag session's existing catch-all bails static. Returns `(acceptedSteps, rejectedSteps)` — the Phase 116 overlay feed.
+- **Collision refusal**: a trial is also refused when two distinct-seeded branches on the same ordered curve pair grab the same candidate. Exempt: pairs whose seeds coincide within `doubleRootEpsilon` ("married" — duplicate branch objects legitimately travel together) and grabs of coincident candidates (a double root — riding the touch point together is correct). Tested through a scripted `IntersectionPoint` subclass — real geometry only reaches the ambiguity via exact ties or coast re-acquisition, which adaptive steps can't hit reliably.
+- **Glados** (`tracing_properties_test.dart`): secant / persistent-miss / near-tangency-approach families × random drags — no swaps at any accepted step, endpoint = static solve labels included, bounded trials, halving provably forced near tangency. The secant family immediately found a real soundness hole: **the sep/2 rule alone is unsound on RP¹** — a quarter-turn step matched each root to the other branch *through the point at infinity* with motions just under sep/2 (a swapped bijection, invisible to collision refusal too). Fixed with an absolute per-step motion cap (`_maxAcceptedMotion = 0.25` chordal); counterexample pinned as a deterministic toy.
+- **Through-tangency is now a deterministic starve**: the allowed motion collapses with the separation, accepted steps Zeno toward the singular t, budget exhausts, throw, static bail (toy + drag-session tests pin it). Phase 115's detour replaces starvation with a traced crossing.
+- **Benchmark reworked** (`traced adaptive`, reports trials/frame): smooth stress frames resolve in **1 trial** — ms/frame static→traced: VM 0.062→0.065, AOT 0.076→0.119, js 0.080→0.100, wasm 0.075→0.120; traced/static 1.0–1.6× (was 8–12× at 16 fixed substeps), ≤ 2% of the 8 ms gate, checksums identical everywhere.
+- Suite 2029 green, analyze clean (also fixed a pre-existing `prefer_asserts_with_message` info on main), `flutter build web` compiles. TODO rotation: Phase 112 moved to archive.
+
+**Next**
+- Phase 115 — Tracing III: singularity detection (root separation under tolerance / step-controller starvation — the `TraceStepBudgetException` path is the hook), semicircular complex detour in `t` around the singular parameter (`DragPath.evaluate` is already holomorphic), fixed detour orientation recorded for determinism; canonical through-tangency tests then flip from "starves" to "crosses with no jump, no swap".
+
+**Gotchas**
+- **Don't weaken the motion cap.** `_maxAcceptedMotion = 0.25` is what closes the RP¹ through-infinity loophole the glados suite found — sep/2 alone accepts silent swaps on wide secant steps (pinned regression toy in `recompute_along_path_test.dart`). Legitimate through-infinity motion (line∩line under a parallel sweep) is not forbidden, it just refines.
+- Through-tangency starvation is *deliberate* Phase 114 behaviour — don't "fix" it by raising the budget; the creep is Zeno and no budget crosses. The toy uses `stepBudget: 40` specifically to keep the creep far from the fp-noise zone around the strict inequality (margins shrink as s³ near the touch point); keep it small if you touch it.
+- A starving frame costs ~budget × substep (~4–7 ms at 128 on the stress rig) before bailing — fine against the gate, but it's per-frame while the user sits on a degeneracy; 115's detour also removes this.
+- Collision refusal is belt-and-braces by design: under the motion bounds a same-candidate grab is provably impossible when both previous roots were distinct candidates — the reachable paths are coast re-acquisition and matching ties, hence the scripted-double tests. Married pairs are computed once per pass at seed time.
+- `TracedBranch.separation` is the candidate set's *min pairwise* distance — for two-candidate sets that's exactly the distance to the alternative; once conic∩conic carriers expose four real candidates (Phases 119–120) it's a conservative proxy (noted in `_collisionFree`).
+- The drag session is unchanged except the flag rename: any `TraceStepBudgetException` inside a traced frame falls into the existing static bail; consecutive frames re-seed from the static solve, so tracing self-heals after a bailed frame.
+
+---
+
 ## Session 112 (V2 Session 14) — 2026-08-14
 
 **Done**

@@ -14,12 +14,6 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 112 — Object batch 4: consumers
-
-- [x] Migrate: `VertexAngle`, `LineAngle`, `Polygon`, `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `SlopeMeasurement` (slope through infinity renders "—"), `ExpressionText`
-- [x] `Locus` deliberately untouched (rewritten in 117)
-- [x] Grep gate: no object file imports `intersections.dart` except `locus.dart` — exceeded: zero importers left in all of `lib/` (even `locus.dart` never imported it directly; Phase 121's deletion is test-side only). Every concrete kind except `Locus` reads projective accessors; remaining affine reads are the documented `orientedAlong` anchor derivations, extent metadata, and §Parameterization chart reads
-
 ## Phase 113 — SPIKE 3 / Tracing I: scaffolding
 
 - [x] `lib/domain/projective/tracing/`: `DragPath` (real `t∈[0,1]`, complexifiable — evaluate is holomorphic in t), `TracedBranch` slots on intersection-bearing objects (`IntersectionPoint` only for now; slots active exclusively inside a tracing pass, locus-chain members excluded until 117), `Construction.recomputeAlongPath` (fixed-step naive, nearest-candidate matching, `branchIndex` untouched — commit semantics are Phase 116's), SoA `Float64List` buffers per the Phase 101 decision (storage shape; hot-loop rewrite is 122)
@@ -29,9 +23,9 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 ## Phase 114 — Tracing II: adaptive step control + root matching
 
-- [ ] Step controller (Cinderella rule): accept a step only if every root moved less than half its minimum pairwise separation at the previous step; else halve
-- [ ] Nearest-neighbour root matching with collision refusal; per-drag step budget with graceful bail to static solve (flagged in debug overlay)
-- [ ] Glados: random constructions × random smooth drags → no branch swaps; endpoint = static solve modulo matching; bounded step counts; adversarial near-tangency paths force halving and still match
+- [x] Step controller (Cinderella rule): accept a step only if every root moved less than half its minimum pairwise separation at the previous step; else halve — plus an absolute per-step motion cap (0.25 chordal) the glados suite proved necessary: sep/2 alone is unsound on RP¹ (a wide step can swap branches *through the point at infinity* with motions just under the bound)
+- [x] Nearest-neighbour root matching with collision refusal (married-seed and coincident-double-root exemptions); per-pass step budget (`stepBudget`, default 128; `TracingFlags.dragStepBudget`) with graceful bail to static solve — exhaustion throws `TraceStepBudgetException`, the drag session bails; `recomputeAlongPath` returns accepted/rejected counts as the Phase 116 debug-overlay feed (the overlay itself is 116's item)
+- [x] Glados: random constructions × random smooth drags → no branch swaps; endpoint = static solve modulo matching; bounded step counts; adversarial near-tangency paths force halving and still match
 
 ## Phase 115 — Tracing III: degeneracy detection + complex detour
 
