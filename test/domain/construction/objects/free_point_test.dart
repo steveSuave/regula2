@@ -43,4 +43,24 @@ void main() {
       expect(p.projPoint.closeTo(ProjPoint.real(3, 4)), isTrue);
     });
   });
+
+  group('tracedPosition (Phase 115)', () {
+    test('stores a complex homogeneous position verbatim and the chart '
+        'read is its real part', () {
+      final p = FreePoint(id: 'p', position: Vec2.zero);
+      const detoured = ProjPoint(
+        Complex(1, 0.5),
+        Complex(2, -0.25),
+        Complex.one,
+      );
+      p.tracedPosition = detoured;
+      expect(p.projPoint, detoured);
+      expect(p.position, const Vec2(1, 2));
+      // The ordinary setter restores the real-lift regime.
+      p.position = const Vec2(3, 4);
+      expect(p.projPoint.x, const Complex(3));
+      expect(p.projPoint.y, const Complex(4));
+      expect(p.projPoint.w, Complex.one);
+    });
+  });
 }
