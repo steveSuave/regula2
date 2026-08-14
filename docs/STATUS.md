@@ -8,6 +8,31 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 112 (V2 Session 14) — 2026-08-14
+
+**Done**
+- **Phase 113 (SPIKE 3 / Tracing I) complete** on `phase-113-tracing-scaffolding`, three commits:
+- **`lib/domain/projective/tracing/`**: `DragPath` (endpoint-exact chart lerp `at(t)`; `evaluate(Complex t)` is the same interpolation continued *holomorphically*, w ≡ 1 — the shape Phase 115's detour needs), `TracedBranch` (per-`IntersectionPoint` slot, SoA `Float64List` storage per Phase 101; `nearestIndexAmong` = argmin of the scale-invariant chordal measure `|p×c|²/(|p|²|c|²)`, works on complex candidates), `Construction.recomputeAlongPath` (uniform substeps; seeds slots from current `projPoint`, clears them before returning; one notification; `onStep` observation hook).
+- **Tracked recompute**: while its slot is active, `IntersectionPoint.recompute` follows the candidate nearest the tracked root instead of `candidates[branchIndex]`; empty-candidate steps keep the slot and resume matching. `branchIndex` is *never* mutated by a pass — the tracked value persists only until the next static recompute, and consecutive passes chain identity by seeding from what the last one left behind. Commit/save/undo stay fully static until Phase 116 owns those semantics; rollback is therefore exact.
+- **Exclusions**: locus-chain intersection points are never seeded (the sweep-and-restore recompute would drag a tracked root along the sweep and break the flip machinery — moot in 117 when loci ride tracing); nothing seedable collapses the pass to one static solve at the path end.
+- **Feature flag**: `TracingFlags.dragTracing` (default off, `dragSteps` 16), captured once per gesture in `DragSession.start`; traced previews apply to single-free-point drags only (rigid translations move several roots at once). The static-solve bail ships as promised: any failure inside a traced frame falls back to `moveFreePoint` (tested by forcing `dragSteps = 0`).
+- **Toy harness** (`test/domain/projective/tracing/`): secant sweep (continuous histories, no swap, endpoint = static solve labels included, identity chained across two consecutive paths), persistent miss (conjugate roots tracked through the complex domain, labels preserved), through-tangency (histories continuous at fixed-step resolution — crossing step ~√(6h) — endpoint in the static candidate set up to labels). The drag-session test pins a real discriminator: dragging a line endpoint *past* the other flips the canonical conjugate order while the roots sit still — static previews relabel, traced previews hold each branch on its side.
+- **Frame budget measured** (`benchmark/tracing_bench.dart` + `run_tracing.sh`, 100-object stress construction, 48 tracked branches, 16 substeps/frame, best of 5, ms/frame): VM 0.46, AOT 0.88, dart2js 0.62, dart2wasm 0.85 — **all ≤ 12% of the 8 ms Phase 116 gate** with the boxed engine and naive fixed steps; checksums identical on all targets. The SoA hot-loop rewrite (122) has enormous headroom.
+- `dart:typed_data` added to the domain layer-rule allowlist (the SoA decision). Suite 2010 green, analyze clean, `flutter build web` compiles.
+
+**Next**
+- Merge `phase-113-tracing-scaffolding`; then Phase 114 — Tracing II: adaptive step control (accept a step only if every root moved less than half its minimum pairwise separation, else halve), nearest-neighbour matching with *collision refusal*, per-drag step budget with graceful bail, glados over random constructions × random smooth drags.
+
+**Gotchas**
+- The tangency handoff is a genuine nearest-neighbour **tie**: the conjugate→real split is symmetric around the touch point, so both branches can grab the same root crossing it. Collision refusal (114) mitigates; only the complex detour (115) resolves it deterministically. The toy tests deliberately assert set-agreement, not labels, through tangency — don't "fix" them early.
+- After a pass, `_point` = tracked root but `branchIndex` is untouched, so the object is out of sync with canonical addressing until the next static recompute. Deliberate: it keeps rollback exact and every jump-behaviour test green. Adoption/persistence is Phase 116 (with save re-derivation).
+- The traced/static frame ratio is ~8–12×, not 16×: `moveFreePoint` re-derives `transitiveDependentsOf` per call while the traced pass hoists it across substeps. Don't read the ~30–55 µs substep as a solver regression.
+- `DragPath.at` uses the two-product lerp form `start·(1−t) + end·t` specifically for bitwise-exact endpoints (`at(1) == end`); the drag session's preview/commit consistency relies on it. Don't "simplify" to `start + t·delta`.
+- The locus-chain exclusion set is rebuilt on every `recomputeAlongPath` call (O(Σ chain lengths) per preview frame). Fine at current scales; dies with Phase 117 anyway.
+- `benchmark/tracing_bench.dart` imports domain code only — keep it (and everything under `lib/domain/`) Flutter-free or the js/wasm benchmark targets break.
+
+---
+
 ## Session 111 (V2 Session 13) — 2026-08-13
 
 **Done**
