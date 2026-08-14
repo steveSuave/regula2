@@ -40,10 +40,10 @@ Found by the Cinderella no-jump demo (C, D on a line, equal circles around each,
 
 ## Phase 117 — Locus rewrite on tracing
 
-- [ ] New `Locus.recompute`: adaptive sweep of the driver parameter via the tracing engine; keep density adaptation + polyline rendering
-- [ ] Delete: tan-grid ray sampling, defined/undefined boundary bisection, branchIndex flipping, infinity tails (infinity now falls out of projection)
-- [ ] Existing locus corpus is the spec: closed loci stay closed; figure-eights and conic loci compared point-set-wise with tolerance
-- [ ] Goldens regenerated where the (better) curve differs; diffs reviewed in STATUS
+- [x] New `Locus.recompute`: traced walk over the tracing engine per defined run of a sampleCount-cell canonical scan (the scan is bitwise the old grids — intersection-free chains return it directly); shared acceptance rules extracted to `trace_acceptance.dart`; folds swap at the walk's last *confident* state and reverse (the 39c parity + closure/trim contract kept verbatim); crossings detour in complex sweep parameter (defensive until conic∩conic carriers, 119–120); full lines sweep RP¹ cyclically, splitting the wrap when the chain is undefined at driver-infinity
+- [x] Deleted: tan-grid ray sampling (the tan substitution survives as the drive's density profile), 48-step boundary bisection + ladders (the walk's Zeno-in accepted steps are the ladder, fenced from the ε-tangent zone by the acceptance rule), branchIndex flipping (never mutated at all now), infinity tails (the domain edge evaluates at the carrier's direction point, w = 0 — infinity falls out of projection; a reversed positioning prefix with a divergent-tail trim replaces the 39e decay ladder)
+- [x] Existing locus corpus passed **unchanged** (closed loci, figure-eight, doc-1 trimming, both fixture documents); the only test edit is the parabola fixture's coreSamples pin (core = the scan's focus-window slice now). Two engine finds fixed on the way: `TracedBranch.setBalance` (the raw chordal metric is the world-origin angle metric — silent far-out branch swaps; identity default keeps drags bitwise) and an index-flip consistency guard for the matched-motion blind spot (locus walk only; audit the drag engine in 121/122)
+- [x] Goldens regenerated (locus scene light/dark): visually identical, subpixel sample placement only — reviewed in STATUS Session 117
 
 ## Phase 118 — Codec v2 + v1 migration
 
