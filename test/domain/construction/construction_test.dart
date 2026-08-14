@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
@@ -121,6 +123,66 @@ void main() {
       expect(() => c.setPointOnObjectParameter('nope', 0), throwsArgumentError);
       expect(() => c.setPointOnObjectParameter('a', 0), throwsArgumentError);
       expect(() => c.setPointOnObjectParameter('m', 0), throwsArgumentError);
+    });
+  });
+
+  group('Construction: setIntersectionBranch', () {
+    test('re-points the branch and recomputes its dependents', () {
+      final c = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(-10, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(10, 0));
+      final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final center = FreePoint(id: 'e', position: const Vec2(0, 1));
+      final rim = FreePoint(id: 'f', position: const Vec2(3, 1));
+      final k = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final p = IntersectionPoint(id: 'p', curve1: l, curve2: k, branchIndex: 0);
+      final m = Midpoint(id: 'm', point1: a, point2: p);
+      c
+        ..add(a)
+        ..add(b)
+        ..add(l)
+        ..add(center)
+        ..add(rim)
+        ..add(k)
+        ..add(p)
+        ..add(m);
+      // Branch 0 is the root at −√8 along the line's direction.
+      final x = math.sqrt(8);
+      expect(p.position!.closeTo(Vec2(-x, 0)), isTrue);
+
+      var notified = 0;
+      c.addListener(() => notified++);
+      c.setIntersectionBranch('p', 1);
+      expect(p.branchIndex, 1);
+      expect(p.position!.closeTo(Vec2(x, 0)), isTrue);
+      expect(m.position!.closeTo(Vec2((x - 10) / 2, 0)), isTrue);
+      expect(notified, 1);
+    });
+
+    test('throws for unknown ids, other kinds, and out-of-range indices',
+        () {
+      final c = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(-10, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(10, 0));
+      final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final center = FreePoint(id: 'e', position: const Vec2(0, 1));
+      final rim = FreePoint(id: 'f', position: const Vec2(3, 1));
+      final k = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final p = IntersectionPoint(id: 'p', curve1: l, curve2: k, branchIndex: 0);
+      c
+        ..add(a)
+        ..add(b)
+        ..add(l)
+        ..add(center)
+        ..add(rim)
+        ..add(k)
+        ..add(p);
+      expect(() => c.setIntersectionBranch('nope', 0), throwsArgumentError);
+      expect(() => c.setIntersectionBranch('a', 0), throwsArgumentError);
+      expect(() => c.setIntersectionBranch('l', 0), throwsArgumentError);
+      expect(() => c.setIntersectionBranch('p', 2), throwsArgumentError);
+      expect(() => c.setIntersectionBranch('p', -1), throwsArgumentError);
+      expect(p.branchIndex, 0);
     });
   });
 

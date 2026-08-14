@@ -99,12 +99,20 @@ class Construction {
   /// candidate exists is seeded ([TracedBranch.seed], with its candidate
   /// set at the path start); during the pass their `recompute` follows
   /// the candidate nearest the tracked root, so branch identity is held
-  /// by continuity instead of canonical re-selection. Slots are cleared
-  /// before returning — [branchIndex] stays untouched, so the *next
-  /// static recompute* re-selects canonically (the endpoint's tracked
-  /// value persists only until then; commands and save keep static
-  /// semantics until Phase 116). Identity chains across consecutive calls
-  /// because each seeds from the value the previous pass left behind.
+  /// by continuity instead of canonical re-selection. When the pass
+  /// completes, each seeded point *adopts* the branch the trace followed
+  /// (Phase 116): `branchIndex` is re-derived as the canonical-order
+  /// index its final step matched ([TracedBranch.matchedIndex] — the
+  /// index into the end state's canonically ordered candidates), except
+  /// on a double root, where canonical order carries no information and
+  /// the seeded index is kept. Slots are then cleared, so every later
+  /// *static* recompute re-selects the adopted — traced — branch:
+  /// identity survives commits, saves and the drag session's static
+  /// bail. Identity also chains across consecutive calls because each
+  /// seeds from the value the previous pass left behind. A pass that
+  /// throws adopts nothing (the state it leaves is its entry state or a
+  /// mid-path real position; the caller's static solve re-selects by the
+  /// last adopted index).
   ///
   /// **Step control (the Cinderella rule).** The first trial attempts the
   /// whole path. A trial is accepted only if every traced root moved less
@@ -368,6 +376,23 @@ class Construction {
           }
         }
       }
+      // Branch adoption (Phase 116): the final accepted step ran at
+      // t = 1 on real carriers, so each slot's matchedIndex is the
+      // index of the tracked root in the end state's canonically
+      // ordered candidate list — exactly the re-derived branchIndex.
+      // No adoption when the step coasted (matchedIndex −1: nothing
+      // was matched), on a double root (separation within
+      // doubleRootEpsilon: the tie broke arbitrarily and canonical
+      // order says nothing), or outside the 0/1 range branchIndex
+      // addresses (future four-candidate conic∩conic carriers).
+      for (final o in seeded) {
+        final branch = o.tracedBranch;
+        if (branch.matchedIndex >= 0 &&
+            branch.matchedIndex <= 1 &&
+            branch.separation > doubleRootEpsilon) {
+          o.branchIndex = branch.matchedIndex;
+        }
+      }
       return (acceptedSteps: accepted, rejectedSteps: rejected, detours: detours);
     } finally {
       for (final o in seeded) {
@@ -446,6 +471,30 @@ class Construction {
       }
     }
     return true;
+  }
+
+  /// Re-points the intersection point [id] at [branchIndex] and
+  /// recomputes it and its transitive dependents (in topological order).
+  ///
+  /// The commit primitive of branch adoption (Phase 116): a traced drag
+  /// can end with an intersection on the other canonical branch than it
+  /// started (a crossed degeneracy flips the ordering under the tracked
+  /// root), and the gesture's one command must replay that re-pointing
+  /// in both directions for undo/redo to be exact. Throws
+  /// [ArgumentError] when [id] is not an [IntersectionPoint] or
+  /// [branchIndex] is out of range.
+  void setIntersectionBranch(String id, int branchIndex) {
+    final object = _objects[id];
+    if (object is! IntersectionPoint) {
+      throw ArgumentError('$id is not an IntersectionPoint in this construction');
+    }
+    if (branchIndex < 0 || branchIndex > 1) {
+      throw ArgumentError.value(branchIndex, 'branchIndex', 'must be 0 or 1');
+    }
+    object.branchIndex = branchIndex;
+    object.recompute();
+    _recomputeDependentsOf(id);
+    _notify();
   }
 
   /// Moves the text [id]'s world anchor to [anchor] and notifies.
