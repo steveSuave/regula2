@@ -1,0 +1,48 @@
+lib/domain/projective/tracing/singularity.dart
+  s_926a7d361a7034::t_b941daaa420a2a 274
+  s_926a7d361a7034::t_ecefa24a4c41f3 102-149
+  s_926a7d361a7034::t_01ffc860ee6bd4 5,171-184,190-193,291-293,297
+  s_926a7d361a7034::t_813e996a364e24 48-56
+  s_926a7d361a7034::t_08e12b24083fe9 150-152,154-157,160,185,194-269,271-272,275-283,285-290,294,298
+  s_926a7d361a7034::t_8b7cec91e6447b 153,158-159,161-170,186-189,270,273,284,295-296
+lib/domain/projective/tracing/traced_branch.dart
+  s_926a7d361a7034::t_dfac376da8fe26 262-272
+lib/domain/construction/objects/locus.dart
+  s_926a7d361a7034::t_0609a4bdb9a63d 1040-1043,1064-1071,1075,1082,1132-1137,1194
+  s_926a7d361a7034::t_2752f26df7aeb9 1152,1159-1165,1227-1230,1232-1256,1259
+  s_926a7d361a7034::t_013771ce41c764 683-693,699
+  s_926a7d361a7034::t_d2114047d24b35 1072-1074,1076-1081,1140-1142
+  s_926a7d361a7034::t_8b7cec91e6447b 1257
+  s_926a7d361a7034::t_edd7f7f5e889ee 6
+  s_926a7d361a7034::t_813e996a364e24 1299,1318
+  s_926a7d361a7034::t_952ed040965f45 1166-1173,1223-1226,1231,1258
+  s_926a7d361a7034::t_360d4579527860 1260
+lib/domain/construction/construction.dart
+  s_926a7d361a7034::t_d5b1e4409fb7a9 517-535,537-544,608-617,619-633,635-646
+  s_926a7d361a7034::t_ed051ffc2dbe9d 618,634
+  s_926a7d361a7034::t_813e996a364e24 429,453
+  s_926a7d361a7034::t_abc02d39bd206b 318-333,352-369
+  s_926a7d361a7034::t_f99a4656aac965 476-488,490,508-510
+  s_926a7d361a7034::t_490b839b43b4a5 381,408-410,436,444,489,499-504,565,598-602
+  s_926a7d361a7034::t_9713fefbf644c2 603,647-648
+docs/PLAN.md
+  s_926a7d361a7034::t_baf6d6c79acf0e 60-72
+docs/TODO.md
+  s_926a7d361a7034::t_d45f187fcc1525 48-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7b76b840ab0d2d2fd083658a89b2b8603182a480",
+  "prompts": {},
+  "sessions": {
+    "s_926a7d361a7034": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2f9564d7-27a6-43f6-b507-693128bc274b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
