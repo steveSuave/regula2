@@ -150,53 +150,48 @@ double collisionStepLimit({
 /// A located minimum of the candidate-separation profile along a leg:
 /// where it sits ([t]) and how deep it goes ([separation]).
 class SeparationMinimum {
-  const SeparationMinimum(this.t, this.separation, this.shoulder);
+  const SeparationMinimum(this.t, this.separation);
 
   /// The leg parameter of the minimum.
   final double t;
 
-  /// The separation there — solver noise at a genuine root collision,
-  /// a finite fraction of [shoulder] at a near-miss.
+  /// The separation there.
   final double separation;
 
-  /// The larger of the two bracketing separations — the scale [separation]
-  /// is deep *relative to*. Chordal separations carry the figure's scale
-  /// (and, in a locus sweep, its balance frame), so only the ratio is
-  /// meaningful.
-  final double shoulder;
-
   /// Whether the minimum is a genuine root collision rather than a
-  /// near-miss: a true zero bottoms out at solver noise, orders below
-  /// its shoulders, while a miss keeps a finite fraction of them.
+  /// near-miss.
   ///
-  /// Both a relative and an absolute floor must be cleared, and the
-  /// conjunction is deliberate. The ratio alone would pass a
-  /// configuration whose whole separation scale is tiny; the absolute
-  /// bound alone would pass an ultra-tight miss in a figure whose
-  /// separations happen to be small. Misclassifying a miss as a
-  /// collision is the expensive direction — it plans an arc around
-  /// complex branch points that the real path passes *between*, which
-  /// winds and swaps the branches — so a minimum that fails either test
-  /// falls back to [estimateSingularParameter] and its undershoot
-  /// guarantee.
-  bool get isCollision =>
-      separation <= doubleRootEpsilon &&
-      separation <= collisionDepthRatio * shoulder;
+  /// The search drives the bracket to the floating-point floor, so a
+  /// real zero reads at solver noise whatever the collapse law — the
+  /// linear law of a transversal crossing and the `√` law of a tangency
+  /// both bottom out inside the kernel's snapped-double-root zone. A
+  /// miss instead flattens at its closest approach and reads that.
+  /// `doubleRootEpsilon` is therefore the right threshold and the
+  /// consistent one: it is already what the kernel means by "these two
+  /// roots coincide", so a miss tighter than it is a double root
+  /// everywhere else in the engine too.
+  ///
+  /// Misclassifying a miss as a collision is the expensive direction —
+  /// it plans an arc around complex branch points that the real path
+  /// passes *between*, which winds and swaps the branches — so a
+  /// minimum that fails this leaves the caller with
+  /// [estimateSingularParameter] and its undershoot guarantee.
+  bool get isCollision => separation <= doubleRootEpsilon;
 }
 
-/// How far below its shoulders a located separation minimum must sit to
-/// count as a genuine collision rather than a near-miss (see
-/// [SeparationMinimum.isCollision]). The search resolves the minimum's
-/// parameter to [_minimumResolution] of the bracket, so a true linear
-/// zero reads about that deep relative to its shoulders — two decades
-/// of headroom below this threshold.
-const double collisionDepthRatio = 1e-4;
 
 /// Locates the next minimum of [separationAt] ahead of [from] by direct
 /// measurement — a geometric forward bracket followed by a ternary
 /// search — searching no further than [end]. Null when the separation
 /// does not turn around inside the window: there is no minimum to aim
 /// at, and the caller keeps its extrapolated estimate.
+///
+/// The forward bracket doubles its stride, so a dip far narrower than
+/// its distance from [from] can be stepped over and read as "no
+/// minimum". That is the safe direction — the caller falls back to
+/// [estimateSingularParameter] — and it does not arise in the walks,
+/// which only ask once their own step has already collapsed to
+/// [detourTriggerStep] near the collision.
 ///
 /// **Why measure rather than extrapolate** (Phase 117b):
 /// [estimateSingularParameter] fits the `s ∝ √(t* − t)` law of a
@@ -222,7 +217,10 @@ SeparationMinimum? locateSeparationMinimum({
   if (!(end > from) || !(firstStep > 0)) {
     return null;
   }
-  // Bracket: probe forward, doubling, until the separation turns up.
+  // Bracket: probe forward, doubling the stride, until the separation
+  // turns up. The window's end is a legitimate probe (a leg may starve
+  // right at its own edge), but a profile still falling there has no
+  // minimum inside the window to aim at.
   var lo = from;
   var sLo = separationAt(from);
   var mid = from + firstStep;
@@ -230,26 +228,21 @@ SeparationMinimum? locateSeparationMinimum({
     return null;
   }
   var sMid = separationAt(mid);
+  if (!(sMid < sLo)) {
+    // Already rising at the first probe: whatever minimum there may be
+    // sits inside the first step, too close to resolve from here.
+    return null;
+  }
   var stride = firstStep;
   double? hi;
   var sHi = double.nan;
   for (var probe = 0; probe < _maxBracketProbes; probe++) {
-    if (sMid > sLo) {
-      // Turned up already: the minimum is between lo and mid, with the
-      // pre-lo sample as the far side. Re-bracket by halving instead.
-      hi = mid;
-      sHi = sMid;
-      mid = (lo + hi) / 2;
-      sMid = separationAt(mid);
-      if (sMid < sLo && sMid < sHi) {
-        break;
-      }
-      // No interior dip: the profile is simply rising.
-      return null;
-    }
     stride *= 2;
-    final next = mid + stride;
-    if (!(next < end)) {
+    var next = mid + stride;
+    if (next >= end) {
+      next = end;
+    }
+    if (!(next > mid)) {
       return null;
     }
     final sNext = separationAt(next);
@@ -267,7 +260,6 @@ SeparationMinimum? locateSeparationMinimum({
     return null;
   }
   // Ternary search on the unimodal bracket.
-  final shoulder = sLo > sHi ? sLo : sHi;
   var a = lo;
   var b = hi;
   final resolution = _minimumResolution * (hi - lo);
@@ -281,20 +273,22 @@ SeparationMinimum? locateSeparationMinimum({
     }
   }
   final t = (a + b) / 2;
-  return SeparationMinimum(t, separationAt(t), shoulder);
+  return SeparationMinimum(t, separationAt(t));
 }
 
 /// Forward doublings allowed while bracketing a separation minimum.
 const int _maxBracketProbes = 24;
 
 /// Ternary-search iterations on a bracketed minimum — each shrinks the
-/// bracket by 1/3, so 40 take any window well below [_minimumResolution]
-/// of its width.
-const int _maxTernaryIterations = 40;
+/// bracket by 1/3, so 100 drive any bracket down to the floating-point
+/// floor. Resolving that far is what makes the near-miss test sharp: a
+/// miss is only told from a collision *below* its own closest approach,
+/// so a shallow search would read a tight miss as a collision.
+const int _maxTernaryIterations = 100;
 
-/// Bracket width, relative to the *initial* bracket, at which the
-/// located minimum is good enough to centre a detour on.
-const double _minimumResolution = 1e-6;
+/// Bracket width, relative to the *initial* bracket, below which further
+/// ternary iterations buy nothing.
+const double _minimumResolution = 1e-15;
 
 /// The detour orientation for a drag from [start] to [end]: `+1` walks
 /// arcs through the upper half-plane of the path parameter (`Im t > 0`),

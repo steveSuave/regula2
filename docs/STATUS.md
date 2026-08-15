@@ -8,6 +8,35 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 118 (V2 Session 20) — 2026-08-15
+
+**Done**
+- **Phase 117b complete** on `phase-117b-tracing-degeneracy`, opened from two user documents: dragging a free point in `apatitos-topos.rgl` froze the app in Chrome, and its locus drew the wrong sheet over a third of the sweep. `locus-miss-2.json` was reported alongside but does not reproduce a freeze here — see gotchas.
+- **The freeze, root-caused**: `G = TangentLine ∩ the circle it touches` is a double root *by construction* — measured chordal separation 9.4e-17. Seeding it made the Cinderella bound (motion < separation/2) refuse every trial, so the controller halved to nothing and the pass starved and bailed on **every frame of every drag**. And each of those ~130 refused trials recomputed the whole downstream graph *including the Locus*, which is a full traced sweep of its own. Measured 54–74 ms per frame on the VM, 741–1093 bails per 1200 frames; several times that under dart2js, which is the freeze.
+  - **Structural double roots never seed** (both walks): no second branch to hold identity against, and canonical resolution is exact when the candidates coincide. Other slots keep tracing.
+  - **Loci are held back during a tracing pass** and settled once at its end (including the bail path, in the `finally`). A locus is a DAG leaf — `IntersectionPoint` and `PointOnObject` both reject one as a parent — so no acceptance decision can read one.
+  - Result: 0.6–0.9 ms mean, worst 5 ms, **zero bails**.
+- **The wrong sheet, root-caused**: the locus chain's `E = circle ∩ segment CD` has the driver `D` as one root by construction, so at each tangent point from C the two roots pass through each other **transversally** — separation vanishing *linearly*, not the `√` law Phase 115 fits. Three compounding gaps, all now closed (PLAN §"Root collisions: seen, measured, walked around"):
+  1. the separation dipped to zero and recovered *strictly inside one accepted step*, with both endpoints comfortably separated and every root barely moving — nothing starved, nothing was classified, and nearest matching quietly kept the canonical index. `collisionStepLimit` now caps the step by the extrapolated distance to the collision, forcing it to a step *end*.
+  2. the collapse-law fit undershoots persistently on the linear law (each refinement re-undershoots), so the arc hugged the collision and exited *nearer* to it than it entered. `locateSeparationMinimum` now measures the collision — bracket plus ternary search on the separation profile — and `SeparationMinimum.isCollision` (separation ≤ `doubleRootEpsilon`, the kernel's own coincidence tolerance) is the crossing/near-miss discriminator. A measured near-miss suppresses the detour outright, which is *stronger* than the undershoot heuristic it gates; the heuristic still stands in when no bracket exists.
+  3. the arc then accepted its whole semicircle in one trial — continuing from its real entry straight to its real exit, the very step across the collision it exists to prevent. Arc steps capped at `maxDetourArcStep` = π/4.
+- **A fourth, latent bug the rigs found**: a detour that flips the matched index left `_prevMatched` stale, so Phase 117's relabel-consistency guard refused *every* trial past the arc exit and the walk stalled there until its budget ran out. Hidden until now only because exits happened to land inside the re-entry floor, where the guard is skipped. Re-baselined after an arc, exactly as the fold swap does.
+- **Tests**: `apatitos-topos.rgl` added as a corpus fixture (H has constant power ½·|CG|² about C, so the locus *is* a line — every sample pinned to it, both crossings included, and the far arm must reach past |p| = 50 so a short trace cannot pass trivially); unit tests for the step limit, the minimum locator and the discriminator; a reduced transversal-crossing locus rig pinned by the Thales-circle invariant at four scan densities, with a companion test asserting the *canonical* scan disagrees; a structural-double-root drag rig; a locus-deferral count on both the completing and the bailing path. Suite 2089 green, analyze clean, locus goldens regenerated (10 px of antialiasing).
+- **Perf gate re-run with a locus in the stress construction** — the Phase 116 gate never covered one. PASS everywhere: ms/frame static→traced VM 0.89→0.94, AOT 1.52→1.60, js 1.30→1.38, wasm 1.34→1.40 (12–20% of the 8 ms budget).
+
+**Next**
+- Merge `phase-117b-tracing-degeneracy`; then Phase 118 — codec v2 + permanent v1 loader.
+
+**Gotchas**
+- **`locus-miss-2.json` does not reproduce a freeze here.** ~40k drag configurations across both free points, plus a 6000-frame randomised gesture fuzz and a slow sweep through the |BC| = 240 tangency: worst frame 14 ms, zero bails, mean ~2 ms. Its only `IntersectionPoint` sits *inside* the locus chain, so it is excluded from drag seeding and the pass collapses to a static solve — there is no starvation path. Whatever the user saw there is either the same Chrome-side slowness at a smaller multiple, or something not in the domain layer. Ask before hunting further.
+- That exclusion is itself worth revisiting: an intersection inside a locus chain gets **no** continuation during drags, so it can still jump canonically mid-gesture. Phase 117 left the Phase 113 exclusion in place; it deserves a look in 121/122.
+- `locateSeparationMinimum` drives the graph at parameters all over its window, which follows the tracked roots — both call sites restore the slots afterwards. Anything else that probes must do the same.
+- The minimum search runs the bracket down to the floating-point floor on purpose: a miss is only told from a collision *below* its own closest approach, so a shallow search reads a tight miss as a collision. That costs ~200 evaluations, but only when the walk actually starves.
+- Its forward bracket doubles its stride, so a dip far narrower than its distance from the starting point can be stepped over and read as "no minimum". That is the safe direction (the caller falls back to the extrapolation) and does not arise in the walks, which only ask once their own step has collapsed to `detourTriggerStep` near the collision.
+- A miss tighter than `doubleRootEpsilon` reads as a collision. Not a wart: below that separation the solver snaps the pair, `collisionFree` waives its refusal and branch adoption declines to re-derive an index — same convention throughout.
+
+---
+
 ## Session 117 (V2 Session 19) — 2026-08-14
 
 **Done**

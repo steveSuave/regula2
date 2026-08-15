@@ -1187,6 +1187,20 @@ class _TracedSweep {
             x = from + dir * d;
             step = math.min(arc.radius, domain.cell);
             _snapshot();
+            // The arc is *how* a crossing relabels: continuing around it
+            // lands the tracked root on the other canonical index, which
+            // is the analytic branch. Re-baseline the relabel-consistency
+            // guard on it, exactly as the fold swap does — a stale
+            // baseline made the guard refuse every trial past the exit,
+            // and the walk stalled there until its budget ran out
+            // (Phase 117b; latent since the guard landed in 117, hidden
+            // while exits happened to land inside the re-entry floor).
+            for (var i = 0; i < seeded.length; i++) {
+              final matched = seeded[i].tracedBranch.matchedIndex;
+              if (matched >= 0) {
+                _prevMatched[i] = matched;
+              }
+            }
             dPrev = d;
             sepPrev = double.infinity;
             dCurr = d;
