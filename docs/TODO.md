@@ -59,6 +59,19 @@ Opened 2026-08-15 from `apatitos-topos.rgl` and `locus-miss-2.json`: dragging a 
 - [x] Perf gate re-run **with a locus in the stress construction** — the Phase 116 gate never covered one. `benchmark/tracing_bench.dart` grew a second scenario (the documents' own shape: a chord through the driver, so the sweep meets a transversal crossing twice a turn). PASS on every target: ms/frame static→traced VM 0.89→0.94, AOT 1.52→1.60, js 1.30→1.38, wasm 1.34→1.40 — 12–20% of the 8 ms budget, and traced/static is now ≈1.05× because the locus settles once per pass instead of once per trial
 - [x] Locus goldens regenerated (light + dark): visually identical, 10 px of antialiasing from adaptive step placement
 
+## Phase 117c — Field instrumentation for the tracing engine
+
+Opened 2026-08-15: the 117b user reported both documents *still* slow and then wedged in Chrome, with the locus shape now correct. Nothing in the domain layer reproduces it — on the VM `apatitos-topos.rgl` sliding D means 0.5 ms/frame and `locus-miss-2.json` dragging C over a 41×41 grid of positions peaks at 13 ms. So the phase is not a fix for a known defect; it is the instrument that says where the cost is on the reporter's machine. See PLAN §"The engine says what it costs".
+
+- [x] `TraceDiagnostics` (`lib/domain/projective/tracing/`, pure Dart, sink-based so `domain/` stays Flutter-free): per-frame wall time, the locus sweep's share, and counters for trials, detours, folds, separation probes and **chain solves** — the unit a slow frame is actually made of. Frames nest by depth, so entry points can be instrumented without knowing their callers
+- [x] Instrumented: both walks (accept/reject/detour), `_measureCollision`/`locateSeparationMinimum` probes, `Locus.recompute` (its own frame when nothing else opened one, so a sweep from a load, a command or an undo is recorded too), `_recomputeAffected` and the sweep's `driveReal`/`_driveComplex`, and both drag sessions' `update` as the frame boundary
+- [x] **Stall reports from inside a running frame**: the walks call `checkpoint` from their inner loops; once a frame overruns it prints where it is, every second, until it finishes. The only instrumentation that survives the reported symptom, which is a frame that never returns
+- [x] Armed in debug **and profile** builds: on the web those are different compilers (DDC vs optimized dart2js), so comparing the same reproduction across them is what separates a kernel cost from a debug-compiler cost. Disarmed in release
+- [x] Surfaced: the trace overlay (⇧O) grew a cost line — ms, locus ms, chain solves; Ctrl/⌘⇧O opens a copyable report (totals, slowest frames, the last 40) and mirrors it to the console
+- [x] **Measured waste found and removed**: `locateSeparationMinimum` refined every confirmed collision to the floating-point floor, ~205 chain solves per crossing, on every frame — more than half of `apatitos-topos.rgl`'s 742. The floor is only needed to settle *whether* it is a collision; once a probe is below `doubleRootEpsilon` that is closed and the parameter only has to centre an arc. Relaxed stopping rule → 442 solves/frame, goldens bit-identical
+- [x] Tests: `TraceDiagnostics` (nesting, arm/disarm, streaming, stall rate limit, lazy detail, history cap, report); `Construction.nameOf`; two new `locateSeparationMinimum` contracts — a confirmed collision stops early (probe count is the contract), a near-miss still refines to the floor
+- [ ] **Waiting on the reporter**: browser numbers for both documents in debug *and* profile. If profile is fast, the fix is build-mode/DDC and the engine is fine; if both are slow, the frame line names the cost centre
+
 ## Phase 118 — Codec v2 + v1 migration
 
 - [ ] `constructionFormatVersion = 2`; v1 decode path kept permanently (`branchIndex` documented as canonical-order seed)

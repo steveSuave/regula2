@@ -5,6 +5,7 @@ import '../../projective/complex.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/tolerances.dart';
 import '../../projective/tracing/singularity.dart';
+import '../../projective/tracing/trace_diagnostics.dart';
 import '../../projective/tracing/traced_branch.dart';
 import '../geo_object.dart';
 import '../trace_acceptance.dart';
@@ -154,6 +155,22 @@ class Locus extends GeoLocus {
 
   @override
   void recompute() {
+    // A frame of its own when nothing else opened one — a sweep
+    // triggered by a load, a command or an undo is exactly as capable of
+    // wedging the app as one inside a drag, and frames nest, so this is
+    // a no-op when a drag is already recording.
+    TraceDiagnostics.frameBegin('locus ${attributes.name}');
+    TraceDiagnostics.count(TraceCounter.locusRecomputes);
+    TraceDiagnostics.locusBegin();
+    try {
+      _recompute();
+    } finally {
+      TraceDiagnostics.locusEnd();
+      TraceDiagnostics.frameEnd();
+    }
+  }
+
+  void _recompute() {
     final domain = _SweepDomain.of(
       driver,
       sampleCount: sampleCount,
@@ -204,6 +221,7 @@ class Locus extends GeoLocus {
     final grid = domain.grid;
     final scan = <Vec2?>[];
     for (final x in grid) {
+      TraceDiagnostics.count(TraceCounter.locusScanSolves);
       walker.driveReal(x);
       scan.add(traced.position);
     }
@@ -659,6 +677,7 @@ class _TracedSweep {
   PointOnObject get _driver => chain.first as PointOnObject;
 
   void driveReal(double x) {
+    TraceDiagnostics.count(TraceCounter.chainSolves);
     _driver.tracedPosition = domain.evalReal(x);
     for (var i = 1; i < chain.length; i++) {
       chain[i].recompute();
@@ -666,6 +685,7 @@ class _TracedSweep {
   }
 
   void _driveComplex(Complex x) {
+    TraceDiagnostics.count(TraceCounter.chainSolves);
     _driver.tracedPosition = domain.evalComplex(x);
     for (var i = 1; i < chain.length; i++) {
       chain[i].recompute();
@@ -802,6 +822,7 @@ class _TracedSweep {
             }
             return out;
           case _EndKind.fold:
+            TraceDiagnostics.count(TraceCounter.locusFolds);
             if (parity.isEmpty) {
               lastOriginalEnd = out.length;
             }
@@ -883,6 +904,10 @@ class _TracedSweep {
       }
       final seedRoots = [for (final o in seeded) o.tracedBranch.root];
       for (var lap = 0; lap < _maxLaps; lap++) {
+        TraceDiagnostics.checkpoint(
+          'locus lap',
+          detail: () => 'lap $lap/$_maxLaps trials=$_trials/$_budget',
+        );
         final end = advance(from: x0 + lap, to: x0 + lap + 1.0, out: out);
         if (end.kind != _EndKind.reached) {
           return out;
@@ -1047,7 +1072,15 @@ class _TracedSweep {
         ? (x, [for (final c in _checkpoints) c!])
         : null;
     while (d < span) {
+      TraceDiagnostics.checkpoint(
+        'locus leg',
+        detail: () => 'd=${d.toStringAsExponential(3)}/'
+            '${span.toStringAsExponential(3)} '
+            'step=${step.toStringAsExponential(2)} '
+            'trials=$_trials/$_budget',
+      );
       if (_trials >= _budget) {
+        TraceDiagnostics.count(TraceCounter.locusBudgetEnds);
         return _AdvanceEnd(x, _EndKind.budget, confident: confident);
       }
       final trialD = d + step < span ? d + step : span;
@@ -1076,6 +1109,7 @@ class _TracedSweep {
       var ok = false;
       if (!overStepLimit) {
         _trials++;
+        TraceDiagnostics.count(TraceCounter.locusTrials);
         driveReal(trialX);
         ok = trialAccepted(seeded, _checkpoints, trialD - d) &&
             collisionFree(_pairs);
@@ -1183,6 +1217,7 @@ class _TracedSweep {
             if (arc == null || !_traceArc(arc, from, dir)) {
               return _AdvanceEnd(x, _EndKind.open, confident: confident);
             }
+            TraceDiagnostics.count(TraceCounter.locusDetours);
             d = arc.exit;
             x = from + dir * d;
             step = math.min(arc.radius, domain.cell);
@@ -1257,6 +1292,7 @@ class _TracedSweep {
       end: span,
       firstStep: detourTriggerStep,
       separationAt: (t) {
+        TraceDiagnostics.count(TraceCounter.collisionProbes);
         driveReal(from + dir * t);
         var min = double.infinity;
         for (final o in culprits) {
@@ -1312,6 +1348,12 @@ class _TracedSweep {
       var theta = math.pi;
       var dTheta = maxDetourArcStep;
       while (theta > 0) {
+        TraceDiagnostics.checkpoint(
+          'locus detour arc',
+          detail: () => 'theta=${theta.toStringAsFixed(6)} '
+              'dTheta=${dTheta.toStringAsExponential(2)} '
+              'trials=$_trials/$_budget',
+        );
         if (_trials >= _budget) {
           for (final o in seeded) {
             o.tracedBranch.allowComplexCarriers = false;
@@ -1320,6 +1362,7 @@ class _TracedSweep {
           return false;
         }
         _trials++;
+        TraceDiagnostics.count(TraceCounter.locusTrials);
         final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
         _driveComplex(Complex(from) + arc.tAt(trialTheta).scale(dir));
         if (trialAccepted(

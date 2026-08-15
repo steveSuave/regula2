@@ -8,6 +8,30 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 119 (V2 Session 21) — 2026-08-15
+
+**Done**
+- **Phase 117c — field instrumentation**, on `phase-117c-trace-diagnostics`. The user re-tested after 117b: the locus *shape* is fixed, but both documents still "move very slowly and then hang" in Chrome — `locus-miss-2.json` after moving C, `apatitos-topos.rgl` after moving D. They asked for logs they could share.
+- **The two triggers land where session 118's fuzz never looked.** In apat, **D is the locus driver** (a `PointOnObject`), so the gesture is a *slide* through `recomputeAlongParameterPath` — 118 dragged free points. In lm2, the only `IntersectionPoint` sits *inside* the locus chain, so it is excluded from drag seeding and the whole per-frame cost is the locus sweep. Re-probed both on those paths: apat sliding D a full turn in 720 frames is **0.5 ms mean / 8 ms worst, zero bails**; lm2 dragging C over a 41×41 grid of destinations (and measuring the frame *after* each move, which is the reported symptom) peaks at **13 ms**. Neither reproduces on the VM.
+- So the phase is not a fix for a defect we can see — it is the instrument that says where the cost is on the reporter's machine. `TraceDiagnostics`: per-frame wall time, the locus sweep's share, and counters for trials, detours, folds, probes and **chain solves** (one recompute of the affected subgraph — the unit a slow frame is actually made of; trials are not the currency). Frames nest by depth, so `Locus.recompute` opens its own when nothing else has, and a sweep from a load, a command or an undo is recorded too.
+- **The part that survives the symptom**: both walks call `checkpoint` from their inner loops, so a frame that overruns prints where it is and how far along, every second, *while it is still running*. A frame that never returns never ends, so nothing that only reports at frame end would ever have been seen.
+- Armed in debug **and profile**. On the web those are different compilers — `flutter run -d chrome` is DDC, profile is optimized dart2js — and the perf gate puts optimized js at ~1.5× the VM on the very locus scenario in question. So "kernel or debug compiler?" is settled by running the same reproduction in both and diffing the numbers, which instrumentation confined to debug could not have asked.
+- Surfaced two ways: the ⇧O trace overlay grew a cost line (ms · locus ms · chain solves · STALLED), and **Ctrl/⌘⇧O** opens a copyable report — totals, ten slowest frames, last forty — mirrored to the console.
+- **Real waste found by the instrument, and removed.** The first armed run showed apat spending **410 of every frame's 742 chain solves inside collision measurement**: `locateSeparationMinimum` refined every confirmed collision to the floating-point floor, ~205 probes per crossing, twice a frame, forever. That precision exists to keep a tight *near-miss* from reading as a collision — but once a probe has been below `doubleRootEpsilon` the verdict is closed for good, and the parameter's only remaining job is centring an arc whose radius is a fraction of the same distance. The stopping rule now relaxes at that moment (`_collisionResolution`, 1e-4 relative): **742 → 442 solves/frame, 0.93 → 0.60 ms**, goldens bit-identical. A near-miss still pays the floor, since that is the case it was bought for.
+- Suite **2103 green**, 26 goldens unchanged, analyze clean, `flutter build web` OK, perf gate PASS on all four targets.
+
+**Next**
+- **Waiting on the reporter**: browser numbers for both documents, in debug *and* profile. If profile is fast, this is DDC and the engine is fine (and the answer is a build-mode note, plus deciding whether the debug web path deserves a cheaper locus preview). If both are slow, the frame line names the cost centre and we go there.
+- Then merge `phase-117b-tracing-degeneracy` and `phase-117c-trace-diagnostics`; then Phase 118 — codec v2 + permanent v1 loader.
+
+**Gotchas**
+- **Neither document reproduces headlessly** — this is the second session that has failed to, now on the correct drag paths. Do not spend a third session fuzzing the domain layer; the next move needs numbers from the browser.
+- `flutter run -d chrome` compiles with **DDC**, which is not the compiler any benchmark in this repo measures (`run_tracing.sh` uses `dart2js -O4`). It is entirely capable of being one to two orders of magnitude slower on this kind of numeric code, and a frame budget blown by 50× turns into pointer events queueing faster than they retire — which *presents* as a hang without anything in the kernel looping.
+- Diagnostics counters are recorded only inside a frame; `frameBegin`/`frameEnd` must stay paired in a `finally`. `checkpoint` outside a frame is a deliberate no-op, and `detail` closures are not built unless the frame has actually overrun — so the instrumentation costs a bool read and a counter bump on a normal frame.
+- The relaxed collision-refinement rule means `SeparationMinimum.t` is now only accurate to ~1e-4 of the distance travelled *for confirmed collisions*. That is a documented contract with a test on it; anything that wants the old precision must ask for a near-miss-grade search, not assume it.
+
+---
+
 ## Session 118 (V2 Session 20) — 2026-08-15
 
 **Done**

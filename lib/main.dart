@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -29,6 +30,7 @@ import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/math/vec2.dart';
+import 'domain/projective/tracing/trace_diagnostics.dart';
 import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/angle_tool.dart';
@@ -98,6 +100,7 @@ bool get isMobileTarget =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _armTraceDiagnostics();
   if (isMobileTarget) {
     // Every canvas pixel counts on a phone: hide the OS status bar
     // (swipe from the edge peeks it back, then it re-hides).
@@ -112,6 +115,32 @@ Future<void> main() async {
       child: const MainApp(),
     ),
   );
+}
+
+/// Points the tracing recorder at the console in debug and profile
+/// builds (Phase 117c).
+///
+/// Armed rather than opt-in because the reports that matter are the ones
+/// nobody thought to ask for: a frame slow enough to feel, or a frame
+/// still running. Both stream out on their own, so reproducing a freeze
+/// in `flutter run -d chrome` and copying the console is the whole
+/// procedure. Quiet otherwise — an ordinary frame prints nothing.
+///
+/// Profile as well as debug, deliberately: on the web those two are
+/// different compilers, not different flag sets — debug is DDC and
+/// profile is optimized dart2js — so "is this the kernel or is this the
+/// debug compiler?" is answered by running the same reproduction in
+/// both and comparing these numbers. Instrumentation that only existed
+/// in debug could not ask the question.
+///
+/// Release builds leave it disarmed.
+void _armTraceDiagnostics() {
+  if (kReleaseMode) {
+    return;
+  }
+  TraceDiagnostics.sink =
+      (String line) => developer.log(line, name: 'regula.trace');
+  TraceDiagnostics.enabled = true;
 }
 
 class MainApp extends ConsumerWidget {
@@ -354,6 +383,54 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// clearest nearby spot — one batch [ChangeAttributesCommand], so one
   /// undo restores every label. Clean and manually-placed labels stay
   /// put; nothing to move is a silent no-op (no undo-stack noise).
+  /// Shows the recorded trace diagnostics (Phase 117c) — the report the
+  /// engine has been accumulating since launch — in a selectable,
+  /// copyable dialog, and mirrors it to the console.
+  ///
+  /// The dialog exists because the console is not always reachable: on
+  /// a wedged tab DevTools may be the only thing still responding, and
+  /// on a merely-slow one the user should not have to open it at all.
+  Future<void> _dumpTraceDiagnostics() async {
+    final report = TraceDiagnostics.report();
+    developer.log(report, name: 'regula.trace');
+    if (!mounted) {
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Trace diagnostics'),
+        content: SizedBox(
+          width: 720,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              report,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              TraceDiagnostics.reset();
+              Navigator.pop(context);
+            },
+            child: const Text('Clear'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Clipboard.setData(ClipboardData(text: report)),
+            child: const Text('Copy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _declutterLabels() {
     final size = _canvasKey.currentContext?.size;
     if (size == null) {
@@ -659,6 +736,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ref.read(documentSettingsProvider.notifier).toggleSnapToGrid();
       case AppAction.toggleTraceOverlay:
         setState(() => _showTraceOverlay = !_showTraceOverlay);
+      case AppAction.dumpTraceDiagnostics:
+        _dumpTraceDiagnostics();
       case AppAction.nudgeLeft:
         _nudgeView(const Offset(-_nudgeStep, 0));
       case AppAction.nudgeRight:

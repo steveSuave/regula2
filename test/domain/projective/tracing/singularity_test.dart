@@ -431,8 +431,56 @@ void main() {
         separationAt: (t) => (t - 0.9).abs(),
       );
       expect(found, isNotNull);
-      expect(found!.t, closeTo(0.9, 1e-9));
+      // Located to a few parts in 10⁴ of the distance travelled, which
+      // is where a *confirmed* collision stops being refined (Phase
+      // 117c): all the parameter is for is centring an arc whose radius
+      // is a fraction of that same distance.
+      expect(found!.t, closeTo(0.9, 1e-4 * (0.9 - 0.8)));
       expect(found.isCollision, isTrue);
+    });
+
+    test('a confirmed collision stops being refined once the verdict '
+        'lands — the probe count is the point (Phase 117c)', () {
+      // The measurement runs on every starving step of every frame and
+      // each probe is a chain solve, so "how many" is a behavioural
+      // contract, not an implementation detail: at the floating-point
+      // floor a single crossing cost ~205 probes, which on a document
+      // carrying a locus was more than half the frame.
+      var probes = 0;
+      final found = locateSeparationMinimum(
+        from: 0.8,
+        end: 1,
+        firstStep: 1e-5,
+        separationAt: (t) {
+          probes++;
+          return (t - 0.9).abs();
+        },
+      );
+      expect(found!.isCollision, isTrue);
+      expect(probes, lessThan(80));
+    });
+
+    test('a near-miss is still refined to the floor — the cheap stopping '
+        'rule applies only once a probe has been below the threshold',
+        () {
+      // The relaxed rule may never decide the *verdict*: a miss is told
+      // from a collision below its own closest approach, so stopping
+      // early here would read this profile as a collision — the
+      // expensive direction, an arc planned around branch points the
+      // real path passes between.
+      var probes = 0;
+      final found = locateSeparationMinimum(
+        from: 0.8,
+        end: 1,
+        firstStep: 1e-5,
+        separationAt: (t) {
+          probes++;
+          return (t - 0.9).abs() + 1e-4;
+        },
+      );
+      expect(found!.isCollision, isFalse);
+      expect(found.t, closeTo(0.9, 1e-9));
+      expect(probes, greaterThan(100));
     });
 
     test('a collision just short of the window edge is reachable — the '

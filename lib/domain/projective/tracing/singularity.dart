@@ -217,17 +217,31 @@ SeparationMinimum? locateSeparationMinimum({
   if (!(end > from) || !(firstStep > 0)) {
     return null;
   }
+  // The deepest separation any probe has read. Two jobs: it is the
+  // verdict ([SeparationMinimum.isCollision] asks nothing more than
+  // whether the profile got below `doubleRootEpsilon`), and it is what
+  // relaxes the stopping rule once that verdict is settled — see the
+  // ternary search below.
+  var deepest = double.infinity;
+  double measure(double t) {
+    final separation = separationAt(t);
+    if (separation < deepest) {
+      deepest = separation;
+    }
+    return separation;
+  }
+
   // Bracket: probe forward, doubling the stride, until the separation
   // turns up. The window's end is a legitimate probe (a leg may starve
   // right at its own edge), but a profile still falling there has no
   // minimum inside the window to aim at.
   var lo = from;
-  var sLo = separationAt(from);
+  var sLo = measure(from);
   var mid = from + firstStep;
   if (!(mid < end)) {
     return null;
   }
-  var sMid = separationAt(mid);
+  var sMid = measure(mid);
   if (!(sMid < sLo)) {
     // Already rising at the first probe: whatever minimum there may be
     // sits inside the first step, too close to resolve from here.
@@ -245,7 +259,7 @@ SeparationMinimum? locateSeparationMinimum({
     if (!(next > mid)) {
       return null;
     }
-    final sNext = separationAt(next);
+    final sNext = measure(next);
     if (sNext > sMid) {
       hi = next;
       sHi = sNext;
@@ -260,20 +274,47 @@ SeparationMinimum? locateSeparationMinimum({
     return null;
   }
   // Ternary search on the unimodal bracket.
+  //
+  // Two stopping rules, because the search answers two questions and
+  // they do not cost the same (Phase 117c). *Is* there a collision has
+  // to be resolved at the floating-point floor: a miss is only told
+  // from a collision below its own closest approach, so a shallow
+  // search reads a tight miss as a collision — the expensive direction.
+  // But once a probe has been *below* `doubleRootEpsilon` that question
+  // is closed for good, and the only question left is where to centre
+  // the arc, which needs a few significant figures, not seventeen. So
+  // the resolution relaxes to a fraction of the distance travelled the
+  // moment the verdict lands.
+  //
+  // This is not a nicety. The measurement runs on every starving step
+  // of every frame, and each probe is a chain solve: at the floor a
+  // single crossing cost ~205 of them, which on a document carrying a
+  // locus was more than half the frame's total work — paid over and
+  // over to re-locate a collision already known to be there.
   var a = lo;
   var b = hi;
-  final resolution = _minimumResolution * (hi - lo);
-  for (var i = 0; i < _maxTernaryIterations && b - a > resolution; i++) {
+  final floor = _minimumResolution * (hi - lo);
+  for (var i = 0; i < _maxTernaryIterations; i++) {
+    final resolution = deepest <= doubleRootEpsilon
+        ? math.max(floor, _collisionResolution * ((a + b) / 2 - from))
+        : floor;
+    if (!(b - a > resolution)) {
+      break;
+    }
     final m1 = a + (b - a) / 3;
     final m2 = b - (b - a) / 3;
-    if (separationAt(m1) <= separationAt(m2)) {
+    if (measure(m1) <= measure(m2)) {
       b = m2;
     } else {
       a = m1;
     }
   }
   final t = (a + b) / 2;
-  return SeparationMinimum(t, separationAt(t));
+  // The depth is the deepest reading, not the midpoint's: under the
+  // relaxed rule the midpoint can sit just off the bottom, and it is
+  // the bottom that decides [SeparationMinimum.isCollision].
+  final atT = separationAt(t);
+  return SeparationMinimum(t, atT < deepest ? atT : deepest);
 }
 
 /// Forward doublings allowed while bracketing a separation minimum.
@@ -289,6 +330,16 @@ const int _maxTernaryIterations = 100;
 /// Bracket width, relative to the *initial* bracket, below which further
 /// ternary iterations buy nothing.
 const double _minimumResolution = 1e-15;
+
+/// Bracket width, relative to the distance from the search's start,
+/// that a *confirmed* collision is located to (Phase 117c).
+///
+/// All the located parameter is used for is planning a detour arc
+/// around the collision, and the arc's radius is a fraction of that
+/// same distance: three or four significant figures put the arc's
+/// centre and radius well inside the safety factor. Every further
+/// figure costs chain solves on every frame and buys nothing.
+const double _collisionResolution = 1e-4;
 
 /// The detour orientation for a drag from [start] to [end]: `+1` walks
 /// arcs through the upper half-plane of the path parameter (`Im t > 0`),

@@ -7,6 +7,7 @@ import '../projective/proj_point.dart';
 import '../projective/tolerances.dart';
 import '../projective/tracing/drag_path.dart';
 import '../projective/tracing/singularity.dart';
+import '../projective/tracing/trace_diagnostics.dart';
 import '../projective/tracing/trace_step_budget_exception.dart';
 import '../projective/tracing/traced_branch.dart';
 import 'geo_object.dart';
@@ -52,6 +53,21 @@ class Construction {
   GeoObject? byId(String id) => _objects[id];
 
   bool contains(String id) => _objects.containsKey(id);
+
+  /// A short human label for [id] — its name if it has one, otherwise
+  /// its kind and a truncated id. For diagnostics and log lines only;
+  /// never parsed, never shown as a name in the UI.
+  String nameOf(String id) {
+    final object = _objects[id];
+    if (object == null) {
+      return '<$id gone>';
+    }
+    final name = object.attributes.name;
+    if (name.isNotEmpty) {
+      return name;
+    }
+    return '${object.runtimeType}#${id.length > 6 ? id.substring(0, 6) : id}';
+  }
 
   /// Adds [object] to the construction.
   ///
@@ -314,6 +330,7 @@ class Construction {
     if (stepBudget < 1) {
       throw ArgumentError.value(stepBudget, 'stepBudget', 'must be at least 1');
     }
+    TraceDiagnostics.count(TraceCounter.dragPasses);
     final affected = transitiveDependentsOf(id);
     // Loci are DAG leaves (nothing may take one as a parent: both
     // `IntersectionPoint` and `PointOnObject` reject them), so no
@@ -428,6 +445,12 @@ class Construction {
           var theta = math.pi;
           var dTheta = maxDetourArcStep;
           while (theta > 0) {
+            TraceDiagnostics.checkpoint(
+              'drag detour arc',
+              detail: () => 'theta=${theta.toStringAsFixed(6)} '
+                  'dTheta=${dTheta.toStringAsExponential(2)} '
+                  'trials=${accepted + rejected}/$stepBudget',
+            );
             if (accepted + rejected >= stepBudget) {
               for (final o in seeded) {
                 o.tracedBranch.allowComplexCarriers = false;
@@ -449,11 +472,13 @@ class Construction {
                 ) &&
                 collisionFree(checkPairs)) {
               accepted++;
+              TraceDiagnostics.count(TraceCounter.dragAccepted);
               theta = trialTheta;
               dTheta = math.min(dTheta * 2 < theta ? dTheta * 2 : theta, maxDetourArcStep);
               snapshot();
             } else {
               rejected++;
+              TraceDiagnostics.count(TraceCounter.dragRejected);
               restoreAll();
               dTheta /= 2;
             }
@@ -466,6 +491,13 @@ class Construction {
       }
 
       while (t < 1) {
+        TraceDiagnostics.checkpoint(
+          'drag walk',
+          detail: () => 't=${t.toStringAsFixed(9)} '
+              'step=${step.toStringAsExponential(2)} '
+              'sep=${sepCurr.toStringAsExponential(2)} '
+              'trials=${accepted + rejected}/$stepBudget',
+        );
         if (accepted + rejected >= stepBudget) {
           throw TraceStepBudgetException(
             tReached: t,
@@ -489,6 +521,7 @@ class Construction {
         }
         if (accept) {
           accepted++;
+          TraceDiagnostics.count(TraceCounter.dragAccepted);
           t = trialT;
           step = step * 2 < 1 ? step * 2 : 1.0;
           snapshot();
@@ -505,6 +538,7 @@ class Construction {
           onStep?.call(trialT);
         } else {
           rejected++;
+          TraceDiagnostics.count(TraceCounter.dragRejected);
           if (!overStepLimit) {
             restoreAll();
           }
@@ -552,6 +586,7 @@ class Construction {
             if (arc != null) {
               traceArc(arc);
               detours++;
+              TraceDiagnostics.count(TraceCounter.dragDetours);
               t = arc.exit;
               // Resume at the arc's own scale: the roots just crossed a
               // near-degeneracy, so accepted steps grow from there by
@@ -630,6 +665,7 @@ class Construction {
       end: 1,
       firstStep: detourTriggerStep,
       separationAt: (probe) {
+        TraceDiagnostics.count(TraceCounter.collisionProbes);
         driveReal(probe);
         _recomputeAffected(affectedCore);
         var min = double.infinity;
@@ -796,6 +832,7 @@ class Construction {
   /// Recomputes the objects in [affected], in insertion (= topological)
   /// order.
   void _recomputeAffected(Set<String> affected) {
+    TraceDiagnostics.count(TraceCounter.chainSolves);
     for (final object in _objects.values) {
       if (affected.contains(object.id)) {
         object.recompute();
