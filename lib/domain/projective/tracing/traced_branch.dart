@@ -259,6 +259,17 @@ class TracedBranch {
   static double chordalDistance(ProjPoint p, ProjPoint q) =>
       math.sqrt(p.join(q).norm2 / (p.norm2 * q.norm2));
 
+  /// The minimum pairwise chordal separation of a candidate set, in the
+  /// unbalanced metric — infinite for a set with fewer than two members.
+  ///
+  /// The seeding-time test for a *structurally* degenerate intersection
+  /// (Phase 117b): a value within `doubleRootEpsilon` means the
+  /// candidates coincide, so there is no second branch to hold identity
+  /// against and nothing a smaller step could separate. Such a slot must
+  /// not be seeded — see `Construction._traceAlong`.
+  static double candidateSeparation(List<ProjPoint> candidates) =>
+      _minPairwiseSeparation(candidates);
+
   static double _minPairwiseSeparation(List<ProjPoint> candidates) {
     var min = double.infinity;
     for (var i = 0; i < candidates.length; i++) {

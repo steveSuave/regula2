@@ -3,9 +3,12 @@ import 'dart:math' as math;
 import '../../math/vec2.dart';
 import '../../projective/complex.dart';
 import '../../projective/proj_point.dart';
+import '../../projective/tolerances.dart';
 import '../../projective/tracing/singularity.dart';
+import '../../projective/tracing/trace_diagnostics.dart';
 import '../../projective/tracing/traced_branch.dart';
 import '../geo_object.dart';
+import '../locus_refresh.dart';
 import '../trace_acceptance.dart';
 import 'intersection_point.dart';
 import 'point_on_object.dart';
@@ -151,8 +154,50 @@ class Locus extends GeoLocus {
   @override
   List<GeoObject> get parents => [driver, traced];
 
+  /// Wall time the last completed sweep took, and how long ago it
+  /// finished — the two numbers [LocusRefresh] throttles on. Both are
+  /// preview bookkeeping only; nothing about the sweep's *result*
+  /// depends on them.
+  double _lastSweepMs = 0;
+  final Stopwatch _sinceSweep = Stopwatch();
+
   @override
   void recompute() {
+    // While a gesture is previewing, a sweep that costs more than its
+    // share of the frame is skipped and this locus keeps the samples it
+    // has (Phase 117d — see [LocusRefresh]). Safe because a locus is a
+    // DAG leaf: nothing may take one as a parent, so no recompute and no
+    // acceptance decision anywhere can read a stale sample. The gesture
+    // commits through a command, with previewing false, so the settled
+    // state is never stale.
+    if (!LocusRefresh.due(
+      lastSweepMs: _lastSweepMs,
+      idleMs: _sinceSweep.elapsedMicroseconds / 1000,
+    )) {
+      TraceDiagnostics.count(TraceCounter.locusCoalesced);
+      return;
+    }
+    // A frame of its own when nothing else opened one — a sweep
+    // triggered by a load, a command or an undo is exactly as capable of
+    // wedging the app as one inside a drag, and frames nest, so this is
+    // a no-op when a drag is already recording.
+    TraceDiagnostics.frameBegin('locus ${attributes.name}');
+    TraceDiagnostics.count(TraceCounter.locusRecomputes);
+    TraceDiagnostics.locusBegin();
+    final watch = Stopwatch()..start();
+    try {
+      _recompute();
+    } finally {
+      _lastSweepMs = watch.elapsedMicroseconds / 1000;
+      _sinceSweep
+        ..reset()
+        ..start();
+      TraceDiagnostics.locusEnd();
+      TraceDiagnostics.frameEnd();
+    }
+  }
+
+  void _recompute() {
     final domain = _SweepDomain.of(
       driver,
       sampleCount: sampleCount,
@@ -203,6 +248,7 @@ class Locus extends GeoLocus {
     final grid = domain.grid;
     final scan = <Vec2?>[];
     for (final x in grid) {
+      TraceDiagnostics.count(TraceCounter.locusScanSolves);
       walker.driveReal(x);
       scan.add(traced.position);
     }
@@ -658,6 +704,7 @@ class _TracedSweep {
   PointOnObject get _driver => chain.first as PointOnObject;
 
   void driveReal(double x) {
+    TraceDiagnostics.count(TraceCounter.chainSolves);
     _driver.tracedPosition = domain.evalReal(x);
     for (var i = 1; i < chain.length; i++) {
       chain[i].recompute();
@@ -665,6 +712,7 @@ class _TracedSweep {
   }
 
   void _driveComplex(Complex x) {
+    TraceDiagnostics.count(TraceCounter.chainSolves);
     _driver.tracedPosition = domain.evalComplex(x);
     for (var i = 1; i < chain.length; i++) {
       chain[i].recompute();
@@ -679,15 +727,23 @@ class _TracedSweep {
       if (o is IntersectionPoint) {
         final p = o.projPoint;
         if (p != null && !p.isZero) {
+          final candidates = intersectionCandidates(o.curve1, o.curve2);
+          // Structurally degenerate slots never seed (Phase 117b): with
+          // the candidates coincident by construction — a point built as
+          // `TangentLine ∩ the circle it touches` — there is no second
+          // branch to hold identity against, and the Cinderella bound
+          // would refuse every trial and starve the walk. Canonical
+          // resolution is exact there. Same rule as the drag walk's.
+          if (TracedBranch.candidateSeparation(candidates) <=
+              doubleRootEpsilon) {
+            continue;
+          }
           final b = balance;
           if (b != null) {
             o.tracedBranch.setBalance(cx: b.cx, cy: b.cy, scale: b.scale);
           }
           // Seed under the balance (separation is measured by it).
-          o.tracedBranch.seed(
-            p,
-            candidates: intersectionCandidates(o.curve1, o.curve2),
-          );
+          o.tracedBranch.seed(p, candidates: candidates);
           seeded.add(o);
         }
       }
@@ -793,6 +849,7 @@ class _TracedSweep {
             }
             return out;
           case _EndKind.fold:
+            TraceDiagnostics.count(TraceCounter.locusFolds);
             if (parity.isEmpty) {
               lastOriginalEnd = out.length;
             }
@@ -874,6 +931,10 @@ class _TracedSweep {
       }
       final seedRoots = [for (final o in seeded) o.tracedBranch.root];
       for (var lap = 0; lap < _maxLaps; lap++) {
+        TraceDiagnostics.checkpoint(
+          'locus lap',
+          detail: () => 'lap $lap/$_maxLaps trials=$_trials/$_budget',
+        );
         final end = advance(from: x0 + lap, to: x0 + lap + 1.0, out: out);
         if (end.kind != _EndKind.reached) {
           return out;
@@ -1028,13 +1089,25 @@ class _TracedSweep {
     var sepPrev = double.infinity;
     var dCurr = 0.0;
     var sepCurr = minSeparation(seeded);
+    // The widest span the next accepted step may cover before an
+    // extrapolated root collision could hide inside it (Phase 117b —
+    // see [collisionStepLimit]).
+    var stepLimit = double.infinity;
     var foldPending = false;
     var foldAtBoundary = false;
     var confident = _isConfident()
         ? (x, [for (final c in _checkpoints) c!])
         : null;
     while (d < span) {
+      TraceDiagnostics.checkpoint(
+        'locus leg',
+        detail: () => 'd=${d.toStringAsExponential(3)}/'
+            '${span.toStringAsExponential(3)} '
+            'step=${step.toStringAsExponential(2)} '
+            'trials=$_trials/$_budget',
+      );
       if (_trials >= _budget) {
+        TraceDiagnostics.count(TraceCounter.locusBudgetEnds);
         return _AdvanceEnd(x, _EndKind.budget, confident: confident);
       }
       final trialD = d + step < span ? d + step : span;
@@ -1048,10 +1121,26 @@ class _TracedSweep {
                 culprits: culprits, confident: confident)
             : _AdvanceEnd(x, _EndKind.open, confident: confident);
       }
-      _trials++;
-      driveReal(trialX);
-      var ok = trialAccepted(seeded, _checkpoints, trialD - d) &&
-          collisionFree(_pairs);
+      // A root collision extrapolated to lie inside this trial refuses
+      // it unevaluated (Phase 117b): the acceptance rules only compare
+      // a step's endpoints, so a separation that dips to zero and
+      // recovers *within* one step passes every check while nearest
+      // matching quietly keeps the canonical index instead of the
+      // analytic branch. Capping the span forces the collision to a
+      // step end, where refinement hands it to the fold/crossing
+      // machinery below.
+      // Refusal falls through to the shared starvation path below, so
+      // the throttle converges into a classified fold or crossing
+      // rather than into the trial budget.
+      final overStepLimit = trialD - d > stepLimit;
+      var ok = false;
+      if (!overStepLimit) {
+        _trials++;
+        TraceDiagnostics.count(TraceCounter.locusTrials);
+        driveReal(trialX);
+        ok = trialAccepted(seeded, _checkpoints, trialD - d) &&
+            collisionFree(_pairs);
+      }
       if (ok && !_indexFlipsAreConsistent(x, trialX)) {
         // A matched-index change can be a benign canonical relabel
         // (both roots stationary, only the ordering flipped) or a
@@ -1101,9 +1190,17 @@ class _TracedSweep {
         sepPrev = sepCurr;
         dCurr = d;
         sepCurr = minSeparation(seeded);
+        stepLimit = collisionStepLimit(
+          t1: dPrev,
+          s1: sepPrev,
+          t2: dCurr,
+          s2: sepCurr,
+        );
         out?.add(traced.position!);
       } else {
-        _restoreAll();
+        if (!overStepLimit) {
+          _restoreAll();
+        }
         step /= 2;
         if (!foldPending &&
             step < detourTriggerStep &&
@@ -1113,13 +1210,28 @@ class _TracedSweep {
           // a null estimate also covers the walk *leaving* a fold it
           // just swapped through (stale tiny separation, growing
           // ahead), where plain halving re-expands on its own.
-          final dStar = estimateSingularParameter(
+          final dExtrapolated = estimateSingularParameter(
             t1: dPrev,
             s1: sepPrev,
             t2: dCurr,
             s2: sepCurr,
           );
           final culprits = _culprits();
+          // Prefer the *measured* collision to the extrapolated one: the
+          // collapse-law fit is exact only on the √ law of a transverse
+          // tangency and undershoots persistently on the linear law of a
+          // transversal crossing, which would centre the arc on the
+          // collision's near shoulder instead of the collision (Phase
+          // 117b — see [locateSeparationMinimum]).
+          final measured = _measureCollision(culprits, from, dir, d, span);
+          // A measured near-miss decides the question: the roots never
+          // meet ahead, so there is nothing to detour around or fold at
+          // and plain refinement carries the walk past it. Only when the
+          // profile offers no bracket at all does the extrapolated
+          // estimate stand in.
+          final dStar = measured == null
+              ? dExtrapolated
+              : (measured.isCollision && measured.t > d ? measured.t : null);
           if (dStar != null &&
               _probeIsReal(culprits, from, dir, d, dStar, span)) {
             // A crossing — detour through it and keep going.
@@ -1132,14 +1244,30 @@ class _TracedSweep {
             if (arc == null || !_traceArc(arc, from, dir)) {
               return _AdvanceEnd(x, _EndKind.open, confident: confident);
             }
+            TraceDiagnostics.count(TraceCounter.locusDetours);
             d = arc.exit;
             x = from + dir * d;
             step = math.min(arc.radius, domain.cell);
             _snapshot();
+            // The arc is *how* a crossing relabels: continuing around it
+            // lands the tracked root on the other canonical index, which
+            // is the analytic branch. Re-baseline the relabel-consistency
+            // guard on it, exactly as the fold swap does — a stale
+            // baseline made the guard refuse every trial past the exit,
+            // and the walk stalled there until its budget ran out
+            // (Phase 117b; latent since the guard landed in 117, hidden
+            // while exits happened to land inside the re-entry floor).
+            for (var i = 0; i < seeded.length; i++) {
+              final matched = seeded[i].tracedBranch.matchedIndex;
+              if (matched >= 0) {
+                _prevMatched[i] = matched;
+              }
+            }
             dPrev = d;
             sepPrev = double.infinity;
             dCurr = d;
             sepCurr = minSeparation(seeded);
+            stepLimit = double.infinity;
             final p = traced.position;
             if (p != null) {
               out?.add(p);
@@ -1167,6 +1295,45 @@ class _TracedSweep {
         for (final o in seeded)
           if (o.tracedBranch.separation < detourTriggerSeparation) o,
       ];
+
+  /// The measured minimum of the culprits' candidate separation ahead of
+  /// [d] (Phase 117b) — where the roots come closest, and how close.
+  /// Null when the profile offers no bracket inside the leg, and only
+  /// then does the caller fall back to the extrapolated estimate.
+  ///
+  /// Slot state is untouched: the probe only drives the chain and reads
+  /// static candidate lists. The chain is left at the last probe; the
+  /// next trial re-drives it.
+  SeparationMinimum? _measureCollision(
+    List<IntersectionPoint> culprits,
+    double from,
+    double dir,
+    double d,
+    double span,
+  ) {
+    if (culprits.isEmpty) {
+      return null;
+    }
+    final minimum = locateSeparationMinimum(
+      from: d,
+      end: span,
+      firstStep: detourTriggerStep,
+      separationAt: (t) {
+        TraceDiagnostics.count(TraceCounter.collisionProbes);
+        driveReal(from + dir * t);
+        var min = double.infinity;
+        for (final o in culprits) {
+          final sep = TracedBranch.candidateSeparation(
+            intersectionCandidates(o.curve1, o.curve2),
+          );
+          if (sep < min) min = sep;
+        }
+        return min;
+      },
+    );
+    _restoreAll();
+    return minimum;
+  }
 
   /// Whether every culprit is real (defined) at a static probe past the
   /// singularity — crossing vs fold. Slot state is restored afterwards;
@@ -1206,8 +1373,14 @@ class _TracedSweep {
     }
     try {
       var theta = math.pi;
-      var dTheta = math.pi;
+      var dTheta = maxDetourArcStep;
       while (theta > 0) {
+        TraceDiagnostics.checkpoint(
+          'locus detour arc',
+          detail: () => 'theta=${theta.toStringAsFixed(6)} '
+              'dTheta=${dTheta.toStringAsExponential(2)} '
+              'trials=$_trials/$_budget',
+        );
         if (_trials >= _budget) {
           for (final o in seeded) {
             o.tracedBranch.allowComplexCarriers = false;
@@ -1216,6 +1389,7 @@ class _TracedSweep {
           return false;
         }
         _trials++;
+        TraceDiagnostics.count(TraceCounter.locusTrials);
         final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
         _driveComplex(Complex(from) + arc.tAt(trialTheta).scale(dir));
         if (trialAccepted(
@@ -1225,7 +1399,7 @@ class _TracedSweep {
             ) &&
             collisionFree(_pairs)) {
           theta = trialTheta;
-          dTheta = dTheta * 2 < theta ? dTheta * 2 : theta;
+          dTheta = math.min(dTheta * 2 < theta ? dTheta * 2 : theta, maxDetourArcStep);
           _snapshot();
         } else {
           _restoreAll();

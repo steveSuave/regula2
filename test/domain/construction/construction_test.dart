@@ -28,6 +28,27 @@ void main() {
       );
     });
 
+    test('nameOf labels an object for diagnostics: its name, else its '
+        'kind and id', () {
+      final c = Construction();
+      final named = FreePoint(
+        id: 'aaaaaaaa-1111',
+        position: Vec2.zero,
+        attributes: const ObjectAttributes(name: 'A'),
+      );
+      final anonymous = FreePoint(id: 'bbbbbbbb-2222', position: Vec2.zero);
+      c
+        ..add(named)
+        ..add(anonymous);
+      expect(c.nameOf(named.id), 'A');
+      expect(c.nameOf(anonymous.id), 'FreePoint#bbbbbb');
+      expect(
+        c.nameOf('gone'),
+        contains('gone'),
+        reason: 'a deleted object still labels its own log line',
+      );
+    });
+
     test('rejects an object whose parents are not in the construction', () {
       final c = Construction();
       final a = FreePoint(id: 'a', position: Vec2.zero);

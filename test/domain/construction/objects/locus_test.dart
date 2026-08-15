@@ -603,6 +603,105 @@ void main() {
     });
   });
 
+  group('Locus: transversal root crossings (Phase 117b)', () {
+    // The apatitos-topos.rgl shape, reduced to its essential invariant.
+    // C sits outside a circle centred at the origin; the driver D sweeps
+    // that circle; E is the intersection of the circle with the
+    // *segment* C→D. Because D is itself on the circle it is always one
+    // of the two roots, so E's candidates pass through each other
+    // **transversally** — separation vanishing linearly — twice a turn,
+    // at the tangent points from C. The canonical order flips there.
+    //
+    // Traced is the chord's midpoint M = mid(D, E). Thales gives the
+    // invariant that makes the two sheets tell each other apart: with E
+    // the *second* intersection, OM ⊥ MC, so M rides the circle with
+    // diameter OC. With E collapsed onto D — the canonical branch on the
+    // arc facing C, and what the walk drew before Phase 117b — M is D
+    // itself, which rides the *original* circle instead. The two circles
+    // meet only at the two tangent points.
+    const c = Vec2(-4, 0);
+    const thalesCentre = Vec2(-2, 0);
+    const thalesRadius = 2.0;
+
+    Locus rig({int sampleCount = 64}) {
+      final centre = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+      final host = CircleCenterPoint(id: 'k', center: centre, onCircle: rim);
+      final outside = FreePoint(id: 'c', position: c);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final chord = Segment(id: 'seg', point1: outside, point2: driver);
+      final e = IntersectionPoint(
+        id: 'e',
+        curve1: host,
+        curve2: chord,
+        branchIndex: 0,
+      );
+      final traced = Midpoint(id: 'm', point1: driver, point2: e);
+      return Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: sampleCount,
+      );
+    }
+
+    test('every traced sample rides the Thales circle over OC — the walk '
+        'holds the second intersection through both crossings', () {
+      final locus = rig();
+      final samples = locus.samples!;
+      expect(samples, isNot(contains(null)), reason: 'one closed component');
+      for (final p in samples.cast<Vec2>()) {
+        expect(
+          p.distanceTo(thalesCentre),
+          closeTo(thalesRadius, 1e-9),
+          reason: 'sample $p left the chord-midpoint locus',
+        );
+      }
+      expect(samples.first, samples.last, reason: 'the walk closes');
+    });
+
+    test('the canonical scan does not: a third of it sits on the driver\'s '
+        'own circle instead — the sheet the walk used to follow', () {
+      // coreSamples is the static, canonical-branch scan. Pinning that it
+      // *disagrees* keeps this test honest: it fails if the fix ever
+      // regresses to canonical resolution, and it fails just as loudly if
+      // the rig stops exercising a crossing at all.
+      final locus = rig();
+      final canonical = locus.coreSamples!;
+      final off = canonical
+          .where((p) => (p.distanceTo(thalesCentre) - thalesRadius).abs() > 1e-6)
+          .toList();
+      expect(
+        off.length,
+        greaterThan(canonical.length ~/ 5),
+        reason: 'the arc facing C is where the canonical order flips',
+      );
+      for (final p in off) {
+        expect(
+          p.norm,
+          closeTo(2, 1e-9),
+          reason: 'and there the canonical root is the driver itself',
+        );
+      }
+    });
+
+    test('the sweep resolution does not decide the answer', () {
+      // A collision hiding inside one accepted step is a step-size bug,
+      // so the invariant must hold at every scan density — including
+      // coarse ones, where a whole crossing falls inside a single cell.
+      for (final n in [8, 16, 64, 128]) {
+        final locus = rig(sampleCount: n);
+        for (final p in locus.samples!.cast<Vec2>()) {
+          expect(
+            p.distanceTo(thalesCentre),
+            closeTo(thalesRadius, 1e-9),
+            reason: 'sampleCount $n',
+          );
+        }
+      }
+    });
+  });
+
   group('Locus as a parent', () {
     test('is rejected as a PointOnObject host', () {
       final locus = _circleLocus(sampleCount: 4);

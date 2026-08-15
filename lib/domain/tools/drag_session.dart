@@ -8,6 +8,7 @@ import '../commands/translate_objects_command.dart';
 import '../construction/construction.dart';
 import '../construction/free_point_ancestors.dart';
 import '../construction/geo_object.dart';
+import '../construction/locus_refresh.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/expression_text.dart';
 import '../construction/objects/free_point.dart';
@@ -17,6 +18,7 @@ import '../math/grid_snap.dart';
 import '../math/vec2.dart';
 import '../projective/proj_point.dart';
 import '../projective/tracing/drag_path.dart';
+import '../projective/tracing/trace_diagnostics.dart';
 import '../projective/tracing/tracing_flags.dart';
 
 /// One in-progress drag gesture in move/select mode.
@@ -251,19 +253,34 @@ class _TranslateDragSession implements DragSession {
   /// total delta, so a rigid shape stays rigid regardless of frame timing.
   @override
   void update(Vec2 pointer) {
-    _delta = pointer - _grabStart;
-    if (_isFreePoint) {
-      if (_traceDrags) {
-        _tracedUpdate(_freePointPosition);
-      } else {
-        _construction.moveFreePoint(_pointIds.single, _freePointPosition);
-      }
-      return;
-    }
-    for (final id in _pointIds) {
-      _construction.moveFreePoint(id, _startPositions[id]! + _delta);
+    TraceDiagnostics.frameBegin(_diagnosticLabel);
+    try {
+      // A preview frame, so loci may lag the pointer rather than pace it
+      // (Phase 117d). The gesture's *command* runs outside this scope,
+      // so what gets committed is never stale.
+      LocusRefresh.preview(() {
+        _delta = pointer - _grabStart;
+        if (_isFreePoint) {
+          if (_traceDrags) {
+            _tracedUpdate(_freePointPosition);
+          } else {
+            _construction.moveFreePoint(_pointIds.single, _freePointPosition);
+          }
+          return;
+        }
+        for (final id in _pointIds) {
+          _construction.moveFreePoint(id, _startPositions[id]! + _delta);
+        }
+      });
+    } finally {
+      TraceDiagnostics.frameEnd();
     }
   }
+
+  /// What the diagnostics recorder calls this gesture.
+  late final String _diagnosticLabel = _pointIds.length == 1
+      ? 'drag ${_construction.nameOf(_pointIds.single)}'
+      : 'translate ${_pointIds.length} points';
 
   /// One traced preview frame: continue branches along the path from the
   /// previous preview position to [target]. The static-solve bail (PLAN
@@ -291,6 +308,7 @@ class _TranslateDragSession implements DragSession {
       );
     } catch (_) {
       _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
+      TraceDiagnostics.count(TraceCounter.dragBails);
       _seedMemory.clear();
       _construction.moveFreePoint(id, target);
     }
@@ -497,8 +515,22 @@ class _SlideDragSession implements DragSession {
 
   double _parameter;
 
+  /// What the diagnostics recorder calls this gesture.
+  late final String _diagnosticLabel =
+      'slide ${_construction.nameOf(_pointId)}';
+
   @override
   void update(Vec2 pointer) {
+    TraceDiagnostics.frameBegin(_diagnosticLabel);
+    try {
+      // See the free-point session: a preview frame, so loci may lag.
+      LocusRefresh.preview(() => _update(pointer));
+    } finally {
+      TraceDiagnostics.frameEnd();
+    }
+  }
+
+  void _update(Vec2 pointer) {
     final from = _parameter;
     _parameter = _clamp(_project(pointer) + _grabOffset);
     if (!_traceDrags) {
@@ -526,6 +558,7 @@ class _SlideDragSession implements DragSession {
       );
     } catch (_) {
       _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
+      TraceDiagnostics.count(TraceCounter.dragBails);
       _seedMemory.clear();
       _construction.setPointOnObjectParameter(_pointId, _parameter);
     }

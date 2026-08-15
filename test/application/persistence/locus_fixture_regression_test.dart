@@ -172,6 +172,52 @@ void main() {
     }
   });
 
+  test('apatitos-topos.rgl (transversal crossings): the traced circumcentre '
+      'rides one straight line, both crossings included', () {
+    // The Phase 117b document. D sweeps circle a; E is the intersection
+    // of a with segment CD, so D itself is always one of E's two roots
+    // and the pair crosses *transversally* at each tangent point from C
+    // — the collapse law is linear, not the √ law Phase 115 fits. The
+    // traced point H is the circumcentre of D, G (the tangency point of
+    // the tangent from C) and F = mid(C, E).
+    //
+    // The analytic answer: |CF|·|CD| = ½|CE|·|CD| = ½·pow(C) = ½|CG|², so
+    // C has *constant* power about circle DFG. |CH|² − |HG|² is then
+    // constant, which is a line perpendicular to CG. Before 117b the walk
+    // glided across each crossing inside one accepted step and came out
+    // holding the canonical index: a third of the sweep drew the sheet
+    // where E has collapsed onto D, a curve merely asymptotic to that
+    // line.
+    final free = <FreePoint>[];
+    final locus = loadLocus('apatitos-topos.rgl', freeOut: free);
+    final c = free.singleWhere((p) => p.attributes.name == 'C').position;
+    // G is fixed (it does not depend on the driver), so read it off the
+    // construction rather than re-deriving it.
+    final samples = locus.samples!;
+    expect(samples, isNot(contains(null)), reason: 'one closed component');
+    final points = samples.cast<Vec2>();
+    expect(points.length, greaterThan(64));
+
+    // 2(G − C)·H + |C|² − |G|² = ½|CG|², written as a residual scaled by
+    // the sample's own magnitude so the far-out arm is judged fairly.
+    const g = Vec2(-1, 1.7320508075688774);
+    final k = (c - g).normSquared / 2;
+    for (final p in points) {
+      final residual =
+          (p - c).normSquared - (p - g).normSquared - k;
+      expect(
+        residual.abs() / (1 + p.norm),
+        lessThan(1e-6),
+        reason: 'sample $p left the constant-power line',
+      );
+    }
+    expect(points.first, points.last, reason: 'the sweep closes');
+    // The line runs to infinity where D, F, G go collinear, so the trace
+    // must actually get out there — a run that stopped short would pass
+    // the residual test trivially.
+    expect(points.map((p) => p.norm).reduce(math.max), greaterThan(50));
+  });
+
   test('locus-miss-2.json (twin tangent points): one closed figure-eight, '
       'no gap and no dropped half', () {
     // Traced is itself the coalescing intersection; the walk must flip

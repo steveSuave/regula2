@@ -242,4 +242,272 @@ void main() {
       }
     });
   });
+
+  group('collisionStepLimit (Phase 117b)', () {
+    test('keeps a step short of the collision under the √ law', () {
+      // The estimator is exact here, so the limit is a plain fraction
+      // of the true remaining distance — and stepping by it lands
+      // strictly before t*, which is the whole contract.
+      const tStar = 0.4;
+      double s(double t) => 3 * math.sqrt(tStar - t);
+      const t1 = 0.3, t2 = 0.35;
+      final limit = collisionStepLimit(t1: t1, s1: s(t1), t2: t2, s2: s(t2));
+      expect(limit, closeTo(collisionStepFraction * (tStar - t2), 1e-12));
+      expect(t2 + limit, lessThan(tStar));
+    });
+
+    test('keeps a step short of the collision under the linear law too — '
+        'the case that used to be stepped straight over', () {
+      // Two roots passing through each other transversally. The
+      // estimator undershoots here (that is fine: the limit only has to
+      // be conservative), but before this limit existed the controller
+      // took whole scan cells across such a collision, which is how a
+      // sheet swap slipped past every acceptance rule.
+      const tStar = 0.4;
+      double s(double t) => 3 * (tStar - t);
+      for (final (t1, t2) in const [(0.0, 0.2), (0.3, 0.35), (0.39, 0.399)]) {
+        final limit = collisionStepLimit(t1: t1, s1: s(t1), t2: t2, s2: s(t2));
+        expect(limit, greaterThan(0), reason: 't2=$t2');
+        expect(t2 + limit, lessThan(tStar), reason: 't2=$t2');
+      }
+    });
+
+    test('does not throttle when the samples point at no collision ahead',
+        () {
+      expect(
+        collisionStepLimit(t1: 0.1, s1: 0.5, t2: 0.2, s2: 0.5),
+        double.infinity,
+      );
+      expect(
+        collisionStepLimit(t1: 0.1, s1: double.infinity, t2: 0.2, s2: 0.5),
+        double.infinity,
+      );
+    });
+
+    test('is self-scaling: a slowly closing separation barely throttles', () {
+      // s falls by 1% over a 0.1 step: the collision extrapolates ~10
+      // units ahead, so nothing near-term is capped.
+      final limit =
+          collisionStepLimit(t1: 0.1, s1: 1.0, t2: 0.2, s2: 0.99);
+      expect(limit, greaterThan(1));
+    });
+  });
+
+  group('locateSeparationMinimum (Phase 117b)', () {
+    test('finds a linear collision and calls it one', () {
+      // |t − 0.4|: a transversal crossing, the profile the collapse-law
+      // fit cannot extrapolate.
+      final found = locateSeparationMinimum(
+        from: 0.1,
+        end: 1,
+        firstStep: 1e-3,
+        separationAt: (t) => (t - 0.4).abs(),
+      );
+      expect(found, isNotNull);
+      expect(found!.t, closeTo(0.4, 1e-6));
+      expect(found.isCollision, isTrue);
+    });
+
+    test('locates a √ collision — the tangency law — just as accurately',
+        () {
+      // Classification is covered below; what matters here is that the
+      // parameter comes out right whatever the exponent, which is the
+      // whole reason for measuring instead of extrapolating.
+      final found = locateSeparationMinimum(
+        from: 0.1,
+        end: 1,
+        firstStep: 1e-3,
+        separationAt: (t) => math.sqrt((t - 0.4).abs()),
+      );
+      expect(found, isNotNull);
+      expect(found!.t, closeTo(0.4, 1e-9));
+    });
+
+    test('a profile that reaches zero is a collision on either law — the '
+        'kernel snaps coincident roots, so real ones do reach it', () {
+      for (final s in <double Function(double)>[
+        (t) => (t - 0.4).abs(),
+        (t) => math.sqrt((t - 0.4).abs()),
+        (t) => 3 * (t - 0.4) * (t - 0.4),
+      ]) {
+        // Mirror the kernel: below its coincidence tolerance the solver
+        // returns the double root itself, so the profile bottoms at a
+        // hard zero rather than trailing off.
+        double snapped(double t) {
+          final v = s(t);
+          return v < 1e-12 ? 0 : v;
+        }
+
+        final found = locateSeparationMinimum(
+          from: 0.1,
+          end: 1,
+          firstStep: 1e-3,
+          separationAt: snapped,
+        );
+        expect(found, isNotNull);
+        expect(found!.t, closeTo(0.4, 1e-5));
+        expect(found.isCollision, isTrue);
+      }
+    });
+
+    test('finds a near-miss and refuses to call it a collision — the '
+        'discriminator the extrapolation cannot provide', () {
+      // s = √((t − a)² + b²) bottoms out at b > 0. Misclassifying this
+      // as a collision would plan an arc around complex zeros the real
+      // path passes *between*, winding and swapping the branches.
+      for (final b in [1e-2, 1e-4, 1e-5]) {
+        final found = locateSeparationMinimum(
+          from: 0.1,
+          end: 1,
+          firstStep: 1e-3,
+          separationAt: (t) => math.sqrt((t - 0.4) * (t - 0.4) + b * b),
+        );
+        expect(found, isNotNull, reason: 'b=$b');
+        expect(found!.t, closeTo(0.4, 1e-3), reason: 'b=$b');
+        expect(found.separation, closeTo(b, b * 1e-3), reason: 'b=$b');
+        expect(found.isCollision, isFalse, reason: 'b=$b');
+      }
+    });
+
+    test('a miss tighter than doubleRootEpsilon reads as a collision — the '
+        'kernel already calls roots that close a double root', () {
+      // Not a wart: below this separation the solver itself snaps the
+      // pair, `collisionFree` waives its refusal and branch adoption
+      // declines to re-derive an index. Treating such a miss as a
+      // collision is the same convention, not a new one.
+      final found = locateSeparationMinimum(
+        from: 0.1,
+        end: 1,
+        firstStep: 1e-3,
+        separationAt: (t) => math.sqrt((t - 0.4) * (t - 0.4) + 1e-16),
+      );
+      expect(found, isNotNull);
+      expect(found!.isCollision, isTrue);
+    });
+
+    test('returns null when the profile never turns around inside the '
+        'window — nothing to aim at, so the caller keeps its estimate', () {
+      // Monotonically rising.
+      expect(
+        locateSeparationMinimum(
+          from: 0.1,
+          end: 1,
+          firstStep: 1e-3,
+          separationAt: (t) => t,
+        ),
+        isNull,
+      );
+      // Monotonically falling: the minimum sits past the window's end.
+      expect(
+        locateSeparationMinimum(
+          from: 0.1,
+          end: 1,
+          firstStep: 1e-3,
+          separationAt: (t) => 2 - t,
+        ),
+        isNull,
+      );
+      // Degenerate windows.
+      expect(
+        locateSeparationMinimum(
+          from: 0.5,
+          end: 0.5,
+          firstStep: 1e-3,
+          separationAt: (t) => (t - 0.4).abs(),
+        ),
+        isNull,
+      );
+    });
+
+    test('a collision thousands of first-steps ahead is still bracketed — '
+        'the search doubles its stride', () {
+      // The walks always ask from close in (their own step has already
+      // collapsed to detourTriggerStep), but the stride must still cover
+      // a collision several decades further out than the first probe.
+      final found = locateSeparationMinimum(
+        from: 0.8,
+        end: 1,
+        firstStep: 1e-5,
+        separationAt: (t) => (t - 0.9).abs(),
+      );
+      expect(found, isNotNull);
+      // Located to a few parts in 10⁴ of the distance travelled, which
+      // is where a *confirmed* collision stops being refined (Phase
+      // 117c): all the parameter is for is centring an arc whose radius
+      // is a fraction of that same distance.
+      expect(found!.t, closeTo(0.9, 1e-4 * (0.9 - 0.8)));
+      expect(found.isCollision, isTrue);
+    });
+
+    test('a confirmed collision stops being refined once the verdict '
+        'lands — the probe count is the point (Phase 117c)', () {
+      // The measurement runs on every starving step of every frame and
+      // each probe is a chain solve, so "how many" is a behavioural
+      // contract, not an implementation detail: at the floating-point
+      // floor a single crossing cost ~205 probes, which on a document
+      // carrying a locus was more than half the frame.
+      var probes = 0;
+      final found = locateSeparationMinimum(
+        from: 0.8,
+        end: 1,
+        firstStep: 1e-5,
+        separationAt: (t) {
+          probes++;
+          return (t - 0.9).abs();
+        },
+      );
+      expect(found!.isCollision, isTrue);
+      expect(probes, lessThan(80));
+    });
+
+    test('a near-miss is still refined to the floor — the cheap stopping '
+        'rule applies only once a probe has been below the threshold',
+        () {
+      // The relaxed rule may never decide the *verdict*: a miss is told
+      // from a collision below its own closest approach, so stopping
+      // early here would read this profile as a collision — the
+      // expensive direction, an arc planned around branch points the
+      // real path passes between.
+      var probes = 0;
+      final found = locateSeparationMinimum(
+        from: 0.8,
+        end: 1,
+        firstStep: 1e-5,
+        separationAt: (t) {
+          probes++;
+          return (t - 0.9).abs() + 1e-4;
+        },
+      );
+      expect(found!.isCollision, isFalse);
+      expect(found.t, closeTo(0.9, 1e-9));
+      expect(probes, greaterThan(100));
+    });
+
+    test('a collision just short of the window edge is reachable — the '
+        'last probe clamps to the edge instead of giving up', () {
+      final found = locateSeparationMinimum(
+        from: 0.998,
+        end: 1,
+        firstStep: 1e-5,
+        separationAt: (t) => (t - 0.999).abs(),
+      );
+      expect(found, isNotNull);
+      expect(found!.t, closeTo(0.999, 1e-9));
+      expect(found.isCollision, isTrue);
+    });
+
+    test('a profile still falling at the window edge has no interior '
+        'minimum: a collision at or past the end is not this function\'s '
+        'to find (no arc can enclose a singular endpoint anyway)', () {
+      expect(
+        locateSeparationMinimum(
+          from: 0.5,
+          end: 1,
+          firstStep: 1e-5,
+          separationAt: (t) => (t - 1.0).abs(),
+        ),
+        isNull,
+      );
+    });
+  });
 }

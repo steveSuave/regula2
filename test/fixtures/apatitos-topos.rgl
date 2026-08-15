@@ -1,0 +1,378 @@
+{
+  "version": 1,
+  "viewport": {
+    "pan": [
+      -7.522374485781628,
+      8.912304674099115
+    ],
+    "scale": 49.324821072149795,
+    "rotation": 0
+  },
+  "showAxes": true,
+  "showGrid": true,
+  "snapToGrid": true,
+  "objects": [
+    {
+      "id": "195d0637-4b32-4d64-8dc8-e96ad6f3a684",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 0,
+        "y": -0.0
+      },
+      "attributes": {
+        "name": "A",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "32b32868-811f-4cdb-86d2-5b01cf06ca33",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 2,
+        "y": -0.0
+      },
+      "attributes": {
+        "name": "B",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "130b5672-566b-4094-bb49-ef6a2b7f2966",
+      "type": "CircleCenterPoint",
+      "parents": [
+        "195d0637-4b32-4d64-8dc8-e96ad6f3a684",
+        "32b32868-811f-4cdb-86d2-5b01cf06ca33"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "a",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "2920590a-c584-48fa-bead-8720c131f94d",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": -4,
+        "y": -0.0
+      },
+      "attributes": {
+        "name": "C",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 3.506479220654551,
+        "labelDy": -30.536275154134174,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "f0042319-2a6b-4cf4-918e-6382aabdb585",
+      "type": "TangentLine",
+      "parents": [
+        "2920590a-c584-48fa-bead-8720c131f94d",
+        "130b5672-566b-4094-bb49-ef6a2b7f2966"
+      ],
+      "params": {
+        "branch": 1
+      },
+      "attributes": {
+        "name": "c",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "124d7054-3b5f-451c-a5dc-75f6400e7fa1",
+      "type": "PointOnObject",
+      "parents": [
+        "130b5672-566b-4094-bb49-ef6a2b7f2966"
+      ],
+      "params": {
+        "parameter": 0.2703228303717905
+      },
+      "attributes": {
+        "name": "D",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "137a2561-11d4-4a25-aafb-5e51a512d2b8",
+      "type": "Segment",
+      "parents": [
+        "2920590a-c584-48fa-bead-8720c131f94d",
+        "124d7054-3b5f-451c-a5dc-75f6400e7fa1"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "b",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "f9a8b436-538b-4262-8004-ca014d233c61",
+      "type": "IntersectionPoint",
+      "parents": [
+        "130b5672-566b-4094-bb49-ef6a2b7f2966",
+        "137a2561-11d4-4a25-aafb-5e51a512d2b8"
+      ],
+      "params": {
+        "branchIndex": 0
+      },
+      "attributes": {
+        "name": "E",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "60f38666-ebb8-482a-acbd-e2e215288d19",
+      "type": "Midpoint",
+      "parents": [
+        "f9a8b436-538b-4262-8004-ca014d233c61",
+        "2920590a-c584-48fa-bead-8720c131f94d"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "F",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "3e5aa905-19bc-4128-b516-5062bfa16ba3",
+      "type": "IntersectionPoint",
+      "parents": [
+        "f0042319-2a6b-4cf4-918e-6382aabdb585",
+        "130b5672-566b-4094-bb49-ef6a2b7f2966"
+      ],
+      "params": {
+        "branchIndex": 0
+      },
+      "attributes": {
+        "name": "G",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "90866dfc-4587-4a2a-acd0-d30f8ce29dcf",
+      "type": "ThreePointCircle",
+      "parents": [
+        "124d7054-3b5f-451c-a5dc-75f6400e7fa1",
+        "3e5aa905-19bc-4128-b516-5062bfa16ba3",
+        "60f38666-ebb8-482a-acbd-e2e215288d19"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "d",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "fe33bac3-2b6c-4667-bd44-6b33659821cc",
+      "type": "CircleCenter",
+      "parents": [
+        "90866dfc-4587-4a2a-acd0-d30f8ce29dcf"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "H",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "8e7f2a52-fb93-457a-909e-83d309802416",
+      "type": "Locus",
+      "parents": [
+        "124d7054-3b5f-451c-a5dc-75f6400e7fa1",
+        "fe33bac3-2b6c-4667-bd44-6b33659821cc"
+      ],
+      "params": {
+        "sampleCount": 128,
+        "center": -0.7753650552500748,
+        "halfSpan": 17.28
+      },
+      "attributes": {
+        "name": "e",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    }
+  ]
+}

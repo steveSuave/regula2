@@ -33,6 +33,7 @@ enum AppAction {
   toggleGrid,
   toggleSnapToGrid,
   toggleTraceOverlay,
+  dumpTraceDiagnostics,
   nudgeLeft,
   nudgeRight,
   nudgeUp,
@@ -457,6 +458,15 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Show/hide trace overlay (drag-tracing step counts)',
     section: ShortcutSection.viewport,
     display: '⇧ O',
+  ),
+  const ShortcutBinding(
+    // Next to ⇧O (the overlay) in the same key family: primary
+    // escalates "show me the last frame" to "show me every frame".
+    sequence: [KeyStroke(LogicalKeyboardKey.keyO, shift: true, primary: true)],
+    action: AppAction.dumpTraceDiagnostics,
+    label: 'Trace diagnostics report (copyable)',
+    section: ShortcutSection.viewport,
+    display: 'Ctrl/⌘ ⇧ O',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.arrowLeft)],

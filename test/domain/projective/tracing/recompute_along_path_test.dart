@@ -2,17 +2,22 @@ import 'dart:math' as math;
 
 import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/proj_point.dart';
+import 'package:regula/domain/projective/tolerances.dart';
 import 'package:regula/domain/projective/tracing/drag_path.dart';
 import 'package:regula/domain/projective/tracing/trace_step_budget_exception.dart';
+import 'package:regula/domain/projective/tracing/traced_branch.dart';
 
 /// A puppet intersection point: real parents wire it into the graph (and
 /// their real candidates give the seed its separation), but its own
@@ -560,6 +565,231 @@ void main() {
       expect(observed, result.acceptedSteps);
       expect(observed, greaterThan(0));
       expect(untracked.tracedBranch.isActive, isFalse);
+    });
+  });
+
+  group('recomputeAlongPath: structural double roots (Phase 117b)', () {
+    /// The apatitos-topos.rgl freeze rig: a tangent from a free point C
+    /// to a circle, and the point where that tangent meets the circle.
+    /// The tangent touches by construction, so the intersection's two
+    /// candidates coincide at every position of every parent — a double
+    /// root that no step size can separate.
+    (Construction, IntersectionPoint) tangencyRig() {
+      final construction = Construction();
+      final centre = fp('o', 0, 0);
+      final rim = fp('r', 2, 0);
+      final c = fp('c', -4, 0);
+      final circle = CircleCenterPoint(id: 'k', center: centre, onCircle: rim);
+      final tangent = TangentLine(
+        id: 'tan',
+        point: c,
+        circle: circle,
+        branch: 0,
+      );
+      final touch = IntersectionPoint(
+        id: 'g',
+        curve1: tangent,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      construction
+        ..add(centre)
+        ..add(rim)
+        ..add(c)
+        ..add(circle)
+        ..add(tangent)
+        ..add(touch);
+      return (construction, touch);
+    }
+
+    test('the candidates really do coincide — the premise of this group',
+        () {
+      final (_, touch) = tangencyRig();
+      final candidates = intersectionCandidates(touch.curve1, touch.curve2);
+      expect(candidates, hasLength(2));
+      expect(
+        TracedBranch.candidateSeparation(candidates),
+        lessThan(doubleRootEpsilon),
+      );
+    });
+
+    test('a drag past one does not starve: the pass completes instead of '
+        'burning its whole budget and bailing', () {
+      // Before 117b this slot seeded, the Cinderella bound (motion <
+      // separation/2, with separation ~1e-16) refused every trial, the
+      // controller halved to nothing and every frame of every drag in
+      // the document threw. Each of those ~130 refused trials recomputed
+      // the whole downstream graph, which is what froze the app.
+      final (construction, touch) = tangencyRig();
+      final result = construction.recomputeAlongPath(
+        'c',
+        const DragPath(Vec2(-4, 0), Vec2(-5, 3)),
+      );
+      expect(result.acceptedSteps, lessThan(8));
+      expect(result.rejectedSteps, lessThan(8));
+      // And the answer is right: the touch point of the tangent from
+      // (−5, 3) still sits on the circle and on the tangent.
+      expect(touch.position!.norm, closeTo(2, 1e-9));
+    });
+
+    test('an unseedable double root does not stop the pass tracing '
+        'everything else', () {
+      // A second, genuinely transverse intersection downstream of the
+      // same drag must keep its continuation.
+      final (construction, _) = tangencyRig();
+      final far = fp('f', 0, 6);
+      final chord = LineThroughTwoPoints(
+        id: 'ch',
+        point1: construction.objects.whereType<FreePoint>().first,
+        point2: far,
+      );
+      final circle = construction.objects.whereType<CircleCenterPoint>().single;
+      final crossing = IntersectionPoint(
+        id: 'x',
+        curve1: chord,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      construction
+        ..add(far)
+        ..add(chord)
+        ..add(crossing);
+      final before = crossing.projPoint!;
+      final result = construction.recomputeAlongPath(
+        'f',
+        const DragPath(Vec2(0, 6), Vec2(1, 6)),
+      );
+      expect(result.acceptedSteps, greaterThan(0));
+      // A short drag cannot move the tracked root far — a swap onto the
+      // other branch would jump it across the circle.
+      expect(
+        crossing.position!.distanceTo(before.toVec2()!),
+        lessThan(1),
+      );
+    });
+  });
+
+  group('recomputeAlongPath: loci are leaves (Phase 117b)', () {
+    test('a locus recomputes once per pass, not once per trial', () {
+      // Recomputing a locus is a whole traced sweep of its own, and no
+      // acceptance decision can read one (nothing may take a locus as a
+      // parent). Before 117b every trial paid for one, so a pass that
+      // refined hard — the frozen document's every frame — paid its
+      // whole step budget in full locus sweeps.
+      final construction = Construction();
+      final fixed = fp('a', 0, 0);
+      final moving = fp('c2', -6, 4);
+      final anchor = fp('an', 10, 10);
+      final k1 = FixedRadiusCircle(id: 'k1', center: fixed, radius: 2);
+      final k2 = FixedRadiusCircle(id: 'k2', center: moving, radius: 2);
+      // Two tracked roots on the circle pair — these make the pass work.
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: k1,
+        curve2: k2,
+        branchIndex: 0,
+      );
+      final p1 = IntersectionPoint(
+        id: 'p1',
+        curve1: k1,
+        curve2: k2,
+        branchIndex: 1,
+      );
+      // …and an expensive leaf downstream of the same drag.
+      final driver = PointOnObject(id: 'drv', curve: k2, parameter: 0);
+      final traced = Midpoint(id: 'm', point1: driver, point2: anchor);
+      final locus = _CountingLocus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 32,
+      );
+      construction
+        ..add(fixed)
+        ..add(moving)
+        ..add(anchor)
+        ..add(k1)
+        ..add(k2)
+        ..add(p0)
+        ..add(p1)
+        ..add(driver)
+        ..add(traced)
+        ..add(locus);
+
+      locus.recomputes = 0;
+      final result = construction.recomputeAlongPath(
+        'c2',
+        const DragPath(Vec2(-6, 4), Vec2(6, 4)),
+      );
+      expect(
+        result.acceptedSteps + result.rejectedSteps,
+        greaterThan(1),
+        reason: 'the pass must actually take several trials to be a test',
+      );
+      expect(locus.recomputes, 1);
+      // Settled at the pass's end state, not left stale.
+      expect(locus.samples, isNotNull);
+      final tracedSamples = locus.samples!;
+      locus.recompute();
+      expect(locus.samples, tracedSamples);
+    });
+
+    test('a bailing pass still settles its loci', () {
+      // The budget path throws, and the public API must not leave a
+      // stale locus behind for a caller that catches and carries on.
+      // The drag ends exactly on the circles' tangency, where no arc can
+      // enclose the singular endpoint and the controller creeps until it
+      // throws (the Phase 115 case).
+      final construction = Construction();
+      final fixed = fp('a', 0, 0);
+      final moving = fp('c2', 0, 6);
+      final anchor = fp('an', 10, 10);
+      final k1 = FixedRadiusCircle(id: 'k1', center: fixed, radius: 2);
+      final k2 = FixedRadiusCircle(id: 'k2', center: moving, radius: 2);
+      final p0 = IntersectionPoint(
+        id: 'p0',
+        curve1: k1,
+        curve2: k2,
+        branchIndex: 0,
+      );
+      final p1 = IntersectionPoint(
+        id: 'p1',
+        curve1: k1,
+        curve2: k2,
+        branchIndex: 1,
+      );
+      final driver = PointOnObject(id: 'drv', curve: k2, parameter: 0);
+      final traced = Midpoint(id: 'm', point1: driver, point2: anchor);
+      final locus = _CountingLocus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 32,
+      );
+      construction
+        ..add(fixed)
+        ..add(moving)
+        ..add(anchor)
+        ..add(k1)
+        ..add(k2)
+        ..add(p0)
+        ..add(p1)
+        ..add(driver)
+        ..add(traced)
+        ..add(locus);
+
+      locus.recomputes = 0;
+      expect(
+        () => construction.recomputeAlongPath(
+          'c2',
+          const DragPath(Vec2(0, 6), Vec2(0, 4)),
+        ),
+        throwsA(isA<TraceStepBudgetException>()),
+      );
+      expect(locus.recomputes, 1);
+      final tracedSamples = locus.samples;
+      locus.recompute();
+      expect(locus.samples, tracedSamples, reason: 'settled, not stale');
     });
   });
 
@@ -1198,4 +1428,22 @@ void main() {
       expect(p1.projPoint!.closeTo(tracked1, 1e-6), isTrue);
     });
   });
+}
+
+/// A [Locus] that counts its recomputes — the leaf-deferral probe.
+class _CountingLocus extends Locus {
+  _CountingLocus({
+    required super.id,
+    required super.driver,
+    required super.traced,
+    super.sampleCount,
+  });
+
+  int recomputes = 0;
+
+  @override
+  void recompute() {
+    recomputes++;
+    super.recompute();
+  }
 }
