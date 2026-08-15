@@ -38,8 +38,14 @@ enum TraceCounter {
   /// Passes that gave up and fell back to the static solve.
   dragBails,
 
-  /// `Locus.recompute` calls.
+  /// `Locus.recompute` calls that actually swept.
   locusRecomputes,
+
+  /// `Locus.recompute` calls a preview frame skipped, because the last
+  /// sweep had not yet earned another (see `LocusRefresh`). A frame
+  /// showing these is a frame whose locus is deliberately lagging the
+  /// pointer to keep the gesture live.
+  locusCoalesced,
 
   /// Canonical scan samples solved (the structure pass).
   locusScanSolves,
@@ -105,6 +111,8 @@ class TraceFrameRecord {
           '${this[TraceCounter.locusDetours]}d/'
           '${this[TraceCounter.locusFolds]}fold',
       'probes=${this[TraceCounter.collisionProbes]}',
+      if (this[TraceCounter.locusCoalesced] > 0)
+        'coalesced=${this[TraceCounter.locusCoalesced]}',
       if (this[TraceCounter.locusBudgetEnds] > 0)
         'BUDGET-END×${this[TraceCounter.locusBudgetEnds]}',
       if (this[TraceCounter.dragBails] > 0)

@@ -8,6 +8,7 @@ import '../../projective/tracing/singularity.dart';
 import '../../projective/tracing/trace_diagnostics.dart';
 import '../../projective/tracing/traced_branch.dart';
 import '../geo_object.dart';
+import '../locus_refresh.dart';
 import '../trace_acceptance.dart';
 import 'intersection_point.dart';
 import 'point_on_object.dart';
@@ -153,8 +154,29 @@ class Locus extends GeoLocus {
   @override
   List<GeoObject> get parents => [driver, traced];
 
+  /// Wall time the last completed sweep took, and how long ago it
+  /// finished — the two numbers [LocusRefresh] throttles on. Both are
+  /// preview bookkeeping only; nothing about the sweep's *result*
+  /// depends on them.
+  double _lastSweepMs = 0;
+  final Stopwatch _sinceSweep = Stopwatch();
+
   @override
   void recompute() {
+    // While a gesture is previewing, a sweep that costs more than its
+    // share of the frame is skipped and this locus keeps the samples it
+    // has (Phase 117d — see [LocusRefresh]). Safe because a locus is a
+    // DAG leaf: nothing may take one as a parent, so no recompute and no
+    // acceptance decision anywhere can read a stale sample. The gesture
+    // commits through a command, with previewing false, so the settled
+    // state is never stale.
+    if (!LocusRefresh.due(
+      lastSweepMs: _lastSweepMs,
+      idleMs: _sinceSweep.elapsedMicroseconds / 1000,
+    )) {
+      TraceDiagnostics.count(TraceCounter.locusCoalesced);
+      return;
+    }
     // A frame of its own when nothing else opened one — a sweep
     // triggered by a load, a command or an undo is exactly as capable of
     // wedging the app as one inside a drag, and frames nest, so this is
@@ -162,9 +184,14 @@ class Locus extends GeoLocus {
     TraceDiagnostics.frameBegin('locus ${attributes.name}');
     TraceDiagnostics.count(TraceCounter.locusRecomputes);
     TraceDiagnostics.locusBegin();
+    final watch = Stopwatch()..start();
     try {
       _recompute();
     } finally {
+      _lastSweepMs = watch.elapsedMicroseconds / 1000;
+      _sinceSweep
+        ..reset()
+        ..start();
       TraceDiagnostics.locusEnd();
       TraceDiagnostics.frameEnd();
     }

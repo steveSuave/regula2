@@ -75,6 +75,17 @@ Opened 2026-08-15: the 117b user reported both documents *still* slow and then w
 - [x] A debug web build says so once at startup, naming `--profile` — this cost two sessions of hunting a freeze that was not there
 - [x] Checked and rejected: a coarse locus preview during drags. 128 → 16 samples only takes 504 → 349 solves (the walk is adaptive; the scan is ~15% of a sweep), so it trades real fidelity for ~30%
 
+## Phase 117d — A locus may lag the pointer
+
+Opened 2026-08-15, straight off 117c's answer. Profile mode fixed the reporter's session and nothing structural: a preview frame still cost 500–900 chain solves with no defence against those solves being slow. See PLAN §"A locus may lag the pointer".
+
+- [x] `LocusRefresh` (`lib/domain/construction/`): a scoped `previewing` flag plus a duty-cycle rule — during a preview a locus re-sweeps only once it has been idle at least as long as its own last sweep took (`maxShare`, default 0.5). No wall-clock constant in the rule, so it is self-tuning across machines, documents and compilers
+- [x] Sound because a locus is a DAG leaf: nothing may take one as a parent, so no recompute and no acceptance decision can read a stale sample. Skipping is invisible to the graph
+- [x] Both drag sessions scope their preview frame; the gesture's command runs *outside* it, so the committed, undone, redone and saved states are never stale
+- [x] Measured on `locus-miss-2.json`: at 60 Hz with a healthy sweep **299/300 frames still sweep** (no behaviour change); with frames arriving as fast as they are served, mean frame cost 2.09 ms → 0.01 ms and the locus coalesces instead of the gesture dying
+- [x] Tests: the policy (never-swept, duty cycle, share 1 = old behaviour, clamping, scope nesting and restore-on-throw) and the integration — previews coalesce, the command leaves the locus current and equal to a cold sweep, a cancel restores the start, share 1 is bit-identical to the old path
+- [ ] Later, if a document ever needs it: the honest remaining lever is per-solve cost (allocation in the complex kernel), not the sweep's shape. Phase 122
+
 ## Phase 118 — Codec v2 + v1 migration
 
 - [ ] `constructionFormatVersion = 2`; v1 decode path kept permanently (`branchIndex` documented as canonical-order seed)

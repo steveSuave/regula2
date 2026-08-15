@@ -8,6 +8,7 @@ import '../commands/translate_objects_command.dart';
 import '../construction/construction.dart';
 import '../construction/free_point_ancestors.dart';
 import '../construction/geo_object.dart';
+import '../construction/locus_refresh.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/expression_text.dart';
 import '../construction/objects/free_point.dart';
@@ -254,18 +255,23 @@ class _TranslateDragSession implements DragSession {
   void update(Vec2 pointer) {
     TraceDiagnostics.frameBegin(_diagnosticLabel);
     try {
-      _delta = pointer - _grabStart;
-      if (_isFreePoint) {
-        if (_traceDrags) {
-          _tracedUpdate(_freePointPosition);
-        } else {
-          _construction.moveFreePoint(_pointIds.single, _freePointPosition);
+      // A preview frame, so loci may lag the pointer rather than pace it
+      // (Phase 117d). The gesture's *command* runs outside this scope,
+      // so what gets committed is never stale.
+      LocusRefresh.preview(() {
+        _delta = pointer - _grabStart;
+        if (_isFreePoint) {
+          if (_traceDrags) {
+            _tracedUpdate(_freePointPosition);
+          } else {
+            _construction.moveFreePoint(_pointIds.single, _freePointPosition);
+          }
+          return;
         }
-        return;
-      }
-      for (final id in _pointIds) {
-        _construction.moveFreePoint(id, _startPositions[id]! + _delta);
-      }
+        for (final id in _pointIds) {
+          _construction.moveFreePoint(id, _startPositions[id]! + _delta);
+        }
+      });
     } finally {
       TraceDiagnostics.frameEnd();
     }
@@ -517,7 +523,8 @@ class _SlideDragSession implements DragSession {
   void update(Vec2 pointer) {
     TraceDiagnostics.frameBegin(_diagnosticLabel);
     try {
-      _update(pointer);
+      // See the free-point session: a preview frame, so loci may lag.
+      LocusRefresh.preview(() => _update(pointer));
     } finally {
       TraceDiagnostics.frameEnd();
     }
