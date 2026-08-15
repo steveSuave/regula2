@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import '../../math/vec2.dart';
 import '../../projective/complex.dart';
 import '../../projective/proj_point.dart';
+import '../../projective/tolerances.dart';
 import '../../projective/tracing/singularity.dart';
 import '../../projective/tracing/traced_branch.dart';
 import '../geo_object.dart';
@@ -679,15 +680,23 @@ class _TracedSweep {
       if (o is IntersectionPoint) {
         final p = o.projPoint;
         if (p != null && !p.isZero) {
+          final candidates = intersectionCandidates(o.curve1, o.curve2);
+          // Structurally degenerate slots never seed (Phase 117b): with
+          // the candidates coincident by construction — a point built as
+          // `TangentLine ∩ the circle it touches` — there is no second
+          // branch to hold identity against, and the Cinderella bound
+          // would refuse every trial and starve the walk. Canonical
+          // resolution is exact there. Same rule as the drag walk's.
+          if (TracedBranch.candidateSeparation(candidates) <=
+              doubleRootEpsilon) {
+            continue;
+          }
           final b = balance;
           if (b != null) {
             o.tracedBranch.setBalance(cx: b.cx, cy: b.cy, scale: b.scale);
           }
           // Seed under the balance (separation is measured by it).
-          o.tracedBranch.seed(
-            p,
-            candidates: intersectionCandidates(o.curve1, o.curve2),
-          );
+          o.tracedBranch.seed(p, candidates: candidates);
           seeded.add(o);
         }
       }
@@ -1028,6 +1037,10 @@ class _TracedSweep {
     var sepPrev = double.infinity;
     var dCurr = 0.0;
     var sepCurr = minSeparation(seeded);
+    // The widest span the next accepted step may cover before an
+    // extrapolated root collision could hide inside it (Phase 117b —
+    // see [collisionStepLimit]).
+    var stepLimit = double.infinity;
     var foldPending = false;
     var foldAtBoundary = false;
     var confident = _isConfident()
@@ -1048,10 +1061,25 @@ class _TracedSweep {
                 culprits: culprits, confident: confident)
             : _AdvanceEnd(x, _EndKind.open, confident: confident);
       }
-      _trials++;
-      driveReal(trialX);
-      var ok = trialAccepted(seeded, _checkpoints, trialD - d) &&
-          collisionFree(_pairs);
+      // A root collision extrapolated to lie inside this trial refuses
+      // it unevaluated (Phase 117b): the acceptance rules only compare
+      // a step's endpoints, so a separation that dips to zero and
+      // recovers *within* one step passes every check while nearest
+      // matching quietly keeps the canonical index instead of the
+      // analytic branch. Capping the span forces the collision to a
+      // step end, where refinement hands it to the fold/crossing
+      // machinery below.
+      // Refusal falls through to the shared starvation path below, so
+      // the throttle converges into a classified fold or crossing
+      // rather than into the trial budget.
+      final overStepLimit = trialD - d > stepLimit;
+      var ok = false;
+      if (!overStepLimit) {
+        _trials++;
+        driveReal(trialX);
+        ok = trialAccepted(seeded, _checkpoints, trialD - d) &&
+            collisionFree(_pairs);
+      }
       if (ok && !_indexFlipsAreConsistent(x, trialX)) {
         // A matched-index change can be a benign canonical relabel
         // (both roots stationary, only the ordering flipped) or a
@@ -1101,9 +1129,17 @@ class _TracedSweep {
         sepPrev = sepCurr;
         dCurr = d;
         sepCurr = minSeparation(seeded);
+        stepLimit = collisionStepLimit(
+          t1: dPrev,
+          s1: sepPrev,
+          t2: dCurr,
+          s2: sepCurr,
+        );
         out?.add(traced.position!);
       } else {
-        _restoreAll();
+        if (!overStepLimit) {
+          _restoreAll();
+        }
         step /= 2;
         if (!foldPending &&
             step < detourTriggerStep &&
@@ -1113,13 +1149,28 @@ class _TracedSweep {
           // a null estimate also covers the walk *leaving* a fold it
           // just swapped through (stale tiny separation, growing
           // ahead), where plain halving re-expands on its own.
-          final dStar = estimateSingularParameter(
+          final dExtrapolated = estimateSingularParameter(
             t1: dPrev,
             s1: sepPrev,
             t2: dCurr,
             s2: sepCurr,
           );
           final culprits = _culprits();
+          // Prefer the *measured* collision to the extrapolated one: the
+          // collapse-law fit is exact only on the √ law of a transverse
+          // tangency and undershoots persistently on the linear law of a
+          // transversal crossing, which would centre the arc on the
+          // collision's near shoulder instead of the collision (Phase
+          // 117b — see [locateSeparationMinimum]).
+          final measured = _measureCollision(culprits, from, dir, d, span);
+          // A measured near-miss decides the question: the roots never
+          // meet ahead, so there is nothing to detour around or fold at
+          // and plain refinement carries the walk past it. Only when the
+          // profile offers no bracket at all does the extrapolated
+          // estimate stand in.
+          final dStar = measured == null
+              ? dExtrapolated
+              : (measured.isCollision && measured.t > d ? measured.t : null);
           if (dStar != null &&
               _probeIsReal(culprits, from, dir, d, dStar, span)) {
             // A crossing — detour through it and keep going.
@@ -1140,6 +1191,7 @@ class _TracedSweep {
             sepPrev = double.infinity;
             dCurr = d;
             sepCurr = minSeparation(seeded);
+            stepLimit = double.infinity;
             final p = traced.position;
             if (p != null) {
               out?.add(p);
@@ -1167,6 +1219,44 @@ class _TracedSweep {
         for (final o in seeded)
           if (o.tracedBranch.separation < detourTriggerSeparation) o,
       ];
+
+  /// The measured minimum of the culprits' candidate separation ahead of
+  /// [d] (Phase 117b) — where the roots come closest, and how close.
+  /// Null when the profile offers no bracket inside the leg, and only
+  /// then does the caller fall back to the extrapolated estimate.
+  ///
+  /// Slot state is untouched: the probe only drives the chain and reads
+  /// static candidate lists. The chain is left at the last probe; the
+  /// next trial re-drives it.
+  SeparationMinimum? _measureCollision(
+    List<IntersectionPoint> culprits,
+    double from,
+    double dir,
+    double d,
+    double span,
+  ) {
+    if (culprits.isEmpty) {
+      return null;
+    }
+    final minimum = locateSeparationMinimum(
+      from: d,
+      end: span,
+      firstStep: detourTriggerStep,
+      separationAt: (t) {
+        driveReal(from + dir * t);
+        var min = double.infinity;
+        for (final o in culprits) {
+          final sep = TracedBranch.candidateSeparation(
+            intersectionCandidates(o.curve1, o.curve2),
+          );
+          if (sep < min) min = sep;
+        }
+        return min;
+      },
+    );
+    _restoreAll();
+    return minimum;
+  }
 
   /// Whether every culprit is real (defined) at a static probe past the
   /// singularity — crossing vs fold. Slot state is restored afterwards;
@@ -1206,7 +1296,7 @@ class _TracedSweep {
     }
     try {
       var theta = math.pi;
-      var dTheta = math.pi;
+      var dTheta = maxDetourArcStep;
       while (theta > 0) {
         if (_trials >= _budget) {
           for (final o in seeded) {
@@ -1225,7 +1315,7 @@ class _TracedSweep {
             ) &&
             collisionFree(_pairs)) {
           theta = trialTheta;
-          dTheta = dTheta * 2 < theta ? dTheta * 2 : theta;
+          dTheta = math.min(dTheta * 2 < theta ? dTheta * 2 : theta, maxDetourArcStep);
           _snapshot();
         } else {
           _restoreAll();

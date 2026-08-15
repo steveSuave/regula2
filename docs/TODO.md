@@ -45,6 +45,18 @@ Found by the Cinderella no-jump demo (C, D on a line, equal circles around each,
 - [x] Existing locus corpus passed **unchanged** (closed loci, figure-eight, doc-1 trimming, both fixture documents); the only test edit is the parabola fixture's coreSamples pin (core = the scan's focus-window slice now). Two engine finds fixed on the way: `TracedBranch.setBalance` (the raw chordal metric is the world-origin angle metric — silent far-out branch swaps; identity default keeps drags bitwise) and an index-flip consistency guard for the matched-motion blind spot (locus walk only; audit the drag engine in 121/122)
 - [x] Goldens regenerated (locus scene light/dark): visually identical, subpixel sample placement only — reviewed in STATUS Session 117
 
+## Phase 117b — Tracing degeneracy robustness (from two user documents)
+
+Opened 2026-08-15 from `apatitos-topos.rgl` and `locus-miss-2.json`: dragging a free point in the first froze the app in Chrome, and its locus drew the wrong sheet over a third of the sweep. Both are engine gaps, not locus gaps — see PLAN §"Root collisions: seen, measured, walked around".
+
+- [x] **Collisions can no longer hide inside an accepted step**: `collisionStepLimit` caps the next step by the extrapolated distance to the collision, in both walks. Without it a *transversal* crossing (separation vanishing linearly — the second intersection of a line drawn through a point already on the curve) dips to zero and recovers inside one scan cell with both endpoints comfortably separated, so nothing starves and nearest matching keeps the canonical index instead of the analytic branch
+- [x] **The collision parameter is measured, not extrapolated**: `locateSeparationMinimum` brackets and ternary-searches the separation profile; its depth *relative to its shoulders* is also the crossing/near-miss discriminator (`SeparationMinimum.isCollision`, an absolute *and* a relative floor). A measured near-miss now suppresses the detour outright — strictly stronger than the undershoot heuristic it gates, which still stands in when no bracket exists
+- [x] **Detour arcs must leave the real axis**: angular steps capped at `maxDetourArcStep` (π/4). A one-trial semicircle continues from the arc's real entry straight to its real exit — the very step across the collision the detour exists to prevent, and indistinguishable to the acceptance rule
+- [x] **Structural double roots never seed**: candidates coincident within `doubleRootEpsilon` at seed time (`TangentLine ∩ the circle it touches`) have no branch identity to hold, and seeding one made the Cinderella bound refuse every trial — the whole pass starved and bailed on *every frame of every drag* in that document
+- [x] **Loci are held back during a tracing pass** and settled once at its end: a locus is a DAG leaf, so no acceptance decision reads one, while recomputing one is a full traced sweep. This is what turned the starving frames into a freeze — a bailing frame paid ~130 locus sweeps
+- [ ] Tests: the two documents as corpus fixtures; unit tests for the step limit, the minimum locator and the collision/near-miss discriminator; a transversal-crossing locus rig; a structural-double-root drag rig; a locus-deferral count
+- [ ] Perf gate re-run **with a locus in the stress construction** — the Phase 116 gate never covered one
+
 ## Phase 118 — Codec v2 + v1 migration
 
 - [ ] `constructionFormatVersion = 2`; v1 decode path kept permanently (`branchIndex` documented as canonical-order seed)

@@ -315,6 +315,22 @@ class Construction {
       throw ArgumentError.value(stepBudget, 'stepBudget', 'must be at least 1');
     }
     final affected = transitiveDependentsOf(id);
+    // Loci are DAG leaves (nothing may take one as a parent: both
+    // `IntersectionPoint` and `PointOnObject` reject them), so no
+    // acceptance decision can read one. Recomputing a locus is a whole
+    // traced sweep of its own — orders of magnitude more work than the
+    // rest of the graph — so the walk holds them back and settles them
+    // once, in the `finally` below, at whatever state the pass ends on.
+    // Before Phase 117b a single starving frame paid `stepBudget` full
+    // sweeps (~130) before bailing, which is what froze the app on
+    // documents that carry both a locus and a degenerate intersection.
+    final affectedLoci = [
+      for (final o in _objects.values)
+        if (o is Locus && affected.contains(o.id)) o,
+    ];
+    final affectedCore = {
+      ...affected,
+    }..removeAll([for (final l in affectedLoci) l.id]);
     final excluded = <GeoObject>{};
     for (final o in _objects.values) {
       if (o is Locus) {
@@ -333,11 +349,24 @@ class Construction {
         // a coast re-acquisition).
         final p = o.projPoint ?? seedMemory?[o.id];
         if (p != null && !p.isZero) {
-          o.tracedBranch.seed(
-            p,
-            candidates: intersectionCandidates(o.curve1, o.curve2),
-          );
-          seeded.add(o);
+          final candidates = intersectionCandidates(o.curve1, o.curve2);
+          // Structural double roots never seed (Phase 117b). A point
+          // built as `TangentLine ∩ the circle it touches` has its two
+          // candidates coincident *by construction*, at every position
+          // of every parent — there is no second branch to hold
+          // identity against, and no step size could separate the
+          // matches. Seeding one made the Cinderella bound
+          // (motion < separation/2, with separation ~1e-16) refuse
+          // every trial, so the controller halved to nothing and the
+          // whole pass starved and bailed — on every frame of every
+          // drag. Left unseeded, the slot simply resolves canonically,
+          // which is exact when the candidates coincide, and the pass's
+          // other slots keep tracing.
+          if (TracedBranch.candidateSeparation(candidates) >
+              doubleRootEpsilon) {
+            o.tracedBranch.seed(p, candidates: candidates);
+            seeded.add(o);
+          }
         }
       }
     }
@@ -349,7 +378,7 @@ class Construction {
     try {
       if (seeded.isEmpty) {
         driveReal(1);
-        _recomputeAffected(affected);
+        _recomputeAffected(affectedCore);
         onStep?.call(1);
         return (acceptedSteps: 1, rejectedSteps: 0, detours: 0);
       }
@@ -376,6 +405,9 @@ class Construction {
       var sepPrev = double.infinity;
       var tCurr = 0.0;
       var sepCurr = minSeparation(seeded);
+      // The widest span the next accepted step may cover before an
+      // extrapolated root collision could hide inside it (Phase 117b).
+      var stepLimit = double.infinity;
 
       void restoreAll() {
         for (var i = 0; i < seeded.length; i++) {
@@ -394,14 +426,14 @@ class Construction {
         }
         try {
           var theta = math.pi;
-          var dTheta = math.pi;
+          var dTheta = maxDetourArcStep;
           while (theta > 0) {
             if (accepted + rejected >= stepBudget) {
               for (final o in seeded) {
                 o.tracedBranch.allowComplexCarriers = false;
               }
               driveReal(arc.entry);
-              _recomputeAffected(affected);
+              _recomputeAffected(affectedCore);
               throw TraceStepBudgetException(
                 tReached: arc.entry,
                 trials: accepted + rejected,
@@ -409,7 +441,7 @@ class Construction {
             }
             final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
             driveComplex(arc.tAt(trialTheta));
-            _recomputeAffected(affected);
+            _recomputeAffected(affectedCore);
             if (trialAccepted(
                   seeded,
                   checkpoints,
@@ -418,7 +450,7 @@ class Construction {
                 collisionFree(checkPairs)) {
               accepted++;
               theta = trialTheta;
-              dTheta = dTheta * 2 < theta ? dTheta * 2 : theta;
+              dTheta = math.min(dTheta * 2 < theta ? dTheta * 2 : theta, maxDetourArcStep);
               snapshot();
             } else {
               rejected++;
@@ -441,10 +473,21 @@ class Construction {
           );
         }
         final trialT = t + step < 1 ? t + step : 1.0;
-        driveReal(trialT);
-        _recomputeAffected(affected);
-        if (trialAccepted(seeded, checkpoints, trialT - t) &&
-            collisionFree(checkPairs)) {
+        // A root collision extrapolated to lie inside this trial refuses
+        // it unevaluated: refine instead, so the collision is localized
+        // at a step *end* where the fold/crossing machinery can classify
+        // it, never glided over (Phase 117b — see [collisionStepLimit]).
+        // Refusal falls through to the shared starvation path below, so
+        // the throttle converges into a detour rather than the budget.
+        final overStepLimit = trialT - t > stepLimit;
+        var accept = false;
+        if (!overStepLimit) {
+          driveReal(trialT);
+          _recomputeAffected(affectedCore);
+          accept = trialAccepted(seeded, checkpoints, trialT - t) &&
+              collisionFree(checkPairs);
+        }
+        if (accept) {
           accepted++;
           t = trialT;
           step = step * 2 < 1 ? step * 2 : 1.0;
@@ -453,22 +496,52 @@ class Construction {
           sepPrev = sepCurr;
           tCurr = t;
           sepCurr = minSeparation(seeded);
+          stepLimit = collisionStepLimit(
+            t1: tPrev,
+            s1: sepPrev,
+            t2: tCurr,
+            s2: sepCurr,
+          );
           onStep?.call(trialT);
         } else {
           rejected++;
-          restoreAll();
+          if (!overStepLimit) {
+            restoreAll();
+          }
           step /= 2;
           // Starvation ⇒ detour attempt: the step has collapsed while
           // the tightest separation did — a root collision ahead on the
           // real axis (a large separation would instead point at the
           // absolute motion cap refining a legitimate sweep).
           if (step < detourTriggerStep && sepCurr < detourTriggerSeparation) {
-            final tStar = estimateSingularParameter(
-              t1: tPrev,
-              s1: sepPrev,
-              t2: tCurr,
-              s2: sepCurr,
+            // Prefer the *measured* collision to the extrapolated one
+            // (Phase 117b — see [locateSeparationMinimum]): the collapse
+            // law is exact only on the √ law of a transverse tangency
+            // and undershoots persistently on the linear law of a
+            // transversal crossing, which centres the arc on the
+            // collision's near shoulder instead of the collision. A
+            // measured *near-miss* decides the question outright —
+            // the roots never meet ahead, so no arc is planned at all
+            // and the pass refines through or bails honestly.
+            final culprits = [
+              for (final o in seeded)
+                if (o.tracedBranch.separation < detourTriggerSeparation) o,
+            ];
+            final measured = _measureCollision(
+              culprits,
+              driveReal,
+              affectedCore,
+              restoreAll,
+              t,
             );
+            final tStar = measured == null
+                ? estimateSingularParameter(
+                    t1: tPrev,
+                    s1: sepPrev,
+                    t2: tCurr,
+                    s2: sepCurr,
+                  )
+                : (measured.isCollision && measured.t > t ? measured.t : null);
             final arc = tStar == null
                 ? null
                 : DetourArc.plan(
@@ -489,6 +562,7 @@ class Construction {
               sepPrev = double.infinity;
               tCurr = t;
               sepCurr = minSeparation(seeded);
+              stepLimit = double.infinity;
               onStep?.call(t);
             }
           }
@@ -521,8 +595,55 @@ class Construction {
       for (final o in seeded) {
         o.tracedBranch.clear();
       }
+      // The held-back leaves, settled once at the state the pass ends
+      // on — the accepted end, or the last trial of a bail. Slots are
+      // cleared first: a locus sweep seeds its own chain.
+      for (final locus in affectedLoci) {
+        locus.recompute();
+      }
       _notify();
     }
+  }
+
+  /// The measured minimum of [culprits]' candidate separation ahead of
+  /// [t] on the unit path (Phase 117b) — where the roots come closest,
+  /// and how close — or null when the profile offers no bracket before
+  /// the path's end, the one case that still falls back to the
+  /// extrapolated estimate.
+  ///
+  /// Probing drives the path and recomputes, which follows the tracked
+  /// roots, so the slots are restored afterwards exactly as
+  /// [_probeIsReal]-style probes do. The construction is left at the
+  /// last probe; the next trial re-drives it.
+  SeparationMinimum? _measureCollision(
+    List<IntersectionPoint> culprits,
+    void Function(double) driveReal,
+    Set<String> affectedCore,
+    void Function() restoreAll,
+    double t,
+  ) {
+    if (culprits.isEmpty) {
+      return null;
+    }
+    final minimum = locateSeparationMinimum(
+      from: t,
+      end: 1,
+      firstStep: detourTriggerStep,
+      separationAt: (probe) {
+        driveReal(probe);
+        _recomputeAffected(affectedCore);
+        var min = double.infinity;
+        for (final o in culprits) {
+          final sep = TracedBranch.candidateSeparation(
+            intersectionCandidates(o.curve1, o.curve2),
+          );
+          if (sep < min) min = sep;
+        }
+        return min;
+      },
+    );
+    restoreAll();
+    return minimum;
   }
 
   /// Re-points the intersection point [id] at [branchIndex] and
