@@ -141,6 +141,22 @@ void _armTraceDiagnostics() {
   TraceDiagnostics.sink =
       (String line) => developer.log(line, name: 'regula.trace');
   TraceDiagnostics.enabled = true;
+  if (kIsWeb && kDebugMode) {
+    // Said once, up front, because it cost two sessions of hunting a
+    // freeze that was not there. `flutter run -d chrome` compiles with
+    // DDC, and on the kernel's complex arithmetic DDC measures ~25x
+    // optimized dart2js (benchmark/run_locus_docs.sh, on the documents
+    // that prompted this): a locus sweep that is 4 ms in a profile
+    // build is 100-180 ms here, which presents as an app that crawls
+    // and then wedges. Nothing about that is the engine.
+    developer.log(
+      'debug web build (DDC): kernel math runs ~25x slower than a '
+      'profile build, so a heavy construction can crawl or appear to '
+      'hang here and be fine in production. Judge performance with '
+      '`flutter run -d chrome --profile`.',
+      name: 'regula.trace',
+    );
+  }
 }
 
 class MainApp extends ConsumerWidget {

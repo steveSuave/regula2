@@ -70,7 +70,10 @@ Opened 2026-08-15: the 117b user reported both documents *still* slow and then w
 - [x] Surfaced: the trace overlay (⇧O) grew a cost line — ms, locus ms, chain solves; Ctrl/⌘⇧O opens a copyable report (totals, slowest frames, the last 40) and mirrors it to the console
 - [x] **Measured waste found and removed**: `locateSeparationMinimum` refined every confirmed collision to the floating-point floor, ~205 chain solves per crossing, on every frame — more than half of `apatitos-topos.rgl`'s 742. The floor is only needed to settle *whether* it is a collision; once a probe is below `doubleRootEpsilon` that is closed and the parameter only has to centre an arc. Relaxed stopping rule → 442 solves/frame, goldens bit-identical
 - [x] Tests: `TraceDiagnostics` (nesting, arm/disarm, streaming, stall rate limit, lazy detail, history cap, report); `Construction.nameOf`; two new `locateSeparationMinimum` contracts — a confirmed collision stops early (probe count is the contract), a near-miss still refines to the floor
-- [ ] **Waiting on the reporter**: browser numbers for both documents in debug *and* profile. If profile is fast, the fix is build-mode/DDC and the engine is fine; if both are slow, the frame line names the cost centre
+- [x] **Answered by the reporter's numbers**: `locus-miss-2.json` dragging C in `flutter run -d chrome` is a median **106 ms/frame, worst 178 ms, 100% inside `Locus.recompute`** — ~870 chain solves at **~200 µs each**. The same sweep is 5.6 µs/solve on the VM and **8.3 on dart2js -O4**. It is the debug web compiler, by a factor of ~25; there is no kernel defect behind this report
+- [x] `benchmark/locus_docs_bench.dart` + `run_locus_docs.sh`: both reported documents inlined and swept on VM / AOT / dart2js / dart2wasm, so the claim above is reproducible and stays honest as the engine changes
+- [x] A debug web build says so once at startup, naming `--profile` — this cost two sessions of hunting a freeze that was not there
+- [x] Checked and rejected: a coarse locus preview during drags. 128 → 16 samples only takes 504 → 349 solves (the walk is adaptive; the scan is ~15% of a sweep), so it trades real fidelity for ~30%
 
 ## Phase 118 — Codec v2 + v1 migration
 
