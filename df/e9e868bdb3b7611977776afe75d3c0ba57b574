@@ -1,0 +1,25 @@
+test/domain/construction/objects/intersection_point_test.dart
+  s_0e1b07700de473::t_45a529361b7270 191,194-223
+lib/domain/construction/objects/intersection_point.dart
+  s_0e1b07700de473::t_b9154663d31e03 34-36,63-68,80-90
+  s_0e1b07700de473::t_48416eb0839246 91
+test/domain/tools/intersection_tool_conics_test.dart
+  s_0e1b07700de473::t_0508b50a7b8ff3 1-84,89-91,97-106,108-109,111-128,130-165,170-172,174-178
+  s_0e1b07700de473::t_948e7e80fa9759 85-88,92-96,107,110,129,166-169,173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "dfe9e868bdb3b7611977776afe75d3c0ba57b574",
+  "prompts": {},
+  "sessions": {
+    "s_0e1b07700de473": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a71e1be6-0ce2-4986-8bd9-f8baf1bcfe7f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
