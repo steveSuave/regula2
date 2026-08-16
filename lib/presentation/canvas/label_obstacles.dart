@@ -9,9 +9,15 @@ import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
 import 'label_declutter.dart';
 import 'label_layout.dart';
+
+/// Sampling flatness (screen px) of a conic obstacle chain. Coarser than
+/// the painter's, because a label only needs the ink's *shape*, not its
+/// antialiasing — the same reason a circle obstacle is a 12–48-gon.
+const double _conicObstacleFlatness = 3;
 
 /// Everything the declutter solver needs to see, in screen space.
 typedef DeclutterScene = ({
@@ -116,7 +122,27 @@ DeclutterScene buildDeclutterScene(
         capsule(center, points.first);
         capsule(center, points.last);
       case GeoCircle():
-        final circle = object.circle!;
+        final circle = object.circle;
+        if (circle == null) {
+          // A conic with no centre and radius: its own visible arcs are
+          // the obstacle, at the sampling density the box asks for — a
+          // hyperbola's two arms give two chains, not one.
+          final box = viewport.visibleWorldBox(canvasSize);
+          final strokes = ConicShape.of(object.conic!).polylines(
+            min: box.min,
+            max: box.max,
+            flatness: viewport.screenToWorldLength(_conicObstacleFlatness),
+          );
+          for (final stroke in strokes) {
+            chords([
+              for (final point in stroke.points)
+                viewport.worldToScreen(point),
+              if (stroke.closed && stroke.points.isNotEmpty)
+                viewport.worldToScreen(stroke.points.first),
+            ]);
+          }
+          break;
+        }
         final center = viewport.worldToScreen(circle.center);
         final radius = viewport.worldToScreenLength(circle.radius);
         final n = (2 * math.pi * radius / 12).ceil().clamp(12, 48);

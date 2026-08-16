@@ -478,4 +478,38 @@ void main() {
       );
     },
   );
+
+  group('splitDegenerateConic', () {
+    final crossingLines = ConicMatrix.coefficients(1, 0, -1, 0, 0, 0); // y = ±x
+    final parallelLines = ConicMatrix.coefficients(1, 0, 0, 0, 0, -1); // x = ±1
+    final originPoint = ConicMatrix.coefficients(1, 0, 1, 0, 0, 0); // x² + y² = 0
+    final doubleLine = ConicMatrix.coefficients(1, 0, 0, 0, 0, 0); // x = 0, twice
+
+    test('recovers two real crossing lines', () {
+      final (g, h) = splitDegenerateConic(crossingLines);
+      expect(g.isReal(), isTrue);
+      expect(h.isReal(), isTrue);
+      expect(ConicMatrix.linePair(g, h).closeTo(crossingLines), isTrue);
+      expect(g.meet(h).toVec2()!.closeTo(Vec2.zero, 1e-9), isTrue);
+    });
+
+    test('recovers parallel lines meeting at infinity', () {
+      final (g, h) = splitDegenerateConic(parallelLines);
+      expect(ConicMatrix.linePair(g, h).closeTo(parallelLines), isTrue);
+      expect(g.meet(h).isFinite(), isFalse);
+    });
+
+    test('a rank-1 conic comes back as one line, doubled', () {
+      final (g, h) = splitDegenerateConic(doubleLine);
+      expect(g.closeTo(h), isTrue);
+      expect(ConicMatrix.linePair(g, h).closeTo(doubleLine), isTrue);
+    });
+
+    test('conjugate components multiply back to the real conic', () {
+      final (g, h) = splitDegenerateConic(originPoint);
+      expect(g.isReal(), isFalse);
+      expect(h.isReal(), isFalse);
+      expect(ConicMatrix.linePair(g, h).closeTo(originPoint), isTrue);
+    });
+  });
 }

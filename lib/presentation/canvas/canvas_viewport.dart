@@ -144,4 +144,35 @@ class CanvasViewport {
   /// hit-test threshold expressed in world units.
   double screenToWorldLength(double screenLength) =>
       screenLength / state.scale;
+
+  /// Axis-aligned world bounds enclosing a [canvasSize] canvas, grown by
+  /// [margin] screen pixels on every side.
+  ///
+  /// The box of the four corners' world images: under a nonzero
+  /// [ViewportState.rotation] the visible region is a rotated rectangle,
+  /// so this is a superset rather than the region itself. That is the
+  /// right side to err on — it is a clip bound for unbounded curves, and
+  /// the canvas trims whatever it over-includes.
+  ({Vec2 min, Vec2 max}) visibleWorldBox(
+    Size canvasSize, {
+    double margin = 0,
+  }) {
+    final corners = [
+      screenToWorld(Offset(-margin, -margin)),
+      screenToWorld(Offset(canvasSize.width + margin, -margin)),
+      screenToWorld(Offset(-margin, canvasSize.height + margin)),
+      screenToWorld(
+        Offset(canvasSize.width + margin, canvasSize.height + margin),
+      ),
+    ];
+    var minX = corners.first.x, maxX = corners.first.x;
+    var minY = corners.first.y, maxY = corners.first.y;
+    for (final corner in corners.skip(1)) {
+      minX = math.min(minX, corner.x);
+      maxX = math.max(maxX, corner.x);
+      minY = math.min(minY, corner.y);
+      maxY = math.max(maxY, corner.y);
+    }
+    return (min: Vec2(minX, minY), max: Vec2(maxX, maxY));
+  }
 }

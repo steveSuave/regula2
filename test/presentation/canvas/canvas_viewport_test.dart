@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
@@ -303,6 +304,61 @@ void main() {
         after.dy - before.dy,
         closeTo(-14, 1e-9),
         reason: 'content must follow the screen delta at any angle',
+      );
+    });
+  });
+
+  group('visibleWorldBox', () {
+    const size = Size(800, 600);
+
+    test('unrotated, it is exactly the canvas in world units', () {
+      const viewport = CanvasViewport(ViewportState(pan: Vec2(-400, 300)));
+      final box = viewport.visibleWorldBox(size);
+      expect(box.min.x, closeTo(-400, 1e-9));
+      expect(box.max.x, closeTo(400, 1e-9));
+      expect(box.min.y, closeTo(-300, 1e-9));
+      expect(box.max.y, closeTo(300, 1e-9));
+    });
+
+    test('scale shrinks the world it covers', () {
+      const viewport = CanvasViewport(
+        ViewportState(pan: Vec2(-40, 30), scale: 10),
+      );
+      final box = viewport.visibleWorldBox(size);
+      expect(box.max.x - box.min.x, closeTo(80, 1e-9));
+      expect(box.max.y - box.min.y, closeTo(60, 1e-9));
+    });
+
+    test('the margin grows it by that many screen pixels', () {
+      const viewport = CanvasViewport(ViewportState(scale: 2));
+      final plain = viewport.visibleWorldBox(size);
+      final grown = viewport.visibleWorldBox(size, margin: 8);
+      expect(grown.min.x, closeTo(plain.min.x - 4, 1e-9));
+      expect(grown.max.x, closeTo(plain.max.x + 4, 1e-9));
+      expect(grown.min.y, closeTo(plain.min.y - 4, 1e-9));
+      expect(grown.max.y, closeTo(plain.max.y + 4, 1e-9));
+    });
+
+    test('under rotation it encloses every visible point', () {
+      const viewport = CanvasViewport(
+        ViewportState(pan: Vec2(-400, 300), rotation: 0.7),
+      );
+      final box = viewport.visibleWorldBox(size);
+      // A rotated view is not axis-aligned, so the box is a superset —
+      // which is what a clip bound for an unbounded curve needs to be.
+      for (var i = 0; i <= 20; i++) {
+        for (var j = 0; j <= 20; j++) {
+          final world = viewport.screenToWorld(
+            Offset(size.width * i / 20, size.height * j / 20),
+          );
+          expect(world.x, inInclusiveRange(box.min.x, box.max.x));
+          expect(world.y, inInclusiveRange(box.min.y, box.max.y));
+        }
+      }
+      expect(
+        (box.max.x - box.min.x) * (box.max.y - box.min.y),
+        greaterThan(size.width * size.height),
+        reason: 'strictly a superset at a nonzero angle',
       );
     });
   });
