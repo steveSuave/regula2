@@ -97,7 +97,9 @@ Opened 2026-08-15, straight off 117c's answer. Profile mode fixed the reporter's
 
 ## Phase 119 — Conic rendering + hit-testing
 
-- [ ] Painter: classify conic (ellipse / parabola / hyperbola / degenerate line pair); viewport-clipped parametric sampling → `Path` (reuse locus polyline machinery); styled like circles; degenerate conics render as their line pair
+- [x] Domain (`lib/domain/projective/conic_shape.dart`): `ConicClass` read off the line at infinity (two real meets → hyperbola, one doubled → parabola, a conjugate pair → ellipse or `empty`), rank ≤ 2 split into components (`splitDegenerateConic` published for it), and the stereographic sweep of PLAN §Parameterization — `X(Q) = (QᵀAQ)·P₀ − 2·(P₀ᵀAQ)·Q`, Q swept as `e_i·cos φ + e_j·sin φ` so the domain is RP¹ walked cyclically over `[0, π)`. Classification runs in a balanced frame (centre at the origin, blocks commensurate); the sweep and the clip run on the caller's matrix
+- [x] Domain: exact viewport clip — the five cutting lines (four box edges + ℓ∞) cut the parameter circle into wholly-visible or wholly-hidden arcs, adjacent visible ones merged, each walked to a flatness tolerance under a shared bisection budget. `ConicMatrix.rank` fixed on the way: it compared `|det|` against `eps·‖A‖³`, which read an ordinary circle at (300, −120) as a line pair
+- [ ] Painter: `GeoCircle`/conic arm consuming `ConicShape.polylines` → `Path`; styled like circles; degenerate conics render as their line pair
 - [ ] Hit-tester: conic distance via seeded Newton on the closest-point condition (coarse-sample seed); (priority, distance) contract kept
 - [ ] Goldens: each conic class × light/dark; circles render identically to before (regression goldens)
 - [ ] Property: distance ≈ 0 on-curve, monotone off-curve
