@@ -26,7 +26,7 @@ V2 of regula: a cross-platform (web / Android / iOS) dynamic geometry app writte
 - **Free points are the only directly-mutable objects.** Every other object is derived and recomputes from its parents.
 - **The `Construction` DAG is the single source of truth.** Rendering, hit testing, undo/redo, and save/load all read from it.
 - **All user actions are reversible `Command`s.** No direct mutation of the construction outside a command, with one carve-out: drag *preview* frames mutate directly, and the gesture must end by emitting exactly one command capturing start → end (or rolling the preview back on cancel). One command per drag gesture, never per frame.
-- **Save format carries a `version` field.** Bump it on any breaking schema change and add a migration.
+- **Save format carries a `version` field.** Bump `constructionFormatVersion` on any change an older reader would *misread*, and add a migration. Additive keys an older reader safely skips (it lands on the defaults the file meant) do not bump it. The encoder stamps the lowest version that reads the document back correctly, not the newest it knows — see PLAN §"The version field is a requirement, not a build number". Version 1 is permanent; `test/fixtures/` is its corpus and every file there must stay v1.
 - **No new public API in `domain/` without a test.** Especially `domain/math/`, `domain/projective/`, and `domain/construction/`.
 
 ### V2 kernel invariants (migration era — see PLAN §Migration strategy)

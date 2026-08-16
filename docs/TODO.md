@@ -88,10 +88,12 @@ Opened 2026-08-15, straight off 117c's answer. Profile mode fixed the reporter's
 
 ## Phase 118 — Codec v2 + v1 migration
 
-- [ ] `constructionFormatVersion = 2`; v1 decode path kept permanently (`branchIndex` documented as canonical-order seed)
-- [ ] v2 hooks: homogeneous params (needed by five-point conic), per-file kernel flags (needed by M-CK)
-- [ ] Migration corpus: directory of real v1 `.rgl` fixtures that must load and round-trip; kitchen-sink v1 file loads into identical geometry
-- [ ] `version > 2` still throws
+- [x] `constructionFormatVersion = 2` + `minimumConstructionFormatVersion = 1`; v1 decode path kept permanently. v1 needs no *rewriting* — v2 only adds, so the migration is the defaults the new readers fall back to; `branchIndex` documented at the codec as a canonical-order **seed**, not an identity (Phase 116 adoption re-derives it at every traced pass end, and a v1 file was written by a build that had nothing else)
+- [x] **The stamp is a requirement, not a build number** (PLAN §"The version field is a requirement…"): `encodeDocument` writes `requiredFormatVersion(document)` — the lowest version that reads the document back *correctly*. A document using nothing from v2 is written byte-identically to a v1 save and still opens in a v1 build; what earns a bump is misreading (a skipped `kernel` block draws the wrong geometry), not novelty (a skipped `rotation` key lands on the default the file meant). CLAUDE.md's invariant amended to match
+- [x] v2 hook — **per-file kernel flags** (M-CK): a top-level `kernel` block carrying the fundamental conic, `DocumentKernel` on `DecodedDocument`. `euclidean`/`hyperbolic`/`elliptic` are reserved *names*, not free strings; the two this build cannot honour are **refused, not approximated** (drawing a hyperbolic document in Euclidean geometry is exactly the failure the stamp was bought to prevent). Omitted from the file while default, which is what keeps ordinary documents at v1
+- [x] v2 hook — **homogeneous params** (Phase 120): one settled wire shape for a `ProjPoint`, a `ProjLine` or a conic's six entries — `{"h": [[re,im], …]}`, each component a pair even when real, so nothing downstream has to guess whether a bare number was real. The map wrapper is what makes such a param self-identifying to the version rule. `encodeHomogeneousParam` / `homogeneousParam`, `FormatException` on every malformed shape
+- [x] Migration corpus (`test/application/persistence/v1_migration_corpus_test.dart`): every document under `test/fixtures/` — five real user files plus `v1/kitchen-sink-v1.json`, a frozen encode of the kitchen sink at the Phase 117 encoder — must be v1, must load with every written object present and wired, and must survive decode → encode → decode with identical geometry object for object. Data-driven, so another user document enrols itself; the version assertion is what stops a v2 file quietly ending the coverage. The kitchen-sink file is pinned against the live builder, not just against itself
+- [x] `version > 2` still throws (naming the newest understood); `version < 1` now throws too
 
 ## Phase 119 — Conic rendering + hit-testing
 

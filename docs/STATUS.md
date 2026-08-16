@@ -8,6 +8,30 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 120 (V2 Session 22) — 2026-08-16
+
+**Done**
+- **Phase 118 (codec v2 + permanent v1 loader) complete** on `phase-118-codec-v2`, two commits, in that order deliberately: the corpus was pinned *before* the version constant moved, so the "v1 still loads" claim is measured against a baseline nothing had touched yet.
+- **The corpus first.** Every document under `test/fixtures/` — the five real user files plus a new `v1/kitchen-sink-v1.json`, frozen from `buildKitchenSink()` through the Phase 117 encoder — must be v1, must load with every written object present and wired to the right parents, and must survive decode → encode → decode with identical geometry object for object (`geometryOf`, so positions, carriers, locus samples and rendered text all by value). The sweep is data-driven: dropping another user document into `test/fixtures/` enrols it with no test edit, and the version assertion is what stops a v2 file being added there and silently ending the coverage. The kitchen-sink file is the one member pinned against something outside itself — the live builder.
+- **The stamp is a requirement, not a build number.** The obvious reading of the bump is that the encoder writes 2 on everything from now on — which locks a user's older build out of documents it could read perfectly, for nothing. `encodeDocument` now stamps `requiredFormatVersion(document)`: the lowest version that reads the document back *correctly*. Ordinary documents stay v1, byte-identical to what a v1 build wrote. **What earns a bump is misreading, not novelty** — the codec has added keys three times without one (viewport rotation, the display flags, the locus params) because a reader that skips them lands on exactly the defaults the file meant; a skipped `kernel` block instead draws the document in the wrong geometry. That distinction is the whole content of the version field, and it is now written down in PLAN and in CLAUDE.md's invariant, which previously said only "bump on any breaking schema change".
+- **v1 needs no rewriting** — v2 only adds, so the migration *is* the defaults the new readers fall back to. Worth naming because it is the kind of claim that rots: `branchIndex` means the same thing in both files (a canonical-order **seed**, re-derived at every traced pass end since Phase 116 — a v1 file was written by a build that had no other notion), and an absent kernel block is the Euclidean geometry every pre-M-CK document is in. Both documented at the codec sites.
+- **Hook 1 — per-file kernel flags (M-CK).** A top-level `kernel` block carrying the fundamental conic; `DocumentKernel` on `DecodedDocument`. `euclidean`/`hyperbolic`/`elliptic` are reserved *names* rather than free-form strings, and the two this build cannot honour are **refused with a message naming them**, not approximated — drawing a hyperbolic document in Euclidean geometry is precisely the failure the version stamp was bought to prevent, and it would be no less wrong for happening inside the build that understands the key. M-CK deletes that guard, not the parser. Omitted from the file while default, which is what keeps ordinary documents at v1.
+- **Hook 2 — homogeneous params (Phase 120).** One settled wire shape for a `ProjPoint`, a `ProjLine`, or a conic's six independent entries: `{"h": [[re,im], …]}`, each component written as a pair even when the value is real, so nothing downstream ever has to guess whether a bare number was real. The map wrapper is what makes such a param self-identifying — to the version rule, and to a human reading the file. `encodeHomogeneousParam` / `homogeneousParam`, `FormatException` (never `TypeError`) on every malformed shape, tested at 3 and 6 components.
+- `version > 2` still throws naming the newest understood; `version < 1` now throws too (the accepted range is explicit rather than one-sided).
+- Suite **2177 green**, analyze clean, `flutter build web` compiles. One existing test changed premise — `encodeDocument stamps the current format version` became `stamps the lowest version that can read the document back`.
+
+**Next**
+- Merge `phase-118-codec-v2`; then Phase 119 — conic rendering + hit-testing (classify the conic, viewport-clipped parametric sampling reusing the locus polyline machinery, seeded-Newton conic distance, one golden per conic class × light/dark with circles pinned as regressions).
+
+**Gotchas**
+- **Don't "fix" the encoder to always stamp `constructionFormatVersion`.** It looks like an oversight and is the phase's main decision; the reason is in PLAN §"The version field is a requirement, not a build number" and in CLAUDE.md. The corollary is that adding a v2-only feature to a kind means teaching `requiredFormatVersion` about it, or documents carrying it will be stamped v1 and misread by v1 builds.
+- The version rule keys off the *encoded* document, not the construction — `requiredFormatVersion` sniffs for the `kernel` key and for `{"h": …}` params. That is why the homogeneous shape is a wrapped map and not a bare list; a bare list would be indistinguishable from any other list-valued param.
+- Nothing constructs a non-default `DocumentKernel` yet, so `saveConstructionFile` was deliberately left without a `kernel` parameter — there is no path by which a non-Euclidean document could be opened (decode refuses it) and then re-saved with its kernel dropped. M-CK threads it through file_io at the same time it makes the metric settable.
+- `FundamentalConic.name` is a stored token, separate from the Dart identifier, so renaming the enum value cannot silently change the file format. The "every reserved metric name is distinct and stable" test is what holds that.
+- The corpus test decodes and re-decodes documents carrying loci, so it pays two full traced sweeps per such fixture. Cheap today (the whole file is well under a second); if it ever isn't, split the round-trip check off rather than dropping fixtures.
+
+---
+
 ## Session 119 (V2 Session 21) — 2026-08-15
 
 **Done**
