@@ -31,6 +31,9 @@ import '../geo_object.dart';
 ///   however the user picked the two curves.
 /// - circle ∩ circle: branch 0 is left of the directed center line
 ///   `curve1 → curve2`; here parent order matters and is preserved.
+/// - conic ∩ conic: up to **four** branches, in the pencil solver's
+///   canonical order with the circular points I and J filtered out
+///   (Phase 105/110). See [maxBranchCount].
 ///
 /// At tangency the double root repeats the point, so both branch objects
 /// sit on the tangency and separate again as the root pair does — V1's
@@ -57,8 +60,12 @@ class IntersectionPoint extends GeoPoint {
     required super.id,
     super.attributes,
   }) {
-    if (branchIndex < 0 || branchIndex > 1) {
-      throw ArgumentError.value(branchIndex, 'branchIndex', 'must be 0 or 1');
+    if (branchIndex < 0 || branchIndex >= maxBranchCount) {
+      throw ArgumentError.value(
+        branchIndex,
+        'branchIndex',
+        'must be 0..${maxBranchCount - 1}',
+      );
     }
     if ((curve1 is! GeoLine && curve1 is! GeoCircle) ||
         (curve2 is! GeoLine && curve2 is! GeoCircle)) {
@@ -69,6 +76,18 @@ class IntersectionPoint extends GeoPoint {
     }
     recompute();
   }
+
+  /// The most branches any carrier pair can have: **four**, from
+  /// conic ∩ conic via the pencil (Phase 105). Line ∩ line has one and
+  /// the line ∩ conic and circle ∩ circle pairs two.
+  ///
+  /// The bound was `0 or 1` until Phase 120b. That was right for as long
+  /// as every `GeoCircle` was a circle — and it survived Phase 110's
+  /// four-candidate conic ∩ conic solver only because no kind could yet
+  /// *produce* a general conic. The first `FivePointConic` tapped against
+  /// another conic made the tool throw on the third crossing, and would
+  /// have made the codec refuse to reload any document containing one.
+  static const int maxBranchCount = 4;
 
   /// Each a [GeoLine] or [GeoCircle] (enforced in the constructor).
   final GeoObject curve1;
