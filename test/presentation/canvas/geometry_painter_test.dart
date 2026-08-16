@@ -593,6 +593,26 @@ void main() {
         );
       });
 
+      test('a fill attribute on a conic paints nothing extra (Phase 120)', () {
+        // A conic bounds nothing the painter can close, so the fill pass
+        // skips it — and, before Phase 120, unwrapped a null `circle` and
+        // crashed the frame the moment a user ticked Fill on one. The
+        // inspector withholds the row to match.
+        final plain = pathsFor(
+          ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+        );
+        final construction = Construction()
+          ..add(
+            StubProjectiveConic(
+              ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+              id: 'k',
+            )..attributes = const ObjectAttributes(fillAlpha: 0.25),
+          );
+        final canvas = _PathRecordingCanvas();
+        painterFor(construction, viewport: centred).paint(canvas, size);
+        expect(canvas.paths, hasLength(plain.length));
+      });
+
       test('a selected conic strokes twice — halo, then stroke', () {
         final construction = Construction()
           ..add(

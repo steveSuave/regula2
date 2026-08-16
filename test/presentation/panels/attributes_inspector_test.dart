@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,12 +11,14 @@ import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
@@ -751,6 +755,51 @@ void main() {
       reason: 'the all-off toggle was one command over both kinds',
     );
     expect(sector.attributes.fillAlpha, 0.25);
+  });
+
+  testWidgets('fill checkbox is withheld from a conic (Phase 120)',
+      (tester) async {
+    // A conic bounds nothing the painter can close — a hyperbola has no
+    // interior, a clipped ellipse would need the viewport edges — so the
+    // row would be a silent no-op. Withheld by *kind*: an undefined circle
+    // still keeps its row (below), and a circle-shaped conic gains none.
+    await pumpEditor(tester);
+    final points = [
+      for (final (i, t) in const [0.0, 1.0, 2.0, 3.0, 4.0].indexed)
+        addPoint('q$i', Vec2(2 * math.cos(t), math.sin(t))),
+    ];
+    container
+        .read(constructionProvider)
+        .construction
+        .add(FivePointConic(id: 'conic', points: points));
+
+    container.read(selectionProvider.notifier).select('conic');
+    await tester.pump();
+    expect(
+      find.widgetWithText(CheckboxListTile, 'Fill'),
+      findsNothing,
+      reason: 'a conic is a curve, not a region',
+    );
+  });
+
+  testWidgets('an undefined circle keeps its fill row (Phase 120)',
+      (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(1, 0));
+    final c = addPoint('c', const Vec2(2, 0));
+    final collinear = ThreePointCircle(
+      id: 'tpc',
+      point1: a,
+      point2: b,
+      point3: c,
+    );
+    container.read(constructionProvider).construction.add(collinear);
+    expect(collinear.isDefined, isFalse);
+
+    container.read(selectionProvider.notifier).select('tpc');
+    await tester.pump();
+    expect(find.widgetWithText(CheckboxListTile, 'Fill'), findsOneWidget);
   });
 
   testWidgets('fill checkbox covers circles and polygons, not arcs '
