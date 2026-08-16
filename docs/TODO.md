@@ -106,7 +106,7 @@ Opened 2026-08-15, straight off 117c's answer. Profile mode fixed the reporter's
 
 ## Phase 120 — Five-point conic: object + tool (payoff demo)
 
-- [ ] `FivePointConic` object (conic-from-five-points from Phase 104)
+- [x] `FivePointConic` object (conic-from-five-points from Phase 104): stores the matrix, `circle` is its circle projection so a circle-shaped one still takes the circle arm, `isDefined` is `ConicShape.isDrawable` (a line pair draws, an isolated point and an imaginary ellipse do not). Coincident parents guarded at `projectiveEpsilon` per the `carrierThrough` convention; the other rank deficiencies come back from the kernel as a null. Tested across all five drawable classes plus both undrawable ones, parents at infinity and complex, with rescaling-invariance and reconstruction properties
 - [ ] `ConicTool` (`MultiPointTool`, 5 slots) + toolbar row + shortcut + inspector + object-tree label + codec entries — the template checklist for shell additions
 - [ ] Intersection tool accepts conics (conic∩line, conic∩conic already total)
 - [ ] Tests: tool flow widget test; codec round-trip; painter golden; glados — conic passes through its five parents; degenerate five-point sets give the right degenerate conic
