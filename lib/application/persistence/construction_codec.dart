@@ -49,26 +49,37 @@ import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/projective/complex.dart';
 import '../providers/document_settings_provider.dart';
 import '../providers/viewport_provider.dart';
+import 'document_kernel.dart';
 
-/// Version stamped into every saved document. Bump on any breaking schema
-/// change and add a migration in [decodeDocument].
-const int constructionFormatVersion = 1;
+/// The newest schema this build writes and reads. Bump on any breaking
+/// schema change and add a migration in [decodeDocument].
+const int constructionFormatVersion = 2;
+
+/// The oldest schema still decodable.
+///
+/// Version 1 is **permanent**: it is the format every document in the wild
+/// was saved in, and `test/fixtures/` holds the corpus that says so. There
+/// is no plan under which dropping it is acceptable.
+const int minimumConstructionFormatVersion = 1;
 
 /// The result of decoding a saved document: a freshly built [Construction]
-/// (no listeners, geometry recomputed) plus the viewport and document
-/// settings snapshots the file carried (defaults when the file had none).
+/// (no listeners, geometry recomputed) plus the viewport, document settings
+/// and kernel snapshots the file carried (defaults when the file had none).
 class DecodedDocument {
   const DecodedDocument({
     required this.construction,
     required this.viewport,
     this.settings = const DocumentSettings(),
+    this.kernel = const DocumentKernel(),
   });
 
   final Construction construction;
   final ViewportState viewport;
   final DocumentSettings settings;
+  final DocumentKernel kernel;
 }
 
 /// Encodes [construction] and the current [viewport] into a JSON-encodable
@@ -77,13 +88,23 @@ class DecodedDocument {
 /// Objects are written in the construction's insertion order, which is a
 /// topological order — [decodeDocument] relies on parents appearing before
 /// their children.
+///
+/// The `version` stamped is the *lowest* schema that can read the result
+/// back correctly, not [constructionFormatVersion] unconditionally — see
+/// [_requiredVersion]. A document using nothing from v2 is therefore
+/// written byte-identically to what a v1 build wrote, and stays openable
+/// by one.
 Map<String, dynamic> encodeDocument(
   Construction construction, {
   required ViewportState viewport,
   DocumentSettings settings = const DocumentSettings(),
+  DocumentKernel kernel = const DocumentKernel(),
 }) {
-  return <String, dynamic>{
-    'version': constructionFormatVersion,
+  final document = <String, dynamic>{
+    // Overwritten below, once the objects are in and the version can be
+    // worked out. Written first so it keeps its place at the head of the
+    // file — overwriting a key does not move it.
+    'version': minimumConstructionFormatVersion,
     'viewport': <String, dynamic>{
       'pan': [viewport.pan.x, viewport.pan.y],
       'scale': viewport.scale,
@@ -94,10 +115,46 @@ Map<String, dynamic> encodeDocument(
     'showAxes': settings.showAxes,
     'showGrid': settings.showGrid,
     'snapToGrid': settings.snapToGrid,
+    // v2 hook (M-CK). Omitted while the kernel is the default one, which
+    // is what keeps ordinary documents at version 1.
+    if (!kernel.isDefault)
+      'kernel': <String, dynamic>{'metric': kernel.metric.name},
     'objects': [
       for (final object in construction.objects) _encodeObject(object),
     ],
   };
+  document['version'] = requiredFormatVersion(document);
+  return document;
+}
+
+/// The lowest format version that reads an encoded [document] back
+/// *correctly* — the only honest thing to stamp a file with.
+///
+/// Both v2 features are ones a v1 reader would not error on but would
+/// silently misread: it ignores an unknown `kernel` block and draws
+/// Euclidean geometry, and it ignores a homogeneous param and falls back
+/// to a default. Refusing the file is the whole value of the stamp, so a
+/// document using either is v2 and everything else stays v1. Additive keys
+/// a v1 reader can *safely* ignore (viewport rotation, the display flags)
+/// are deliberately not on this list — that is the distinction the version
+/// field exists to draw, and why not every schema addition bumps it.
+int requiredFormatVersion(Map<String, dynamic> document) {
+  if (document.containsKey('kernel')) {
+    return 2;
+  }
+  final objects = document['objects'];
+  if (objects is List) {
+    for (final object in objects) {
+      if (object is! Map<String, dynamic>) {
+        continue;
+      }
+      final params = object['params'];
+      if (params is Map<String, dynamic> && params.values.any(_isHomogeneous)) {
+        return 2;
+      }
+    }
+  }
+  return minimumConstructionFormatVersion;
 }
 
 /// Decodes a document produced by [encodeDocument].
@@ -117,13 +174,20 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
       '(latest known: $constructionFormatVersion)',
     );
   }
-  // Version 1 is the only schema so far; migrations slot in here.
+  if (version < minimumConstructionFormatVersion) {
+    throw FormatException('Invalid file format version $version');
+  }
+  // v1 → v2 needs no rewriting: v2 only *adds* the kernel block and
+  // homogeneous params, and a v1 file has neither, so the readers below
+  // land on the same defaults a v1 document meant. The migration such as
+  // it is lives in those defaults, and `test/fixtures/` is its corpus.
   final viewport = _decodeViewport(json['viewport']);
   final settings = DocumentSettings(
     showAxes: _decodeSettingFlag(json, 'showAxes'),
     showGrid: _decodeSettingFlag(json, 'showGrid'),
     snapToGrid: _decodeSettingFlag(json, 'snapToGrid'),
   );
+  final kernel = _decodeKernel(json['kernel']);
   final objectsJson = json['objects'];
   if (objectsJson is! List) {
     throw const FormatException('Missing or invalid "objects" list');
@@ -145,7 +209,43 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
     construction: construction,
     viewport: viewport,
     settings: settings,
+    kernel: kernel,
   );
+}
+
+/// The document's kernel block (v2 hook, PLAN §M-CK): absent → Euclidean,
+/// which is what every v1 document is.
+///
+/// A named-but-unimplemented metric is refused rather than approximated.
+/// Drawing a hyperbolic document in Euclidean geometry is the failure the
+/// version stamp was bought to prevent, and it would be no less wrong for
+/// happening inside the build that understands the key. M-CK deletes the
+/// second guard, not the first.
+DocumentKernel _decodeKernel(Object? json) {
+  if (json == null) {
+    return const DocumentKernel();
+  }
+  if (json is! Map<String, dynamic>) {
+    throw const FormatException('Invalid "kernel"');
+  }
+  final metricName = json['metric'];
+  if (metricName == null) {
+    return const DocumentKernel();
+  }
+  if (metricName is! String) {
+    throw const FormatException('Invalid "kernel" metric');
+  }
+  final metric = FundamentalConic.byName(metricName);
+  if (metric == null) {
+    throw FormatException('Unknown "kernel" metric "$metricName"');
+  }
+  if (metric != FundamentalConic.euclidean) {
+    throw FormatException(
+      'This document uses ${metric.name} geometry, which this build does '
+      'not implement',
+    );
+  }
+  return DocumentKernel(metric: metric);
 }
 
 /// A document-settings flag that pre-36/45 files legitimately lack: false
@@ -173,6 +273,13 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         'PointOnObject',
         {'parameter': parameter}
       ),
+    // `branchIndex` is a **seed**, not an identity: it addresses the
+    // canonical candidate order at load time, and from Phase 116 on a
+    // drag re-derives it at every pass end (adoption), so what is saved
+    // is the canonical address of whatever root tracing was holding. It
+    // means the same thing in v1 and v2 files — v1 documents were written
+    // by a build that only ever had canonical order — which is why v1
+    // needs no rewriting here.
     IntersectionPoint(:final branchIndex) => (
         'IntersectionPoint',
         {'branchIndex': branchIndex}
@@ -686,6 +793,72 @@ double? _optionalDoubleParam(
   String key,
 ) =>
     params.containsKey(key) ? _doubleParam(id, params, key) : null;
+
+/// The key a homogeneous param's components live under. Wrapping the list
+/// in a one-key map rather than writing it bare is what makes such a param
+/// self-identifying — to [_requiredVersion], and to a human reading the
+/// file.
+const String _homogeneousKey = 'h';
+
+bool _isHomogeneous(Object? value) =>
+    value is Map<String, dynamic> && value.containsKey(_homogeneousKey);
+
+/// Encodes a homogeneous value — the components of a `ProjPoint`,
+/// `ProjLine` or the six independent entries of a `ConicMatrix` — as a
+/// **v2 param** (v2 hook, needed from Phase 120 on).
+///
+/// One shape for all of them, deliberately: each component is written as
+/// its `[re, im]` pair even when the value is real, so the first kind that
+/// stores homogeneous state inherits a settled, tested encoding instead of
+/// also having to decide a schema. Length is the caller's contract —
+/// [homogeneousParam] checks it on the way back in.
+///
+/// Any param encoded this way lifts the whole document to version 2, since
+/// a v1 reader would skip it and silently substitute a default.
+Map<String, dynamic> encodeHomogeneousParam(List<Complex> components) =>
+    <String, dynamic>{
+      _homogeneousKey: [
+        for (final c in components) [c.re, c.im],
+      ],
+    };
+
+/// Reads back a param written by [encodeHomogeneousParam], insisting on
+/// exactly [length] components. Throws [FormatException] like every other
+/// param reader, so a malformed file stays one dialog.
+List<Complex> homogeneousParam(
+  String id,
+  Map<String, dynamic> params,
+  String key, {
+  required int length,
+}) {
+  final value = params[key];
+  if (!_isHomogeneous(value)) {
+    throw FormatException('Object "$id": missing homogeneous param "$key"');
+  }
+  final components = (value! as Map<String, dynamic>)[_homogeneousKey];
+  if (components is! List || components.length != length) {
+    throw FormatException(
+      'Object "$id": param "$key" needs $length homogeneous components',
+    );
+  }
+  final out = <Complex>[];
+  for (final component in components) {
+    if (component is! List ||
+        component.length != 2 ||
+        component.any((part) => part is! num)) {
+      throw FormatException(
+        'Object "$id": param "$key" has a malformed component',
+      );
+    }
+    out.add(
+      Complex(
+        (component[0] as num).toDouble(),
+        (component[1] as num).toDouble(),
+      ),
+    );
+  }
+  return out;
+}
 
 ObjectAttributes _decodeAttributes(String id, Object? json) {
   if (json == null) {

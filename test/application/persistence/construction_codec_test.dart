@@ -263,12 +263,20 @@ void main() {
   });
 
   group('encodeDocument', () {
-    test('stamps the current format version', () {
+    test('stamps the lowest version that can read the document back', () {
+      // Phase 118: the stamp is a requirement, not a build number, so an
+      // ordinary document stays v1 and stays openable by a v1 build. The
+      // rule and both v2 features are pinned in `codec_v2_test.dart`.
       final json = encodeDocument(
         Construction(),
         viewport: const ViewportState(),
       );
-      expect(json['version'], constructionFormatVersion);
+      expect(json['version'], requiredFormatVersion(json));
+      expect(json['version'], minimumConstructionFormatVersion);
+      expect(
+        json['version'],
+        lessThanOrEqualTo(constructionFormatVersion),
+      );
     });
 
     test('writes objects in insertion (= topological) order', () {
