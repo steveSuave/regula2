@@ -1,0 +1,1565 @@
+{
+  "version": 1,
+  "viewport": {
+    "pan": [
+      -3.5,
+      7.25
+    ],
+    "scale": 2.5,
+    "rotation": 0.65
+  },
+  "showAxes": true,
+  "showGrid": true,
+  "snapToGrid": true,
+  "objects": [
+    {
+      "id": "a",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "attributes": {
+        "name": "A",
+        "colorArgb": 4289344358,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 14.0,
+        "labelDy": 9.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 6.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "b",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 4.0,
+        "y": 0.0
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "c",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 1.0,
+        "y": 3.0
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "mid",
+      "type": "Midpoint",
+      "parents": [
+        "a",
+        "b"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ratio",
+      "type": "SegmentRatioPoint",
+      "parents": [
+        "a",
+        "b"
+      ],
+      "params": {
+        "ratio": 2.25
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "lab",
+      "type": "LineThroughTwoPoints",
+      "parents": [
+        "a",
+        "b"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 1
+      }
+    },
+    {
+      "id": "seg",
+      "type": "Segment",
+      "parents": [
+        "a",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": false,
+        "labelVisible": true,
+        "showValue": true,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 4.0,
+        "dashPeriod": 8.0,
+        "tickMarks": 2,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ray",
+      "type": "Ray",
+      "parents": [
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "cent",
+      "type": "Centroid",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "orth",
+      "type": "Orthocenter",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "inc",
+      "type": "Incenter",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "circ",
+      "type": "Circumcenter",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "perp",
+      "type": "PerpendicularLine",
+      "parents": [
+        "c",
+        "lab"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "par",
+      "type": "ParallelLine",
+      "parents": [
+        "c",
+        "lab"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "bis",
+      "type": "AngleBisectorLine",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "pbis",
+      "type": "PerpendicularBisectorLine",
+      "parents": [
+        "a",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "cc",
+      "type": "CircleCenterPoint",
+      "parents": [
+        "a",
+        "b"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ccen",
+      "type": "CircleCenter",
+      "parents": [
+        "cc"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "llbis",
+      "type": "TwoLineBisectorLine",
+      "parents": [
+        "lab",
+        "perp"
+      ],
+      "params": {
+        "branch": 1
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "tan",
+      "type": "TangentLine",
+      "parents": [
+        "ratio",
+        "cc"
+      ],
+      "params": {
+        "branch": 1
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "pol",
+      "type": "PolarLine",
+      "parents": [
+        "ratio",
+        "cc"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "tpc",
+      "type": "ThreePointCircle",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "npc",
+      "type": "NinePointCircle",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "insc",
+      "type": "InscribedCircle",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "apo",
+      "type": "ApolloniusCircle",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "rax",
+      "type": "RadicalAxisLine",
+      "parents": [
+        "cc",
+        "tpc"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "frc",
+      "type": "FixedRadiusCircle",
+      "parents": [
+        "c"
+      ],
+      "params": {
+        "radius": 2.5
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "comp",
+      "type": "CompassCircle",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "dia",
+      "type": "DiameterCircle",
+      "parents": [
+        "a",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "arc",
+      "type": "Arc",
+      "parents": [
+        "a",
+        "c",
+        "b"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "sec",
+      "type": "Sector",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": 0.25,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "vang",
+      "type": "VertexAngle",
+      "parents": [
+        "a",
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": 0.25,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "lang",
+      "type": "LineAngle",
+      "parents": [
+        "lab",
+        "perp"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "lang2",
+      "type": "LineAngle",
+      "parents": [
+        "lab",
+        "perp"
+      ],
+      "params": {
+        "sign1": -1,
+        "sign2": 1
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "int",
+      "type": "IntersectionPoint",
+      "parents": [
+        "lab",
+        "cc"
+      ],
+      "params": {
+        "branchIndex": 1
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "poo",
+      "type": "PointOnObject",
+      "parents": [
+        "cc"
+      ],
+      "params": {
+        "parameter": 1.25
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ldrv",
+      "type": "PointOnObject",
+      "parents": [
+        "cc"
+      ],
+      "params": {
+        "parameter": 0.5
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ltrace",
+      "type": "Midpoint",
+      "parents": [
+        "ldrv",
+        "a"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "locus",
+      "type": "Locus",
+      "parents": [
+        "ldrv",
+        "ltrace"
+      ],
+      "params": {
+        "sampleCount": 16,
+        "center": 0.5,
+        "halfSpan": 40.0
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "poly",
+      "type": "Polygon",
+      "parents": [
+        "a",
+        "b",
+        "ratio",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": 0.25,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "dist",
+      "type": "DistanceMeasurement",
+      "parents": [
+        "a",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "parea",
+      "type": "AreaMeasurement",
+      "parents": [
+        "poly"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "carea",
+      "type": "AreaMeasurement",
+      "parents": [
+        "cc"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "clen",
+      "type": "LengthMeasurement",
+      "parents": [
+        "cc"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "alen",
+      "type": "LengthMeasurement",
+      "parents": [
+        "arc"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "slen",
+      "type": "LengthMeasurement",
+      "parents": [
+        "sec"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "slope",
+      "type": "SlopeMeasurement",
+      "parents": [
+        "lab"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "refl",
+      "type": "ReflectedPoint",
+      "parents": [
+        "c",
+        "lab"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "proj",
+      "type": "ProjectionPoint",
+      "parents": [
+        "c",
+        "lab"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "homo",
+      "type": "HomotheticPoint",
+      "parents": [
+        "c",
+        "a"
+      ],
+      "params": {
+        "ratio": -1.5
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "harm",
+      "type": "HarmonicConjugatePoint",
+      "parents": [
+        "a",
+        "b",
+        "ratio"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "crefl",
+      "type": "CentralReflectionPoint",
+      "parents": [
+        "c",
+        "a"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "rot",
+      "type": "RotatedPoint",
+      "parents": [
+        "b",
+        "a"
+      ],
+      "params": {
+        "angle": 0.75
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "trans",
+      "type": "TranslatedPoint",
+      "parents": [
+        "c",
+        "a",
+        "b"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "text",
+      "type": "ExpressionText",
+      "parents": [
+        "a",
+        "c"
+      ],
+      "params": {
+        "content": "AC = {dist(A, C)} u",
+        "x": 2.0,
+        "y": 5.0
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "text2",
+      "type": "ExpressionText",
+      "parents": [],
+      "params": {
+        "content": "plain note",
+        "x": -1.0,
+        "y": -2.0
+      },
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    }
+  ]
+}
