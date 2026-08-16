@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
@@ -5,6 +7,7 @@ import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
+import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center.dart';
@@ -14,7 +17,9 @@ import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/diameter_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
+import 'package:regula/domain/construction/objects/focal_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
@@ -247,12 +252,101 @@ Construction buildKitchenSink() {
   return construction;
 }
 
+/// The kinds added *after* format version 1 — a second construction
+/// rather than more of [buildKitchenSink].
+///
+/// [buildKitchenSink] is frozen bit-for-bit by
+/// `test/fixtures/v1/kitchen-sink-v1.json`, which the v1 corpus decodes
+/// and compares against the live builder (Phase 118). That file is what a
+/// v1 app wrote, so a kind v1 never knew cannot honestly appear in it —
+/// and the pin is the point, not an obstacle. Post-v1 kinds live here
+/// instead, and the sweeps that mean "every concrete kind" run over both.
+///
+/// Every kind here still encodes to a v1 *document*: adding an object type
+/// is novelty, not misreading (PLAN §"The version field is a requirement,
+/// not a build number") — a v1 reader refuses the unknown type outright
+/// rather than drawing the wrong thing.
+Construction buildPostV1Kinds() {
+  final construction = Construction();
+  // Five points of the ellipse x²/4 + y² = 1, so the conic is a genuine
+  // one: `circle` is null and only the projective view carries it.
+  final points = [
+    for (final (i, t) in const [0.0, 1.0, 2.0, 3.0, 4.0].indexed)
+      FreePoint(id: 'q$i', position: Vec2(2 * math.cos(t), math.sin(t))),
+  ];
+  for (final point in points) {
+    construction.add(point);
+  }
+  construction.add(
+    FivePointConic(
+      id: 'conic',
+      points: points,
+      attributes: const ObjectAttributes(name: 'K', colorArgb: 0xFF2277BB),
+    ),
+  );
+
+  // The metric conics (Phase 120b). A parabola, so the stored
+  // eccentricity is the one a round-trip must carry exactly; and both
+  // bifocal branches over the same three points, so the `difference`
+  // flag is the only thing telling them apart.
+  final focus = FreePoint(id: 'focus', position: const Vec2(2, -1));
+  final directrix = LineThroughTwoPoints(
+    id: 'directrix',
+    point1: FreePoint(id: 'd1', position: const Vec2(-4, -3)),
+    point2: FreePoint(id: 'd2', position: const Vec2(-4, 5)),
+  );
+  final f1 = FreePoint(id: 'f1', position: const Vec2(-3, 0));
+  final f2 = FreePoint(id: 'f2', position: const Vec2(3, 0));
+  final on = FreePoint(id: 'on', position: const Vec2(1, 4));
+  construction
+    ..add(focus)
+    ..add(directrix.point1)
+    ..add(directrix.point2)
+    ..add(directrix)
+    ..add(
+      FocalConic(
+        id: 'parabola',
+        focus: focus,
+        directrix: directrix,
+        eccentricity: 1,
+        attributes: const ObjectAttributes(name: 'P', strokeWidth: 2),
+      ),
+    )
+    ..add(FocalConic(id: 'focal', focus: focus, directrix: directrix,
+        eccentricity: 0.5))
+    ..add(f1)
+    ..add(f2)
+    ..add(on)
+    ..add(
+      BifocalConic(
+        id: 'ellipse',
+        focus1: f1,
+        focus2: f2,
+        point: on,
+        difference: false,
+      ),
+    )
+    ..add(
+      BifocalConic(
+        id: 'hyperbola',
+        focus1: f1,
+        focus2: f2,
+        point: on,
+        difference: true,
+        attributes: const ObjectAttributes(dashPeriod: 6),
+      ),
+    );
+  return construction;
+}
+
 /// The current geometry of [object], by kind — what a round-trip must
 /// reproduce exactly (same parent doubles → same recompute output).
 Object? geometryOf(GeoObject object) => switch (object) {
   GeoPoint(:final position) => position,
   GeoLine(:final line) => line,
-  GeoCircle(:final circle) => circle,
+  // A conic-valued kind has no circle projection; its value is the matrix,
+  // so that is what a round-trip must reproduce.
+  GeoCircle(:final circle) => circle ?? object.conic,
   GeoAngle(:final angle) => angle,
   GeoPolygon(:final polygonVertices) => polygonVertices,
   GeoMeasurement(:final value, :final anchor) => (value, anchor),

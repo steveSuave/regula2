@@ -1,6 +1,8 @@
 @Tags(['golden'])
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
@@ -9,11 +11,14 @@ import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
+import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
+import 'package:regula/domain/construction/objects/focal_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -789,6 +794,104 @@ void main() {
       )..attributes = const ObjectAttributes(name: 'C'),
     );
 
+  /// The payoff kind, drawn by the real object rather than a stub: five
+  /// free points on the ellipse x²/8² + y²/5² = 1 and the
+  /// [FivePointConic] they determine, which must pass through every one
+  /// of them.
+  Construction fivePointConicScene() {
+    final construction = Construction();
+    final points = [
+      for (final (i, t) in const [0.4, 1.4, 2.4, 3.6, 5.0].indexed)
+        FreePoint(
+          id: 'q$i',
+          position: Vec2(8 * math.cos(t), 5 * math.sin(t)),
+          attributes: ObjectAttributes(name: 'P${i + 1}'),
+        ),
+    ];
+    for (final point in points) {
+      construction.add(point);
+    }
+    return construction
+      ..add(
+        FivePointConic(
+          id: 'conic',
+          points: points,
+          attributes: const ObjectAttributes(name: 'K', strokeWidth: 2),
+        ),
+      );
+  }
+
+  /// The metric conic constructors (Phase 120b), each drawn by its real
+  /// object with its defining parents visible: a parabola from a focus
+  /// and a vertical directrix, and the ellipse and hyperbola sharing one
+  /// pair of foci — so the two branches of the bifocal definition appear
+  /// over identical parents and only the flag tells them apart.
+  Construction conicConstructorsScene() {
+    final construction = Construction();
+    final focus = FreePoint(
+      id: 'focus',
+      position: const Vec2(-6, 4),
+      attributes: const ObjectAttributes(name: 'F'),
+    );
+    final d1 = FreePoint(id: 'd1', position: const Vec2(-12, -2));
+    final d2 = FreePoint(id: 'd2', position: const Vec2(-12, 10));
+    final directrix = LineThroughTwoPoints(id: 'dir', point1: d1, point2: d2);
+    final f1 = FreePoint(
+      id: 'f1',
+      position: const Vec2(2, -4),
+      attributes: const ObjectAttributes(name: 'A'),
+    );
+    final f2 = FreePoint(
+      id: 'f2',
+      position: const Vec2(10, -4),
+      attributes: const ObjectAttributes(name: 'B'),
+    );
+    // Off the perpendicular bisector, deliberately: an equidistant point
+    // makes the difference branch the doubled bisector — the honest limit,
+    // pinned by a unit test, but it would show no hyperbola here.
+    final on = FreePoint(
+      id: 'on',
+      position: const Vec2(7, 1),
+      attributes: const ObjectAttributes(name: 'P'),
+    );
+    return construction
+      ..add(focus)
+      ..add(d1)
+      ..add(d2)
+      ..add(directrix)
+      ..add(
+        FocalConic(
+          id: 'parabola',
+          focus: focus,
+          directrix: directrix,
+          eccentricity: 1,
+          attributes: const ObjectAttributes(name: 'K', strokeWidth: 2),
+        ),
+      )
+      ..add(f1)
+      ..add(f2)
+      ..add(on)
+      ..add(
+        BifocalConic(
+          id: 'ellipse',
+          focus1: f1,
+          focus2: f2,
+          point: on,
+          difference: false,
+        ),
+      )
+      ..add(
+        BifocalConic(
+          id: 'hyperbola',
+          focus1: f1,
+          focus2: f2,
+          point: on,
+          difference: true,
+          attributes: const ObjectAttributes(colorArgb: 0xFFD32F2F),
+        ),
+      );
+  }
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
@@ -824,6 +927,31 @@ void main() {
         construction: conicsScene(),
         theme: theme,
         golden: 'conics_$themeName',
+        viewport: const ViewportState(pan: Vec2(-16, 12), scale: 20),
+      );
+    });
+
+    // Phase 120: the same explicit viewport as the conics scene, because
+    // `fittedViewport` reads bounds off affine views and this conic has
+    // none — the five points alone would frame it too tightly.
+    testWidgets('five-point conic scene — $themeName', (tester) async {
+      await expectSceneGolden(
+        tester,
+        construction: fivePointConicScene(),
+        theme: theme,
+        golden: 'five_point_conic_$themeName',
+        viewport: const ViewportState(pan: Vec2(-16, 12), scale: 20),
+      );
+    });
+
+    // Phase 120b: an explicit viewport for the same reason — a parabola
+    // and a hyperbola have no affine bounds for `fittedViewport` to read.
+    testWidgets('conic constructors scene — $themeName', (tester) async {
+      await expectSceneGolden(
+        tester,
+        construction: conicConstructorsScene(),
+        theme: theme,
+        golden: 'conic_constructors_$themeName',
         viewport: const ViewportState(pan: Vec2(-16, 12), scale: 20),
       );
     });

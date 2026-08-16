@@ -4,10 +4,12 @@ import '../commands/macro_command.dart';
 import '../construction/geo_object.dart';
 import '../construction/objects/apollonius_circle.dart';
 import '../construction/objects/arc.dart';
+import '../construction/objects/bifocal_conic.dart';
 import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/diameter_circle.dart';
+import '../construction/objects/five_point_conic.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/homothetic_point.dart';
 import '../construction/objects/inscribed_circle.dart';
@@ -61,7 +63,10 @@ enum ObjectTransform {
 /// `Segment`, `Ray`, `LineThroughTwoPoints`, `CircleCenterPoint`,
 /// `DiameterCircle`, `CompassCircle`, `ThreePointCircle`, `NinePointCircle`,
 /// `InscribedCircle`, `ApolloniusCircle` (distance *ratios* survive any
-/// similarity), `Arc`, `VertexAngle`, and `Sector`
+/// similarity), `FivePointConic` (a similarity carries a conic to the
+/// conic through the image points, class included) and `BifocalConic`
+/// (foci go to foci and the focal sum scales with the ratio), `Arc`,
+/// `VertexAngle`, and `Sector`
 /// except under reflect-about-line (rebuilding would give the
 /// complementary wedge — documented limitation). Curves with non-point
 /// parents (`PerpendicularLine`, `ParallelLine`, `AngleBisectorLine`,
@@ -242,6 +247,8 @@ class TransformObjectTool implements ToolInputPreview {
         NinePointCircle() ||
         InscribedCircle() ||
         ApolloniusCircle() ||
+        FivePointConic() ||
+        BifocalConic() ||
         Arc() ||
         VertexAngle() =>
           true,
@@ -476,6 +483,17 @@ class TransformObjectTool implements ToolInputPreview {
           vertex1: img(c.vertex1),
           vertex2: img(c.vertex2),
           vertex3: img(c.vertex3),
+        ),
+      final FivePointConic c => FivePointConic(
+          id: newId(),
+          points: [for (final p in c.points) img(p)],
+        ),
+      final BifocalConic c => BifocalConic(
+          id: newId(),
+          focus1: img(c.focus1),
+          focus2: img(c.focus2),
+          point: img(c.point),
+          difference: c.difference,
         ),
       final Arc a =>
         Arc(id: newId(), start: img(a.start), via: img(a.via), end: img(a.end)),

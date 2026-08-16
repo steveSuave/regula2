@@ -36,40 +36,49 @@ DecodedDocument roundTrip(
 
 void main() {
   group('round-trip through a JSON string', () {
-    test('reproduces every object kind: ids, order, parents, geometry', () {
-      final original = buildKitchenSink();
-      final decoded = roundTrip(original).construction;
+    // Both corpora, because "every concrete kind" spans them: the kitchen
+    // sink is frozen at the v1 fixture, so kinds added since live in
+    // [buildPostV1Kinds] (see there).
+    for (final (name, build) in [
+      ('the kitchen sink', buildKitchenSink),
+      ('the post-v1 kinds', buildPostV1Kinds),
+    ]) {
+      test('reproduces every object kind in $name: ids, order, parents, '
+          'geometry', () {
+        final original = build();
+        final decoded = roundTrip(original).construction;
 
-      final originals = original.objects.toList();
-      final decodeds = decoded.objects.toList();
-      expect(decodeds.length, originals.length);
-      for (var i = 0; i < originals.length; i++) {
-        final before = originals[i];
-        final after = decodeds[i];
-        expect(after.id, before.id);
-        expect(after.runtimeType, before.runtimeType);
-        expect(
-          [for (final p in after.parents) p.id],
-          [for (final p in before.parents) p.id],
-          reason: 'parents of ${before.id}',
-        );
-        expect(
-          after.attributes,
-          before.attributes,
-          reason: 'attributes of ${before.id}',
-        );
-        expect(
-          after.isDefined,
-          before.isDefined,
-          reason: 'definedness of ${before.id}',
-        );
-        expect(
-          geometryOf(after),
-          geometryOf(before),
-          reason: 'geometry of ${before.id}',
-        );
-      }
-    });
+        final originals = original.objects.toList();
+        final decodeds = decoded.objects.toList();
+        expect(decodeds.length, originals.length);
+        for (var i = 0; i < originals.length; i++) {
+          final before = originals[i];
+          final after = decodeds[i];
+          expect(after.id, before.id);
+          expect(after.runtimeType, before.runtimeType);
+          expect(
+            [for (final p in after.parents) p.id],
+            [for (final p in before.parents) p.id],
+            reason: 'parents of ${before.id}',
+          );
+          expect(
+            after.attributes,
+            before.attributes,
+            reason: 'attributes of ${before.id}',
+          );
+          expect(
+            after.isDefined,
+            before.isDefined,
+            reason: 'definedness of ${before.id}',
+          );
+          expect(
+            geometryOf(after),
+            geometryOf(before),
+            reason: 'geometry of ${before.id}',
+          );
+        }
+      });
+    }
 
     test('decoded parents are the decoded instances, wired by reference', () {
       final decoded = roundTrip(buildKitchenSink()).construction;

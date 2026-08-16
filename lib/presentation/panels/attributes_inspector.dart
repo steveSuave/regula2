@@ -10,6 +10,7 @@ import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/object_naming.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/objects/five_point_conic.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../canvas/measure_format.dart';
@@ -89,12 +90,17 @@ class AttributesInspector extends ConsumerWidget {
     // The kinds the painter can fill (Phase 37): angle markers, polygons,
     // and circle-carrier kinds — sectors as pie wedges, full circles as
     // discs. Arcs excluded: their fill shape is ambiguous, the painter
-    // skips them.
+    // skips them. Conic-valued kinds are excluded for the same reason
+    // (Phase 120): a hyperbola bounds nothing and a clipped ellipse would
+    // have to be closed along the viewport edges, so the row would be a
+    // silent no-op. By *kind*, not by the current value — an undefined
+    // circle must keep its fill row, and a conic that happens to be
+    // circle-shaped today need not gain one.
     final fillables = [
       for (final object in objects)
         if (object is GeoAngle ||
             object is GeoPolygon ||
-            (object is GeoCircle && object is! Arc))
+            (object is GeoCircle && object is! Arc && object is! FivePointConic))
           object,
     ];
     // The kinds with a measurable value (Phase 35): segment lengths and

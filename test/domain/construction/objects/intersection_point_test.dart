@@ -188,9 +188,39 @@ void main() {
         throwsArgumentError,
       );
       expect(
-        () => IntersectionPoint(id: 'x', curve1: l, curve2: l2, branchIndex: 2),
+        () => IntersectionPoint(id: 'x', curve1: l, curve2: l2, branchIndex: 4),
         throwsArgumentError,
       );
+      expect(
+        () =>
+            IntersectionPoint(id: 'x', curve1: l, curve2: l2, branchIndex: -1),
+        throwsArgumentError,
+      );
+    });
+
+    test('branches 2 and 3 are legal — conic ∩ conic has four (Phase 120b)',
+        () {
+      // The bound was 0..1 until a `FivePointConic` could be tapped
+      // against another conic. It is a *seed* addressing canonical order,
+      // and `recompute` clamps it to what the current carriers actually
+      // produce, so the constructor bounds it by the largest any pair can
+      // have rather than by this pair's count right now.
+      final l = lineThrough('l', (fp('a', 0, 0), fp('b', 1, 0)));
+      final l2 = lineThrough('l2', (fp('c', 0, 1), fp('d', 1, 2)));
+      for (final index in const [2, 3]) {
+        final point = IntersectionPoint(
+          id: 'x',
+          curve1: l,
+          curve2: l2,
+          branchIndex: index,
+        );
+        expect(point.branchIndex, index);
+        expect(
+          point.isDefined,
+          isTrue,
+          reason: 'two lines have one branch; the index clamps to it',
+        );
+      }
     });
   });
 

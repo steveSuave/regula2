@@ -5,6 +5,7 @@ import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/apollonius_circle.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/area_measurement.dart';
+import '../../domain/construction/objects/bifocal_conic.dart';
 import '../../domain/construction/objects/central_reflection_point.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center.dart';
@@ -14,7 +15,9 @@ import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/objects/five_point_conic.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
+import '../../domain/construction/objects/focal_conic.dart';
 import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/harmonic_conjugate_point.dart';
 import '../../domain/construction/objects/homothetic_point.dart';
@@ -316,6 +319,23 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     NinePointCircle() => ('NinePointCircle', const {}),
     InscribedCircle() => ('InscribedCircle', const {}),
     ApolloniusCircle() => ('ApolloniusCircle', const {}),
+    // The five parents determine the conic, so it stores no params — and
+    // therefore needs no version bump (PLAN §"The version field is a
+    // requirement, not a build number"): a v1 reader refuses the unknown
+    // type outright rather than misreading it, which is exactly what the
+    // stamp would have bought.
+    FivePointConic() => ('FivePointConic', const {}),
+    // Both metric conics carry the one number that is not in their
+    // parents. Ordinary params, so still a v1 document: see the note on
+    // `FivePointConic` above.
+    FocalConic(:final eccentricity) => (
+        'FocalConic',
+        {'eccentricity': eccentricity}
+      ),
+    BifocalConic(:final difference) => (
+        'BifocalConic',
+        {'difference': difference}
+      ),
     CompassCircle() => ('CompassCircle', const {}),
     FixedRadiusCircle(:final radius) => (
         'FixedRadiusCircle',
@@ -611,6 +631,28 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         point3: point(2),
         attributes: attributes,
       ),
+    // Parent count is the constructor's ArgumentError, normalized to
+    // FormatException by the decode loop — the Polygon convention.
+    'FocalConic' => FocalConic(
+        id: id,
+        focus: point(0),
+        directrix: line(1),
+        eccentricity: _doubleParam(id, params, 'eccentricity'),
+        attributes: attributes,
+      ),
+    'BifocalConic' => BifocalConic(
+        id: id,
+        focus1: point(0),
+        focus2: point(1),
+        point: point(2),
+        difference: _boolParam(id, params, 'difference'),
+        attributes: attributes,
+      ),
+    'FivePointConic' => FivePointConic(
+        id: id,
+        points: [for (var i = 0; i < parents.length; i++) point(i)],
+        attributes: attributes,
+      ),
     'CompassCircle' => CompassCircle(
         id: id,
         radiusPoint1: point(0),
@@ -768,6 +810,14 @@ String _stringParam(String id, Map<String, dynamic> params, String key) {
   final value = params[key];
   if (value is! String) {
     throw FormatException('Object "$id": missing string param "$key"');
+  }
+  return value;
+}
+
+bool _boolParam(String id, Map<String, dynamic> params, String key) {
+  final value = params[key];
+  if (value is! bool) {
+    throw FormatException('Object "$id": missing boolean param "$key"');
   }
   return value;
 }

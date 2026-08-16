@@ -32,10 +32,13 @@ import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/angle_tool.dart';
 import '../../domain/tools/area_tool.dart';
+import '../../domain/tools/bifocal_conic_tool.dart';
+import '../../domain/tools/conic_tool.dart';
 import '../../domain/tools/distance_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
 import '../../domain/tools/fixed_length_segment_tool.dart';
 import '../../domain/tools/fixed_radius_circle_tool.dart';
+import '../../domain/tools/focal_conic_tool.dart';
 import '../../domain/tools/harmonic_conjugate_tool.dart';
 import '../../domain/tools/intersection_tool.dart';
 import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
@@ -168,7 +171,9 @@ class GeometryToolbar extends ConsumerWidget {
             !_twoPointCircleBuilders.contains(tool.build));
     final linesActive =
         tool is PolygonTool ||
-        (tool is PointAndLineTool && tool.build != buildProjectionPoint) ||
+        (tool is PointAndLineTool &&
+            tool is! FocalConicTool &&
+            tool.build != buildProjectionPoint) ||
         tool is AngleBisectorTool ||
         tool is TangentTool ||
         tool is PolarLineTool ||
@@ -180,6 +185,10 @@ class GeometryToolbar extends ConsumerWidget {
         tool is TriangleCircleTool ||
         (tool is TwoPointTool && _twoPointCircleBuilders.contains(tool.build)) ||
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
+    // Every conic tool is its own type, so the group needs no builder
+    // sets — see `FocalConicTool` for why they are types and not builders.
+    final conicsActive =
+        tool is ConicTool || tool is FocalConicTool || tool is BifocalConicTool;
     final anglesActive = tool is AngleTool || tool is AngleBySizeTool;
     final transformActive = tool is TransformObjectTool;
     final macrosActive =
@@ -235,6 +244,13 @@ class GeometryToolbar extends ConsumerWidget {
       return sides == null
           ? null
           : RegularPolygonMacroTool(newId: newObjectId, sideCount: sides);
+    }
+
+    Future<Tool?> eccentricityPick() async {
+      final eccentricity = await askEccentricity(context);
+      return eccentricity == null
+          ? null
+          : FocalConicTool(newId: newObjectId, eccentricity: eccentricity);
     }
 
     Future<Tool?> circleRadiusPick() async {
@@ -430,6 +446,44 @@ class GeometryToolbar extends ConsumerWidget {
               'Apollonius circle (A, B, then the ratio point)',
               _threePoint(buildApolloniusCircle),
               AppAction.apolloniusCircleTool,
+            ),
+          ],
+        ),
+        _ToolGroup(
+          icon: Icons.egg_outlined,
+          tooltip: 'Conics: through five points, parabola by focus and '
+              'directrix, ellipse and hyperbola by their foci, or by a '
+              'given eccentricity',
+          active: conicsActive,
+          items: [
+            (
+              'Conic through five points',
+              _pick(() => ConicTool(newId: newObjectId)),
+              AppAction.conicTool,
+            ),
+            (
+              'Parabola (focus, then directrix)',
+              _pick(() => FocalConicTool(newId: newObjectId)),
+              AppAction.parabolaTool,
+            ),
+            (
+              'Ellipse (two foci, then a point on it)',
+              _pick(
+                () => BifocalConicTool(newId: newObjectId, difference: false),
+              ),
+              AppAction.ellipseTool,
+            ),
+            (
+              'Hyperbola (two foci, then a point on it)',
+              _pick(
+                () => BifocalConicTool(newId: newObjectId, difference: true),
+              ),
+              AppAction.hyperbolaTool,
+            ),
+            (
+              'Conic by focus, directrix and eccentricity…',
+              eccentricityPick,
+              AppAction.focalConicTool,
             ),
           ],
         ),
@@ -836,11 +890,26 @@ Future<double?> askSegmentLength(BuildContext context) =>
 Future<double?> _askLength(
   BuildContext context,
   String title,
-  AppAction action,
-) =>
+  AppAction action, {
+  String? hint,
+}) =>
     showDialog<double>(
       context: context,
-      builder: (context) => _LengthDialog(title: title, action: action),
+      builder: (context) => hint == null
+          ? _LengthDialog(title: title, action: action)
+          : _LengthDialog(title: title, action: action, hint: hint),
+    );
+
+/// Asks for a conic's eccentricity — the shared path behind the Conics
+/// flyout item and the `G ⇧ C` shortcut. A pure ratio rather than a
+/// length, but the same rule and the same parser: positive and finite,
+/// anything else reads as cancel. The three classes are named in the
+/// hint because the number is the only thing that distinguishes them.
+Future<double?> askEccentricity(BuildContext context) => _askLength(
+      context,
+      'Conic eccentricity',
+      AppAction.focalConicTool,
+      hint: 'ratio — below 1 an ellipse, 1 a parabola, above 1 a hyperbola',
     );
 
 /// Asks for a regular polygon's side count — the shared path behind the
@@ -1031,10 +1100,15 @@ class _AngleDialogState extends State<_AngleDialog> {
 /// Positive-length sibling of [_AngleDialog] (same controller-lifetime
 /// reasoning), shared by the circle-radius and segment-length asks.
 class _LengthDialog extends StatefulWidget {
-  const _LengthDialog({required this.title, required this.action});
+  const _LengthDialog({
+    required this.title,
+    required this.action,
+    this.hint = 'world units — e.g. 2.5, 5/2 or sqrt(8)',
+  });
 
   final String title;
   final AppAction action;
+  final String hint;
 
   @override
   State<_LengthDialog> createState() => _LengthDialogState();
@@ -1056,9 +1130,7 @@ class _LengthDialogState extends State<_LengthDialog> {
       content: TextField(
         controller: _controller,
         autofocus: true,
-        decoration: const InputDecoration(
-          hintText: 'world units — e.g. 2.5, 5/2 or sqrt(8)',
-        ),
+        decoration: InputDecoration(hintText: widget.hint),
         onSubmitted: (text) => Navigator.pop(context, _parseLength(text)),
       ),
       actions: [

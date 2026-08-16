@@ -3,12 +3,15 @@ import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/apollonius_circle.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/area_measurement.dart';
+import '../../domain/construction/objects/bifocal_conic.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
+import '../../domain/construction/objects/five_point_conic.dart';
+import '../../domain/construction/objects/focal_conic.dart';
 import '../../domain/construction/objects/harmonic_conjugate_point.dart';
 import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
@@ -74,6 +77,13 @@ String objectKindLabel(GeoObject object) => switch (object) {
       NinePointCircle() => 'Nine-point circle',
       InscribedCircle() => 'Inscribed circle',
       ApolloniusCircle() => 'Apollonius circle',
+      FivePointConic() => 'Conic',
+      // The stored parameter *is* the class here, so the label reads it
+      // back rather than asking `ConicShape` — a parabola built as one
+      // says so even where the classifier's √eps double root is noisy.
+      FocalConic(:final eccentricity) when eccentricity == 1 => 'Parabola',
+      FocalConic() => 'Conic',
+      BifocalConic(:final difference) => difference ? 'Hyperbola' : 'Ellipse',
       GeoCircle() => 'Circle',
       LineAngle() => 'Angle between lines',
       GeoAngle() => 'Angle',

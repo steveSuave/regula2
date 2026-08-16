@@ -175,11 +175,36 @@ class ConicShape {
     final atInfinity = intersectLineConic(ProjLine.infinity, balanced, eps);
     final i0 = atInfinity[0];
     final i1 = atInfinity[1];
+    // Coincidence is asked *before* realness, and deliberately: a parabola's
+    // two meets are one double root, which is inherently only ~√(machine
+    // eps) accurate, so rounding routinely pushes the pair a little off the
+    // real axis. Asking `isReal` first sends such a parabola into the
+    // ellipse branch below, where it is probed through a centre that is
+    // genuinely at infinity — usually surviving as a huge finite one, but
+    // measurably often (13 in 3000 sampled exact parabolas, Phase 120b) not
+    // at all, and then the curve reports `empty` and does not draw.
+    // `doubleRootEpsilon` exists for exactly this question; applying it to
+    // the conjugate side as well as the real one is the same rule, not a
+    // new tolerance. A hyperbola whose asymptote directions agree to within
+    // it is likewise called a parabola, as it already was.
+    if (i0.closeTo(i1, doubleRootEpsilon)) {
+      // The base point is the doubled meet — taken exactly as the null
+      // direction of the quadratic block rather than from the perturbed
+      // root, so a parabola's seed is real by construction.
+      return _parameterized(
+        ConicClass.parabola,
+        conic,
+        unbalance.apply(_nullDirectionOf(balanced)).normalized,
+        eps,
+      );
+    }
     if (i0.isReal(eps) && i1.isReal(eps)) {
-      final kind = i0.closeTo(i1, doubleRootEpsilon)
-          ? ConicClass.parabola
-          : ConicClass.hyperbola;
-      return _parameterized(kind, conic, unbalance.apply(i0).normalized, eps);
+      return _parameterized(
+        ConicClass.hyperbola,
+        conic,
+        unbalance.apply(i0).normalized,
+        eps,
+      );
     }
 
     // Central and missing infinity: an ellipse, real or imaginary. Every
@@ -204,6 +229,21 @@ class ConicShape {
       }
     }
     return ConicShape._(ConicClass.empty, conic, const [], null, 0, 1, eps);
+  }
+
+  /// The point at infinity in the null direction of [a]'s quadratic block
+  /// — the doubled meet of a parabola with ℓ∞.
+  ///
+  /// `Q·(−xy, xx) = (0, det Q)` and `Q·(yy, −xy) = (det Q, 0)`, and a
+  /// parabola is exactly `det Q = 0`, so either column is the null vector;
+  /// the longer one is taken for conditioning. Both are built from the
+  /// block's own entries, so the result is real whenever the conic is —
+  /// which is the point of using it instead of a root that a vanishing
+  /// discriminant has nudged into the complex plane.
+  static ProjPoint _nullDirectionOf(ConicMatrix a) {
+    final first = ProjPoint(-a.xy, a.xx, Complex.zero);
+    final second = ProjPoint(a.yy, -a.xy, Complex.zero);
+    return first.norm2 >= second.norm2 ? first : second;
   }
 
   /// [a] in coordinates that make its rank readable, together with the

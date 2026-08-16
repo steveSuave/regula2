@@ -856,7 +856,17 @@ class GeometryPainter extends CustomPainter {
       case Arc():
         break;
       case GeoCircle():
-        final circle = object.circle!;
+        final circle = object.circle;
+        if (circle == null) {
+          // A conic with no centre and radius has no filled form to draw,
+          // for the same reason an arc has none — only more so: a
+          // hyperbola bounds nothing, a parabola's interior is unbounded,
+          // and a clipped ellipse's would have to be closed along the
+          // viewport edges. It is also the stance the hit-tester already
+          // takes (Phase 119: a conic is a curve, not a region), and the
+          // inspector withholds the fill row to match.
+          break;
+        }
         final center = viewport.worldToScreen(circle.center);
         final radius = viewport.worldToScreenLength(circle.radius);
         if (radius > largeRadiusThreshold) {

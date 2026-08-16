@@ -14,13 +14,16 @@ import '../../kitchen_sink.dart';
 
 void main() {
   group('lift-from-affine bridge defaults (Phase 106)', () {
-    // The kitchen sink contains every concrete GeoObject kind (the codec
-    // encoder throws UnsupportedError for a kind missing from it, and the
-    // codec round-trip test would fail) — so looping over it is the
-    // exhaustive per-kind check the phase calls for.
+    // The two corpora together contain every concrete GeoObject kind (the
+    // codec encoder throws UnsupportedError for a kind missing from them,
+    // and the codec round-trip test would fail) — so looping over them is
+    // the exhaustive per-kind check the phase calls for.
     test('projective getters agree with the affine views '
         'for every concrete kind', () {
       final construction = buildKitchenSink();
+      for (final object in buildPostV1Kinds().objects) {
+        construction.add(object);
+      }
       var points = 0;
       var lines = 0;
       var circles = 0;
