@@ -147,7 +147,7 @@ List<ProjPoint> intersectConicConic(
 
   // 4–6. Split, intersect with the better-conditioned input, polish,
   // un-balance, order.
-  final (g, h) = _splitDegenerateConic(member);
+  final (g, h) = splitDegenerateConic(member);
   final carrier = c0.abs >= c3.abs ? a : b;
   final points = [
     for (final x in intersectLineConic(g, carrier, eps)) _polish(x, a, b),
@@ -289,12 +289,18 @@ ProjPoint _unbalance(ProjPoint p, double sigma, Vec2 t) {
 /// Splits a degenerate (rank ≤ 2) conic into its two lines `(g, h)`, with
 /// `C ∝ ghᵀ + hgᵀ`. A rank-1 conic is a double line: `g = h`.
 ///
+/// The components of a *real* rank-2 conic are either both real (two drawn
+/// lines) or a conjugate pair meeting in the conic's one real point — the
+/// split is over ℂ and does not distinguish them; ask the lines themselves
+/// with [ProjLine.isReal]. Passing a nondegenerate conic is a caller error:
+/// the routine stays total but its output means nothing.
+///
 /// Rank 2: `adj(C) = −ppᵀ` up to scale, where `p = g×h` is the lines'
 /// common point. Recover `p` from the largest adjugate diagonal
 /// (β = sqrt(−adj_ii), p = adj column i / β), then `C + M_p = 2hgᵀ`
 /// (rank 1; `M_p` is the cross-product matrix), whose rows/columns are the
 /// lines.
-(ProjLine, ProjLine) _splitDegenerateConic(ConicMatrix c0) {
+(ProjLine, ProjLine) splitDegenerateConic(ConicMatrix c0) {
   final c = _frobNormalized(c0);
   final adj = _adjugate(c);
   final diag = [adj.xx, adj.yy, adj.ww];

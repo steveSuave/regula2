@@ -294,8 +294,22 @@ class ConicMatrix {
   /// 2 for a line pair, 1 for a double line, 0 for the zero matrix (and for
   /// non-finite entries).
   ///
-  /// Both cutoffs are relative to the Frobenius norm: `|det| > eps·‖A‖³`
-  /// reads rank 3, else `max|adj| > eps·‖A‖²` reads rank 2.
+  /// Both cutoffs ask the *conditioning* question — is the smallest singular
+  /// value negligible against the largest, `σ_k > eps·σ₁` — expressed in the
+  /// quantities available without a decomposition. Since `|det| = σ₁σ₂σ₃`
+  /// and `‖adj‖ ≈ σ₁σ₂`, that reads
+  ///
+  /// - rank ≥ 2 when `‖adj‖ > eps·‖A‖²`      (i.e. `σ₂ > eps·σ₁`),
+  /// - and then rank 3 when `|det| > eps·‖A‖·‖adj‖`  (`σ₃ > eps·σ₁`).
+  ///
+  /// Comparing `|det|` against `eps·‖A‖³` instead — the obvious relative
+  /// test, and what this did before Phase 119 — asks `σ₃ > eps·σ₁²/σ₂`,
+  /// which is far stricter whenever the matrix is *stretched* (`σ₁ ≫ σ₂`).
+  /// A circle is exactly that: lifted at centre (300, −120) with radius 45
+  /// its `ww` entry is ~1e5 while its quadratic block is 1, and the old
+  /// cutoff read the perfectly ordinary circle as a line pair. Same trap,
+  /// same fix as [toCircleEq]'s quadratic-block scaling — a conic far from
+  /// the origin is not a degenerate one.
   int rank([double eps = projectiveEpsilon]) {
     if (!xx.isFinite ||
         !xy.isFinite ||
@@ -308,7 +322,8 @@ class ConicMatrix {
     final f2 = norm2;
     if (f2 == 0) return 0;
     final f = math.sqrt(f2);
-    if (det.abs > eps * f * f * f) return 3;
+    // Largest adjugate entry, standing in for ‖adj‖ (equivalent up to the
+    // dimension-sized constant a relative cutoff absorbs).
     final adjMax2 = [
       yy * ww - yw * yw,
       xw * yw - xy * ww,
@@ -317,8 +332,12 @@ class ConicMatrix {
       xy * xw - xx * yw,
       xx * yy - xy * xy,
     ].map((e) => e.abs2).reduce(math.max);
-    if (adjMax2 > eps * eps * f2 * f2) return 2;
-    return 1;
+    // Smallest first: a double line's adjugate vanishes identically, so the
+    // rank-3 cutoff would read whatever noise `det` carries against a scale
+    // of zero. Asking `σ₂` before `σ₃` keeps the ladder monotone.
+    if (adjMax2 <= eps * eps * f2 * f2) return 1;
+    if (det.abs > eps * f * math.sqrt(adjMax2)) return 3;
+    return 2;
   }
 
   /// Whether the conic is degenerate (a line pair or double line) at [eps]:

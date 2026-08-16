@@ -291,13 +291,36 @@ void main() {
   });
 
   group('rank', () {
-    // Restricted to well-conditioned scales: a tiny circle far from the
-    // origin is numerically a point circle relative to its matrix norm
-    // (|det| = r² drowns against ‖A‖³ ~ |center|⁶) — the translation part
-    // of the balancing recipe that Phase 105 adds. At radius ≥ 0.5 and
-    // center within 10 of the origin, rank 3 holds with orders of margin.
     Glados(any.smallCircle).test('circles have rank 3', (c) {
       expect(ConicMatrix.lift(c).rank(), 3);
+    });
+
+    test('an off-origin circle is not a degenerate conic', () {
+      // Pinned in Phase 119, where the painter met it: `|det| = r²` drowns
+      // against `‖A‖³ ~ |centre|⁶`, so the old cutoff read an ordinary
+      // circle at (300, −120) as a line pair and the renderer refused to
+      // draw it. The conditioning cutoff (σ₃ > eps·σ₁) holds these at
+      // rank 3.
+      for (final scale in [1e0, 1e1, 1e2, 1e3]) {
+        final c = CircleEq(Vec2(3 * scale, -1.2 * scale), 0.45 * scale);
+        expect(ConicMatrix.lift(c).rank(), 3, reason: 'scale $scale');
+        expect(ConicMatrix.lift(c).isDegenerate(), isFalse);
+      }
+    });
+
+    test('rank is a property of the matrix as written, not of the conic', () {
+      // Beyond |centre| ≈ 1/√eps the *representation* stops carrying the
+      // radius: a 1e-9 relative perturbation of `ww` swamps r², and the
+      // matrix genuinely is a double line at this tolerance. That is the
+      // honest answer for a matrix; a caller asking a geometric question
+      // balances first (see `ConicShape.of`), and this is the wall that
+      // makes the balancing necessary rather than decorative.
+      expect(ConicMatrix.lift(CircleEq(Vec2(1e6, 1e6), 1)).rank(), 1);
+      expect(
+        ConicMatrix.lift(CircleEq(Vec2(1e6, 1e6), 1)).rank(1e-30),
+        3,
+        reason: 'the information is still there at a tighter tolerance',
+      );
     });
 
     Glados2(any.projLine, any.projLine).test(
