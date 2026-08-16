@@ -387,6 +387,107 @@ class ConicShape {
     return math.atan2(cj, ci) % math.pi;
   }
 
+  /// The distance from [p] to the conic's real ink, in the chart —
+  /// `double.infinity` when it has none.
+  ///
+  /// Degenerate conics answer exactly, from their line components. A curve
+  /// is answered by **seeding a coarse sweep and refining every local
+  /// minimum it finds**: the stationarity condition `(X(φ) − p)·X'(φ) = 0`
+  /// is quartic, so the squared distance has at most four stationary
+  /// points and a scan an order of magnitude finer than that cannot land
+  /// in the wrong basin — but taking only the scan's *best* sample could,
+  /// where the pencil parameter is stretched, so each local minimum is
+  /// refined and the winner taken at the end.
+  ///
+  /// Refinement is a golden-section search rather than a Newton step: the
+  /// bracket is already in hand from the scan, a bracketed search cannot
+  /// leave it, and a hit test runs once per tap — there is nothing to buy
+  /// with a method that can diverge. (The exact alternative — intersect
+  /// the conic with the Apollonius conic of normals through `p`, four
+  /// feet, no iteration — is rejected here: it degenerates precisely where
+  /// the conic is near-circular, and would put the tap path through the
+  /// pencil solver's hardest input for no accuracy the tap can use.)
+  double distanceTo(Vec2 p) {
+    if (!isParameterized) {
+      var best = double.infinity;
+      for (final line in lines) {
+        final eq = line.toLineEq(_eps);
+        if (eq != null) best = math.min(best, eq.distanceTo(p));
+      }
+      return best;
+    }
+    const scan = 360;
+    final squared = List<double>.filled(scan, double.infinity);
+    for (var i = 0; i < scan; i++) {
+      final v = chartPointAt(math.pi * i / scan);
+      if (v != null) squared[i] = v.squaredDistanceTo(p);
+    }
+    var best = double.infinity;
+    for (var i = 0; i < scan; i++) {
+      final current = squared[i];
+      if (!current.isFinite) continue;
+      if (current > squared[(i - 1 + scan) % scan]) continue;
+      if (current > squared[(i + 1) % scan]) continue;
+      best = math.min(
+        best,
+        _refinedMinimum(math.pi * (i - 1) / scan, math.pi * (i + 1) / scan, p),
+      );
+    }
+    return best.isFinite ? math.sqrt(best) : double.infinity;
+  }
+
+  /// The least squared distance to [p] over the pencil interval
+  /// `[lo, hi]`, by golden-section search. Parameters whose point is at
+  /// infinity score infinity, which the search walks away from.
+  double _refinedMinimum(double lo, double hi, Vec2 p) {
+    const inverseGolden = 0.6180339887498949;
+    const steps = 60;
+    double at(double phi) =>
+        chartPointAt(phi)?.squaredDistanceTo(p) ?? double.infinity;
+    var a = lo, b = hi;
+    var c = b - (b - a) * inverseGolden;
+    var d = a + (b - a) * inverseGolden;
+    var fc = at(c), fd = at(d);
+    for (var i = 0; i < steps; i++) {
+      if (fc < fd) {
+        b = d;
+        d = c;
+        fd = fc;
+        c = b - (b - a) * inverseGolden;
+        fc = at(c);
+      } else {
+        a = c;
+        c = d;
+        fc = fd;
+        d = a + (b - a) * inverseGolden;
+        fd = at(d);
+      }
+    }
+    return math.min(math.min(fc, fd), math.min(at(lo), at(hi)));
+  }
+
+  /// The points of the curve whose tangent is perpendicular to the
+  /// direction [angle] — its two extremes along that direction, or fewer
+  /// when one of them is not real and finite.
+  ///
+  /// Projective, not sampled: the points with tangent parallel to a
+  /// direction are the conic's intersection with the polar line of that
+  /// direction's point at infinity — the diameter conjugate to it. Empty
+  /// for a conic with no curve.
+  List<Vec2> extremesAlong(double angle) {
+    if (!isParameterized) return const [];
+    // Tangent ⟂ [angle] means tangent ∥ [angle] + π/2.
+    final along = ProjPoint(
+      Complex(-math.sin(angle)),
+      Complex(math.cos(angle)),
+      Complex.zero,
+    );
+    return [
+      for (final x in intersectLineConic(conic.polarLine(along), conic, _eps))
+        ?x.toVec2(_eps),
+    ];
+  }
+
   /// The conic's drawn strokes, trimmed to the world box `[min, max]`.
   ///
   /// The trim is exact rather than sampled: the curve can only enter or

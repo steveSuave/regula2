@@ -569,4 +569,157 @@ void main() {
       expect(ConicShape.of(imaginaryEllipse).anchorPoint, isNull);
     });
   });
+
+  group('distanceTo', () {
+    /// The outward unit normal of [a] at the chart point [v] — the
+    /// gradient of the quadratic form, normalized.
+    Vec2 normalAt(ConicMatrix a, Vec2 v) {
+      final gx = (a.xx.re * v.x + a.xy.re * v.y + a.xw.re) * 2;
+      final gy = (a.xy.re * v.x + a.yy.re * v.y + a.yw.re) * 2;
+      return Vec2(gx, gy).normalized();
+    }
+
+    test('a point of the curve is at distance zero', () {
+      for (final a in [unitCircle, ellipse, parabola, hyperbola]) {
+        final shape = ConicShape.of(a);
+        for (final phi in [0.1, 0.8, 1.5, 2.2, 2.9]) {
+          final v = shape.chartPointAt(phi);
+          if (v == null) continue;
+          expect(shape.distanceTo(v), lessThan(1e-9), reason: 'φ = $phi');
+        }
+      }
+    });
+
+    test('a circle answers its own radius, inside and out', () {
+      final shape = ConicShape.of(unitCircle);
+      for (final r in [0.0, 0.25, 0.9, 1.0, 1.6, 40.0]) {
+        expect(
+          shape.distanceTo(Vec2(r, 0)),
+          closeTo((r - 1).abs(), 1e-9),
+          reason: 'r = $r',
+        );
+      }
+    });
+
+    test('off-curve distance is the offset along the normal', () {
+      // Inside the evolute the foot of the normal is the closest point, so
+      // stepping t along it must read back exactly t. This is the
+      // monotone-off-curve property, stated where it is exact.
+      for (final a in [unitCircle, ellipse]) {
+        final shape = ConicShape.of(a);
+        for (final phi in [0.3, 1.1, 2.0, 2.7]) {
+          final v = shape.chartPointAt(phi)!;
+          final n = normalAt(a, v);
+          for (final t in [-0.4, -0.1, 0.1, 0.4, 0.9]) {
+            expect(
+              shape.distanceTo(v + n * t),
+              closeTo(t.abs(), 1e-8),
+              reason: 'φ = $phi, t = $t',
+            );
+          }
+        }
+      }
+    });
+
+    test('a hyperbola measures to the nearer branch', () {
+      // x² − y² = 1. From (3, 0) the foot is *not* the vertex: minimizing
+      // (x − 3)² + x² − 1 puts it at x = 1.5, √3.5 away — the case that
+      // makes a real search worth having.
+      final shape = ConicShape.of(hyperbola);
+      expect(shape.distanceTo(const Vec2(3, 0)), closeTo(math.sqrt(3.5), 1e-8));
+      expect(
+        shape.distanceTo(const Vec2(-3, 0)),
+        closeTo(math.sqrt(3.5), 1e-8),
+      );
+      // The origin sits between the branches, one unit from each vertex —
+      // there the vertex *is* the foot.
+      expect(shape.distanceTo(Vec2.zero), closeTo(1, 1e-8));
+    });
+
+    test('a degenerate conic measures to its nearest line', () {
+      // y = ±x.
+      final shape = ConicShape.of(crossingLines);
+      expect(shape.distanceTo(const Vec2(2, 0)), closeTo(math.sqrt2, 1e-9));
+      expect(shape.distanceTo(Vec2.zero), closeTo(0, 1e-9));
+      // x = ±1: nearer to x = 1.
+      expect(
+        ConicShape.of(parallelLines).distanceTo(const Vec2(0.75, 40)),
+        closeTo(0.25, 1e-9),
+      );
+      expect(
+        ConicShape.of(doubleLine).distanceTo(const Vec2(3, -7)),
+        closeTo(3, 1e-9),
+      );
+    });
+
+    test('a conic with no ink is infinitely far', () {
+      expect(ConicShape.of(imaginaryEllipse).distanceTo(Vec2.zero), isPositive);
+      expect(
+        ConicShape.of(imaginaryEllipse).distanceTo(Vec2.zero).isFinite,
+        isFalse,
+      );
+      expect(
+        ConicShape.of(originPoint).distanceTo(const Vec2(1, 1)).isFinite,
+        isFalse,
+        reason: 'an isolated point is not ink',
+      );
+    });
+
+    Glados(any.pencilAngle).test('every swept point reads distance zero', (
+      phi,
+    ) {
+      final shape = ConicShape.of(ellipse);
+      final v = shape.chartPointAt(phi);
+      if (v == null) return;
+      expect(shape.distanceTo(v), lessThan(1e-8), reason: 'φ = $phi');
+    });
+  });
+
+  group('extremesAlong', () {
+    test('an ellipse extends to its semi-axes', () {
+      // x²/4 + y²/9 = 1.
+      final shape = ConicShape.of(ellipse);
+      final horizontal = shape.extremesAlong(0)..sort((a, b) => a.x.compareTo(b.x));
+      expect(horizontal, hasLength(2));
+      expect(horizontal.first.x, closeTo(-2, 1e-9));
+      expect(horizontal.last.x, closeTo(2, 1e-9));
+      expect(horizontal.every((v) => v.y.abs() < 1e-9), isTrue);
+
+      final vertical = shape.extremesAlong(math.pi / 2)
+        ..sort((a, b) => a.y.compareTo(b.y));
+      expect(vertical.first.y, closeTo(-3, 1e-9));
+      expect(vertical.last.y, closeTo(3, 1e-9));
+    });
+
+    test('a rotated direction still touches the curve', () {
+      final shape = ConicShape.of(ellipse);
+      for (final angle in [0.4, 1.2, 2.5]) {
+        final extremes = shape.extremesAlong(angle);
+        expect(extremes, hasLength(2));
+        for (final v in extremes) {
+          expect(ellipse.containsPoint(ProjPoint.lift(v)), isTrue);
+          // Nothing on the curve reaches further along the direction.
+          final along = Vec2(math.cos(angle), math.sin(angle));
+          final reach = extremes.map((e) => e.dot(along)).toList()..sort();
+          for (var i = 0; i < 60; i++) {
+            final sample = shape.chartPointAt(math.pi * i / 60)!;
+            expect(sample.dot(along), greaterThanOrEqualTo(reach.first - 1e-9));
+            expect(sample.dot(along), lessThanOrEqualTo(reach.last + 1e-9));
+          }
+        }
+      }
+    });
+
+    test('a hyperbola has real extremes only across its axis', () {
+      // x² − y² = 1: vertical tangents at (±1, 0); no horizontal ones.
+      final shape = ConicShape.of(hyperbola);
+      expect(shape.extremesAlong(0), hasLength(2));
+      expect(shape.extremesAlong(math.pi / 2), isEmpty);
+    });
+
+    test('a conic with no curve has no extremes', () {
+      expect(ConicShape.of(crossingLines).extremesAlong(0), isEmpty);
+      expect(ConicShape.of(imaginaryEllipse).extremesAlong(0), isEmpty);
+    });
+  });
 }

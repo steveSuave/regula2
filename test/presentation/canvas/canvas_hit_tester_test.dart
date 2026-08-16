@@ -18,8 +18,11 @@ import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/presentation/canvas/canvas_hit_tester.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
+
+import '../../projective_stubs.dart';
 
 void main() {
   const tester = CanvasHitTester();
@@ -998,6 +1001,117 @@ void main() {
       expect(cross.position!.x, closeTo(8, 1e-9));
       // …and the intersection point itself is hit-testable out there.
       expect(hit(construction, const Vec2(8, 0.2))?.id, 'x');
+    });
+  });
+
+  group('conics (Phase 119)', () {
+    // x²/4 + y²/9 = 1 — a genuine ellipse, so `circle` is null and the
+    // conic arm decides both distance and containment.
+    ConicMatrix ellipse() =>
+        ConicMatrix.coefficients(1 / 4, 0, 1 / 9, 0, 0, -1);
+    // x² − y² = 1.
+    ConicMatrix hyperbola() => ConicMatrix.coefficients(1, 0, -1, 0, 0, -1);
+
+    Construction sceneOf(ConicMatrix conic) =>
+        Construction()..add(StubProjectiveConic(conic, id: 'k'));
+
+    test('an ellipse is picked on its rim, not at its centre', () {
+      final construction = sceneOf(ellipse());
+      expect(hit(construction, const Vec2(2, 0))?.id, 'k');
+      expect(hit(construction, const Vec2(0, 3))?.id, 'k');
+      expect(hit(construction, const Vec2(2.6, 0)), isNull);
+      expect(
+        hit(construction, Vec2.zero),
+        isNull,
+        reason: 'the interior is not the ink — a conic is a curve',
+      );
+    });
+
+    test('a hyperbola is picked on either arm', () {
+      final construction = sceneOf(hyperbola());
+      expect(hit(construction, const Vec2(1, 0))?.id, 'k');
+      expect(hit(construction, const Vec2(-1, 0))?.id, 'k');
+      expect(
+        hit(construction, Vec2.zero),
+        isNull,
+        reason: 'between the branches, one unit from each vertex',
+      );
+    });
+
+    test('a degenerate conic is picked on its lines', () {
+      // y = ±x.
+      final construction = sceneOf(ConicMatrix.coefficients(1, 0, -1, 0, 0, 0));
+      expect(hit(construction, const Vec2(3, 3))?.id, 'k');
+      expect(hit(construction, const Vec2(3, -3))?.id, 'k');
+      expect(hit(construction, const Vec2(3, 0)), isNull);
+    });
+
+    test('a point on the conic outranks it', () {
+      final construction = sceneOf(ellipse())
+        ..add(FreePoint(id: 'p', position: const Vec2(2, 0)));
+      expect(hit(construction, const Vec2(2, 0))?.id, 'p');
+      expect(
+        tester
+            .hitTestAll(construction.objects, const Vec2(2, 0), threshold)
+            .map((o) => o.id),
+        ['p', 'k'],
+        reason: 'points beat circles, and a conic is picked like a circle',
+      );
+    });
+
+    test('band selection takes an ellipse only when it fits', () {
+      final construction = sceneOf(ellipse());
+      expect(
+        tester
+            .objectsInRect(
+              construction.objects,
+              const Vec2(-2, -3),
+              const Vec2(2, 3),
+            )
+            .map((o) => o.id),
+        ['k'],
+        reason: 'the band is exactly the semi-axes box',
+      );
+      expect(
+        tester.objectsInRect(
+          construction.objects,
+          const Vec2(-1.99, -3),
+          const Vec2(2, 3),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('an unbounded conic is never band-selected', () {
+      final construction = sceneOf(hyperbola());
+      expect(
+        tester.objectsInRect(
+          construction.objects,
+          const Vec2(-1e9, -1e9),
+          const Vec2(1e9, 1e9),
+        ),
+        isEmpty,
+        reason: 'no band contains a curve that runs to infinity',
+      );
+    });
+
+    test('a rotated band measures the ellipse along its own axes', () {
+      final construction = sceneOf(ellipse());
+      // The band frame at 45°: the ellipse's extent along that diagonal is
+      // √(a²cos² + b²sin²) = √(2 + 4.5) = √6.5 either way.
+      const half = math.sqrt2 / 2;
+      final reach = math.sqrt(6.5);
+      List<GeoObject> inBand(double slack) => tester.objectsContainedIn(
+        construction.objects,
+        (p) {
+          final u = (p.x + p.y) * half;
+          final v = (p.y - p.x) * half;
+          return u.abs() <= reach + slack && v.abs() <= reach + slack;
+        },
+        cardinalAngle: math.pi / 4,
+      );
+      expect(inBand(1e-6).map((o) => o.id), ['k']);
+      expect(inBand(-1e-3), isEmpty);
     });
   });
 }

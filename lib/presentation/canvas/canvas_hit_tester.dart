@@ -9,6 +9,8 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/angle_geometry.dart';
 import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/projective/conic_matrix.dart';
+import '../../domain/projective/conic_shape.dart';
 
 /// Finds the object under a tap.
 ///
@@ -84,6 +86,7 @@ class CanvasHitTester {
       }
       final priority = switch (object) {
         GeoPoint() => 0,
+        // A conic is picked like the circle it generalizes.
         GeoCircle() => 1,
         GeoLine() => 2,
         GeoLocus() => 2, // a locus is picked like the line it draws as
@@ -173,12 +176,14 @@ class CanvasHitTester {
             [object.circle!.center, object.startRim!, object.endRim!],
             cardinalAngle,
           ).every(within),
-        GeoCircle() => _branchExtremes(
-            object.circle!,
-            (_) => true,
-            const [],
-            cardinalAngle,
-          ).every(within),
+        GeoCircle() => object.circle == null
+            ? _conicContained(object.conic!, within, cardinalAngle)
+            : _branchExtremes(
+                object.circle!,
+                (_) => true,
+                const [],
+                cardinalAngle,
+              ).every(within),
         GeoLine() => false, // infinite (rays included): never contained
         GeoAngle() => within(object.angle!.vertex),
         GeoPolygon() => object.polygonVertices!.every(within),
@@ -190,6 +195,30 @@ class CanvasHitTester {
         // drawn ink) can never be band-selected.
         GeoLocus() => _locusContained(object, within),
       };
+
+  /// Whether a conic without a centre and radius is wholly inside the
+  /// region. Only an ellipse can be: every other drawable class runs off
+  /// to infinity, and a band that merely crosses an object does not take
+  /// it. The ellipse's extremes along the band frame's two axes are its
+  /// exact bounding box in that frame — the conic analogue of
+  /// [_branchExtremes], computed projectively rather than by sampling.
+  bool _conicContained(
+    ConicMatrix conic,
+    bool Function(Vec2) within,
+    double cardinalAngle,
+  ) {
+    final shape = ConicShape.of(conic);
+    if (shape.kind != ConicClass.ellipse) {
+      return false;
+    }
+    for (var k = 0; k < 2; k++) {
+      final extremes = shape.extremesAlong(cardinalAngle + k * math.pi / 2);
+      if (extremes.length < 2 || !extremes.every(within)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   bool _locusContained(GeoLocus locus, bool Function(Vec2) within) {
     final points = locus.samples!.whereType<Vec2>();
@@ -236,7 +265,11 @@ class CanvasHitTester {
         // A sector's visible geometry is its wedge outline: the arc branch
         // plus the two straight radius edges.
         Sector() => _sectorDistance(object, point),
-        GeoCircle() => object.circle!.distanceTo(point),
+        // A conic with no centre and radius measures to its curve — the
+        // closest-point search in `ConicShape` (see there for why it is a
+        // bracketed search and not a Newton step).
+        GeoCircle() => object.circle?.distanceTo(point) ??
+            ConicShape.of(object.conic!).distanceTo(point),
         // Segments and rays measure to their extent, not the infinite
         // carrier: t clamps to [0, 1] and [0, ∞) respectively.
         Segment() => _clampedDistance(object.start!, object.end!, point, 1),
