@@ -110,6 +110,27 @@ V2's schema is version 2, and every V1 document ever saved is version 1. The obv
 - **The tap measures to the curve.** Degenerate conics answer exactly from their line components; a curve is answered by a coarse sweep whose *every* local minimum is refined, because the stationarity condition is quartic (≤ 4 stationary points, so a scan an order of magnitude finer cannot miss a basin, but its single best sample can sit in the wrong one where the parameter is stretched). Refinement is golden-section, not Newton: the bracket is already in hand and a tap has no performance pressure. The exact route — intersect with the Apollonius conic of normals through the tap, four feet, no iteration — is **rejected**, because it degenerates precisely where the conic is near-circular and would put the tap path through the pencil solver's hardest input for accuracy no tap can use. An ellipse's interior is not a hit: a conic is a curve, not a region. Band selection can only contain an ellipse, measured by `extremesAlong` (the polar line of a direction's point at infinity), exact in the band's own frame.
 - **`isDrawable` is what `isDefined` means for a conic-valued kind** — the migration's "real and finite after projection", put to a conic. An isolated point (two conjugate complex components) is deliberately *not* drawable: it has a real point but no curve, and a conic's ink is its curve. Until Phase 121 renames it, conic-valued kinds live under `GeoCircle`, whose `circle` getter is the circle projection and whose default `isDefined` stays "projects to a circle" — so no existing circle kind changes meaning, and a conic kind overrides.
 
+### The conic constructors, and where the metric enters (pinned in Phase 120b)
+
+Five points determine a conic *projectively* — no distances, no angles, nothing a change of geometry could touch. The classical alternatives do not: a focus, a directrix, an eccentricity and a pair of foci are all **metric** data. That difference is not a footnote, it is the design, because it says exactly which constructors M-CK will have to re-found and which it will not. The user-facing shape is the DGS-standard set (five points, parabola, ellipse, hyperbola) plus the eccentricity generalization; the Conics toolbar group holds conic-*valued* kinds only, so tangent, polar and radical-axis lines stay in Lines — they are lines.
+
+- **Focus–directrix is metric but still polynomial**, so `focalConicOf(F, ℓ, e)` needs no chart read at all:
+
+  ```
+  (a²+b²)·[(x·f_w − f_x·w)² + (y·f_w − f_y·w)²] − e²·f_w²·(a·x + b·y + c·w)² = 0
+  ```
+
+  holomorphic in every input, covariant under rescaling of `F` (by `μ²`) and of `ℓ` (by `λ²`) independently, and total. The Euclidean structure enters through exactly one coefficient, `a² + b²` — which is `ℓ` evaluated against the degenerate *dual* conic `diag(1,1,0)`, the dual of `{I, J}`. **That one factor is the whole of the geometry in this constructor**, so M-CK switches it by substituting the fundamental conic's dual and nothing else moves. One kind, `FocalConic`, carries the eccentricity as a param; the parabola tool is that kind at `e = 1`, which is why there is no separate parabola kind.
+- **The bifocal conic is the one that genuinely needs the chart.** `|PF₁| ± |PF₂|` is a sum of square roots of real distances and is not polynomial in the homogeneous data, so `bifocalConicOf` reads the parents' *projections* — the sanctioned metric-boundary route of Phase 112, and the same place M-CK re-founds measurement. With the centre `O`, the focal vector `D = F₂ − F₁`, `c² = |D|²/4` and `a` from the branch, the conic is
+
+  ```
+  (a² − c²)·[(X−O)·D]² + a²·[(X−O)·D^⊥]² − 4c²a²(a² − c²) = 0
+  ```
+
+  — **one formula for both branches**: the sum branch has `a ≥ c` and gives an ellipse, the difference branch `a ≤ c` and gives a hyperbola, each by the triangle inequality, so the branch flag selects a definition rather than a case in the algebra.
+- **The projective bifocal route is recorded and not built.** A point `F` is a focus of `C` exactly when the isotropic lines `F∨I` and `F∨J` are tangent to it, so the confocal family of `F₁, F₂` is a *pencil in the dual plane* through four fixed points, and "`P` on `C`" is quadratic in the pencil parameter — its two roots are precisely the ellipse and the hyperbola the branch flag names. Elegant, and rejected for now: it points the Phase 102 pencil machinery at a case the chart answers exactly and cheaply, and buys nothing until M-CK, which is when to revisit it.
+- **Degeneracies stay total and unbanded**, per the standing Phase 110 rule. Ellipse branch with `P` on the segment `F₁F₂` → `a = c` → the axis doubled; hyperbola branch with `P` on the perpendicular bisector → `a = 0` → that bisector doubled (which is the honest limit: `|XF₁| = |XF₂|` *is* the bisector); focus on the directrix, or a focus at infinity, flattens the focal conic onto its own degenerate limit. The one guard is **coincident foci**, refused at `projectiveEpsilon` like `carrierThrough`: the branch has no meaning there and the circle through `P` is `CircleCenterPoint`'s job, not a limit for this kind to invent.
+
 ## Kernel track (Phases 100–122)
 
 Full checklists live in `docs/TODO.md`. The arc, with the three de-risking spikes marked:
@@ -124,7 +145,7 @@ Full checklists live in `docs/TODO.md`. The arc, with the three de-risking spike
 | 113–116 | **SPIKE 3** tracing scaffolding · adaptive steps + root matching · degeneracy detection + complex detour · integration + performance gate (≤ 8 ms kernel time per drag frame on a 100-object stress construction) |
 | 117 | Locus rewrite on tracing (the 704-line special-case machine dissolves) |
 | 118 | Codec v2 + permanent v1 loader |
-| 119–120 | Conic rendering + hit-testing · five-point conic object + tool (the payoff demo) |
+| 119–120 | Conic rendering + hit-testing · five-point conic object + tool (the payoff demo) · **120b** the conics group: focal and bifocal constructors |
 | 121–122 | Old kernel deletion + degeneracy-convention unification · performance hardening + compile-target finalization |
 
 ## Milestone outlines
