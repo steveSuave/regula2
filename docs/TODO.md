@@ -112,6 +112,18 @@ Opened 2026-08-15, straight off 117c's answer. Profile mode fixed the reporter's
 - [ ] Intersection tool accepts conics (conic∩line, conic∩conic already total)
 - [x] Tests: tool flow, unit and through the canvas (five taps, one undo unit, the conic through all five); `G 5` activation; codec round-trip + the version-stamp decision; painter golden, light + dark, drawn by the real object; glados — five points of a similarity-transformed ellipse/parabola/hyperbola reconstruct it (the parabola's *label* is exempt: its doubled meet with ℓ∞ is only √eps-accurate, and `kind` never selects a code path); degenerate five-point sets — four/five collinear, three-plus-two, coincident, isolated point, imaginary ellipse
 
+## Phase 120b — The conics group: focal and bifocal constructors
+
+The five-point conic proved the kind; this is the rest of the classical set, and its own toolbar group. Decisions in PLAN §"The conic constructors, and where the metric enters".
+
+- [ ] Kernel (`lib/domain/projective/conics.dart`): `focalConicOf(F, ℓ, e)` — polynomial and holomorphic, covariant under rescaling of each parent independently, the Euclidean structure confined to the single coefficient `a²+b²` (the directrix against the dual of {I, J}, which is M-CK's one substitution); `bifocalConicOf(f1, f2, p, difference)` at the Phase 112 metric boundary (a sum of square roots is not polynomial in the homogeneous data), one formula for both branches
+- [ ] Kinds: `FocalConic` (focus, directrix, `eccentricity` param — the parabola is this kind at e = 1, so there is no separate parabola kind) and `BifocalConic` (two foci, a point, `difference` flag). Both `isDefined` = `ConicShape.isDrawable`; coincident foci refused at `projectiveEpsilon`, every other degeneracy total and unbanded
+- [ ] Tools: `FocalConicTool` (point + line, either order, holding the eccentricity) and `BifocalConicTool` (3 slots). Distinct types rather than builder-identity on the shared tools, so toolbar group detection stays a `tool is` test — the dialog-driven variant could not be a canonicalized tear-off anyway
+- [ ] **A Conics toolbar group**, conic-valued kinds only: five points (moved out of Circles), parabola, ellipse, hyperbola, and the eccentricity dialog. Tangent/polar/radical-axis stay in Lines — they are lines
+- [ ] Shortcuts: `G B` parabola, `G ⇧E` ellipse, `G ⇧H` hyperbola, `G ⇧C` conic by eccentricity (`G 5` unchanged) + cheat-sheet rows
+- [ ] Shell: object-tree labels reading the branch (`FocalConic` at e = 1 is a "Parabola"; `BifocalConic` is an "Ellipse" or a "Hyperbola"), codec entries, `incidence.dart`, transform-tool sources, `buildPostV1Kinds`
+- [ ] Tests: per-kind geometry and degeneracy (focus/directrix pinned against the classical parabola, foci recovered from the built conic, both doubled-line limits); rescaling invariance through the object graph; tool flows; codec round-trip; goldens for the new scene; the conics group in the toolbar
+
 ## Phase 121 — Old kernel deletion + convention unification
 
 - [ ] Revisit the detour orientation convention (deferred from 117 → here, user decision 2026-08-14): Phase 115 ships *reversal-identity* (`detourOrientation` odd in the drag direction — there-and-back restores branches), deviating from Cinderella's fixed-time orientation (back-and-forth alternates sides, honest monodromy). Reopens only once branch identity is durably continuation-carried — commit/save/bail are still static touchpoints through 117–120, so the alternation could not survive them yet. Complete loci are unaffected either way — real double-root crossings have no branch point, so the figure-eight closes under both conventions. Switching = make the orientation constant + flip the there-and-back test to expect alternation.
