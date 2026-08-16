@@ -42,6 +42,7 @@ import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/canvas/label_layout.dart';
+import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
 import '../../wide_window.dart';
 
@@ -779,8 +780,13 @@ void main() {
       // Both menus activate a ThreePointTool; the highlight must follow
       // the builder, so only the circles icon lights up.
       final theme = Theme.of(tester.element(find.byType(AppBar)));
-      Color? iconColor(IconData icon) =>
-          tester.widget<Icon>(find.byIcon(icon)).color;
+      // The active tint arrives through the ambient IconTheme (see
+      // `_ToolGroup`), so read the effective colour, not the property.
+      Color? iconColor(IconData icon) {
+        final finder = find.byIcon(icon);
+        return tester.widget<Icon>(finder).color ??
+            IconTheme.of(tester.element(finder)).color;
+      }
       expect(iconColor(Icons.circle_outlined), theme.colorScheme.primary);
       expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));
 
@@ -956,8 +962,11 @@ void main() {
     // The merged AngleTool — the angles icon must light up, not the
     // lines or circles ones.
     final theme = Theme.of(tester.element(find.byType(AppBar)));
-    Color? iconColor(IconData icon) =>
-        tester.widget<Icon>(find.byIcon(icon)).color;
+    Color? iconColor(IconData icon) {
+      final finder = find.byIcon(icon);
+      return tester.widget<Icon>(finder).color ??
+          IconTheme.of(tester.element(finder)).color;
+    }
     expect(iconColor(Icons.square_foot), theme.colorScheme.primary);
     expect(iconColor(Icons.circle_outlined), isNot(theme.colorScheme.primary));
     expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));
@@ -2530,7 +2539,7 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.egg_outlined));
+    await tester.tap(find.byType(ConicIcon));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Conic through five points'));
     await tester.pumpAndSettle();
@@ -2578,7 +2587,7 @@ void main() {
     await tester.pump();
     expect(objectCount(), 3);
 
-    await tester.tap(find.byIcon(Icons.egg_outlined));
+    await tester.tap(find.byType(ConicIcon));
     await tester.pumpAndSettle();
     // `ToolMenuRow` puts the parenthesized explanation on its own
     // dimmed line, so the tappable text is the bare name.
@@ -2605,7 +2614,7 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.egg_outlined));
+    await tester.tap(find.byType(ConicIcon));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ellipse'));
     await tester.pumpAndSettle();

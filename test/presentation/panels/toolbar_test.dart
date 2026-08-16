@@ -9,10 +9,13 @@ import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/nine_point_circle.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
+import 'package:regula/domain/tools/bifocal_conic_tool.dart';
+import 'package:regula/domain/tools/conic_tool.dart';
 import 'package:regula/domain/tools/distance_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
+import 'package:regula/domain/tools/focal_conic_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
@@ -35,6 +38,7 @@ import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_circle_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/main.dart';
+import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
 import '../../wide_window.dart';
 
@@ -57,8 +61,29 @@ void main() {
     );
   }
 
-  Color? iconColor(WidgetTester tester, IconData icon) =>
-      tester.widget<Icon>(find.byIcon(icon)).color;
+  /// The colour a group's glyph actually paints.
+  ///
+  /// The active tint arrives through the ambient [IconTheme] rather than
+  /// an explicit `color` argument (see `_ToolGroup`), which is how [Icon]
+  /// resolves its own colour and is what lets the Conics group's painted
+  /// [ConicIcon] tint identically to a font glyph. Reading the widget's
+  /// `color` property alone would therefore always see null.
+  Color? effectiveColor(WidgetTester tester, Finder finder, Color? own) =>
+      own ?? IconTheme.of(tester.element(finder)).color;
+
+  Color? iconColor(WidgetTester tester, IconData icon) {
+    final finder = find.byIcon(icon);
+    return effectiveColor(tester, finder, tester.widget<Icon>(finder).color);
+  }
+
+  Color? conicIconColor(WidgetTester tester) {
+    final finder = find.byType(ConicIcon);
+    return effectiveColor(
+      tester,
+      finder,
+      tester.widget<ConicIcon>(finder).color,
+    );
+  }
 
   testWidgets('picking a flyout item activates its tool and highlights '
       'only that group', (tester) async {
@@ -77,6 +102,70 @@ void main() {
       iconColor(tester, Icons.circle_outlined),
       isNot(theme.colorScheme.primary),
     );
+  });
+
+  testWidgets('every Conics row activates its tool and highlights Conics, '
+      'not Circles (Phase 120b)', (tester) async {
+    // The group holds conic-valued kinds only, and each of its tools is
+    // its own type — so nothing here may leak into the Circles, Lines or
+    // Points catch-alls.
+    for (final (label, matcher) in [
+      ('Conic through five points', isA<ConicTool>()),
+      ('Parabola', isA<FocalConicTool>()),
+      ('Ellipse', isA<BifocalConicTool>()),
+      ('Hyperbola', isA<BifocalConicTool>()),
+    ]) {
+      await pumpEditor(tester);
+      await tester.tap(find.byType(ConicIcon));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+
+      expect(container.read(toolProvider).tool, matcher, reason: label);
+      final theme = Theme.of(tester.element(find.byType(AppBar)));
+      expect(
+        conicIconColor(tester),
+        theme.colorScheme.primary,
+        reason: '$label must highlight the Conics group',
+      );
+      for (final other in const [
+        Icons.circle_outlined,
+        Icons.timeline,
+        Icons.control_point,
+      ]) {
+        expect(
+          iconColor(tester, other),
+          isNot(theme.colorScheme.primary),
+          reason: '$label must not highlight $other',
+        );
+      }
+    }
+  });
+
+  testWidgets('the eccentricity item asks for a ratio; cancel and garbage '
+      'activate nothing (Phase 120b)', (tester) async {
+    await pumpEditor(tester);
+    await tester.tap(find.byType(ConicIcon));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Conic by focus, directrix and eccentricity…'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await tester.tap(find.byType(ConicIcon));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Conic by focus, directrix and eccentricity…'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '3/2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<FocalConicTool>());
+    expect((tool! as FocalConicTool).eccentricity, 1.5);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(conicIconColor(tester), theme.colorScheme.primary);
   });
 
   testWidgets('the segment-ratio closure highlights Points, not Lines — '

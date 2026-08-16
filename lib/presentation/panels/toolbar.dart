@@ -70,6 +70,7 @@ import '../../domain/tools/triangle_center_tool.dart';
 import '../../domain/tools/triangle_circle_tool.dart';
 import '../../domain/tools/two_point_tool.dart';
 import '../shortcuts/shortcut_table.dart';
+import 'conic_icon.dart';
 
 /// One flyout item's payload: asynchronously produces the tool to
 /// activate, or null to abort (a dialog cancelled — the current tool
@@ -281,7 +282,7 @@ class GeometryToolbar extends ConsumerWidget {
           onPressed: () => ref.read(toolProvider.notifier).deactivate(),
         ),
         _ToolGroup(
-          icon: Icons.control_point,
+          icon: const Icon(Icons.control_point),
           tooltip: 'Points: free, derived and constrained points',
           active: pointsActive,
           items: [
@@ -327,7 +328,7 @@ class GeometryToolbar extends ConsumerWidget {
           ],
         ),
         _ToolGroup(
-          icon: Icons.timeline,
+          icon: const Icon(Icons.timeline),
           tooltip: 'Lines: line, segment, ray, perpendicular, parallel, '
               'bisectors, tangents, polar, radical axis',
           active: linesActive,
@@ -395,7 +396,7 @@ class GeometryToolbar extends ConsumerWidget {
           ],
         ),
         _ToolGroup(
-          icon: Icons.circle_outlined,
+          icon: const Icon(Icons.circle_outlined),
           tooltip: 'Circles: center + rim, by diameter, by radius, '
               'three-point, compass, arc, sector, nine-point, inscribed, '
               'Apollonius',
@@ -450,7 +451,7 @@ class GeometryToolbar extends ConsumerWidget {
           ],
         ),
         _ToolGroup(
-          icon: Icons.egg_outlined,
+          icon: const ConicIcon(),
           tooltip: 'Conics: through five points, parabola by focus and '
               'directrix, ellipse and hyperbola by their foci, or by a '
               'given eccentricity',
@@ -488,7 +489,7 @@ class GeometryToolbar extends ConsumerWidget {
           ],
         ),
         _ToolGroup(
-          icon: Icons.square_foot,
+          icon: const Icon(Icons.square_foot),
           tooltip: 'Angles: at a vertex, or between two lines',
           active: anglesActive,
           items: [
@@ -505,7 +506,7 @@ class GeometryToolbar extends ConsumerWidget {
           ],
         ),
         _ToolGroup(
-          icon: Icons.flip,
+          icon: const Icon(Icons.flip),
           tooltip: 'Transform: reflect, rotate or translate a point or curve',
           active: transformActive,
           items: [
@@ -541,7 +542,7 @@ class GeometryToolbar extends ConsumerWidget {
           ],
         ),
         _ToolGroup(
-          icon: Icons.crop_square,
+          icon: const Icon(Icons.crop_square),
           tooltip: 'Polygons & shape macros',
           active: macrosActive,
           items: [
@@ -628,7 +629,7 @@ class GeometryToolbar extends ConsumerWidget {
           ],
         ),
         _ToolGroup(
-          icon: Icons.straighten,
+          icon: const Icon(Icons.straighten),
           tooltip: 'Measure: distance, area, slope, locus',
           active: measureActive,
           items: [
@@ -686,7 +687,13 @@ class _ToolGroup extends ConsumerWidget {
     required this.items,
   });
 
-  final IconData icon;
+  /// Any widget, not an `IconData`: the Conics group's glyph is drawn
+  /// ([ConicIcon]) because Material has none that means *conic*. The
+  /// active tint flows through [IconTheme] rather than a `color`
+  /// argument, which is how [Icon] resolves its own colour — so the group
+  /// tints a font glyph and a painted one the same way, without knowing
+  /// which it has.
+  final Widget icon;
   final String tooltip;
   final bool active;
   final List<ToolItem> items;
@@ -697,10 +704,14 @@ class _ToolGroup extends ConsumerWidget {
       tooltip: active ? '$tooltip — double-click to deselect' : tooltip,
       // Skip the default grow-and-fade so the flyout is readable at once.
       popUpAnimationStyle: AnimationStyle.noAnimation,
-      icon: Icon(
-        icon,
-        color: active ? Theme.of(context).colorScheme.primary : null,
-      ),
+      icon: active
+          ? IconTheme.merge(
+              data: IconThemeData(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              child: icon,
+            )
+          : icon,
       onSelected: (pick) async {
         final tool = await pick();
         if (tool != null) {
