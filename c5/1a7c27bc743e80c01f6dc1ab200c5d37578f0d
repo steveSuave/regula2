@@ -1,0 +1,70 @@
+test/domain/tools/conic_constructor_tools_test.dart
+  s_0e1b07700de473::t_4bbe0196983863 1-175
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_0e1b07700de473::t_bd262ac6dc2ca7 42,48,950-1000
+  s_0e1b07700de473::t_b9b05381785d9d 1001
+lib/domain/tools/transform_equivalence.dart
+  s_0e1b07700de473::t_88bce9f1cea494 4,66
+lib/main.dart
+  s_0e1b07700de473::t_fa3cea192e58f8 38,45,882-891
+  s_0e1b07700de473::t_7962d50ee46219 593-604
+test/domain/construction/objects/focal_conic_test.dart
+  s_0e1b07700de473::t_2ab49fe446cae4 1-172
+lib/application/persistence/construction_codec.dart
+  s_0e1b07700de473::t_865cf571713d73 8,817-820
+  s_0e1b07700de473::t_bb1f7c93b9a136 20,328-338,636-650
+  s_0e1b07700de473::t_4d8855045cba7e 821-824
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_0e1b07700de473::t_28358e7dd17f29 21,824-848,852-853,855-894,947-954,956
+  s_0e1b07700de473::t_f31f7877226775 849-851,854
+  s_0e1b07700de473::t_00a81c44739d8e 14
+  s_0e1b07700de473::t_49377cee9b7f91 955,957-958
+lib/domain/tools/focal_conic_tool.dart
+  s_0e1b07700de473::t_bf7510d9afb7dd 1-34
+lib/presentation/shortcuts/shortcut_table.dart
+  s_0e1b07700de473::t_fa3cea192e58f8 72-75,693-719
+test/presentation/canvas/geometry_canvas_test.dart
+  s_0e1b07700de473::t_6c3c9919b82a0e 21,2565-2582,2586-2609,2611-2630
+  s_0e1b07700de473::t_7d0c31ab2e8589 2533
+  s_0e1b07700de473::t_d9f3b468a55713 2583-2585,2610
+  s_0e1b07700de473::t_2619da8b734654 16
+  s_0e1b07700de473::t_cdcce5914576b4 2631
+lib/domain/construction/incidence.dart
+  s_0e1b07700de473::t_88bce9f1cea494 4,70-72
+lib/presentation/panels/object_kind_label.dart
+  s_0e1b07700de473::t_88bce9f1cea494 14,81-86
+  s_0e1b07700de473::t_8f5f27476d37c8 6
+lib/presentation/panels/toolbar.dart
+  s_0e1b07700de473::t_c7c36b5df7bae4 35,41,174-176,188-191,249-255,399-401,450-458,464-487
+  s_0e1b07700de473::t_97bfa1a1955a30 893-895,898-912,1103-1107,1111,1133
+test/domain/construction/objects/bifocal_conic_test.dart
+  s_0e1b07700de473::t_26607bd92d441b 1-241
+lib/domain/tools/transform_object_tool.dart
+  s_0e1b07700de473::t_88bce9f1cea494 7,67-69,251,491-496
+  s_0e1b07700de473::t_21ab605f325a77 497
+test/kitchen_sink.dart
+  s_0e1b07700de473::t_c32173d2c40853 10
+  s_0e1b07700de473::t_3e38a3d4640fcc 22,287-338
+lib/domain/construction/objects/focal_conic.dart
+  s_0e1b07700de473::t_6868c89f50aff3 1-80
+lib/domain/construction/objects/bifocal_conic.dart
+  s_0e1b07700de473::t_ad6c6d1a4eaeb1 1-101
+lib/domain/tools/bifocal_conic_tool.dart
+  s_0e1b07700de473::t_2cc1b9aed85758 1-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c51a7c27bc743e80c01f6dc1ab200c5d37578f0d",
+  "prompts": {},
+  "sessions": {
+    "s_0e1b07700de473": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a71e1be6-0ce2-4986-8bd9-f8baf1bcfe7f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
