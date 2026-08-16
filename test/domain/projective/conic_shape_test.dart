@@ -74,6 +74,43 @@ void main() {
       expect(ConicShape.of(rotated).kind, ConicClass.parabola);
     });
 
+    test('a slanted parabola classifies and draws, though its double root '
+        'is not bitwise real (Phase 120b)', () {
+      // 16x² + 24xy + 9y² − 130x + 90y + 100 = 0, i.e. (4x+3y)² = …: the
+      // focus-directrix parabola of F = (2, −1) and 3x − 4y + 5 = 0. Its
+      // quadratic block has determinant exactly zero, but the balanced
+      // frame's discriminant rounds slightly negative, so the doubled meet
+      // with ℓ∞ comes back a conjugate pair a hair off the real axis.
+      // Reading realness before coincidence sent this into the ellipse
+      // branch, to be probed through a centre that is genuinely at
+      // infinity — mostly surviving as a huge finite one, and measurably
+      // often (13 in 3000 sampled parabolas) collapsing to `empty`, so the
+      // curve did not draw at all.
+      final slanted = conic(16, 24, 9, -130, 90, 100);
+      final shape = ConicShape.of(slanted);
+      expect(shape.kind, ConicClass.parabola);
+      expect(shape.isDrawable, isTrue);
+      // The seed is real and genuinely on the conic — it is the null
+      // direction of the quadratic block, not the perturbed root.
+      final seed = shape.basePoint!;
+      expect(seed.isReal(), isTrue);
+      expect(slanted.containsPoint(seed), isTrue);
+      final strokes = shape.polylines(
+        min: const Vec2(-30, -30),
+        max: const Vec2(30, 30),
+      );
+      expect(strokes, isNotEmpty);
+      for (final p in strokes.expand((s) => s.points)) {
+        expect(
+          16 * p.x * p.x + 24 * p.x * p.y + 9 * p.y * p.y -
+              130 * p.x +
+              90 * p.y +
+              100,
+          closeTo(0, 1e-6 * (1 + p.norm * p.norm)),
+        );
+      }
+    });
+
     test('an imaginary ellipse is empty, not an ellipse', () {
       final shape = ConicShape.of(imaginaryEllipse);
       expect(shape.kind, ConicClass.empty);
@@ -487,6 +524,14 @@ void main() {
     test('a near-parabolic ellipse still classifies and draws', () {
       // δ = 1e-12: numerically a hair from a parabola, geometrically a very
       // elongated ellipse. The probe pair is what keeps it an ellipse.
+      //
+      // It is also what pins the Phase 120b coincidence boundary from the
+      // other side: the meets are at ±i√δ, so they read as one double root
+      // below δ ≈ 2.5e-13 and this ellipse clears that by a factor of 4.
+      // A *genuine* parabola's rounding noise is ~√(machine eps) ≈ 1e-8,
+      // two orders inside the threshold — so the margin is wide on the
+      // side that matters, and an ellipse that loses it is a million-to-one
+      // sliver that draws identically either way.
       final elongated = conic(1e-12, 0, 1, -4, 0, 0);
       final shape = ConicShape.of(elongated);
       expect(shape.kind, ConicClass.ellipse);
