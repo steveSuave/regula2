@@ -39,6 +39,7 @@ import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/angle_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
+import 'package:regula/domain/tools/conic_tool.dart';
 import 'package:regula/domain/tools/distance_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
@@ -929,6 +930,18 @@ void main() {
       (tool! as TwoPointTool).build,
       buildDiameterCircle,
       reason: 'G 2 pairs with G 3 — two points fix a diameter',
+    );
+  });
+
+  testWidgets('G 5 activates the five-point conic tool', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit5);
+    expect(
+      activeTool(),
+      isA<ConicTool>(),
+      reason: 'G 5 joins G 2/G 3/G 9 — the digit is the point count',
     );
   });
 

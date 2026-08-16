@@ -9,6 +9,7 @@ import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
+import '../../domain/construction/objects/five_point_conic.dart';
 import '../../domain/construction/objects/harmonic_conjugate_point.dart';
 import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
@@ -74,6 +75,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       NinePointCircle() => 'Nine-point circle',
       InscribedCircle() => 'Inscribed circle',
       ApolloniusCircle() => 'Apollonius circle',
+      FivePointConic() => 'Conic',
       GeoCircle() => 'Circle',
       LineAngle() => 'Angle between lines',
       GeoAngle() => 'Angle',

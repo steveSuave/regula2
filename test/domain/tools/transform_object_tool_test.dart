@@ -11,6 +11,7 @@ import 'package:regula/domain/construction/objects/central_reflection_point.dart
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/diameter_circle.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/inscribed_circle.dart';
@@ -26,6 +27,7 @@ import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 
@@ -382,6 +384,48 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('reflect a five-point conic: the conic through the image points',
+        () {
+      // A similarity carries a conic to the conic through the images of
+      // its points, class included — so the rebuild needs nothing beyond
+      // the five image points the tool already makes.
+      final points = [
+        for (final (i, t) in const [0.4, 1.4, 2.4, 3.6, 5.0].indexed)
+          FreePoint(
+            id: 'q$i',
+            position: Vec2(2 * math.cos(t), 1 + math.sin(t)),
+          ),
+      ];
+      final conic = FivePointConic(id: 'o', points: points);
+      final construction = Construction()
+        ..add(m1)
+        ..add(m2)
+        ..add(xAxis);
+      for (final point in points) {
+        construction.add(point);
+      }
+      construction.add(conic);
+      final tool = TransformObjectTool.reflectAboutLine(newId: newId);
+
+      tool.onInput(ToolInput(points.first.position, hit: conic));
+      final result =
+          tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis))
+              as ToolCommitted;
+
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as FivePointConic;
+      expect(image.isDefined, isTrue);
+      expect(
+        ConicShape.of(image.conic!).kind,
+        ConicShape.of(conic.conic!).kind,
+      );
+      final shape = ConicShape.of(image.conic!);
+      for (final point in points) {
+        final p = point.position;
+        expect(shape.distanceTo(Vec2(p.x, -p.y)), lessThan(1e-9));
+      }
     });
 
     test('dilate a nine-point circle: rebuilt over the image triangle', () {

@@ -35,6 +35,7 @@ import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/angle_tool.dart';
 import 'domain/tools/area_tool.dart';
+import 'domain/tools/conic_tool.dart';
 import 'domain/tools/delete_tool.dart';
 import 'domain/tools/distance_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
@@ -862,6 +863,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(
           ThreePointTool(newId: newObjectId, build: buildApolloniusCircle),
         );
+      case AppAction.conicTool:
+        tools.activate(ConicTool(newId: newObjectId));
       case AppAction.segmentRatioTool:
         _activateSegmentRatioTool();
       case AppAction.arcTool:

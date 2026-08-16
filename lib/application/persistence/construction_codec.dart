@@ -14,6 +14,7 @@ import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/objects/five_point_conic.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
 import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/harmonic_conjugate_point.dart';
@@ -316,6 +317,12 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     NinePointCircle() => ('NinePointCircle', const {}),
     InscribedCircle() => ('InscribedCircle', const {}),
     ApolloniusCircle() => ('ApolloniusCircle', const {}),
+    // The five parents determine the conic, so it stores no params — and
+    // therefore needs no version bump (PLAN §"The version field is a
+    // requirement, not a build number"): a v1 reader refuses the unknown
+    // type outright rather than misreading it, which is exactly what the
+    // stamp would have bought.
+    FivePointConic() => ('FivePointConic', const {}),
     CompassCircle() => ('CompassCircle', const {}),
     FixedRadiusCircle(:final radius) => (
         'FixedRadiusCircle',
@@ -609,6 +616,13 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         point1: point(0),
         point2: point(1),
         point3: point(2),
+        attributes: attributes,
+      ),
+    // Parent count is the constructor's ArgumentError, normalized to
+    // FormatException by the decode loop — the Polygon convention.
+    'FivePointConic' => FivePointConic(
+        id: id,
+        points: [for (var i = 0; i < parents.length; i++) point(i)],
         attributes: attributes,
       ),
     'CompassCircle' => CompassCircle(

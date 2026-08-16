@@ -56,9 +56,28 @@ void main() {
       expect(json['kernel'], {'metric': 'hyperbolic'});
     });
 
+    test('a new object kind does not bump it — novelty is not misreading',
+        () {
+      // A `FivePointConic` is determined by its five parents, so it stores
+      // no params and needs nothing v2 offers. A v1 build meeting one
+      // refuses the whole file by its unknown type, which is exactly the
+      // protection the stamp buys — so there is nothing left for the stamp
+      // to add, and a document that merely *uses a newer kind* must stay
+      // openable by every build that understands it.
+      final json = encode(buildPostV1Kinds());
+      expect(
+        (json['objects'] as List).any(
+          (o) => (o as Map<String, dynamic>)['type'] == 'FivePointConic',
+        ),
+        isTrue,
+      );
+      expect(json['version'], 1);
+    });
+
     test('a homogeneous param makes the document v2', () {
       // No kind emits one yet, so the rule is pinned on the encoded shape
-      // directly — this is the contract Phase 120 will rely on.
+      // directly — the contract a future kind with stored homogeneous
+      // state will rely on.
       final json = encode(buildKitchenSink());
       expect(requiredFormatVersion(json), 1);
       ((json['objects'] as List).first as Map<String, dynamic>)['params'] = {

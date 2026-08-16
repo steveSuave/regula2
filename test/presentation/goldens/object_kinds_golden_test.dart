@@ -1,6 +1,8 @@
 @Tags(['golden'])
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
@@ -14,6 +16,7 @@ import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -789,6 +792,33 @@ void main() {
       )..attributes = const ObjectAttributes(name: 'C'),
     );
 
+  /// The payoff kind, drawn by the real object rather than a stub: five
+  /// free points on the ellipse x²/8² + y²/5² = 1 and the
+  /// [FivePointConic] they determine, which must pass through every one
+  /// of them.
+  Construction fivePointConicScene() {
+    final construction = Construction();
+    final points = [
+      for (final (i, t) in const [0.4, 1.4, 2.4, 3.6, 5.0].indexed)
+        FreePoint(
+          id: 'q$i',
+          position: Vec2(8 * math.cos(t), 5 * math.sin(t)),
+          attributes: ObjectAttributes(name: 'P${i + 1}'),
+        ),
+    ];
+    for (final point in points) {
+      construction.add(point);
+    }
+    return construction
+      ..add(
+        FivePointConic(
+          id: 'conic',
+          points: points,
+          attributes: const ObjectAttributes(name: 'K', strokeWidth: 2),
+        ),
+      );
+  }
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
@@ -824,6 +854,19 @@ void main() {
         construction: conicsScene(),
         theme: theme,
         golden: 'conics_$themeName',
+        viewport: const ViewportState(pan: Vec2(-16, 12), scale: 20),
+      );
+    });
+
+    // Phase 120: the same explicit viewport as the conics scene, because
+    // `fittedViewport` reads bounds off affine views and this conic has
+    // none — the five points alone would frame it too tightly.
+    testWidgets('five-point conic scene — $themeName', (tester) async {
+      await expectSceneGolden(
+        tester,
+        construction: fivePointConicScene(),
+        theme: theme,
+        golden: 'five_point_conic_$themeName',
         viewport: const ViewportState(pan: Vec2(-16, 12), scale: 20),
       );
     });

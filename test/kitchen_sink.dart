@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
@@ -14,6 +16,7 @@ import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/diameter_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
@@ -247,12 +250,49 @@ Construction buildKitchenSink() {
   return construction;
 }
 
+/// The kinds added *after* format version 1 — a second construction
+/// rather than more of [buildKitchenSink].
+///
+/// [buildKitchenSink] is frozen bit-for-bit by
+/// `test/fixtures/v1/kitchen-sink-v1.json`, which the v1 corpus decodes
+/// and compares against the live builder (Phase 118). That file is what a
+/// v1 app wrote, so a kind v1 never knew cannot honestly appear in it —
+/// and the pin is the point, not an obstacle. Post-v1 kinds live here
+/// instead, and the sweeps that mean "every concrete kind" run over both.
+///
+/// Every kind here still encodes to a v1 *document*: adding an object type
+/// is novelty, not misreading (PLAN §"The version field is a requirement,
+/// not a build number") — a v1 reader refuses the unknown type outright
+/// rather than drawing the wrong thing.
+Construction buildPostV1Kinds() {
+  final construction = Construction();
+  // Five points of the ellipse x²/4 + y² = 1, so the conic is a genuine
+  // one: `circle` is null and only the projective view carries it.
+  final points = [
+    for (final (i, t) in const [0.0, 1.0, 2.0, 3.0, 4.0].indexed)
+      FreePoint(id: 'q$i', position: Vec2(2 * math.cos(t), math.sin(t))),
+  ];
+  for (final point in points) {
+    construction.add(point);
+  }
+  construction.add(
+    FivePointConic(
+      id: 'conic',
+      points: points,
+      attributes: const ObjectAttributes(name: 'K', colorArgb: 0xFF2277BB),
+    ),
+  );
+  return construction;
+}
+
 /// The current geometry of [object], by kind — what a round-trip must
 /// reproduce exactly (same parent doubles → same recompute output).
 Object? geometryOf(GeoObject object) => switch (object) {
   GeoPoint(:final position) => position,
   GeoLine(:final line) => line,
-  GeoCircle(:final circle) => circle,
+  // A conic-valued kind has no circle projection; its value is the matrix,
+  // so that is what a round-trip must reproduce.
+  GeoCircle(:final circle) => circle ?? object.conic,
   GeoAngle(:final angle) => angle,
   GeoPolygon(:final polygonVertices) => polygonVertices,
   GeoMeasurement(:final value, :final anchor) => (value, anchor),

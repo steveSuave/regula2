@@ -5,6 +5,7 @@ import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/diameter_circle.dart';
+import '../construction/objects/five_point_conic.dart';
 import '../construction/objects/homothetic_point.dart';
 import '../construction/objects/inscribed_circle.dart';
 import '../construction/objects/line_through_two_points.dart';
@@ -60,6 +61,7 @@ bool _covered(GeoObject object) => switch (object) {
       NinePointCircle() ||
       InscribedCircle() ||
       ApolloniusCircle() ||
+      FivePointConic() ||
       Arc() ||
       Sector() ||
       VertexAngle() =>

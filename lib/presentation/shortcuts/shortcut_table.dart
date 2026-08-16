@@ -68,6 +68,7 @@ enum AppAction {
   ninePointCircleTool,
   inscribedCircleTool,
   apolloniusCircleTool,
+  conicTool,
   segmentRatioTool,
   projectionTool,
   harmonicConjugateTool,
@@ -678,6 +679,12 @@ final List<ShortcutBinding> shortcutTable = [
     'Apollonius circle (A, B, then the ratio point)',
     'G ⇧ A',
     shift: true,
+  ),
+  _g(
+    LogicalKeyboardKey.digit5,
+    AppAction.conicTool,
+    'Conic through five points',
+    'G 5',
   ),
   _g(
     LogicalKeyboardKey.keyR,

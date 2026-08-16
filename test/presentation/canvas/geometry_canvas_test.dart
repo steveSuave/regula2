@@ -16,6 +16,7 @@ import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
@@ -29,6 +30,7 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
@@ -2519,6 +2521,43 @@ void main() {
       const Vec2(100, -100),
       reason: 'a label drag never moves the object',
     );
+  });
+
+  testWidgets('the conic tool: five taps build one conic through them, '
+      'in one undo unit (Phase 120)', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Conic through five points'));
+    await tester.pumpAndSettle();
+
+    // Five screen points on an ellipse, tapped in no particular order —
+    // five points determine the same conic however they arrive.
+    const taps = [
+      Offset(120, 200),
+      Offset(220, 120),
+      Offset(340, 160),
+      Offset(300, 280),
+      Offset(160, 300),
+    ];
+    for (final tap in taps) {
+      await tester.tapAt(origin + tap);
+      await tester.pump();
+    }
+
+    expect(objectCount(), 6, reason: 'five free points and the conic');
+    final construction = container.read(constructionProvider).construction;
+    final conic = construction.objects.last as FivePointConic;
+    expect(conic.isDefined, isTrue);
+    final shape = ConicShape.of(conic.conic!);
+    for (final point in conic.points) {
+      expect(shape.distanceTo(point.position!), lessThan(1e-9));
+    }
+
+    container.read(commandStackProvider.notifier).undo();
+    expect(objectCount(), 0, reason: 'the whole step is one undo unit');
   });
 
   testWidgets('G L then tap a circle, then a line: the whole circle '

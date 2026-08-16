@@ -32,6 +32,7 @@ import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/angle_tool.dart';
 import '../../domain/tools/area_tool.dart';
+import '../../domain/tools/conic_tool.dart';
 import '../../domain/tools/distance_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
 import '../../domain/tools/fixed_length_segment_tool.dart';
@@ -178,6 +179,7 @@ class GeometryToolbar extends ConsumerWidget {
     final circlesActive =
         tool is FixedRadiusCircleTool ||
         tool is TriangleCircleTool ||
+        tool is ConicTool ||
         (tool is TwoPointTool && _twoPointCircleBuilders.contains(tool.build)) ||
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
     final anglesActive = tool is AngleTool || tool is AngleBySizeTool;
@@ -380,9 +382,9 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.circle_outlined,
-          tooltip: 'Circles: center + rim, by diameter, by radius, '
-              'three-point, compass, arc, sector, nine-point, inscribed, '
-              'Apollonius',
+          tooltip: 'Circles & conics: center + rim, by diameter, by '
+              'radius, three-point, compass, arc, sector, nine-point, '
+              'inscribed, Apollonius, five-point conic',
           active: circlesActive,
           items: [
             (
@@ -430,6 +432,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Apollonius circle (A, B, then the ratio point)',
               _threePoint(buildApolloniusCircle),
               AppAction.apolloniusCircleTool,
+            ),
+            (
+              'Conic through five points',
+              _pick(() => ConicTool(newId: newObjectId)),
+              AppAction.conicTool,
             ),
           ],
         ),
