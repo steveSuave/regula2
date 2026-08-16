@@ -1,0 +1,21 @@
+test/application/persistence/v1_migration_corpus_test.dart
+  s_36f349fbeaed7a::t_5fe1538ace4c26 1-161
+test/fixtures/v1/kitchen-sink-v1.json
+  s_36f349fbeaed7a::t_cd46af829cd336 1-1565
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "607c88e1df044464d6081786f2bebb468aab07fc",
+  "prompts": {},
+  "sessions": {
+    "s_36f349fbeaed7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b9b8297d-fbf9-4fbf-981e-5605e9cf76a8",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
