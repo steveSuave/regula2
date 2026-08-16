@@ -1,0 +1,60 @@
+test/presentation/canvas/geometry_painter_test.dart
+  s_a57abee7b844f8::t_23d7028032effc 20,24-25,491-492,494-498,501-563,566,568-637
+  s_a57abee7b844f8::t_56ada86d78038e 493,499-500
+  s_a57abee7b844f8::t_205cfaa23f5e9b 564-565,567
+  s_a57abee7b844f8::t_8c500d12c3fc92 638-639
+test/presentation/canvas/label_obstacles_test.dart
+  s_a57abee7b844f8::t_bbb7dccab90d49 12,16-17,134-184
+  s_a57abee7b844f8::t_4e03589ab43815 185
+lib/presentation/canvas/geometry_painter.dart
+  s_a57abee7b844f8::t_17bb765adc160f 529-530,539-571
+  s_a57abee7b844f8::t_e130d0db05c7e3 74-75,435-437,526-528,531-538
+  s_a57abee7b844f8::t_e59eaed4098548 432-434,438-440
+  s_a57abee7b844f8::t_e95f4431d18839 76-79
+  s_a57abee7b844f8::t_a53465ad0370cd 16-17
+test/domain/projective/conic_shape_test.dart
+  s_a57abee7b844f8::t_7c115f8ecb696f 518-571
+test/projective_stubs.dart
+  s_a57abee7b844f8::t_56ada86d78038e 92
+  s_a57abee7b844f8::t_4345ff0abff555 6,72-91,94,97
+  s_a57abee7b844f8::t_54184d0320a288 93,95-96,98-99
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_a57abee7b844f8::t_94f2cf4298c831 37,43-44,736-791,818-829
+  s_a57abee7b844f8::t_7067139202baf7 830
+lib/domain/projective/conic_shape.dart
+  s_a57abee7b844f8::t_dce7389f52fdd2 305-346
+lib/presentation/canvas/canvas_viewport.dart
+  s_a57abee7b844f8::t_b3060f0a24d179 147-151,160-177
+  s_a57abee7b844f8::t_630b6ab09199e6 152-159
+test/presentation/canvas/canvas_viewport_test.dart
+  s_a57abee7b844f8::t_78cc08ab61592e 2
+  s_a57abee7b844f8::t_0166d3a1fa7f06 310-364
+lib/presentation/canvas/label_anchor.dart
+  s_a57abee7b844f8::t_176e726ab58601 9,19-20
+  s_a57abee7b844f8::t_630b6ab09199e6 37-45
+lib/presentation/canvas/label_obstacles.dart
+  s_a57abee7b844f8::t_630b6ab09199e6 131,135-136,138-139
+  s_a57abee7b844f8::t_778ed0aaf199f6 125-130,132-134,137,140-145
+  s_a57abee7b844f8::t_3cedfc1308037d 12,17-20
+  s_a57abee7b844f8::t_ea69c291fdafd9 21
+test/presentation/canvas/label_anchor_test.dart
+  s_a57abee7b844f8::t_aea565b1ad2b6d 14-15,18-19,102-105,107-133
+  s_a57abee7b844f8::t_56ada86d78038e 106
+  s_a57abee7b844f8::t_d18ee251318f21 134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "85c595702ea3303421e7b093c0827cdc3cca5d24",
+  "prompts": {},
+  "sessions": {
+    "s_a57abee7b844f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7f699b1e-c5a5-425b-9b59-1204b459c5cb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
