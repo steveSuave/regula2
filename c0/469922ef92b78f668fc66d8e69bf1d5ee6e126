@@ -1,0 +1,28 @@
+lib/presentation/canvas/geometry_painter.dart
+  s_0e1b07700de473::t_2af4c221865c47 859-869
+lib/presentation/panels/attributes_inspector.dart
+  s_0e1b07700de473::t_5a44cac792bcc7 13
+  s_0e1b07700de473::t_1cb4242a11ed30 93-98,103
+test/presentation/canvas/geometry_painter_test.dart
+  s_0e1b07700de473::t_1384e68f91e4f2 596-615
+test/presentation/panels/attributes_inspector_test.dart
+  s_0e1b07700de473::t_d37f024f6f31b3 760-768,770-804
+  s_0e1b07700de473::t_5adb1e613f1276 1-2,14,21
+  s_0e1b07700de473::t_cf9d281ce5d940 769
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c0469922ef92b78f668fc66d8e69bf1d5ee6e126",
+  "prompts": {},
+  "sessions": {
+    "s_0e1b07700de473": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a71e1be6-0ce2-4986-8bd9-f8baf1bcfe7f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
