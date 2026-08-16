@@ -39,11 +39,13 @@ import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/angle_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
+import 'package:regula/domain/tools/bifocal_conic_tool.dart';
 import 'package:regula/domain/tools/conic_tool.dart';
 import 'package:regula/domain/tools/distance_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
+import 'package:regula/domain/tools/focal_conic_tool.dart';
 import 'package:regula/domain/tools/harmonic_conjugate_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/locus_tool.dart';
@@ -942,6 +944,58 @@ void main() {
       activeTool(),
       isA<ConicTool>(),
       reason: 'G 5 joins G 2/G 3/G 9 — the digit is the point count',
+    );
+  });
+
+  testWidgets('G B, G ⇧E and G ⇧H reach the conic constructors',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+    var tool = activeTool();
+    expect(tool, isA<FocalConicTool>());
+    expect(
+      (tool! as FocalConicTool).eccentricity,
+      1,
+      reason: 'G B is the parabola — the focal conic at e = 1',
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyE);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    tool = activeTool();
+    expect(tool, isA<BifocalConicTool>());
+    expect((tool! as BifocalConicTool).difference, isFalse, reason: 'ellipse');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    tool = activeTool();
+    expect(tool, isA<BifocalConicTool>());
+    expect((tool! as BifocalConicTool).difference, isTrue, reason: 'hyperbola');
+  });
+
+  testWidgets('G ⇧C asks for an eccentricity, then arms the focal conic',
+      (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '1/2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = activeTool();
+    expect(tool, isA<FocalConicTool>());
+    expect(
+      (tool! as FocalConicTool).eccentricity,
+      0.5,
+      reason: 'the dialog parses expressions, like every numeric dialog',
     );
   });
 

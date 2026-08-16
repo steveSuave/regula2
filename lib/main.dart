@@ -35,12 +35,14 @@ import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/angle_tool.dart';
 import 'domain/tools/area_tool.dart';
+import 'domain/tools/bifocal_conic_tool.dart';
 import 'domain/tools/conic_tool.dart';
 import 'domain/tools/delete_tool.dart';
 import 'domain/tools/distance_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/fixed_length_segment_tool.dart';
 import 'domain/tools/fixed_radius_circle_tool.dart';
+import 'domain/tools/focal_conic_tool.dart';
 import 'domain/tools/harmonic_conjugate_tool.dart';
 import 'domain/tools/intersection_tool.dart';
 import 'domain/tools/isosceles_trapezium_macro_tool.dart';
@@ -588,6 +590,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(TwoPointTool(newId: newObjectId, build: build));
   }
 
+  Future<void> _activateFocalConicTool() async {
+    final eccentricity = await askEccentricity(context);
+    if (eccentricity == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(
+          FocalConicTool(newId: newObjectId, eccentricity: eccentricity),
+        );
+  }
+
   Future<void> _activateDilateTool() async {
     final ratio = await askDilationRatio(context);
     if (ratio == null) {
@@ -865,6 +879,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         );
       case AppAction.conicTool:
         tools.activate(ConicTool(newId: newObjectId));
+      case AppAction.parabolaTool:
+        tools.activate(FocalConicTool(newId: newObjectId));
+      case AppAction.ellipseTool:
+        tools.activate(
+          BifocalConicTool(newId: newObjectId, difference: false),
+        );
+      case AppAction.hyperbolaTool:
+        tools.activate(BifocalConicTool(newId: newObjectId, difference: true));
+      case AppAction.focalConicTool:
+        _activateFocalConicTool();
       case AppAction.segmentRatioTool:
         _activateSegmentRatioTool();
       case AppAction.arcTool:

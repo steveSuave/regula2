@@ -13,10 +13,12 @@ import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/five_point_conic.dart';
+import 'package:regula/domain/construction/objects/focal_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
@@ -2528,7 +2530,7 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.tap(find.byIcon(Icons.egg_outlined));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Conic through five points'));
     await tester.pumpAndSettle();
@@ -2558,6 +2560,73 @@ void main() {
 
     container.read(commandStackProvider.notifier).undo();
     expect(objectCount(), 0, reason: 'the whole step is one undo unit');
+  });
+
+  testWidgets('the Conics group: a parabola from a focus and a directrix '
+      '(Phase 120b)', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // A vertical directrix, then the parabola tool over it and a focus.
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Line'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(120, 80));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(120, 320));
+    await tester.pump();
+    expect(objectCount(), 3);
+
+    await tester.tap(find.byIcon(Icons.egg_outlined));
+    await tester.pumpAndSettle();
+    // `ToolMenuRow` puts the parenthesized explanation on its own
+    // dimmed line, so the tappable text is the bare name.
+    await tester.tap(find.text('Parabola'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(260, 200));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(120, 200));
+    await tester.pump();
+
+    expect(objectCount(), 5, reason: 'the focus and the parabola');
+    final construction = container.read(constructionProvider).construction;
+    final parabola = construction.objects.last as FocalConic;
+    expect(parabola.eccentricity, 1);
+    expect(parabola.isDefined, isTrue);
+    expect(ConicShape.of(parabola.conic!).kind, ConicClass.parabola);
+
+    container.read(commandStackProvider.notifier).undo();
+    expect(objectCount(), 3, reason: 'the whole step is one undo unit');
+  });
+
+  testWidgets('the Conics group: an ellipse from two foci and a point '
+      '(Phase 120b)', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.egg_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ellipse'));
+    await tester.pumpAndSettle();
+    for (final tap in const [
+      Offset(160, 200),
+      Offset(280, 200),
+      Offset(340, 260),
+    ]) {
+      await tester.tapAt(origin + tap);
+      await tester.pump();
+    }
+
+    expect(objectCount(), 4);
+    final construction = container.read(constructionProvider).construction;
+    final ellipse = construction.objects.last as BifocalConic;
+    expect(ellipse.difference, isFalse);
+    expect(ConicShape.of(ellipse.conic!).kind, ConicClass.ellipse);
+    // It passes through the third tap, and not through the foci.
+    final shape = ConicShape.of(ellipse.conic!);
+    expect(shape.distanceTo(ellipse.point.position!), lessThan(1e-9));
+    expect(shape.distanceTo(ellipse.focus1.position!), greaterThan(1e-6));
   });
 
   testWidgets('G L then tap a circle, then a line: the whole circle '

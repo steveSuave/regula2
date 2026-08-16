@@ -1,6 +1,7 @@
 import 'geo_object.dart';
 import 'objects/angle_bisector_line.dart';
 import 'objects/arc.dart';
+import 'objects/bifocal_conic.dart';
 import 'objects/circle_center_point.dart';
 import 'objects/five_point_conic.dart';
 import 'objects/intersection_point.dart';
@@ -66,6 +67,9 @@ List<GeoPoint> onCarrierDefiningPoints(GeoObject curve) => switch (curve) {
       ThreePointCircle() => [curve.point1, curve.point2, curve.point3],
       // Five points determine the conic, so all five are on it.
       FivePointConic() => curve.points,
+      // A bifocal conic passes through the point that fixed its semi-axis
+      // — but not through its foci, which are off the curve entirely.
+      BifocalConic() => [curve.point],
       Arc() => [curve.start, curve.via, curve.end],
       // A sector's start pins its radius; its end fixes an angle only.
       Sector() => [curve.start],

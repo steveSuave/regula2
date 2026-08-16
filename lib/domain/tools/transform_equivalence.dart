@@ -1,6 +1,7 @@
 import '../construction/geo_object.dart';
 import '../construction/objects/apollonius_circle.dart';
 import '../construction/objects/arc.dart';
+import '../construction/objects/bifocal_conic.dart';
 import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
@@ -62,6 +63,7 @@ bool _covered(GeoObject object) => switch (object) {
       InscribedCircle() ||
       ApolloniusCircle() ||
       FivePointConic() ||
+      BifocalConic() ||
       Arc() ||
       Sector() ||
       VertexAngle() =>

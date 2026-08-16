@@ -7,6 +7,7 @@ import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
+import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center.dart';
@@ -18,6 +19,7 @@ import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
+import 'package:regula/domain/construction/objects/focal_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
@@ -282,6 +284,58 @@ Construction buildPostV1Kinds() {
       attributes: const ObjectAttributes(name: 'K', colorArgb: 0xFF2277BB),
     ),
   );
+
+  // The metric conics (Phase 120b). A parabola, so the stored
+  // eccentricity is the one a round-trip must carry exactly; and both
+  // bifocal branches over the same three points, so the `difference`
+  // flag is the only thing telling them apart.
+  final focus = FreePoint(id: 'focus', position: const Vec2(2, -1));
+  final directrix = LineThroughTwoPoints(
+    id: 'directrix',
+    point1: FreePoint(id: 'd1', position: const Vec2(-4, -3)),
+    point2: FreePoint(id: 'd2', position: const Vec2(-4, 5)),
+  );
+  final f1 = FreePoint(id: 'f1', position: const Vec2(-3, 0));
+  final f2 = FreePoint(id: 'f2', position: const Vec2(3, 0));
+  final on = FreePoint(id: 'on', position: const Vec2(1, 4));
+  construction
+    ..add(focus)
+    ..add(directrix.point1)
+    ..add(directrix.point2)
+    ..add(directrix)
+    ..add(
+      FocalConic(
+        id: 'parabola',
+        focus: focus,
+        directrix: directrix,
+        eccentricity: 1,
+        attributes: const ObjectAttributes(name: 'P', strokeWidth: 2),
+      ),
+    )
+    ..add(FocalConic(id: 'focal', focus: focus, directrix: directrix,
+        eccentricity: 0.5))
+    ..add(f1)
+    ..add(f2)
+    ..add(on)
+    ..add(
+      BifocalConic(
+        id: 'ellipse',
+        focus1: f1,
+        focus2: f2,
+        point: on,
+        difference: false,
+      ),
+    )
+    ..add(
+      BifocalConic(
+        id: 'hyperbola',
+        focus1: f1,
+        focus2: f2,
+        point: on,
+        difference: true,
+        attributes: const ObjectAttributes(dashPeriod: 6),
+      ),
+    );
   return construction;
 }
 
