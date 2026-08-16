@@ -11,7 +11,11 @@ import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
+import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/presentation/canvas/label_anchor.dart';
+
+import '../../projective_stubs.dart';
 
 void main() {
   final origin = FreePoint(id: 'o', position: Vec2.zero);
@@ -93,6 +97,39 @@ void main() {
         coreSamples: const [],
       );
       expectAnchor(labelAnchor(locus), Vec2.zero);
+    });
+  });
+  group('conic anchors (Phase 119)', () {
+    test('a circle-shaped conic still hangs from the top of the rim', () {
+      // r = 5 about (2, 1): the arm must not change for circles.
+      final anchor = labelAnchor(
+        StubProjectiveConic(ConicMatrix.coefficients(1, 0, 1, -4, -2, -20)),
+      );
+      expect(anchor.x, closeTo(2, 1e-9));
+      expect(anchor.y, closeTo(6, 1e-9));
+    });
+
+    test('a conic with no rim hangs from a point of its curve', () {
+      // x²/4 + y²/9 = 1.
+      final conic = ConicMatrix.coefficients(1 / 4, 0, 1 / 9, 0, 0, -1);
+      final anchor = labelAnchor(StubProjectiveConic(conic));
+      expect(conic.containsPoint(ProjPoint.lift(anchor)), isTrue);
+    });
+
+    test('a line pair hangs from the lines\' crossing', () {
+      // (y − x)(y + x) = 0, crossing at the origin.
+      final anchor = labelAnchor(
+        StubProjectiveConic(ConicMatrix.coefficients(1, 0, -1, 0, 0, 0)),
+      );
+      expect(anchor.closeTo(Vec2.zero, 1e-9), isTrue);
+    });
+
+    test('parallel lines hang from a point of one of them', () {
+      // x = ±1: the crossing is at infinity, so the meet cannot serve.
+      final anchor = labelAnchor(
+        StubProjectiveConic(ConicMatrix.coefficients(1, 0, 0, 0, 0, -1)),
+      );
+      expect(anchor.x.abs(), closeTo(1, 1e-9));
     });
   });
 }

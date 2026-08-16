@@ -17,8 +17,11 @@ import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
+
+import '../../projective_stubs.dart';
 
 /// Pixel-accurate rendering is Phase 12's golden tests; here we assert
 /// the painter accepts every current object kind — including undefined
@@ -481,6 +484,155 @@ void main() {
           canvas.paths.single.computeMetrics().single.isClosed,
           isTrue,
           reason: 'no gaps and a circle host: the loop closes',
+        );
+      });
+    });
+
+    group('conic strokes (Phase 119)', () {
+      // Origin at the canvas centre, one screen px per world unit.
+      const centred = CanvasViewport(ViewportState(pan: Vec2(-400, 300)));
+      const size = Size(800, 600);
+
+      List<Path> pathsFor(ConicMatrix conic, {double dashPeriod = 0}) {
+        final construction = Construction()
+          ..add(
+            StubProjectiveConic(conic, id: 'k')
+              ..attributes = ObjectAttributes(dashPeriod: dashPeriod),
+          );
+        final canvas = _PathRecordingCanvas();
+        painterFor(construction, viewport: centred).paint(canvas, size);
+        return canvas.paths;
+      }
+
+      test('an ellipse strokes one closed path', () {
+        // x²/100² + y²/50² = 1 — comfortably inside the 800×600 canvas.
+        final paths = pathsFor(
+          ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+        );
+        expect(paths, hasLength(1));
+        final metrics = paths.single.computeMetrics().toList();
+        expect(metrics.single.isClosed, isTrue);
+        final bounds = paths.single.getBounds();
+        // Screen bounds: 200 px wide (x semi-axis 100), 100 px tall.
+        expect(bounds.width, closeTo(200, 1));
+        expect(bounds.height, closeTo(100, 1));
+        expect(bounds.center.dx, closeTo(400, 1));
+        expect(bounds.center.dy, closeTo(300, 1));
+      });
+
+      test('a hyperbola strokes one open path per branch', () {
+        // x²/100² − y²/100² = 1: both arms cross the canvas.
+        final paths = pathsFor(
+          ConicMatrix.coefficients(1 / 10000, 0, -1 / 10000, 0, 0, -1),
+        );
+        expect(paths, hasLength(2));
+        for (final path in paths) {
+          expect(path.computeMetrics().single.isClosed, isFalse);
+        }
+        final centres = paths.map((p) => p.getBounds().center.dx).toList()
+          ..sort();
+        expect(centres.first, lessThan(400), reason: 'the left branch');
+        expect(centres.last, greaterThan(400), reason: 'the right branch');
+      });
+
+      test('a parabola strokes one open path', () {
+        // y² = 200x, opening right from the origin.
+        final paths = pathsFor(ConicMatrix.coefficients(0, 0, 1, -200, 0, 0));
+        expect(paths, hasLength(1));
+        expect(paths.single.computeMetrics().single.isClosed, isFalse);
+      });
+
+      test('a degenerate conic strokes its line pair', () {
+        // y = ±x, both diagonals of the canvas.
+        final paths = pathsFor(ConicMatrix.coefficients(1, 0, -1, 0, 0, 0));
+        expect(paths, hasLength(2));
+        for (final path in paths) {
+          expect(path.computeMetrics().single.isClosed, isFalse);
+        }
+      });
+
+      test('a circle-shaped conic keeps the circle arm', () {
+        // Same object, but the conic projects to a centre and radius — it
+        // must still go through drawCircle, so circle goldens cannot move.
+        expect(
+          pathsFor(ConicMatrix.coefficients(1, 0, 1, 0, 0, -10000)),
+          isEmpty,
+        );
+      });
+
+      test('a conic entirely off-screen strokes nothing', () {
+        // (x − 10000)²/10² + y²/5² = 1 — a small ellipse (not a circle, so
+        // it takes the conic arm) a long way past the canvas edge.
+        final paths = pathsFor(
+          ConicMatrix.coefficients(1, 0, 4, -20000, 0, 1e8 - 100),
+        );
+        expect(paths, isEmpty);
+      });
+
+      test('a conic with no real ink is never painted', () {
+        // x² + y² + 1 = 0 — `isDefined` is false, so the paint loop skips
+        // it before the arm is reached.
+        final conic = ConicMatrix.coefficients(1, 0, 1, 0, 0, 1);
+        expect(StubProjectiveConic(conic).isDefined, isFalse);
+        expect(pathsFor(conic), isEmpty);
+      });
+
+      test('dashes apply to conic strokes', () {
+        final solid = pathsFor(
+          ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+        );
+        final dashed = pathsFor(
+          ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+          dashPeriod: 8,
+        );
+        expect(dashed, hasLength(1));
+        expect(
+          dashed.single.computeMetrics().length,
+          greaterThan(solid.single.computeMetrics().length),
+          reason: 'a dashed stroke is many subpaths',
+        );
+      });
+
+      test('a selected conic strokes twice — halo, then stroke', () {
+        final construction = Construction()
+          ..add(
+            StubProjectiveConic(
+              ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+              id: 'k',
+            ),
+          );
+        final canvas = _PathRecordingCanvas();
+        painterFor(
+          construction,
+          viewport: centred,
+          selectedIds: {'k'},
+        ).paint(canvas, size);
+        expect(canvas.paths, hasLength(2));
+      });
+
+      test('zooming out does not multiply the sample count', () {
+        // Flatness is a screen-space budget, so a smaller on-screen conic
+        // is a cheaper polyline, never a denser one.
+        final near = pathsFor(
+          ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+        );
+        final construction = Construction()
+          ..add(
+            StubProjectiveConic(
+              ConicMatrix.coefficients(1 / 10000, 0, 1 / 2500, 0, 0, -1),
+              id: 'k',
+            ),
+          );
+        final canvas = _PathRecordingCanvas();
+        painterFor(
+          construction,
+          viewport: const CanvasViewport(
+            ViewportState(pan: Vec2(-4000, 3000), scale: 0.1),
+          ),
+        ).paint(canvas, size);
+        expect(
+          canvas.paths.single.computeMetrics().single.length,
+          lessThan(near.single.computeMetrics().single.length),
         );
       });
     });

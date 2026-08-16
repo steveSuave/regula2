@@ -9,8 +9,11 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/label_obstacles.dart';
+
+import '../../projective_stubs.dart';
 
 void main() {
   const viewport = CanvasViewport(ViewportState());
@@ -127,5 +130,57 @@ void main() {
     expect(rightCapsules, 4, reason: 'the right-angle square has 4 edges');
     // 45° at ≤ 30° steps → 2 steps: 3 spokes + 2 rim chords.
     expect(acuteCapsules, 5);
+  });
+
+  group('conic obstacles (Phase 119)', () {
+    const centred = CanvasViewport(ViewportState(pan: Vec2(-400, 300)));
+
+    test('a hyperbola contributes one capsule chain per visible branch', () {
+      final construction = Construction()
+        ..add(
+          StubProjectiveConic(
+            ConicMatrix.coefficients(1 / 10000, 0, -1 / 10000, 0, 0, -1),
+            id: 'k',
+          ),
+        );
+      final scene = buildDeclutterScene(construction, centred, canvasSize);
+      expect(scene.capsules, isNotEmpty);
+      expect(scene.capsules.every((c) => c.ownerId == 'k'), isTrue);
+      // Every capsule sits on one side or the other, never spanning the
+      // gap between the branches — that gap is where a label may go.
+      final leftish = scene.capsules.where((c) => c.a.dx < 400).length;
+      expect(leftish, greaterThan(0));
+      expect(leftish, lessThan(scene.capsules.length));
+    });
+
+    test('a circle-shaped conic keeps the circle obstacle', () {
+      final construction = Construction()
+        ..add(
+          StubProjectiveConic(
+            ConicMatrix.coefficients(1, 0, 1, 0, 0, -10000),
+            id: 'k',
+          ),
+        );
+      final scene = buildDeclutterScene(construction, centred, canvasSize);
+      // The circle arm emits a 12–48-gon; the ends meet, so the chain is
+      // closed.
+      expect(scene.capsules.length, inInclusiveRange(12, 48));
+      expect(
+        (scene.capsules.first.a - scene.capsules.last.b).distance,
+        lessThan(1e-6),
+      );
+    });
+
+    test('an off-screen conic is no obstacle', () {
+      final construction = Construction()
+        ..add(
+          StubProjectiveConic(
+            ConicMatrix.coefficients(1, 0, 4, -20000, 0, 1e8 - 100),
+            id: 'k',
+          ),
+        );
+      final scene = buildDeclutterScene(construction, centred, canvasSize);
+      expect(scene.capsules, isEmpty);
+    });
   });
 }

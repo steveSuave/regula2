@@ -515,4 +515,58 @@ void main() {
       );
     });
   });
+
+  group('isDrawable and anchorPoint', () {
+    test('ink is the curve or the real line components', () {
+      expect(ConicShape.of(unitCircle).isDrawable, isTrue);
+      expect(ConicShape.of(parabola).isDrawable, isTrue);
+      expect(ConicShape.of(hyperbola).isDrawable, isTrue);
+      expect(ConicShape.of(crossingLines).isDrawable, isTrue);
+      expect(ConicShape.of(parallelLines).isDrawable, isTrue);
+      expect(ConicShape.of(doubleLine).isDrawable, isTrue);
+      // A real point is not ink: a conic's ink is its curve.
+      expect(ConicShape.of(originPoint).isDrawable, isFalse);
+      expect(ConicShape.of(imaginaryEllipse).isDrawable, isFalse);
+      expect(
+        ConicShape.of(
+          const ConicMatrix(
+            Complex.zero,
+            Complex.zero,
+            Complex.zero,
+            Complex.zero,
+            Complex.zero,
+            Complex.zero,
+          ),
+        ).isDrawable,
+        isFalse,
+      );
+    });
+
+    test('the anchor lands on the curve', () {
+      for (final a in [unitCircle, ellipse, parabola, hyperbola]) {
+        final anchor = ConicShape.of(a).anchorPoint;
+        expect(anchor, isNotNull);
+        expect(a.containsPoint(ProjPoint.lift(anchor!)), isTrue);
+      }
+    });
+
+    test('degenerate anchors are the crossing, or a point of a line', () {
+      expect(
+        ConicShape.of(crossingLines).anchorPoint!.closeTo(Vec2.zero, 1e-9),
+        isTrue,
+      );
+      // Parallel lines meet at infinity: a point of one of them stands in.
+      expect(
+        ConicShape.of(parallelLines).anchorPoint!.x.abs(),
+        closeTo(1, 1e-9),
+      );
+      expect(ConicShape.of(doubleLine).anchorPoint!.x, closeTo(0, 1e-9));
+      // The isolated point is real even though it is not ink.
+      expect(
+        ConicShape.of(originPoint).anchorPoint!.closeTo(Vec2.zero, 1e-9),
+        isTrue,
+      );
+      expect(ConicShape.of(imaginaryEllipse).anchorPoint, isNull);
+    });
+  });
 }

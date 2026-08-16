@@ -34,10 +34,13 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/fit_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/theme/app_theme.dart';
+
+import '../../projective_stubs.dart';
 
 /// Pixel goldens for every concrete object kind, light + dark — one scene
 /// per sealed kind plus a decorations scene (labels, custom attributes,
@@ -730,6 +733,62 @@ void main() {
     return construction;
   }
 
+
+  /// Every conic class the painter can draw, one per region of the frame:
+  /// an ellipse, a parabola, a hyperbola (two arms), a crossing line pair,
+  /// a double line, and — the regression that matters — a conic whose
+  /// matrix *is* a circle, which must still take the circle arm and land
+  /// pixel-for-pixel where `circlesScene` puts one.
+  ///
+  /// Built from `StubProjectiveConic` because Phase 119 renders conics one
+  /// phase before Phase 120's `FivePointConic` exists to produce them.
+  Construction conicsScene() => Construction()
+    // ((x+8)/6)² + ((y−5)/3)² = 1
+    ..add(
+      StubProjectiveConic(
+        ConicMatrix.coefficients(1, 0, 4, 16, -40, 128),
+        id: 'ell',
+      )..attributes = const ObjectAttributes(name: 'E'),
+    )
+    // (x−8)² = 8(y+8)
+    ..add(
+      StubProjectiveConic(
+        ConicMatrix.coefficients(1, 0, 0, -16, -8, 0),
+        id: 'par',
+      )..attributes = const ObjectAttributes(name: 'P', strokeWidth: 3),
+    )
+    // x²/2² − (y+2)²/2² = 1
+    ..add(
+      StubProjectiveConic(
+        ConicMatrix.coefficients(1, 0, -1, 0, -4, -8),
+        id: 'hyp',
+      )..attributes = const ObjectAttributes(
+        name: 'H',
+        colorArgb: 0xFFD32F2F,
+      ),
+    )
+    // (x−10)² − (y−8)² = 0: two lines crossing at (10, 8)
+    ..add(
+      StubProjectiveConic(
+        ConicMatrix.coefficients(1, 0, -1, -20, 16, 36),
+        id: 'pair',
+      )..attributes = const ObjectAttributes(dashPeriod: 8),
+    )
+    // (x + y + 14)² = 0
+    ..add(
+      StubProjectiveConic(
+        ConicMatrix.coefficients(1, 2, 1, 28, 28, 196),
+        id: 'dbl',
+      ),
+    )
+    // (x+8)² + (y+6)² = 3²  — circle-shaped, so the circle arm draws it
+    ..add(
+      StubProjectiveConic(
+        ConicMatrix.coefficients(1, 0, 1, 16, 12, 91),
+        id: 'circ',
+      )..attributes = const ObjectAttributes(name: 'C'),
+    );
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
@@ -755,6 +814,19 @@ void main() {
         );
       });
     }
+
+    // Phase 119: the conic classes. An explicit viewport, because
+    // `fittedViewport` reads bounds off affine views and a hyperbola has
+    // none — 32 × 24 world units over the 640 × 480 canvas.
+    testWidgets('conics scene — $themeName', (tester) async {
+      await expectSceneGolden(
+        tester,
+        construction: conicsScene(),
+        theme: theme,
+        golden: 'conics_$themeName',
+        viewport: const ViewportState(pan: Vec2(-16, 12), scale: 20),
+      );
+    });
 
     testWidgets('decorations scene — $themeName', (tester) async {
       await expectSceneGolden(

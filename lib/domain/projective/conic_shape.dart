@@ -302,6 +302,48 @@ class ConicShape {
       kind == ConicClass.parabola ||
       kind == ConicClass.hyperbola;
 
+  /// Whether the conic has real ink: a curve, or real line components.
+  ///
+  /// This is what `isDefined` means for a conic-valued kind — the same
+  /// "real and finite after projection" question the migration asks of
+  /// points and lines, put to a conic. An [ConicClass.isolatedPoint] is
+  /// deliberately *not* drawable: it has a real point but no curve, and a
+  /// conic's ink is its curve.
+  bool get isDrawable =>
+      isParameterized ||
+      kind == ConicClass.linePair ||
+      kind == ConicClass.doubleLine;
+
+  /// A finite real chart point of the conic's ink — where a label hangs
+  /// from, or where a coarse search seeds. Null when there is none.
+  ///
+  /// Deterministic rather than canonical: the first of a fixed pencil
+  /// scan that projects, so it moves continuously with the conic except
+  /// where that one parameter runs off to infinity. Degenerate conics
+  /// answer with their components' meet, or a point of the first real
+  /// component when the meet is at infinity (parallel lines).
+  Vec2? get anchorPoint {
+    if (isParameterized) {
+      const scan = 12;
+      for (var i = 0; i < scan; i++) {
+        final v = chartPointAt(math.pi * i / scan);
+        if (v != null) return v;
+      }
+      return null;
+    }
+    if (kind == ConicClass.isolatedPoint) return basePoint?.toVec2(_eps);
+    if (lines.isEmpty) return null;
+    if (lines.length == 2) {
+      final meet = lines[0].meet(lines[1]).toVec2(_eps);
+      if (meet != null) return meet;
+    }
+    for (final line in lines) {
+      final eq = line.toLineEq(_eps);
+      if (eq != null) return eq.pointOnLine;
+    }
+    return null;
+  }
+
   /// The point of the conic at pencil angle [phi] — see the class doc for
   /// the construction. Exactly π-periodic, and a bijection from `[0, π)` to
   /// the whole curve, points at infinity included.

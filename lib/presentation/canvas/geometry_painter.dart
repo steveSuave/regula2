@@ -13,6 +13,8 @@ import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/projective/conic_matrix.dart';
+import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
 import 'dash_path.dart';
 import 'grid_layout.dart';
@@ -68,6 +70,12 @@ class GeometryPainter extends CustomPainter {
 
   /// Opacity factor for hidden objects while [showHidden] is on.
   static const double _hiddenAlpha = 0.35;
+
+  /// Screen-px margin the conic clip box is grown by, and the flatness
+  /// (also screen px) the conic sweep is walked to. Half a pixel is under
+  /// the antialiasing floor at any zoom.
+  static const double _conicClipMargin = 8;
+  static const double _conicFlatness = 0.5;
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -421,7 +429,15 @@ class GeometryPainter extends CustomPainter {
           dashPeriod: dashPeriod,
         );
       case GeoCircle():
-        final circle = object.circle!;
+        final circle = object.circle;
+        if (circle == null) {
+          // A conic-valued kind that does not project to a centre and
+          // radius — an ellipse, parabola, hyperbola or line pair.
+          // Circles keep the arm below untouched, so their goldens do
+          // not move.
+          _drawConic(canvas, size, object.conic!, paint, dashPeriod);
+          break;
+        }
         final center = viewport.worldToScreen(circle.center);
         final radius = viewport.worldToScreenLength(circle.radius);
         if (radius > largeRadiusThreshold) {
@@ -500,6 +516,52 @@ class GeometryPainter extends CustomPainter {
       runs.single.close();
     }
     for (final path in runs) {
+      canvas.drawPath(
+        dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
+        paint,
+      );
+    }
+  }
+
+  /// Paints a conic with no centre-and-radius form — an ellipse,
+  /// parabola, hyperbola or degenerate line pair — as one stroke per
+  /// visible arc.
+  ///
+  /// Unlike an infinite line, a conic cannot be drawn by over-extending
+  /// past the canvas: a hyperbola runs off in two directions and a
+  /// parabola in one, so there is no "far enough".
+  /// [ConicShape.polylines] does the clipping in world space instead,
+  /// exactly, and returns only what the box can see. The box is grown by
+  /// [_conicClipMargin] so an arc leaves the canvas *past* the edge
+  /// rather than exactly on it — the canvas' own clip trims the
+  /// overshoot, while a join sitting on the boundary would show its
+  /// mitre.
+  void _drawConic(
+    Canvas canvas,
+    Size size,
+    ConicMatrix conic,
+    Paint paint,
+    double dashPeriod,
+  ) {
+    final box = viewport.visibleWorldBox(size, margin: _conicClipMargin);
+    final strokes = ConicShape.of(conic).polylines(
+      min: box.min,
+      max: box.max,
+      flatness: viewport.screenToWorldLength(_conicFlatness),
+    );
+    for (final stroke in strokes) {
+      if (stroke.points.length < 2) {
+        continue;
+      }
+      final first = viewport.worldToScreen(stroke.points.first);
+      final path = Path()..moveTo(first.dx, first.dy);
+      for (final point in stroke.points.skip(1)) {
+        final screen = viewport.worldToScreen(point);
+        path.lineTo(screen.dx, screen.dy);
+      }
+      if (stroke.closed) {
+        path.close();
+      }
       canvas.drawPath(
         dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
         paint,
