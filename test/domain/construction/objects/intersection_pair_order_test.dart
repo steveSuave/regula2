@@ -91,6 +91,46 @@ void main() {
     return pointsOf(construction).last;
   }
 
+  /// The rig with all four crossings already seated, named G, H, I, J as
+  /// the recording's were.
+  (Construction, List<IntersectionPoint>, List<Vec2>) seatedRig() {
+    final construction = rig();
+    for (var i = 0; i < 4; i++) {
+      construction.add(
+        IntersectionPoint(
+          curve1: construction.byId('e1')!,
+          curve2: construction.byId('e2')!,
+          branchIndex: i,
+          id: String.fromCharCode('G'.codeUnitAt(0) + i),
+        ),
+      );
+    }
+    final points = pointsOf(construction);
+    final home = [for (final p in points) p.position!]
+      ..sort((a, b) => a.y != b.y ? a.y.compareTo(b.y) : a.x.compareTo(b.x));
+    return (construction, points, home);
+  }
+
+  /// Which named point occupies each of the four home crossings, read in a
+  /// fixed spatial order — the seating chart the user reads off the canvas.
+  String seating(List<IntersectionPoint> points, List<Vec2> home) {
+    final out = <String>[];
+    for (final h in home) {
+      var name = '.';
+      var best = 0.3;
+      for (final p in points) {
+        final v = p.position;
+        if (v == null) continue;
+        if (v.distanceTo(h) < best) {
+          best = v.distanceTo(h);
+          name = p.id;
+        }
+      }
+      out.add(name);
+    }
+    return out.join();
+  }
+
   void expectNoneStacked(List<IntersectionPoint> points, String reason) {
     final defined = [
       for (final p in points)
@@ -192,6 +232,70 @@ void main() {
           );
         }
       }
+    }
+  });
+
+  // What the user sees as "the names roll". Pinned here because it is a
+  // *consequence* of the chosen convention (PLAN §"A round trip is
+  // honest"), not an accident: one out-and-back drag is a loop around a
+  // branch point, and a loop around a branch point permutes the sheets.
+  // The alternative — a round trip restoring every label — is the
+  // reversal-identity convention Phase 120c deliberately replaced, so a
+  // future reader must not "fix" this into an identity.
+
+  test('an identical round trip trades the two crossings that vanish, and '
+      'the next trip trades them back', () {
+    final (construction, points, home) = seatedRig();
+    final start = (construction.byId('D')! as FreePoint).position;
+    final atHome = seating(points, home);
+
+    final seen = <String>[];
+    for (var trip = 1; trip <= 6; trip++) {
+      drag(construction, 'D', start + const Vec2(-3, 1.5));
+      // The reported route: exactly two of the four go complex.
+      expect(
+        points.where((p) => p.position != null).length,
+        2,
+        reason: 'trip $trip should take two crossings away, not all four',
+      );
+      drag(construction, 'D', start);
+      seen.add(seating(points, home));
+    }
+
+    // Strictly alternating: an odd number of trips is the trade, an even
+    // number is back where it started.
+    for (var i = 0; i < seen.length; i++) {
+      if (i.isOdd) {
+        expect(seen[i], atHome, reason: 'trip ${i + 1} restores');
+      } else {
+        expect(seen[i], isNot(atHome), reason: 'trip ${i + 1} trades');
+      }
+    }
+    expect(seen.toSet(), hasLength(2), reason: 'two states, not a drift');
+  });
+
+  test('however the names permute, all four survive and none ever doubles',
+      () {
+    final (construction, points, home) = seatedRig();
+    final start = (construction.byId('D')! as FreePoint).position;
+    // Varying the excursion is what makes the names roll rather than
+    // alternate: a different loop realizes a different permutation.
+    for (var trip = 1; trip <= 40; trip++) {
+      final wobble = Vec2(-3 + 0.37 * (trip % 5), 1.5 - 0.29 * (trip % 7));
+      drag(construction, 'D', start + wobble);
+      drag(construction, 'D', start);
+      final chart = seating(points, home);
+      expect(
+        chart.split('')..sort(),
+        ['G', 'H', 'I', 'J'],
+        reason: 'trip $trip seated $chart — a name was lost or doubled',
+      );
+      expect(
+        points.map((p) => p.branchIndex).toSet(),
+        hasLength(4),
+        reason: 'trip $trip: two points share a branch',
+      );
+      expectNoneStacked(points, 'trip $trip');
     }
   });
 }
