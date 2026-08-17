@@ -40,6 +40,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [x] **Drag budget re-measured and recorded as the standing gate.** `tracing_bench.dart` now *throws* when a frame exceeds `dragFrameBudgetMs`, so a job can enforce it without parsing text (thrown, not `exit`ed: `dart:io` would cost the file its js and wasm targets, and an uncaught error is a non-zero exit on all four). Standing measurement across VM/AOT/dart2js/dart2wasm: **1–2%** of the 8 ms budget plain, **7–11%** carrying the 128-sample locus, checksums identical
 - [ ] Browser smoke of the wasm build, with the first deploy
 
+## Phase 126 — M-CK3: the mode as a UI
+
+The first phase of the milestone the user can *see*. Three phases of kernel work are reachable only from tests today; this one opens the door, in the order the door has to open — **the tool layer first, the codec's refusal last**, because the refusal is what has been standing in for the threading that is missing.
+
+- [ ] **Carry the kernel into the tool layer**, per the note left at `nearestIntersectionBranch` in Phase 125. `ToolInput` gains the absolute; `geometry_canvas.dart` reads it off `construction.kernel`; `resolvePoint` and `IntersectionTool` pass it down. This is owed *before* the codec change, not after: `branchIndex` addresses the filtered candidate list, so a tool on the Euclidean default building a point in a hyperbolic document writes an address into the file that means something else on reload
+- [ ] **The geometry switch is a re-addressing operation, and the type system should say so.** `Construction.kernel` stops being `final` but does **not** become a setter: the only way to change it is a method that switches, recomputes, re-points every `IntersectionPoint` by chordal match to where it was, and **returns the report of what moved** — so there is no route that switches without re-addressing (PLAN §"The audit"; the Phase 120c defect from a third direction)
+- [ ] `SetGeometryCommand` in `domain/commands/`, holding the old kernel and the old branch indices so undo restores addresses **exactly** rather than re-matching (a round trip through a re-match is not the identity — the match is nearest-position, and a point that had no real position at the switch has nothing to match on)
+- [ ] **The codec's refusal turned into support**: `_decodeKernel` drops the second guard, keeps the first (an *unknown* metric name is still a refusal). Round-trip tests per metric; the version rule is untouched — a non-default kernel already requires v2 and `test/fixtures/` stays v1
+- [ ] **Disc-boundary rendering**: the absolute drawn where it is real (the unit circle, hyperbolic), and the region outside it marked as not part of the plane. Elliptic has no real absolute to draw, which is itself the thing to show rather than hide
+- [ ] **The mode as UI**: a geometry menu beside "Axes & grid", the switch routed through the command stack, and the re-addressing report surfaced — the same report the load-time `repairedIntersections` pass still owes
+- [ ] A **mini-tutorial** the user asked for: what to build to *see* the difference (triangle angle sum, the parallel postulate, incidence unchanged, a circle whose centre looks off-centre). Written where a user finds it, not in `docs/`
+
 ## Phase 125 — M-CK2: the tier-2/3 substitutions
 
 The bulk of the milestone: 32 kinds. Taken in the audit's order — the verbatim pole/polar generalizations first, then the genuine re-foundings, then the refusals. **Zero Euclidean behaviour change** throughout.
