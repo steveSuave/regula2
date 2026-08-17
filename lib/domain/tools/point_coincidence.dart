@@ -47,6 +47,21 @@ double _tolerance(Vec2 at) => 1e-6 * math.max(1.0, at.norm);
 /// outcome — undefined under a probe, out of tolerance — resolves to
 /// null, i.e. to keeping the new point: a spurious duplicate is clutter,
 /// a wrong merge corrupts drag semantics.
+///
+/// **On the projective kernel this needed no change (Phase 121), and
+/// that is a property worth stating rather than a coincidence.** The
+/// probe only ever reads [GeoPoint.position] and writes [FreePoint]
+/// positions and [PointOnObject] parameters, all of which are now
+/// projections and chart parameters rather than stored state — so the
+/// perturbation still perturbs exactly the mutable roots, and the
+/// restore is still bit-exact (a `FreePoint` stores the lift of its
+/// position, `w` exactly 1). Two consequences are deliberate, not
+/// oversights: a point that projects outside the chart — at infinity, or
+/// complex — has no position and so is never merged, which is the
+/// conservative branch this function is built to take everywhere; and
+/// the tolerance stays in *world units*, because what it screens is
+/// "would the user see one dot or two", a question about the chart the
+/// figure is drawn in and not a projective invariant.
 GeoPoint? coincidentExistingPoint(
   Iterable<GeoObject> objects,
   GeoPoint candidate, {
