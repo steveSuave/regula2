@@ -107,6 +107,7 @@ class TwoLineBisectorLine extends GeoLine {
       _anchored(l1, line1.line),
       _anchored(l2, line2.line),
       branch,
+      absolute,
     );
     _carrier = carrier.isZero ? null : carrier;
     _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());

@@ -1,4 +1,5 @@
 import '../../math/triangle_centers.dart' as tc;
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 
@@ -18,7 +19,12 @@ class Incenter extends TriangleCenterPoint {
   });
 
   @override
-  ProjPoint? computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) {
+  ProjPoint? computeCenter(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  ) {
     final pa = a.toVec2();
     final pb = b.toVec2();
     final pc = c.toVec2();

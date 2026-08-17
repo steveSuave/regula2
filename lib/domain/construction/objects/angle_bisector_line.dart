@@ -55,7 +55,7 @@ class AngleBisectorLine extends GeoLine {
       _line = null;
       return;
     }
-    final carrier = angleBisectorOf(_chart(a), _chart(v), _chart(b));
+    final carrier = angleBisectorOf(_chart(a), _chart(v), _chart(b), absolute);
     _carrier = carrier.isZero ? null : carrier;
     // A canonical vertex has w = 1, so the carrier's raw representative
     // direction is exactly the kernel's (dx, dy) — V1's direction on real

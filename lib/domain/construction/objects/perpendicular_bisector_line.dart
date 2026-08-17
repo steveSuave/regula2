@@ -50,7 +50,7 @@ class PerpendicularBisectorLine extends GeoLine {
       _line = null;
       return;
     }
-    final carrier = perpendicularBisectorOf(p1, p2);
+    final carrier = perpendicularBisectorOf(p1, p2, absolute);
     _carrier = carrier.isZero ? null : carrier;
     final a1 = point1.position;
     final a2 = point2.position;

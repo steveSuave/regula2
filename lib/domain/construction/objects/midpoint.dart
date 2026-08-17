@@ -44,7 +44,7 @@ class Midpoint extends GeoPoint {
       _point = null;
       return;
     }
-    final m = midpointOf(p1, p2);
+    final m = midpointOf(p1, p2, absolute);
     _point = m.isZero ? null : m;
   }
 }

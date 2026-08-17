@@ -1,3 +1,4 @@
+import '../../projective/absolute.dart';
 import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
@@ -16,6 +17,10 @@ class Centroid extends TriangleCenterPoint {
   });
 
   @override
-  ProjPoint computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) =>
-      centroidOf(a, b, c);
+  ProjPoint computeCenter(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  ) => centroidOf(a, b, c);
 }

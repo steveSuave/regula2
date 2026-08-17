@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/metric.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/proj_point.dart';
@@ -20,8 +21,11 @@ class ParallelLine extends RelativeLine {
   });
 
   @override
-  ProjLine carrierFrom(ProjPoint through, ProjLine reference) =>
-      parallelThrough(through, reference);
+  ProjLine carrierFrom(
+    ProjPoint through,
+    ProjLine reference,
+    Absolute absolute,
+  ) => parallelThrough(through, reference, absolute);
 
   @override
   Vec2 directionFrom(LineEq referenceLine) => referenceLine.direction;

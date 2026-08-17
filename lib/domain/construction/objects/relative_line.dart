@@ -50,7 +50,11 @@ abstract class RelativeLine extends GeoLine {
 
   /// The derived carrier, given the parents' projective views. May be the
   /// zero triple on degenerate input (see class doc); never null.
-  ProjLine carrierFrom(ProjPoint through, ProjLine reference);
+  ProjLine carrierFrom(
+    ProjPoint through,
+    ProjLine reference,
+    Absolute absolute,
+  );
 
   /// The V1 orientation of the derived line, given the reference's affine
   /// view ([LineEq.normal] and [LineEq.direction] are unit length, so
@@ -66,7 +70,7 @@ abstract class RelativeLine extends GeoLine {
       _line = null;
       return;
     }
-    final carrier = carrierFrom(p, ref);
+    final carrier = carrierFrom(p, ref, absolute);
     _carrier = carrier.isZero ? null : carrier;
     final refLine = reference.line;
     _line = orientedAlong(
