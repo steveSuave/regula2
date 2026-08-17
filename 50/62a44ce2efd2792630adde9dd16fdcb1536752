@@ -1,0 +1,29 @@
+lib/domain/construction/geometry_change.dart
+  s_864df67dc11e5d::t_ffb9c8bd0c923c 24-29
+  s_864df67dc11e5d::t_9ae7fbdf146dfe 1-23,30-43,45-67
+  s_864df67dc11e5d::t_5438736e613016 44
+lib/domain/construction/construction.dart
+  s_864df67dc11e5d::t_3a03501a7d82b2 15,809-920
+  s_864df67dc11e5d::t_065da990a84a7d 39-40,45-58
+  s_864df67dc11e5d::t_07df214104e028 921
+lib/domain/commands/set_geometry_command.dart
+  s_864df67dc11e5d::t_929fa3573ee379 1-56
+test/domain/construction/geometry_switch_test.dart
+  s_864df67dc11e5d::t_0135dd52387d59 1-236
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5062a44ce2efd2792630adde9dd16fdcb1536752",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
