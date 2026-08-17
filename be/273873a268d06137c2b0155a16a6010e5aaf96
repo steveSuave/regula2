@@ -1,0 +1,88 @@
+lib/domain/construction/objects/vertex_angle.dart
+  s_864df67dc11e5d::t_73c86546dee790 37,43,56
+test/domain/projective/metric_ck_test.dart
+  s_864df67dc11e5d::t_23fa4bbe83eb22 8,188-261
+  s_864df67dc11e5d::t_507c0ab36ac259 262-263
+lib/domain/construction/objects/line_angle.dart
+  s_864df67dc11e5d::t_73c86546dee790 106,116,130,139,144
+lib/domain/construction/objects/reflected_point.dart
+  s_864df67dc11e5d::t_c6a5b6f998a527 50
+lib/domain/construction/objects/triangle_circle.dart
+  s_864df67dc11e5d::t_4b45d214bd72f8 48-53,70
+lib/domain/construction/objects/central_reflection_point.dart
+  s_864df67dc11e5d::t_c6a5b6f998a527 49
+test/domain/construction/ck_measurement_kinds_test.dart
+  s_864df67dc11e5d::t_b5ee4d3e0bd7d8 200-227
+lib/domain/construction/objects/circle_center_point.dart
+  s_864df67dc11e5d::t_f4bee503990b5d 4,53-59
+lib/domain/construction/objects/sector.dart
+  s_864df67dc11e5d::t_1b4c9e77f0e9e9 103-104
+  s_864df67dc11e5d::t_f260cdc095a5af 99-102,105-106
+lib/domain/construction/objects/circle_center.dart
+  s_864df67dc11e5d::t_f260cdc095a5af 39-47
+lib/domain/construction/objects/radical_axis_line.dart
+  s_864df67dc11e5d::t_a50da6475397b3 51-58
+lib/domain/construction/objects/homothetic_point.dart
+  s_864df67dc11e5d::t_a50da6475397b3 53-60
+test/domain/construction/ck_kind_coverage_test.dart
+  s_864df67dc11e5d::t_607d06241df8de 30-67,70-75,77-84,87,89-105,115-126
+  s_864df67dc11e5d::t_76b7b2ca6fa4fd 106-114
+  s_864df67dc11e5d::t_a75ccc072c8d02 3,5,68,85-86
+  s_864df67dc11e5d::t_6f0a2e460bda40 1-2,6-29,69,76,88,127-153
+  s_864df67dc11e5d::t_508306b8ab010e 4
+lib/domain/construction/objects/inscribed_circle.dart
+  s_864df67dc11e5d::t_0d7df1007ab4f9 4,6,35-51
+  s_864df67dc11e5d::t_4b45d214bd72f8 3,29-34
+lib/domain/construction/objects/diameter_circle.dart
+  s_864df67dc11e5d::t_f4bee503990b5d 4,6,56-61
+lib/domain/projective/ck_circles.dart
+  s_864df67dc11e5d::t_fd6efbe3b8cff6 40,122-143
+  s_864df67dc11e5d::t_a2120ad84e91a9 144-145
+lib/domain/construction/objects/rotated_point.dart
+  s_864df67dc11e5d::t_a50da6475397b3 47-57
+lib/domain/construction/objects/segment_ratio_point.dart
+  s_864df67dc11e5d::t_73c86546dee790 51-57
+lib/domain/construction/objects/focal_conic.dart
+  s_864df67dc11e5d::t_a50da6475397b3 68-77
+lib/domain/construction/objects/translated_point.dart
+  s_864df67dc11e5d::t_a50da6475397b3 47-53
+lib/domain/construction/objects/centroid.dart
+  s_864df67dc11e5d::t_0d7df1007ab4f9 25-33
+lib/domain/construction/objects/apollonius_circle.dart
+  s_864df67dc11e5d::t_a50da6475397b3 51-57
+lib/domain/construction/objects/bifocal_conic.dart
+  s_864df67dc11e5d::t_35dfdc994fbc26 77-86
+lib/domain/construction/objects/arc.dart
+  s_864df67dc11e5d::t_f260cdc095a5af 94-100,103-104
+  s_864df67dc11e5d::t_1b4c9e77f0e9e9 101-102
+lib/domain/construction/objects/compass_circle.dart
+  s_864df67dc11e5d::t_f4bee503990b5d 4,57-59
+lib/domain/projective/proj_transform.dart
+  s_864df67dc11e5d::t_e033856bf6ab1a 3,119-125,145-177,197-202
+lib/domain/construction/objects/fixed_radius_circle.dart
+  s_864df67dc11e5d::t_35dfdc994fbc26 4,63-70
+lib/domain/construction/objects/three_point_circle.dart
+  s_864df67dc11e5d::t_fd6efbe3b8cff6 4,61-63
+lib/domain/construction/objects/nine_point_circle.dart
+  s_864df67dc11e5d::t_fd6efbe3b8cff6 3,34-40
+  s_864df67dc11e5d::t_4b45d214bd72f8 1,28-32
+  s_864df67dc11e5d::t_9a9c750283df55 33
+lib/domain/construction/objects/incenter.dart
+  s_864df67dc11e5d::t_0d7df1007ab4f9 3,29-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "be273873a268d06137c2b0155a16a6010e5aaf96",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
