@@ -1233,7 +1233,7 @@ class _TracedSweep {
             final arc = DetourArc.plan(
               entry: d,
               tStar: dStar,
-              orientation: detourOrientation1D(from, to),
+              orientation: detourHalfPlane,
               end: span,
             );
             if (arc == null || !_traceArc(arc, from, dir)) {

@@ -16,6 +16,7 @@ import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/tracing/trace_diagnostics.dart';
 
 void main() {
   group('Locus chain', () {
@@ -690,6 +691,37 @@ void main() {
           reason: 'and there the canonical root is the driver itself',
         );
       }
+    });
+
+    test('and it holds them by detouring — two crossings, two arcs '
+        '(Phase 121)', () {
+      // The sheet assertions above are only evidence about the detour
+      // half-plane while the walk actually plans an arc, so pin that it
+      // does. Phase 121 unified the locus half-plane with the drag's
+      // constant, and this rig plus `apatitos-topos.rgl` are the whole
+      // of the corpus's detour coverage: if a future change makes the
+      // walk cross these tangent points some other way, the invariant
+      // above would still pass while silently testing nothing.
+      TraceDiagnostics.reset();
+      TraceDiagnostics.enabled = true;
+      try {
+        TraceDiagnostics.frameBegin('test');
+        rig();
+        TraceDiagnostics.frameEnd();
+      } finally {
+        TraceDiagnostics.enabled = false;
+      }
+      final counts = TraceDiagnostics.history.single.counts;
+      expect(
+        counts[TraceCounter.locusDetours],
+        2,
+        reason: 'one arc per tangent point from C',
+      );
+      expect(
+        counts[TraceCounter.locusFolds] ?? 0,
+        0,
+        reason: 'the crossings are transversal — the curve never turns',
+      );
     });
 
     test('the sweep resolution does not decide the answer', () {

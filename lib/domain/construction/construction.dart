@@ -154,7 +154,7 @@ class Construction {
   /// from the last two accepted steps' separations
   /// ([estimateSingularParameter]) and the pass walks a [DetourArc]: the
   /// same interpolation continued holomorphically around the singularity
-  /// through [dragDetourOrientation]'s half-plane of the path's own
+  /// through [detourHalfPlane]'s half-plane of the path's own
   /// parameter — a **constant**, so a round trip closes a loop around the
   /// branch point and honestly trades the two roots (Phase 120c; see
   /// `singularity.dart` for why the constant, and for the
@@ -302,7 +302,7 @@ class Construction {
   /// and [recomputeAlongParameterPath]: [driveReal] puts the dragged
   /// object at real path parameter `t` (including its own recompute, if
   /// it needs one), [driveComplex] at a complex `t` during a detour arc.
-  /// Detours take the constant [dragDetourOrientation]. See
+  /// Detours take the constant [detourHalfPlane]. See
   /// [recomputeAlongPath] for the full contract.
   /// [seedMemory], when provided, is *gesture-scoped* continuation state
   /// (Phase 116b): a pass whose start state leaves an intersection
@@ -587,7 +587,7 @@ class Construction {
                 : DetourArc.plan(
                     entry: t,
                     tStar: tStar,
-                    orientation: dragDetourOrientation,
+                    orientation: detourHalfPlane,
                   );
             if (arc != null) {
               traceArc(arc);
