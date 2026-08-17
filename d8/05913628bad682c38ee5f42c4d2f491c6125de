@@ -1,0 +1,23 @@
+lib/domain/tools/point_coincidence.dart
+  s_cfee4ea9eee223::t_c0f70fd505f002 50-64
+test/domain/tools/point_coincidence_test.dart
+  s_cfee4ea9eee223::t_3ce87b26a8a926 256-293
+docs/TODO.md
+  s_cfee4ea9eee223::t_716ed4ebfcde88 154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d805913628bad682c38ee5f42c4d2f491c6125de",
+  "prompts": {},
+  "sessions": {
+    "s_cfee4ea9eee223": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b4ca906-2c3f-4d82-ab85-f72027c94e9f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
