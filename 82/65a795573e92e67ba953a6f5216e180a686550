@@ -1,0 +1,37 @@
+test/application/persistence/construction_codec_test.dart
+  s_17fa7314429764::t_e034718a5debc8 623-634,638-698
+  s_17fa7314429764::t_45748ceb34f721 635-637
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_17fa7314429764::t_ce2c3f6357c971 1328-1363
+docs/PLAN.md
+  s_17fa7314429764::t_7db9005d03026c 150-159
+lib/application/persistence/construction_codec.dart
+  s_17fa7314429764::t_8f0a6ea8a86f5d 56-57,246,248-252
+  s_17fa7314429764::t_d39371b072ac17 82,89-95
+  s_17fa7314429764::t_6bafee45d90673 221,227,231-245,247,253-258,267,269-270,291-292,309-310,324-325,331,338-340
+  s_17fa7314429764::t_f09f6218a95c3a 259-266,268,271-285,293-294,296-308,311,323,328
+  s_17fa7314429764::t_7169918b78fbc8 286-290,295,312-322,326-327,329-330,332-337
+  s_17fa7314429764::t_f22994ea6d50ed 341-342
+docs/STATUS.md
+  s_17fa7314429764::t_b4dda9dd3ba3fe 27-30,32,43
+docs/TODO.md
+  s_17fa7314429764::t_bc232d7b1d6dfe 139
+lib/domain/construction/construction.dart
+  s_17fa7314429764::t_a63e3ed6ea6a9d 626-642,648,656-673
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8265a795573e92e67ba953a6f5216e180a686550",
+  "prompts": {},
+  "sessions": {
+    "s_17fa7314429764": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "547c8021-d6cb-4838-8d42-3db8e1c0c4a4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
