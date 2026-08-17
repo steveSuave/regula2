@@ -91,7 +91,16 @@ List<ProjPoint> intersectConicConic(
   // 0. Two circles have a *known* degenerate member, so steps 1–4 collapse
   // (Phase 122). Same canonical order, same accuracy, ~9× cheaper.
   final circlePoints = _circlePencilPoints(a0, b0);
-  if (circlePoints != null) return _canonicalOrder(circlePoints, a0, b0, eps);
+  if (circlePoints != null) {
+    return _canonicalOrder(
+      circlePoints,
+      a0,
+      b0,
+      eps,
+      centerA: _circleCenter(a0, eps),
+      centerB: _circleCenter(b0, eps),
+    );
+  }
 
   // 1. Balance: centroid → origin, diag(σ, σ, 1), unit Frobenius.
   final t = _translationEstimate(a0, b0, eps);
@@ -254,6 +263,13 @@ const ProjLine _lineAtInfinity = ProjLine(
   Complex.zero,
   Complex.one,
 );
+
+/// A circle's centre — its pole of ℓ∞, which for the shape `xy = 0`,
+/// `xx = yy` is `(−xw : −yw : xx)` straight off the coefficients. This is
+/// [_realCenter]'s answer on a circle (the adjugate's third column comes
+/// out `xx·(−xw, −yw, xx)`), without forming the adjugate.
+Vec2? _circleCenter(ConicMatrix c, double eps) =>
+    ProjPoint(-c.xw, -c.yw, c.xx).toVec2(eps);
 
 /// The largest centroid shift the circle route will balance by, matching
 /// the general route's guard against a bogus far pole flinging the
@@ -500,15 +516,23 @@ Complex _dotLines(ProjLine u, ProjLine v) => u.a * v.a + u.b * v.b + u.c * v.c;
 // Canonical ordering.
 // ---------------------------------------------------------------------------
 
+/// [centerA] / [centerB] let a caller that already knows a conic's centre
+/// hand it over instead of paying [_realCenter]'s adjugate for it — which
+/// the circle route does, a circle's pole of ℓ∞ being `(−xw : −yw : xx)`
+/// straight off the coefficients. Same projective point, so the same
+/// order; it is the *ordering rule* that is load-bearing here, and it
+/// stays in this one function for every route.
 List<ProjPoint> _canonicalOrder(
   List<ProjPoint> pts,
   ConicMatrix a,
   ConicMatrix b,
-  double eps,
-) {
+  double eps, {
+  Vec2? centerA,
+  Vec2? centerB,
+}) {
   Vec2? direction;
-  final ca = _realCenter(a, eps);
-  final cb = _realCenter(b, eps);
+  final ca = centerA ?? _realCenter(a, eps);
+  final cb = centerB ?? _realCenter(b, eps);
   if (ca != null && cb != null) {
     final d = cb - ca;
     if (d.norm > 1e-12 * (1 + ca.norm + cb.norm)) direction = d;
@@ -529,11 +553,9 @@ class _OrderKey {
       // Real finite: V1 circle∩circle order — left of the directed center
       // line first, i.e. descending cross product against it.
       final primary = direction == null ? 0.0 : -direction.cross(v);
-      return _OrderKey._(0, primary, [v.x, v.y]);
+      return _OrderKey._(0, primary, p, v);
     }
-    final n = p.normalized;
-    final lex = [n.x.re, n.x.im, n.y.re, n.y.im, n.w.re, n.w.im];
-    if (p.isReal(eps)) return _OrderKey._(1, 0, lex);
+    if (p.isReal(eps)) return _OrderKey._(1, 0, p, null);
     // Non-real: the largest of the three pairwise Hermitian forms Im(x̄y),
     // Im(x̄w), Im(ȳw), scaled by the triple's norm. All three vanish exactly
     // when the triple is real up to a complex scalar, so a non-real point
@@ -547,21 +569,39 @@ class _OrderKey {
     var f = f1;
     if (f2.abs() > f.abs()) f = f2;
     if (f3.abs() > f.abs()) f = f3;
-    return _OrderKey._(2, f / p.norm2, lex);
+    return _OrderKey._(2, f / p.norm2, p, null);
   }
 
-  const _OrderKey._(this.tier, this.primary, this.lex);
+  _OrderKey._(this.tier, this.primary, this._point, this._affine);
 
   final int tier;
   final double primary;
-  final List<double> lex;
+  final ProjPoint _point;
+  final Vec2? _affine;
+  List<double>? _lex;
+
+  /// The last-resort tie-break coordinates, built only when a comparison
+  /// actually reaches them. It usually does not: two circles give two real
+  /// points and then I and J, where tier and primary always decide, and
+  /// building four of these (with a [ProjPoint.normalized] behind each of
+  /// the non-affine ones) was most of what ordering cost.
+  List<double> get lex {
+    final cached = _lex;
+    if (cached != null) return cached;
+    final affine = _affine;
+    if (affine != null) return _lex = [affine.x, affine.y];
+    final n = _point.normalized;
+    return _lex = [n.x.re, n.x.im, n.y.re, n.y.im, n.w.re, n.w.im];
+  }
 
   int compareTo(_OrderKey other) {
     if (tier != other.tier) return tier.compareTo(other.tier);
     final c = primary.compareTo(other.primary);
     if (c != 0) return c;
-    for (var i = 0; i < lex.length && i < other.lex.length; i++) {
-      final d = lex[i].compareTo(other.lex[i]);
+    final mine = lex;
+    final theirs = other.lex;
+    for (var i = 0; i < mine.length && i < theirs.length; i++) {
+      final d = mine[i].compareTo(theirs[i]);
       if (d != 0) return d;
     }
     return 0;
