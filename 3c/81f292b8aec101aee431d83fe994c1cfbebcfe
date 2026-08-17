@@ -1,0 +1,29 @@
+lib/domain/projective/conics.dart
+  s_cfee4ea9eee223::t_e01afa2ec52215 75
+docs/PLAN.md
+  s_cfee4ea9eee223::t_481b20aaddc2e0 19,21,23-27,29
+CLAUDE.md
+  s_cfee4ea9eee223::t_e01afa2ec52215 32
+  s_cfee4ea9eee223::t_7673726089ea87 34-36
+lib/domain/construction/geo_object.dart
+  s_cfee4ea9eee223::t_7673726089ea87 78-80,104-106,153-155
+  s_cfee4ea9eee223::t_e01afa2ec52215 87,113,162
+docs/TODO.md
+  s_cfee4ea9eee223::t_4018e9b814d826 155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3c81f292b8aec101aee431d83fe994c1cfbebcfe",
+  "prompts": {},
+  "sessions": {
+    "s_cfee4ea9eee223": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b4ca906-2c3f-4d82-ab85-f72027c94e9f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
