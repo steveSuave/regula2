@@ -36,6 +36,15 @@ class CircleCenter extends GeoPoint {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). The Euclidean centre is the pole of l-infinity. A CK circle's
+    // centre is the pole of its chord of contact with the absolute, and
+    // recovering that chord from the conic alone is a generalized
+    // eigenproblem for the pencil {K, Omega} rather than a substitution.
+    // Deferred.
+    if (!absolute.isEuclidean) {
+      _point = null;
+      return;
+    }
     final pole = circle.conic?.poleOf(ProjLine.infinity);
     _point = (pole == null || pole.isZero) ? null : pole;
   }

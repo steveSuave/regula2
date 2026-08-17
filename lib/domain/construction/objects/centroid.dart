@@ -1,4 +1,5 @@
-import '../../projective/euclidean.dart';
+import '../../projective/absolute.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 
@@ -16,6 +17,18 @@ class Centroid extends TriangleCenterPoint {
   });
 
   @override
-  ProjPoint computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) =>
-      centroidOf(a, b, c);
+  ProjPoint computeCenter(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  ) => absolute.isEuclidean
+      ? centroidOf(a, b, c)
+      // The medians' common point. Under the Euclidean absolute that is
+      // what `centroidOf`'s affine average computes; under a proper one
+      // the medians run to the *CK* midpoints, and the construction is
+      // otherwise the same — so this generalizes rather than refuses.
+      : a
+            .join(midpointOf(b, c, absolute))
+            .meet(b.join(midpointOf(a, c, absolute)));
 }

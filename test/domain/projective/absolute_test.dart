@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
-import 'package:regula/domain/projective/euclidean.dart';
+import 'package:regula/domain/projective/metric.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 

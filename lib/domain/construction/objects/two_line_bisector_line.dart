@@ -2,7 +2,7 @@ import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
-import '../../projective/euclidean.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 import '../object_attributes.dart';
@@ -107,6 +107,7 @@ class TwoLineBisectorLine extends GeoLine {
       _anchored(l1, line1.line),
       _anchored(l2, line2.line),
       branch,
+      absolute,
     );
     _carrier = carrier.isZero ? null : carrier;
     _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());

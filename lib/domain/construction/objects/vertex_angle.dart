@@ -34,12 +34,13 @@ class VertexAngle extends GeoAngle {
 
   AngleGeometry? _angle;
   double? _measure;
+  bool _euclidean = true;
 
   @override
   AngleGeometry? get angle => _angle;
 
   @override
-  double? get measure => _measure ?? _angle?.measure;
+  double? get measure => _euclidean ? _angle?.measure : _measure;
 
   @override
   List<GeoObject> get parents => [arm1, vertex, arm2];
@@ -52,6 +53,7 @@ class VertexAngle extends GeoAngle {
     _angle = (a == null || v == null || b == null)
         ? null
         : AngleGeometry.fromRays(a, v, b);
+    _euclidean = absolute.isEuclidean;
     _measure = _ckMeasure(absolute);
   }
 

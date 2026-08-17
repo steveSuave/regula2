@@ -1,6 +1,7 @@
 import '../../math/circle_eq.dart';
 import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
+import '../../projective/ck_circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
@@ -57,7 +58,9 @@ class ThreePointCircle extends GeoCircle {
       _circle = null;
       return;
     }
-    final k = circumcircleOf(p1, p2, p3);
+    final k = absolute.isEuclidean
+        ? circumcircleOf(p1, p2, p3)
+        : ckCircumcircleOf(absolute, p1, p2, p3);
     _conic = k.isZero ? null : k;
     _circle = _conic?.toCircleEq();
   }

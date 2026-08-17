@@ -381,7 +381,11 @@ class Construction {
         // a coast re-acquisition).
         final p = o.projPoint ?? seedMemory?[o.id];
         if (p != null && !p.isZero) {
-          final candidates = intersectionCandidates(o.curve1, o.curve2);
+          final candidates = intersectionCandidates(
+            o.curve1,
+            o.curve2,
+            absolute: kernel.absolute,
+          );
           // Structural double roots never seed (Phase 117b). A point
           // built as `TangentLine ∩ the circle it touches` has its two
           // candidates coincident *by construction*, at every position
@@ -744,7 +748,11 @@ class Construction {
         var min = double.infinity;
         for (final o in culprits) {
           final sep = TracedBranch.candidateSeparation(
-            intersectionCandidates(o.curve1, o.curve2),
+            intersectionCandidates(
+              o.curve1,
+              o.curve2,
+              absolute: kernel.absolute,
+            ),
           );
           if (sep < min) min = sep;
         }

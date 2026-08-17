@@ -46,7 +46,7 @@ class CentralReflectionPoint extends GeoPoint {
       _point = null;
       return;
     }
-    final image = ProjTransform.pointReflection(c).apply(p);
+    final image = ProjTransform.pointReflection(c, absolute).apply(p);
     _point = image.isZero ? null : image;
   }
 }

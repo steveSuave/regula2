@@ -1,6 +1,6 @@
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
-import '../../projective/euclidean.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
@@ -50,7 +50,7 @@ class ProjectionPoint extends GeoPoint {
       _point = null;
       return;
     }
-    final foot = perpendicularThrough(p, carrier).meet(carrier);
+    final foot = perpendicularThrough(p, carrier, absolute).meet(carrier);
     _point = foot.isZero ? null : foot;
   }
 }

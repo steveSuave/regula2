@@ -8,11 +8,15 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/length_measurement.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/parallel_line.dart';
+import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/slope_measurement.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
+import 'package:regula/domain/projective/ck_measure.dart';
 
 /// Phase 124: the measurement kinds under a substituted absolute.
 ///
@@ -142,6 +146,105 @@ void main() {
         expect(m.value, isNull, reason: '${m.id} hyperbolic');
         expect(m.anchor, isNull);
         expect(m.isDefined, isFalse);
+      }
+    });
+  });
+
+  group('the metric kinds read the absolute (Phase 125)', () {
+    test('a midpoint moves when the geometry changes', () {
+      final a = p('a', 0, 0);
+      final b = p('b', 0.8, 0);
+      final m = Midpoint(id: 'm', point1: a, point2: b);
+
+      m.recompute(Absolute.euclidean);
+      expect(m.position!.x, closeTo(0.4, 1e-15));
+
+      // Hyperbolic distance grows towards the boundary, so the balance
+      // point sits further out than the Euclidean halfway point.
+      m.recompute(Absolute.hyperbolic);
+      expect(m.position!.x, closeTo(0.5, 1e-12));
+    });
+
+    test('a perpendicular is a different line in a different geometry', () {
+      // Deliberately *not* through the disc centre: the pole of a line
+      // through the centre is the same point under both absolutes (their
+      // duals differ by a sign there), so the two perpendiculars would
+      // coincide and the test would pass without testing anything.
+      final a = p('a', 0.2, -0.3);
+      final b = p('b', 0.6, 0.3);
+      final carrier = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final through = p('t', 0.1, -0.2);
+      final perp = PerpendicularLine(
+        id: 'perp',
+        through: through,
+        reference: carrier,
+      );
+
+      perp.recompute(Absolute.euclidean);
+      final euclidean = perp.projLine!;
+      perp.recompute(Absolute.hyperbolic);
+      final hyperbolic = perp.projLine!;
+
+      expect(hyperbolic.closeTo(euclidean), isFalse);
+      // Both are genuinely perpendicular — in their own geometry.
+      expect(
+        angleBetweenLines(Absolute.euclidean, carrier.projLine!, euclidean),
+        closeTo(math.pi / 2, 1e-12),
+      );
+      expect(
+        angleBetweenLines(Absolute.hyperbolic, carrier.projLine!, hyperbolic),
+        closeTo(math.pi / 2, 1e-12),
+      );
+    });
+
+    test('a non-right line angle responds to the geometry', () {
+      // The companion to the coverage test's one named exception: a right
+      // angle is invariant because conjugacy is perpendicularity in every
+      // geometry, so the responsive case has to be checked on a wedge
+      // that is not right.
+      final o = p('o', 0.05, 0.02);
+      final a = p('a', 0.6, 0.1);
+      final b = p('b', 0.2, 0.55);
+      final l1 = LineThroughTwoPoints(id: 'l1', point1: o, point2: a);
+      final l2 = LineThroughTwoPoints(id: 'l2', point1: o, point2: b);
+      final angle = LineAngle(id: 'la', line1: l1, line2: l2);
+
+      angle.recompute(Absolute.euclidean);
+      final euclidean = angle.measure!;
+      expect(euclidean, isNot(closeTo(math.pi / 2, 1e-3)));
+
+      for (final absolute in [Absolute.hyperbolic, Absolute.elliptic]) {
+        angle.recompute(absolute);
+        expect(
+          angle.measure,
+          isNot(closeTo(euclidean, 1e-9)),
+          reason: absolute.metric.name,
+        );
+        // ...and the marker is still the chart wedge.
+        expect(angle.angle!.sweep, closeTo(euclidean, 1e-12));
+      }
+    });
+
+    test('a parallel line goes undefined where parallels do not exist', () {
+      final a = p('a', 0, 0);
+      final b = p('b', 0.5, 0.5);
+      final carrier = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final through = p('t', 0.1, -0.2);
+      final parallel = ParallelLine(
+        id: 'par',
+        through: through,
+        reference: carrier,
+      );
+
+      parallel.recompute(Absolute.euclidean);
+      expect(parallel.isDefined, isTrue);
+
+      // Refused, not approximated: hyperbolic geometry has infinitely
+      // many non-meeting lines through a point, elliptic has none.
+      for (final absolute in [Absolute.hyperbolic, Absolute.elliptic]) {
+        parallel.recompute(absolute);
+        expect(parallel.projLine, isNull, reason: absolute.metric.name);
+        expect(parallel.isDefined, isFalse);
       }
     });
   });

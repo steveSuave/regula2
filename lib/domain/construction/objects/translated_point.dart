@@ -44,6 +44,13 @@ class TranslatedPoint extends GeoPoint {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). Translation by an affine vector is affine. The CK analogue is
+    // the isometry carrying one point to another along their geodesic,
+    // which is a different construction, not this one re-pointed.
+    if (!absolute.isEuclidean) {
+      _point = null;
+      return;
+    }
     final p = point.projPoint;
     final from = vectorFrom.projPoint;
     final to = vectorTo.projPoint;

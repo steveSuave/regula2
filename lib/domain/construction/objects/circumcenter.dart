@@ -1,4 +1,5 @@
-import '../../projective/euclidean.dart';
+import '../../projective/absolute.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 
@@ -19,6 +20,14 @@ class Circumcenter extends TriangleCenterPoint {
   });
 
   @override
-  ProjPoint computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) =>
-      perpendicularBisectorOf(a, b).meet(perpendicularBisectorOf(a, c));
+  ProjPoint computeCenter(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  ) => perpendicularBisectorOf(
+    a,
+    b,
+    absolute,
+  ).meet(perpendicularBisectorOf(a, c, absolute));
 }

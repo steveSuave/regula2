@@ -1,4 +1,6 @@
 import '../../math/triangle_centers.dart' as tc;
+import '../../projective/absolute.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 
@@ -18,7 +20,24 @@ class Incenter extends TriangleCenterPoint {
   });
 
   @override
-  ProjPoint? computeCenter(ProjPoint a, ProjPoint b, ProjPoint c) {
+  ProjPoint? computeCenter(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  ) {
+    if (!absolute.isEuclidean) {
+      // The internal bisectors' common point — the definition, and one
+      // that generalizes because `angleBisectorOf` does. The chart route
+      // below is the Euclidean specialization, kept because it is exact.
+      final meet = angleBisectorOf(
+        b,
+        a,
+        c,
+        absolute,
+      ).meet(angleBisectorOf(a, b, c, absolute));
+      return meet.isZero ? null : meet;
+    }
     final pa = a.toVec2();
     final pb = b.toVec2();
     final pc = c.toVec2();

@@ -50,6 +50,14 @@ class HomotheticPoint extends GeoPoint {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). A homothety of ratio other than +-1 is a *similarity*, and
+    // Cayley-Klein geometries have none: similar-but-not-congruent
+    // triangles exist exactly when the parallel postulate holds (Wallis).
+    // So there is no transformation here to apply.
+    if (!absolute.isEuclidean) {
+      _point = null;
+      return;
+    }
     final p = point.projPoint;
     final c = center.projPoint;
     if (p == null || c == null) {

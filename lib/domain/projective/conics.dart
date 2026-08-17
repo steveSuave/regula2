@@ -9,7 +9,7 @@
 /// this library is where the two answers sit side by side:
 ///
 /// - [focalConicOf] is metric but still **polynomial**, so it follows the
-///   layer conventions in full (`euclidean.dart`): holomorphic — no
+///   layer conventions in full (`metric.dart`): holomorphic — no
 ///   conjugation, no division, no square roots — and multihomogeneous in
 ///   each argument. Its whole Euclidean content is one coefficient.
 /// - [bifocalConicOf] cannot be: `|PF₁| ± |PF₂|` is a sum of square roots

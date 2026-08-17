@@ -1,6 +1,6 @@
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
-import '../../projective/euclidean.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
@@ -48,6 +48,13 @@ class SegmentRatioPoint extends GeoPoint {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). A ratio along a segment is affine — it divides in the ratio the
+    // affine chart reads. The CK analogue divides a *distance*, which is a
+    // logarithm of a cross-ratio, so the point is not an interpolation.
+    if (!absolute.isEuclidean) {
+      _point = null;
+      return;
+    }
     final p1 = point1.projPoint;
     final p2 = point2.projPoint;
     if (p1 == null || p2 == null) {

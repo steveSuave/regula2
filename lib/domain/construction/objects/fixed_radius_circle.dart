@@ -1,6 +1,7 @@
 import '../../math/circle_eq.dart';
 import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
+import '../../projective/ck_circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
@@ -59,7 +60,14 @@ class FixedRadiusCircle extends GeoCircle {
       _circle = null;
       return;
     }
-    final k = circleWithRadius(c, radius);
+    // The stored radius is a *metric* quantity, so it changes meaning
+    // with the geometry: the same number names a Euclidean radius, a
+    // hyperbolic one (Klein radius tanh r) or an elliptic one. The
+    // parameter is not reinterpreted on a geometry switch — that is part
+    // of what Phase 126's re-addressing has to decide.
+    final k = absolute.isEuclidean
+        ? circleWithRadius(c, radius)
+        : ckCircleWithRadius(absolute, c, radius);
     _conic = k.isZero ? null : k;
     final projected = _conic == null ? null : c.toVec2();
     _circle = projected == null ? null : CircleEq(projected, radius);

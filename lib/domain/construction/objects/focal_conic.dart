@@ -65,6 +65,16 @@ class FocalConic extends GeoCircle {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). Focus-directrix is metric through the single coefficient a^2+b^2
+    // (PLAN, the conic constructors), so it *is* substitutable -- but the
+    // eccentricity it carries is a ratio of distances, and CK distances
+    // are logarithms. Deferred with the bifocal one.
+    if (!absolute.isEuclidean) {
+      _conic = null;
+      _circle = null;
+      _drawable = false;
+      return;
+    }
     final f = focus.projPoint;
     final l = directrix.projLine;
     if (f == null || l == null) {

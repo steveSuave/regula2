@@ -235,6 +235,7 @@ class IntersectionPoint extends GeoPoint {
       curve2,
       complexCarriers:
           tracedBranch.isActive && tracedBranch.allowComplexCarriers,
+      absolute: absolute,
     );
     _candidateCount = _distinctRealCount(candidates);
     if (candidates.isEmpty) {
@@ -282,6 +283,24 @@ class IntersectionPoint extends GeoPoint {
 bool canonicalPairOrder(GeoObject curve1, GeoObject curve2) =>
     curve1.id.compareTo(curve2.id) <= 0;
 
+/// Whether [p] is a point every circle of [absolute]'s geometry shares,
+/// and so carries no branch information.
+///
+/// Euclidean circles all pass through I and J, which is why they are
+/// filtered out of solver output — two circles meet in four points and
+/// two of them are always those. **That is a fact about the Euclidean
+/// absolute, not about circles.** Under a proper absolute a circle is
+/// bitangent to it, and two such circles share no point at all: their
+/// pencil's degenerate member is a genuine line pair, so all four
+/// intersections carry information and none may be dropped.
+///
+/// This matters beyond tidiness because `branchIndex` addresses the
+/// *filtered* order, so every caller has to filter identically or two
+/// points on one curve pair end up in different address spaces — the
+/// Phase 120c failure, arrived at from a new direction.
+bool _sharedWithAbsolute(ProjPoint p, Absolute absolute) =>
+    absolute.isEuclidean && isCircularPoint(p);
+
 /// The intersection candidates of two curve objects (each a [GeoLine] or
 /// [GeoCircle]), in canonical order, zero triples dropped and the circular
 /// points I, J filtered out ([isCircularPoint]). Empty while a parent's
@@ -325,6 +344,7 @@ List<ProjPoint> intersectionCandidates(
   GeoObject curve1,
   GeoObject curve2, {
   bool complexCarriers = false,
+  Absolute absolute = Absolute.euclidean,
 }) {
   switch ((curve1, curve2)) {
     case (final GeoLine a, final GeoLine b):
@@ -342,9 +362,9 @@ List<ProjPoint> intersectionCandidates(
       final p = l1.meet(l2);
       return p.isZero ? const [] : [p];
     case (final GeoLine a, final GeoCircle b):
-      return _lineConicCandidates(a, b, complexCarriers);
+      return _lineConicCandidates(a, b, complexCarriers, absolute);
     case (final GeoCircle a, final GeoLine b):
-      return _lineConicCandidates(b, a, complexCarriers);
+      return _lineConicCandidates(b, a, complexCarriers, absolute);
     case (final GeoCircle a, final GeoCircle b):
       final c1 = a.conic;
       final c2 = b.conic;
@@ -356,7 +376,7 @@ List<ProjPoint> intersectionCandidates(
       }
       return [
         for (final p in intersectConicConic(c1, c2))
-          if (!p.isZero && !isCircularPoint(p)) _realSnapped(p),
+          if (!p.isZero && !_sharedWithAbsolute(p, absolute)) _realSnapped(p),
       ];
     // Unreachable from IntersectionPoint: its constructor rejects
     // non-curve parents.
@@ -374,6 +394,7 @@ List<ProjPoint> _lineConicCandidates(
   GeoLine line,
   GeoCircle circle,
   bool complexCarriers,
+  Absolute absolute,
 ) {
   final l = line.projLine;
   final c = circle.conic;
@@ -385,7 +406,7 @@ List<ProjPoint> _lineConicCandidates(
   }
   final candidates = [
     for (final p in intersectLineConic(l, c))
-      if (!p.isZero && !isCircularPoint(p)) _realSnapped(p),
+      if (!p.isZero && !_sharedWithAbsolute(p, absolute)) _realSnapped(p),
   ];
   // `intersectLineConic` orders along the *representative's* direction,
   // but no kind contract pins the stored carrier's sign — a join through

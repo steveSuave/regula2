@@ -48,6 +48,14 @@ class RadicalAxisLine extends GeoLine {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). The radical axis is the locus of equal *power*, built on the
+    // Euclidean circle coefficient shape and on squared distance. Neither
+    // survives a change of absolute.
+    if (!absolute.isEuclidean) {
+      _carrier = null;
+      _line = null;
+      return;
+    }
     final c1 = circle1.conic;
     final c2 = circle2.conic;
     if (c1 == null || c2 == null) {

@@ -88,9 +88,11 @@ MeasureKind angleKindOf(Absolute absolute) => MeasureKind.elliptic;
 /// acute angle. Kinds that need a signed or obtuse wedge get it from the
 /// chart, where orientation lives (`AngleGeometry`).
 double? angleBetweenLines(Absolute absolute, ProjLine l, ProjLine m) {
-  final ll = absolute.evaluateLine(l);
-  final mm = absolute.evaluateLine(m);
-  final lm = absolute.pairLines(l, m);
+  final cl = _canonicalLine(l);
+  final cm = _canonicalLine(m);
+  final ll = absolute.evaluateLine(cl);
+  final mm = absolute.evaluateLine(cm);
+  final lm = absolute.pairLines(cl, cm);
   return _ratioToAngle(lm, ll, mm);
 }
 
@@ -116,9 +118,17 @@ double? distanceBetween(Absolute absolute, ProjPoint p, ProjPoint q) {
     // Not an unimplemented case — an impossible one. See the library doc.
     return null;
   }
-  final pp = absolute.pairPoints(p, p);
-  final qq = absolute.pairPoints(q, q);
-  final pq = absolute.pairPoints(p, q);
+  // Canonicalize the representatives first. A projective point is only
+  // defined up to a complex scalar, and constructions that go through a
+  // square root routinely hand back a real point scaled by `i` — the CK
+  // midpoint of two interior hyperbolic points does exactly that. Left
+  // alone, `⟨P,Q⟩` between an i-scaled point and a real one is imaginary
+  // and the realness gate below would reject a perfectly good pair.
+  final cp = _canonical(p);
+  final cq = _canonical(q);
+  final pp = absolute.pairPoints(cp, cp);
+  final qq = absolute.pairPoints(cq, cq);
+  final pq = absolute.pairPoints(cp, cq);
   final ratio = _realRatio(pq, pp, qq);
   if (ratio == null) {
     return null;
@@ -153,11 +163,71 @@ double? _realRatio(Complex ab, Complex aa, Complex bb) {
 /// arccos domain — the ratio can exceed 1 by rounding on a near-parallel
 /// pair, and an angle of exactly 0 is the right answer there.
 double? _ratioToAngle(Complex ab, Complex aa, Complex bb) {
+  // An isotropic argument has no angle to anything, and this test must
+  // come first: a line in the *kernel* of the dual form — ℓ∞ under the
+  // Euclidean absolute — pairs to zero against every line, which the
+  // conjugacy shortcut below would otherwise read as "perpendicular to
+  // everything" rather than "degenerate".
+  if (aa.abs2 == 0 || bb.abs2 == 0) {
+    return null;
+  }
+  // Conjugacy *is* perpendicularity, by definition, in every Cayley-Klein
+  // geometry — so between two non-isotropic lines a vanishing pairing is
+  // a right angle whatever the self-pairings' signs do. Needed as its own
+  // case because under a proper absolute a line and its perpendicular can
+  // sit on opposite sides of the absolute (one meeting it really, one
+  // not), making the product under the root negative and answering null
+  // for the most clearly-defined angle there is.
+  if (ab.abs2 == 0) {
+    return math.pi / 2;
+  }
   final ratio = _realRatio(ab, aa, bb);
   if (ratio == null) {
     return null;
   }
   return math.acos(math.min(ratio, 1));
+}
+
+/// The largest-modulus component of a homogeneous triple, or null when
+/// the triple is zero.
+///
+/// **Why every measure here canonicalizes first.** A projective element
+/// is defined only up to a complex scalar, and the Cayley-Klein
+/// constructions routinely hand back a real element scaled by `i`: both
+/// [midpointPairOf] and [twoLineBisectorOf] take a square root of a form
+/// that is negative on the interior of the absolute, so `√` returns a
+/// pure imaginary and the whole triple carries the phase. Left alone, the
+/// pairing between such an element and a real one is imaginary and the
+/// realness gate rejects a perfectly good pair — which is a bug in the
+/// measure, not in the construction. Dividing through by the largest
+/// component removes any global phase and leaves a genuinely non-real
+/// element non-real.
+/// Returns the *unit phase* of the largest component, not the component
+/// itself, and that distinction is load-bearing: dividing by the phase is
+/// exact for every case that matters (a real triple divides by ±1, an
+/// i-scaled one by ±i, all bit-exact), where dividing by the component
+/// would rescale and round. Exactness is required — the perpendicularity
+/// test below is `⟨ℓ,m⟩* == 0`, and a canonicalization that turned an
+/// exact zero into 2.7e-17 would lose every right angle it touched.
+Complex? _pivotOf(Complex a, Complex b, Complex c) {
+  var pivot = a;
+  if (b.abs2 > pivot.abs2) pivot = b;
+  if (c.abs2 > pivot.abs2) pivot = c;
+  if (pivot.abs2 == 0) {
+    return null;
+  }
+  final magnitude = pivot.abs;
+  return Complex(pivot.re / magnitude, pivot.im / magnitude);
+}
+
+ProjPoint _canonical(ProjPoint p) {
+  final pivot = _pivotOf(p.x, p.y, p.w);
+  return pivot == null ? p : ProjPoint(p.x / pivot, p.y / pivot, p.w / pivot);
+}
+
+ProjLine _canonicalLine(ProjLine l) {
+  final pivot = _pivotOf(l.a, l.b, l.c);
+  return pivot == null ? l : ProjLine(l.a / pivot, l.b / pivot, l.c / pivot);
 }
 
 double _acosh(double x) => math.log(x + math.sqrt(x * x - 1));

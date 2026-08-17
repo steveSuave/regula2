@@ -5,7 +5,7 @@ import 'package:regula/domain/math/triangle_centers.dart' as tc;
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
-import 'package:regula/domain/projective/euclidean.dart';
+import 'package:regula/domain/projective/metric.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 

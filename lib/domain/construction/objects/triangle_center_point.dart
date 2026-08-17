@@ -41,7 +41,12 @@ abstract class TriangleCenterPoint extends GeoPoint {
   /// The homogeneous center of triangle `abc`. May be the zero triple, or
   /// null for degeneracies the subclass computes affinely (`Incenter`);
   /// both leave the object undefined.
-  ProjPoint? computeCenter(ProjPoint a, ProjPoint b, ProjPoint c);
+  ProjPoint? computeCenter(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  );
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
@@ -52,7 +57,7 @@ abstract class TriangleCenterPoint extends GeoPoint {
       _center = null;
       return;
     }
-    final center = computeCenter(a, b, c);
+    final center = computeCenter(a, b, c, absolute);
     _center = (center == null || center.isZero) ? null : center;
   }
 }

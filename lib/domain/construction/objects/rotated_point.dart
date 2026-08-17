@@ -44,6 +44,17 @@ class RotatedPoint extends GeoPoint {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). A CK rotation about a general centre needs an orthonormal frame
+    // in the pencil through it, and the sign of the dual form varies
+    // across that pencil, so the angle parameterization is not uniformly
+    // circular. Deferred rather than approximated. (About the disc centre
+    // it happens to be the Euclidean matrix, both proper absolutes being
+    // rotation-invariant there -- which is why this is a gap, not an
+    // impossibility.)
+    if (!absolute.isEuclidean) {
+      _point = null;
+      return;
+    }
     final p = point.projPoint;
     final c = center.projPoint;
     if (p == null || c == null) {
