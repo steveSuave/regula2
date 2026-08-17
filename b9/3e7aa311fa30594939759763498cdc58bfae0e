@@ -1,0 +1,34 @@
+lib/domain/tools/point_resolution.dart
+  s_864df67dc11e5d::t_8131b74bca7308 7
+  s_864df67dc11e5d::t_10d49beb9bd5c0 114-121,125-128
+lib/domain/construction/construction.dart
+  s_864df67dc11e5d::t_b68af1d2a8e2d8 384-388,751-755
+lib/domain/construction/objects/intersection_point.dart
+  s_864df67dc11e5d::t_b68af1d2a8e2d8 238
+  s_864df67dc11e5d::t_5c915590249319 286-303,347,379,409
+  s_864df67dc11e5d::t_efb377f593c48f 365,367,397
+lib/application/persistence/construction_codec.dart
+  s_864df67dc11e5d::t_b68af1d2a8e2d8 288-292
+lib/domain/construction/objects/locus.dart
+  s_864df67dc11e5d::t_563cad9a693c1e 165-174,177,1053-1057,1066-1070,1353
+  s_864df67dc11e5d::t_fc229ec8557d08 246
+  s_864df67dc11e5d::t_bb5df598545cbf 678,685-688
+  s_864df67dc11e5d::t_10d49beb9bd5c0 734-738,891-895
+  s_864df67dc11e5d::t_74a886e4df1560 689
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b93e7aa311fa30594939759763498cdc58bfae0e",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
