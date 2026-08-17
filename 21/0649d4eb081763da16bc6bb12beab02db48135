@@ -1,0 +1,53 @@
+lib/domain/construction/objects/midpoint.dart
+  s_864df67dc11e5d::t_5b36bacc6c3cde 47
+lib/domain/construction/objects/projection_point.dart
+  s_864df67dc11e5d::t_64ce29d596ce01 53
+lib/domain/construction/objects/circumcenter.dart
+  s_864df67dc11e5d::t_c103797ba6d826 1
+  s_864df67dc11e5d::t_deefd1f855c714 23-32
+lib/domain/construction/objects/orthocenter.dart
+  s_864df67dc11e5d::t_c103797ba6d826 1
+  s_864df67dc11e5d::t_deefd1f855c714 23-31
+lib/domain/construction/objects/centroid.dart
+  s_864df67dc11e5d::t_deefd1f855c714 20-25
+  s_864df67dc11e5d::t_c103797ba6d826 1
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_864df67dc11e5d::t_0838f296fe5d69 110
+lib/domain/construction/objects/parallel_line.dart
+  s_864df67dc11e5d::t_deefd1f855c714 24-28
+  s_864df67dc11e5d::t_c103797ba6d826 3
+test/domain/construction/ck_measurement_kinds_test.dart
+  s_864df67dc11e5d::t_3f051a8f3497e2 11-13,19,153-168,174-219,221
+  s_864df67dc11e5d::t_386c537e63f7ed 169-173
+  s_864df67dc11e5d::t_194e07fa2cc5f2 220,222-223
+lib/domain/construction/objects/triangle_center_point.dart
+  s_864df67dc11e5d::t_deefd1f855c714 44-49,60
+lib/domain/construction/objects/perpendicular_bisector_line.dart
+  s_864df67dc11e5d::t_64ce29d596ce01 53
+lib/domain/construction/objects/relative_line.dart
+  s_864df67dc11e5d::t_deefd1f855c714 53-57,73
+lib/domain/construction/objects/incenter.dart
+  s_864df67dc11e5d::t_deefd1f855c714 22-27
+  s_864df67dc11e5d::t_c103797ba6d826 2
+lib/domain/construction/objects/perpendicular_line.dart
+  s_864df67dc11e5d::t_deefd1f855c714 22-26
+  s_864df67dc11e5d::t_c103797ba6d826 3
+lib/domain/construction/objects/angle_bisector_line.dart
+  s_864df67dc11e5d::t_64ce29d596ce01 58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "210649d4eb081763da16bc6bb12beab02db48135",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
