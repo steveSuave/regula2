@@ -33,7 +33,12 @@ class MidpointTool extends TwoPointTool {
     final hit = input.hit;
     if (collectedVertices.isEmpty && hit is GeoCircle) {
       final center = CircleCenter(id: newId(), circle: hit);
-      if (coincidentExistingPoint(input.objects, center) != null) {
+      if (coincidentExistingPoint(
+            input.objects,
+            center,
+            absolute: input.absolute,
+          ) !=
+          null) {
         return const ToolIgnored();
       }
       return ToolCommitted(AddObjectCommand(center));

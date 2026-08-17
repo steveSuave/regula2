@@ -77,12 +77,21 @@ class IntersectionPoint extends GeoPoint {
   /// caller named the curves the other way round. The crossing the caller
   /// asked for is the crossing the object tracks; only its *address*
   /// changes.
+  ///
+  /// [absolute] is the document's geometry (Phase 126), and it is here for
+  /// the remapping alone: both orders' candidate lists are filtered
+  /// against the absolute, so a remap computed under the wrong one
+  /// translates between two numberings that neither the caller nor the
+  /// construction is using. It does *not* need to reach [recompute] — the
+  /// value settles when `Construction.add` recomputes under the document's
+  /// absolute — but the address, once stored, is never recomputed.
   factory IntersectionPoint({
     required GeoObject curve1,
     required GeoObject curve2,
     required int branchIndex,
     required String id,
     ObjectAttributes? attributes,
+    Absolute absolute = Absolute.euclidean,
   }) {
     if (branchIndex < 0 || branchIndex >= maxBranchCount) {
       throw ArgumentError.value(
@@ -110,7 +119,7 @@ class IntersectionPoint extends GeoPoint {
     return IntersectionPoint.canonical(
       curve1: curve2,
       curve2: curve1,
-      branchIndex: _readdress(curve1, curve2, branchIndex),
+      branchIndex: _readdress(curve1, curve2, branchIndex, absolute),
       id: id,
       attributes: attributes,
     );
@@ -145,9 +154,14 @@ class IntersectionPoint extends GeoPoint {
   /// and it is defined on complex candidates too, so it still speaks while
   /// the crossing is imaginary. With no candidates to match against
   /// (an undefined parent) the index passes through unchanged.
-  static int _readdress(GeoObject a, GeoObject b, int index) {
-    final from = intersectionCandidates(a, b);
-    final to = intersectionCandidates(b, a);
+  static int _readdress(
+    GeoObject a,
+    GeoObject b,
+    int index,
+    Absolute absolute,
+  ) {
+    final from = intersectionCandidates(a, b, absolute: absolute);
+    final to = intersectionCandidates(b, a, absolute: absolute);
     if (index >= from.length || to.isEmpty) return index;
     final target = from[index];
     var best = 0;

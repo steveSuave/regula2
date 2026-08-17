@@ -237,7 +237,7 @@ class Locus extends GeoLocus {
       }
       driver.parameter = savedParameter;
       for (final o in _chain) {
-        o.recompute();
+        o.recompute(_absolute);
       }
     }
   }
@@ -711,7 +711,7 @@ class _TracedSweep {
     TraceDiagnostics.count(TraceCounter.chainSolves);
     _driver.tracedPosition = domain.evalReal(x);
     for (var i = 1; i < chain.length; i++) {
-      chain[i].recompute();
+      chain[i].recompute(_absolute);
     }
   }
 
@@ -719,7 +719,7 @@ class _TracedSweep {
     TraceDiagnostics.count(TraceCounter.chainSolves);
     _driver.tracedPosition = domain.evalComplex(x);
     for (var i = 1; i < chain.length; i++) {
-      chain[i].recompute();
+      chain[i].recompute(_absolute);
     }
   }
 

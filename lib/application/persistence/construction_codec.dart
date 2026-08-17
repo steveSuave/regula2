@@ -547,6 +547,11 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       curve2: any(1),
       branchIndex: _intParam(id, params, 'branchIndex'),
       attributes: attributes,
+      // The document's geometry, for the constructor's canonical remap:
+      // a pre-120c file can name its pair the other way round, and the
+      // translation between the two numberings is only meaningful in the
+      // absolute the rest of the document is read in (Phase 126).
+      absolute: construction.kernel.absolute,
     ),
     'ReflectedPoint' => ReflectedPoint(
       id: id,

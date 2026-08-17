@@ -1,6 +1,7 @@
 import '../commands/command.dart';
 import '../construction/geo_object.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 
 /// One user input delivered to the active tool — a tap (or click) on the
 /// canvas, already hit-tested by the presentation layer.
@@ -30,6 +31,17 @@ import '../math/vec2.dart';
 /// the tool stays pure — a null [text] tells it the input wasn't meant
 /// for it. The defaults (`const []`, `0`, `null`) make a bare
 /// `ToolInput(pos, hit: x)` behave exactly as before the fields existed.
+///
+/// [absolute] is the **document's** geometry (Phase 126), read off
+/// `Construction.kernel` by whoever builds the input. It lives here rather
+/// than being reached for inside the tools because a tool is a pure
+/// function of its input — and because what it decides is not cosmetic: a
+/// tool that snaps to a crossing writes a `branchIndex`, which addresses
+/// the candidate list *as filtered against the absolute* (Phase 125).
+/// Building that address under the wrong geometry stores a number naming a
+/// different crossing, which is the Phase 120c failure arriving through
+/// the tool layer. The Euclidean default is what every document was before
+/// this phase, and what a caller that means Euclidean should keep.
 class ToolInput {
   const ToolInput(
     this.position, {
@@ -40,6 +52,7 @@ class ToolInput {
     this.gridSnapStep = 0,
     this.viewExtent = 0,
     this.text,
+    this.absolute = Absolute.euclidean,
   });
 
   final Vec2 position;
@@ -50,6 +63,7 @@ class ToolInput {
   final double gridSnapStep;
   final double viewExtent;
   final String? text;
+  final Absolute absolute;
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
   /// followed by [extraHits].

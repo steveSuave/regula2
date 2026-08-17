@@ -3,6 +3,7 @@ import '../construction/geo_object.dart';
 import '../construction/incidence.dart';
 import '../construction/objects/intersection_point.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 import 'point_coincidence.dart';
 import 'point_resolution.dart';
 import 'tool.dart';
@@ -70,7 +71,13 @@ class IntersectionTool implements ToolInputPreview {
       return const ToolIgnored();
     }
     final index =
-        nearestIntersectionBranch(first, hit, input.position)?.index ?? 0;
+        nearestIntersectionBranch(
+          first,
+          hit,
+          input.position,
+          absolute: input.absolute,
+        )?.index ??
+        0;
     // Built before the duplicate check, not after: the constructor puts
     // the pair in canonical order and renumbers the branch onto it, so
     // the candidate's own address is the one to compare against — the tap
@@ -80,15 +87,21 @@ class IntersectionTool implements ToolInputPreview {
       curve2: hit,
       branchIndex: index,
       id: newId(),
+      absolute: input.absolute,
     );
-    if (_existingIntersection(input.objects, candidate)) {
+    if (_existingIntersection(input.objects, candidate, input.absolute)) {
       return const ToolIgnored();
     }
     // The structural check above misses points that sit on the crossing
     // by *theorem* rather than by incident parents — a centroid built as
     // two medians' intersection occupies the third median's crossings
     // too. The numeric identity probe catches those; same refusal.
-    if (coincidentExistingPoint(input.objects, candidate) != null) {
+    if (coincidentExistingPoint(
+          input.objects,
+          candidate,
+          absolute: input.absolute,
+        ) !=
+        null) {
       return const ToolIgnored();
     }
     _first = null;
@@ -127,6 +140,7 @@ class IntersectionTool implements ToolInputPreview {
   bool _existingIntersection(
     Iterable<GeoObject> objects,
     IntersectionPoint candidate,
+    Absolute absolute,
   ) {
     final curve1 = candidate.curve1;
     final curve2 = candidate.curve2;
@@ -143,7 +157,12 @@ class IntersectionTool implements ToolInputPreview {
       if (object.position != null &&
           structurallyIncident(curve1, object) &&
           structurallyIncident(curve2, object) &&
-          nearestIntersectionBranch(curve1, curve2, object.position!)?.index ==
+          nearestIntersectionBranch(
+                curve1,
+                curve2,
+                object.position!,
+                absolute: absolute,
+              )?.index ==
               candidate.branchIndex) {
         return true;
       }

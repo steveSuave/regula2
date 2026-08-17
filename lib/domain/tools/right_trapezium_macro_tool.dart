@@ -50,6 +50,7 @@ class RightTrapeziumMacroTool extends MultiPointTool {
       curve1: perpendicularA,
       curve2: parallelThroughC,
       branchIndex: 0,
+      absolute: absolute,
     );
     final corner = dedupedDerivedPoint(cornerD);
 

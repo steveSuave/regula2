@@ -62,6 +62,7 @@ class SquareMacroTool extends MultiPointTool {
       curve1: perpB,
       curve2: circleB,
       branchIndex: 1,
+      absolute: absolute,
     );
     final perpA = PerpendicularLine(
       id: newId(),
@@ -81,6 +82,7 @@ class SquareMacroTool extends MultiPointTool {
       curve1: perpA,
       curve2: circleA,
       branchIndex: 1,
+      absolute: absolute,
     );
     final c = dedupedDerivedPoint(cornerC);
     final d = dedupedDerivedPoint(cornerD);

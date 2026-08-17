@@ -93,6 +93,7 @@ class RectangleMacroTool extends MultiPointTool {
       curve1: parallelThroughC,
       curve2: perpendicularA,
       branchIndex: 0,
+      absolute: absolute,
     );
 
     return [
