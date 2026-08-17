@@ -62,16 +62,15 @@ abstract class GeoPoint extends GeoObject {
   /// The point in homogeneous coordinates — the canonical V2 view (PLAN
   /// §Migration strategy). New domain code reads this, never [position].
   ///
-  /// This default lifts the affine [position] to `[x, y, 1]`, null while
-  /// undefined — correct for unmigrated kinds, whose affine kernel only
-  /// produces real finite values. A migrated kind stores homogeneous
-  /// state, overrides this getter to return it, and reimplements
-  /// [position] as its projection ([ProjPoint.toVec2]), so [isDefined]
-  /// becomes the rendering question "real and finite?".
-  ProjPoint? get projPoint => switch (position) {
-    null => null,
-    final p => ProjPoint.lift(p),
-  };
+  /// Abstract since Phase 121. Through the migration this carried a
+  /// default that lifted [position] to `[x, y, 1]`, which was right for a
+  /// kind whose affine kernel could only produce real finite values —
+  /// and is now a trap: every kind stores homogeneous state, so a new
+  /// one that forgot to would silently inherit a fallback instead of
+  /// failing to compile. A kind implements this and reimplements
+  /// [position] as its projection ([ProjPoint.toVec2]), which is what
+  /// makes [isDefined] the rendering question "real and finite?".
+  ProjPoint? get projPoint;
 
   @override
   bool get isDefined => position != null;
@@ -90,15 +89,12 @@ abstract class GeoLine extends GeoObject {
   /// The carrier in homogeneous coefficients — the canonical V2 view
   /// (PLAN §Migration strategy). New domain code reads this, never [line].
   ///
-  /// This default lifts the affine [line] coefficient-wise, null while
-  /// undefined — correct for unmigrated kinds. A migrated kind stores
-  /// homogeneous state, overrides this getter, and reimplements [line] as
-  /// its projection ([ProjLine.toLineEq]); real-extent metadata
-  /// ([parameterExtent]) stays affine either way.
-  ProjLine? get projLine => switch (line) {
-    null => null,
-    final l => ProjLine.lift(l),
-  };
+  /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
+  /// lift-from-affine default went. A kind stores homogeneous state,
+  /// implements this, and reimplements [line] as its projection
+  /// ([ProjLine.toLineEq]); real-extent metadata ([parameterExtent])
+  /// stays affine either way.
+  ProjLine? get projLine;
 
   /// The parameter span of the carrier this object actually occupies, in
   /// the carrier's arc-length parameterization (`LineEq.parameterAt`), as
@@ -142,15 +138,12 @@ abstract class GeoCircle extends GeoObject {
   /// The carrier as a projective conic — the canonical V2 view (PLAN
   /// §Migration strategy). New domain code reads this, never [circle].
   ///
-  /// This default lifts the affine [circle] ([ConicMatrix.lift]), null
-  /// while undefined — correct for unmigrated kinds. A migrated kind
-  /// stores a [ConicMatrix], overrides this getter, and reimplements
-  /// [circle] as its projection ([ConicMatrix.toCircleEq]); angular-extent
-  /// metadata ([angularExtent]) stays affine either way.
-  ConicMatrix? get conic => switch (circle) {
-    null => null,
-    final c => ConicMatrix.lift(c),
-  };
+  /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
+  /// lift-from-affine default went. A kind stores a [ConicMatrix],
+  /// implements this, and reimplements [circle] as its projection
+  /// ([ConicMatrix.toCircleEq]); angular-extent metadata
+  /// ([angularExtent]) stays affine either way.
+  ConicMatrix? get conic;
 
   /// The angular span of the carrier this object actually occupies, as
   /// `(start, sweep)` with a counter-clockwise sweep in [0, 2π) — or null
