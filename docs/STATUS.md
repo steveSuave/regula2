@@ -8,6 +8,30 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 126 (V2 Session 28) — 2026-08-17
+
+**Done**
+- Merged nothing new from 120c (it was already on `main` at `1266b9b`); opened `phase-121-kernel-deletion` and took the first two items of Phase 121, both of which were "unify or record why not" questions rather than mechanical deletions.
+- **One detour half-plane for every kind of pass.** Loci detoured through a rule odd in the drive direction (`detourOrientation1D`) while drags took a constant; the constant is now `detourHalfPlane` (renamed from `dragDetourOrientation`, which was no longer drag-only) and the odd rule is deleted. **The fixture diffs are nil, bitwise**, measured before switching rather than after: a scratch census over all four locus documents shows only `apatitos-topos.rgl` detours at all — twice, both on *forward* legs, which is exactly where the two rules disagreed (they agree on a reversed leg) — and its sample list is identical under the odd rule, under `+1` and under `−1`.
+- **And the reason generalizes, so it is what got recorded.** An arc is planned to enclose *one* estimated singularity, and it encircles it by a half-turn whichever side it passes; for a simple branch point a half-turn in either sense exchanges the same two sheets. The half-plane can therefore only be load-bearing when an arc encloses more than one collision, or one of higher order — and there the arc is mis-planned and neither rule has a claim to the right answer. What a locus needed was a well-planned arc, not a half-plane of its own. PLAN §"A round trip is honest" now says this instead of recording the non-uniformity.
+- New coverage pins that the Phase 117b reduced rig **detours at all** (two arcs, no folds, via `TraceDiagnostics`). It and `apatitos-topos.rgl` are the whole of the corpus's detour coverage, and its sheet assertions were silently free to stop exercising one.
+- **The index-flip guard now works at any candidate count.** `locus.dart` read the un-matched root as `1 - index` and skipped itself entirely on anything but a two-candidate pair, so a conic∩conic member of a locus chain — four candidates since Phase 120 — lost the guard rather than crashing on it. Widened and moved to `trace_acceptance.dart` as `relabelIsBenign`, a pure function over candidate lists with its own tests: a flip is a benign canonical relabel exactly when every root the slot did *not* follow pairs with a distinct other root within the same motion allowance. Nearest-match is **exact**, not merely greedy, because the cap is at most half the set's minimum pairwise separation; at two candidates it reduces to the old arithmetic exactly.
+- **`construction.dart` held a literal NUL byte** — the per-pair adoption key wrote `'${curve1.id}\x00${curve2.id}'` as a raw byte instead of an escape. Dart reads it fine, which is why it survived 120c, but `file(1)` calls the largest file in `lib/domain/` "data" and grep/ripgrep skip a binary file **silently**: every search for a symbol in it came back empty rather than wrong. Found by grepping for the drag side's detour orientation and getting nothing. Escaped in its own commit; same string value.
+- Suite **2389 green**, 32 goldens byte-identical, analyze clean, `flutter build web` compiles, perf gate re-run on VM/AOT/dart2js/dart2wasm: PASS at 2% of budget (10–11% with the locus rig), checksums identical.
+
+**Next**
+- Phase 121 continues, and the rest of it is the deletion work: drop `lib/domain/math/intersections.dart` (test-side only — no `lib/` importer has remained since Phase 112), demote `LineEq`/`CircleEq` to presentation view structs, one degeneracy convention everywhere, remove lift-default dead code where every kind now overrides, re-point `point_coincidence.dart` at projected positions, and record the grep gates in CLAUDE.md.
+- Still open from the 120c arc: a **load-time validation/report pass**, so a document carrying duplicate intersection addresses tells the user rather than needing a three-round diagnosis.
+- Also still open with the reporter: they were asked to re-test the recorded sequence (tap the four crossings in *different* orders). No reply recorded yet.
+
+**Gotchas**
+- **A literal control byte in a source file makes it invisible to search, not broken.** That is the dangerous half: the compiler is happy, the tests are green, and every future `grep`/`rg` over that file returns nothing at all. If a search for a symbol you can see in the file comes back empty, run `file(1)` on it before doubting the symbol. Worth a lint if one exists.
+- **Measure the convention before changing it, and record what the measurement covered.** The corpus turned out to contain exactly two detour sites, one of which was a test rig with no assertion that it detoured. "The fixtures are green" was much weaker evidence here than it looked, which is why the census and the new counter assertion are the durable part of this change, not the rename.
+- `relabelIsBenign`'s exactness argument rests on `cap ≤ separation/2`. If a caller ever passes a looser cap, nearest-match becomes ambiguous and the function needs a real assignment algorithm — the call site derives the cap from `_checkpoints[i]!.separation / 2`, so don't loosen it there.
+- The locus walk still differs from the drag walk in one recorded way, and it is not the half-plane: a locus arc is planned in the leg's *distance travelled* (always increasing) and mapped to the drive variable by `dir`, so the physical side a run detours through does flip with walk direction now. Nothing observable depends on it (see above), but the two spaces are worth keeping straight when reading `_traceArc`.
+
+---
+
 ## Session 125 (V2 Session 27) — 2026-08-17
 
 **Done**
