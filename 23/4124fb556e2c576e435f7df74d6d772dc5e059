@@ -1,0 +1,22 @@
+lib/application/persistence/construction_codec.dart
+  s_864df67dc11e5d::t_87f5a20a557218 323-324,326-338
+test/application/persistence/codec_v2_test.dart
+  s_864df67dc11e5d::t_dd6eb6805d7e4f 8-11,215-217
+  s_864df67dc11e5d::t_f413b4c6b79eca 178-214,218-242
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "234124fb556e2c576e435f7df74d6d772dc5e059",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
