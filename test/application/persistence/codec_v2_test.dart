@@ -2,9 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
-import 'package:regula/application/persistence/document_kernel.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/document_kernel.dart';
+import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/complex.dart';
 
 import '../../kitchen_sink.dart';
@@ -17,17 +18,13 @@ import '../../kitchen_sink.dart';
 /// messages, and which documents the version stamp is allowed to lock out
 /// of older builds.
 void main() {
-  Map<String, dynamic> encode(
-    Construction construction, {
-    DocumentKernel kernel = const DocumentKernel(),
-  }) =>
+  // The kernel now rides on the construction rather than on the encode
+  // call — a document cannot be written under an absolute other than the
+  // one its objects were computed in.
+  Map<String, dynamic> encode(Construction construction) =>
       jsonDecode(
             jsonEncode(
-              encodeDocument(
-                construction,
-                viewport: const ViewportState(),
-                kernel: kernel,
-              ),
+              encodeDocument(construction, viewport: const ViewportState()),
             ),
           )
           as Map<String, dynamic>;
@@ -50,8 +47,9 @@ void main() {
 
     test('a non-default kernel makes the document v2', () {
       final json = encode(
-        Construction(),
-        kernel: const DocumentKernel(metric: FundamentalConic.hyperbolic),
+        Construction(
+          kernel: const DocumentKernel(metric: FundamentalConic.hyperbolic),
+        ),
       );
       expect(json['version'], 2);
       expect(json['kernel'], {'metric': 'hyperbolic'});
@@ -155,6 +153,22 @@ void main() {
         ..['kernel'] = <String, dynamic>{}
         ..['version'] = 2;
       expect(decodeDocument(json).kernel, const DocumentKernel());
+    });
+
+    // Phase 123: the setting reaches the graph, not just the document
+    // record. The absolute is an input to every metric recompute, so a
+    // construction that did not carry it would be computing in a geometry
+    // the file does not name.
+    test('the decoded construction carries the kernel, not just the doc', () {
+      final decoded = decodeDocument(encode(buildKitchenSink()));
+      expect(decoded.construction.kernel, decoded.kernel);
+      expect(decoded.construction.kernel.absolute, Absolute.euclidean);
+      expect(decoded.construction.kernel.absolute.isEuclidean, isTrue);
+    });
+
+    test('a fresh construction is Euclidean', () {
+      expect(Construction().kernel, const DocumentKernel());
+      expect(Construction().kernel.absolute, Absolute.euclidean);
     });
 
     test(

@@ -214,6 +214,18 @@ class ConicMatrix {
     xw * p.x + yw * p.y + ww * p.w,
   );
 
+  /// This matrix read as a *dual* conic, applied to [l] — `A·ℓ`, a point.
+  /// The counterpart of [polarLine], which applies it as a point conic.
+  ///
+  /// Distinct from [poleOf]: that takes a *point* conic and forms the
+  /// adjugate first. When a dual conic is already in hand — as it is for
+  /// an [Absolute] — the adjugate would be taking the dual twice.
+  ProjPoint applyToLine(ProjLine l) => ProjPoint(
+    xx * l.a + xy * l.b + xw * l.c,
+    xy * l.a + yy * l.b + yw * l.c,
+    xw * l.a + yw * l.b + ww * l.c,
+  );
+
   /// The pole of [l] — the adjugate applied to the line, `adj(A)·l` —
   /// the point whose [polarLine] is [l] (up to scale) when the conic is
   /// nondegenerate. Division-free, so total: for a rank-2 conic the

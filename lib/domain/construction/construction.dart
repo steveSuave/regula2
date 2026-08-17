@@ -10,6 +10,7 @@ import '../projective/tracing/singularity.dart';
 import '../projective/tracing/trace_diagnostics.dart';
 import '../projective/tracing/trace_step_budget_exception.dart';
 import '../projective/tracing/traced_branch.dart';
+import 'document_kernel.dart';
 import 'geo_object.dart';
 import 'object_attributes.dart';
 import 'objects/expression_text.dart';
@@ -34,6 +35,22 @@ import 'trace_acceptance.dart';
 /// import Flutter (see CLAUDE.md); the application layer bridges this to
 /// Riverpod.
 class Construction {
+  Construction({this.kernel = const DocumentKernel()});
+
+  /// The geometry this document is drawn in — the absolute every metric
+  /// recompute is founded on (PLAN §"M-CK — Cayley–Klein").
+  ///
+  /// **Final, deliberately.** This build implements one geometry, and the
+  /// codec refuses to load a document in either other one, so there is no
+  /// route by which it could change. That is not merely convenient: the
+  /// candidate list an `IntersectionPoint`'s `branchIndex` addresses is
+  /// itself a function of the absolute (the circular-point filter, and
+  /// canonical order's centre), so switching a live document's geometry
+  /// re-addresses every intersection point and has to go through a command
+  /// that re-points and reports — PLAN §"The audit", assigned to Phase
+  /// 126. A settable field here is exactly how that would get skipped.
+  final DocumentKernel kernel;
+
   final LinkedHashMap<String, GeoObject> _objects =
       LinkedHashMap<String, GeoObject>();
 
