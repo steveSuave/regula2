@@ -1,0 +1,24 @@
+lib/domain/projective/ck_circles.dart
+  s_864df67dc11e5d::t_44eb077881b3ab 1-44,47,55-88,94-154
+  s_864df67dc11e5d::t_faf6dbe8669bb1 45-46,48-54,89-93
+test/domain/projective/ck_circles_test.dart
+  s_864df67dc11e5d::t_7440ab918ed65c 8,47-51,63-67,145-148,150-155,199,205-209
+  s_864df67dc11e5d::t_faf6dbe8669bb1 101-105,115-119,121-132,163-172
+  s_864df67dc11e5d::t_53a2e5f647b5b3 1-7,9-46,52-62,68-100,106-114,120,133-144,149,156-162,173-198,200-204,210-232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3801d3e4fefc147af1190ed5f848fdb74cc27886",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
