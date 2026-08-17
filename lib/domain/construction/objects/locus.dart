@@ -996,12 +996,13 @@ class _TracedSweep {
   }
 
   /// Verifies every matched-index change between the accepted state [x]
-  /// and the trial state [trialX] (already driven): the *un-matched*
-  /// candidate must not have moved farther than the matched-motion
-  /// allowance — a benign canonical relabel keeps both roots in place,
-  /// a silent branch swap leaves the abandoned true branch far away.
-  /// Costs two extra chain evaluations, only when an index actually
-  /// flipped. Leaves the chain at the trial state.
+  /// and the trial state [trialX] (already driven) with
+  /// [relabelIsBenign]: the roots the slot did *not* follow must pair up
+  /// across the flip within the matched-motion allowance — a benign
+  /// canonical relabel keeps the whole candidate set in place, a silent
+  /// branch swap leaves the abandoned true branch far away. Costs two
+  /// extra chain evaluations, only when an index actually flipped.
+  /// Leaves the chain at the trial state.
   bool _indexFlipsAreConsistent(double x, double trialX) {
     List<int>? flips;
     for (var i = 0; i < seeded.length; i++) {
@@ -1028,19 +1029,16 @@ class _TracedSweep {
     };
     driveReal(trialX);
     for (final i in flips) {
-      final old = oldCandidates[i]!;
-      final now = intersectionCandidates(seeded[i].curve1, seeded[i].curve2);
-      if (old.length != 2 || now.length != 2) {
-        continue;
-      }
       final branch = seeded[i].tracedBranch;
-      final otherMotion = TracedBranch.chordalDistance(
-        old[1 - _prevMatched[i]],
-        now[1 - branch.matchedIndex],
-      );
       final allowed = _checkpoints[i]!.separation / 2;
       final cap = allowed < maxAcceptedMotion ? allowed : maxAcceptedMotion;
-      if (!(otherMotion < cap)) {
+      if (!relabelIsBenign(
+        before: oldCandidates[i]!,
+        after: intersectionCandidates(seeded[i].curve1, seeded[i].curve2),
+        matchedBefore: _prevMatched[i],
+        matchedAfter: branch.matchedIndex,
+        cap: cap,
+      )) {
         return false;
       }
     }
