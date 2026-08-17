@@ -116,6 +116,31 @@ class IntersectionPoint extends GeoPoint {
   /// (that machinery dissolves when Phase 117 rewrites loci on tracing).
   final TracedBranch tracedBranch = TracedBranch();
 
+  /// The half-plane (`+1` upper, `−1` lower) of the last detour arc walked
+  /// around a root collision this point took part in, or null if it has
+  /// never detoured. Read and written only by `Construction._traceAlong`.
+  ///
+  /// **This is what makes a there-and-back drag an identity** (Phase
+  /// 120c). Reversing a path conjugates its parameter's imaginary axis —
+  /// the return leg's `Im s > 0` is the outward leg's `Im t < 0` — so the
+  /// two legs trace the *same* bump, and cancel, exactly when they detour
+  /// on opposite sides *in their own parameters*. Each detour therefore
+  /// takes the negation of what this records.
+  ///
+  /// The alternation generalizes past a single clean out-and-back: between
+  /// two consecutive crossings of one singularity the path must leave its
+  /// neighbourhood and come back, crossing every *other* singularity an
+  /// even number of times on the way, so a per-point counter still
+  /// alternates on that point's own crossings and the windings telescope
+  /// to zero.
+  ///
+  /// It is deliberately **not** gesture-scoped: a there-and-back done as
+  /// two separate drags is the common case, and any state that resets at
+  /// mouse-up would hand the return leg the same half-plane as the
+  /// outward one. It is not persisted either — a freshly loaded document
+  /// has no history to be consistent with.
+  double? lastDetourOrientation;
+
   ProjPoint? _point;
   int _candidateCount = 0;
 

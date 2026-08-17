@@ -16,17 +16,33 @@ import '../tolerances.dart';
 /// bounded number of trials and lands on the far side with branch identity
 /// decided by continuity, not by a matching tie.
 ///
-/// **Detour orientation is fixed and recorded here**: which half-plane of
-/// the path parameter an arc walks is [detourOrientation] of the drag's
-/// direction — a deterministic, *odd* rule (reversing the drag flips it).
-/// Oddness is what makes reversal compose correctly: a return pass
-/// parameterizes the reverse path, so keeping one absolute half-plane
-/// would put its detour on the *other physical side* of the singularity —
-/// the round trip would wind once around it and swap the branches (the
-/// monodromy of the root split; the toy probe caught exactly this).
-/// Flipping the half-plane with the direction retraces the same physical
-/// side, winds zero net turns, and a there-and-back drag restores every
-/// branch (identity monodromy — "no jump, no swap").
+/// **Detour orientation is recorded here.** Which half-plane of the path
+/// parameter an arc walks must be *odd under path reversal*: a return
+/// pass parameterizes the reverse path, so keeping one absolute
+/// half-plane would put its detour on the *other physical side* of the
+/// singularity — the round trip would wind once around it and swap the
+/// branches (the monodromy of the root split; the toy probe caught
+/// exactly this). Flipping retraces the same physical side, winds zero
+/// net turns, and a there-and-back drag restores every branch (identity
+/// monodromy — "no jump, no swap").
+///
+/// Phases 115–120b took the flip from the drag's *direction*, via
+/// [detourOrientation]. That is odd, as required, but any ±1 rule on
+/// directions has a seam — two antipodal directions where it flips — and
+/// this one's sat on the horizontal axis, where `dy` is pure pointer
+/// noise. Dragging two equal circles onto each other is exactly that
+/// gesture, and a twentieth of a pixel of jitter sent the crossing back
+/// on the far side about a third of the time (Phase 120c).
+///
+/// **The flip is now carried by memory instead**
+/// (`IntersectionPoint.lastDetourOrientation`): each detour takes the
+/// negation of the half-plane its colliding points last used. Alternation
+/// is odd by construction, has no seam because it never reads the
+/// direction, and holds across gesture boundaries. [detourOrientation]
+/// and [detourOrientation1D] survive as the opening move — the first
+/// crossing of a collision has nothing to be consistent with, so its side
+/// is genuinely arbitrary — and as the locus sweeps' rule, which walks a
+/// deterministic scan rather than a user gesture.
 
 /// Trial-step size below which the controller is considered starving and
 /// a detour is attempted (a fraction of the unit path parameter). Steps
@@ -341,14 +357,19 @@ const double _minimumResolution = 1e-15;
 /// figure costs chain solves on every frame and buys nothing.
 const double _collisionResolution = 1e-4;
 
-/// The detour orientation for a drag from [start] to [end]: `+1` walks
-/// arcs through the upper half-plane of the path parameter (`Im t > 0`),
-/// `−1` through the lower. The rule — descending or leftward drags
-/// detour upper — is arbitrary; what is load-bearing is that it is
-/// deterministic and *odd* (reversing the drag flips it), which is what
-/// makes a there-and-back drag an identity (see the library doc). A
+/// The *opening* detour orientation for a drag from [start] to [end]:
+/// `+1` walks arcs through the upper half-plane of the path parameter
+/// (`Im t > 0`), `−1` through the lower. The rule — descending or
+/// leftward drags detour upper — is arbitrary, and so is the side of a
+/// collision nothing has crossed before, which is all this now decides:
+/// every later crossing alternates instead (see the library doc). A
 /// degenerate zero-direction path cannot starve the controller, so its
 /// value never matters.
+///
+/// Do not restore this as the standing rule. It is odd in the drag
+/// direction, which is necessary, but it takes the direction's sign from
+/// `dy` and only consults `dx` when `dy` is *exactly* zero — so a
+/// nominally horizontal drag picks its half-plane from pointer noise.
 double detourOrientation(Vec2 start, Vec2 end) {
   final dy = end.y - start.y;
   if (dy != 0) {

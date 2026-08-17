@@ -1055,6 +1055,130 @@ void main() {
     });
   });
 
+  group('recomputeAlongPath: detour half-plane alternates (Phase 120c)', () {
+    /// Two equal-radius circles on free centres, overlapping, with one
+    /// crossing materialized — the reported rig, and the shape of
+    /// `cinderella-jumping.rgl`. Dragging b left past |ab| = 2r and back
+    /// crosses one tangency in each direction.
+    (Construction, IntersectionPoint) equalCircles() {
+      final construction = Construction();
+      final a = fp('a', 0, 0);
+      final b = fp('b', -120, 0);
+      final k1 = FixedRadiusCircle(id: 'k1', center: a, radius: 100);
+      final k2 = FixedRadiusCircle(id: 'k2', center: b, radius: 100);
+      final p = IntersectionPoint(
+        id: 'p',
+        curve1: k1,
+        curve2: k2,
+        branchIndex: 0,
+      );
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(k1)
+        ..add(k2)
+        ..add(p);
+      return (construction, p);
+    }
+
+    /// Drags b out to x = −300 and back to −120 over [frames] frames each
+    /// way, with [jitter] world units of noise in y — pointer sampling.
+    /// Returns the sign of the surviving crossing's y.
+    double thereAndBack(int frames, double jitter, int seed) {
+      final (construction, p) = equalCircles();
+      final rng = math.Random(seed);
+      final memory = <String, ProjPoint>{};
+      var from = const Vec2(-120, 0);
+      double y() => (rng.nextDouble() - 0.5) * 2 * jitter;
+      final targets = <Vec2>[
+        for (var i = 1; i <= frames; i++) Vec2(-120 - 180 * i / frames, y()),
+        for (var i = 1; i <= frames; i++) Vec2(-300 + 180 * i / frames, y()),
+      ];
+      for (final to in targets) {
+        try {
+          construction.recomputeAlongPath(
+            'b',
+            DragPath(from, to),
+            seedMemory: memory,
+          );
+        } on TraceStepBudgetException {
+          memory.clear();
+          construction.moveFreePoint('b', to);
+        }
+        from = to;
+      }
+      return p.position!.y.sign;
+    }
+
+    test('a there-and-back drag returns the crossing to its own side, '
+        'whatever the pointer noise', () {
+      // The old rule read the half-plane off the drag direction, taking
+      // its sign from dy and only falling back to dx when dy was exactly
+      // zero — so its seam sat on the horizontal axis, which is where
+      // this gesture lives. Exactly horizontal it was right every time;
+      // with a twentieth of a pixel of noise in y it sent the point back
+      // on the far side of the circle about a third of the time.
+      final start = thereAndBack(20, 0, 0);
+      expect(start, -1, reason: 'the rig starts on the lower crossing');
+      for (final jitter in [0.0, 0.05, 1.0]) {
+        for (var seed = 0; seed < 20; seed++) {
+          expect(
+            thereAndBack(20, jitter, 1000 + seed),
+            start,
+            reason: 'jitter $jitter, seed $seed came back on the far side',
+          );
+        }
+      }
+      // Coarse frames are a fast pointer: fewer, wider passes, which is
+      // where a pass is likeliest to starve rather than detour.
+      for (var seed = 0; seed < 20; seed++) {
+        expect(thereAndBack(3, 1, 2000 + seed), start);
+      }
+    });
+
+    test('the second detour around a collision takes the other half-plane',
+        () {
+      // The mechanism itself, without the statistics: one crossing out,
+      // one back, and the recorded half-planes must be opposites.
+      final (construction, p) = equalCircles();
+      expect(p.lastDetourOrientation, isNull);
+      final out = construction.recomputeAlongPath(
+        'b',
+        const DragPath(Vec2(-120, 0), Vec2(-300, 0)),
+      );
+      expect(out.detours, 1);
+      final first = p.lastDetourOrientation;
+      expect(first, isNotNull);
+      final back = construction.recomputeAlongPath(
+        'b',
+        const DragPath(Vec2(-300, 0), Vec2(-120, 0)),
+      );
+      expect(back.detours, 1);
+      expect(p.lastDetourOrientation, -first!);
+    });
+
+    test('alternation is not gesture-scoped: a there-and-back split across '
+        'two drags is still an identity', () {
+      // The common way to do it — drag, release, drag back. Anything
+      // that reset at mouse-up would hand the return leg the same
+      // half-plane as the outward one and swap the branches.
+      final (construction, p) = equalCircles();
+      final side = p.position!.y.sign;
+      construction.recomputeAlongPath(
+        'b',
+        const DragPath(Vec2(-120, 0), Vec2(-300, 0)),
+      );
+      // Gesture boundary: seed memory dropped, slots cleared, a static
+      // solve in between — everything a mouse-up does.
+      construction.moveFreePoint('b', const Vec2(-300, 0));
+      construction.recomputeAlongPath(
+        'b',
+        const DragPath(Vec2(-300, 0), Vec2(-120, 0)),
+      );
+      expect(p.position!.y.sign, side);
+    });
+  });
+
   group('recomputeAlongPath: branch adoption (Phase 116)', () {
     /// The relabel rig: a line through free a(−10,0) and free b — the
     /// dragged point — and a fixed circle floating at (0,5) with radius
