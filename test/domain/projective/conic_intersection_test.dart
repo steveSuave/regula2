@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:glados/glados.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/circles.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_intersection.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
@@ -47,6 +48,20 @@ double distanceToClosest(List<ProjPoint> points, Vec2 expected) {
   }
   return best;
 }
+
+/// [c] moved off the exact circle coefficient shape (`xy = 0`, `xx = yy`)
+/// by ~1e-30 relative — far below every tolerance in the kernel, and
+/// enough to miss the bitwise dispatch test that sends two circles down
+/// the closed-form pencil route. This is how a test asks the *general*
+/// route the same geometric question a circle pair asks the short one.
+ConicMatrix nudgedOffCircleShape(ConicMatrix c) => ConicMatrix(
+  c.xx,
+  Complex(1e-30 * math.sqrt(c.norm2)),
+  c.yy,
+  c.xw,
+  c.yw,
+  c.ww,
+);
 
 /// Scale-free incidence residual of point [p] on conic [m].
 double residualOn(ConicMatrix m, ProjPoint p) {
@@ -256,6 +271,138 @@ void main() {
         }
       },
     );
+  });
+
+  // The pencil of two circles has a degenerate member in closed form — no
+  // cubic, no member scoring, no adjugate split. These pin that the shorter
+  // route is *taken*, and that taking it changes no answer: the V1-agreement
+  // and rescaling-invariance properties above run over it too.
+  group('the circle pencil is closed form (Phase 122)', () {
+    final a = ConicMatrix.lift(CircleEq(Vec2.zero, math.sqrt(2)));
+    final b = ConicMatrix.lift(CircleEq(const Vec2(2, 0), math.sqrt(2)));
+
+    test('the circular points come back exactly on the line at infinity', () {
+      // The discriminator: `ℓ∞ ∩ circle` is solved directly, so I and J are
+      // exact rather than recovered from a computed cubic root. The general
+      // route leaves them at |w| ~ 1e-33 on this same pair — near enough for
+      // every consumer, and not zero. If this ever reads "near", the closed
+      // form has stopped being reached.
+      final pts = intersectConicConic(a, b);
+      expect(pts[2].w, Complex.zero);
+      expect(pts[3].w, Complex.zero);
+      expect(pts[2].y, const Complex(0, -1));
+      expect(pts[3].y, Complex.i);
+      expect(pts[2].x, Complex.one);
+      expect(pts[3].x, Complex.one);
+    });
+
+    test('both routes answer the same, points and order', () {
+      // A conic 1e-30 off the circle shape is the same geometry and misses
+      // the bitwise dispatch test, so it is the general route asked the same
+      // question. Both real crossings and the conjugate pair must line up
+      // index for index — the order is what `branchIndex` addresses.
+      final rng = math.Random(7);
+      var real = 0;
+      var complex = 0;
+      for (var i = 0; i < 400; i++) {
+        final c1 = CircleEq(
+          Vec2(rng.nextDouble() * 20 - 10, rng.nextDouble() * 20 - 10),
+          rng.nextDouble() * 8 + 0.1,
+        );
+        final c2 = CircleEq(
+          Vec2(rng.nextDouble() * 20 - 10, rng.nextDouble() * 20 - 10),
+          rng.nextDouble() * 8 + 0.1,
+        );
+        final closed = intersectConicConic(
+          ConicMatrix.lift(c1),
+          ConicMatrix.lift(c2),
+        );
+        final general = intersectConicConic(
+          nudgedOffCircleShape(ConicMatrix.lift(c1)),
+          ConicMatrix.lift(c2),
+        );
+        expect(closed, hasLength(4));
+        expect(general, hasLength(4));
+        if (projectReal(closed[0]) != null) {
+          real++;
+        } else {
+          complex++;
+        }
+        for (var k = 0; k < 4; k++) {
+          expect(
+            closed[k].closeTo(general[k], 1e-7),
+            isTrue,
+            reason: 'circles $c1 $c2 index $k: ${closed[k]} vs ${general[k]}',
+          );
+        }
+      }
+      // Both regimes were actually reached — a conjugate pair orders by the
+      // imaginary-measure tier, not the centre line, so it is a different
+      // rule being checked.
+      expect(real, greaterThan(50));
+      expect(complex, greaterThan(50));
+    });
+
+    test('the centroid balance is load-bearing far from the origin', () {
+      // The general recipe's step 1 warns that an unbalanced configuration
+      // loses digits quadratically in its offset; the closed form is not
+      // exempt, and gets the balance for free because a circle's centre is
+      // (−xw/xx, −yw/xx) with no adjugate to form. Unbalanced, the crossings
+      // below come out ~2e-5 off.
+      const offset = 1e6;
+      final far1 = CircleEq(const Vec2(offset, offset), 2.5);
+      final far2 = CircleEq(const Vec2(offset + 3, offset + 1), 2);
+      final pts = intersectConicConic(
+        ConicMatrix.lift(far1),
+        ConicMatrix.lift(far2),
+      );
+      final near = intersectCircleCircle(
+        CircleEq(Vec2.zero, 2.5),
+        CircleEq(const Vec2(3, 1), 2),
+      );
+      expect(near, hasLength(2));
+      for (var k = 0; k < 2; k++) {
+        final v = projectReal(pts[k]);
+        expect(v, isNotNull);
+        expect(
+          Vec2(v!.x - offset, v.y - offset).distanceTo(near[k]),
+          lessThan(1e-8),
+          reason: 'far crossing $k: $v',
+        );
+      }
+    });
+
+    test('complex carriers stay on both conics', () {
+      // What a tracing detour hands it: circles whose centres have left the
+      // real axis. The route is holomorphic throughout — a complex centroid
+      // is still a translation — so the answer is judged the only way it can
+      // be, by incidence on both inputs.
+      final ca = circleWithRadius(
+        ProjPoint(const Complex(0, 0.3), const Complex(1, -0.2), Complex.one),
+        2.5,
+      );
+      final cb = circleWithRadius(
+        ProjPoint(const Complex(3, -0.1), const Complex(1, 0.4), Complex.one),
+        2,
+      );
+      final pts = intersectConicConic(ca, cb);
+      expect(pts, hasLength(4));
+      for (final p in pts) {
+        expect(residualOn(ca, p), lessThan(1e-10), reason: '$p');
+        expect(residualOn(cb, p), lessThan(1e-10), reason: '$p');
+      }
+    });
+
+    test('concentric circles meet only at I and J, each doubled', () {
+      // The radical axis degenerates to ℓ∞ itself, so all four points are
+      // circular — the honest answer, and the one consumers already filter.
+      final pts = intersectConicConic(
+        ConicMatrix.lift(CircleEq(const Vec2(4, -3), 1)),
+        ConicMatrix.lift(CircleEq(const Vec2(4, -3), 2.5)),
+      );
+      expect(pts, hasLength(4));
+      expect(pts.where(isCircular), hasLength(4));
+    });
   });
 
   group('degenerate inputs', () {
