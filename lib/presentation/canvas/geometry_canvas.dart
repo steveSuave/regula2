@@ -218,6 +218,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             gridColor:
                 Theme.of(context).extension<CanvasColors>()?.grid ??
                 const Color(0xFFE3E6EA),
+            absoluteColor:
+                Theme.of(context).extension<CanvasColors>()?.absolute ??
+                const Color(0xFFB26A00),
           ),
           foregroundPainter: _MarqueePainter(
             band: _band,

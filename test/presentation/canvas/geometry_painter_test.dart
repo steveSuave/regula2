@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
@@ -864,6 +865,109 @@ void main() {
       });
     });
   });
+
+  /// Phase 126: the fundamental conic of a non-Euclidean document.
+  group('the absolute', () {
+    const viewport = CanvasViewport(ViewportState(scale: 120));
+    const size = Size(800, 600);
+
+    test('only hyperbolic has a real absolute to draw', () {
+      // Not three cases of one rule but three different facts. The
+      // hyperbolic absolute is the unit circle and bounds the plane; the
+      // elliptic one has no real points and bounds nothing, elliptic
+      // space having no edge; the Euclidean one is the line at infinity,
+      // real but in no chart. Drawing something for either of the last
+      // two would be inventing an edge that is not in the geometry.
+      expect(absoluteDisc(FundamentalConic.euclidean, viewport), isNull);
+      expect(absoluteDisc(FundamentalConic.elliptic, viewport), isNull);
+      expect(absoluteDisc(FundamentalConic.hyperbolic, viewport), isNotNull);
+    });
+
+    test('it is the unit circle, in world units, at any view state', () {
+      for (final state in [
+        const ViewportState(scale: 120),
+        const ViewportState(scale: 37.5, pan: Vec2(2, -1)),
+        const ViewportState(scale: 200, rotation: 0.7),
+      ]) {
+        final view = CanvasViewport(state);
+        final disc = absoluteDisc(FundamentalConic.hyperbolic, view)!;
+        expect(disc.radius, closeTo(view.worldToScreenLength(1), 1e-9));
+        expect(disc.centre, view.worldToScreen(Vec2.zero));
+        // A circle stays a circle under rotation, which is why the
+        // painter can take centre and radius from the viewport instead of
+        // projecting the conic.
+        expect(
+          (view.worldToScreen(const Vec2(1, 0)) - disc.centre).distance,
+          closeTo(disc.radius, 1e-9),
+        );
+        expect(
+          (view.worldToScreen(const Vec2(0, -1)) - disc.centre).distance,
+          closeTo(disc.radius, 1e-9),
+        );
+      }
+    });
+
+    test('a degenerate view draws nothing rather than throwing', () {
+      expect(
+        absoluteDisc(
+          FundamentalConic.hyperbolic,
+          const CanvasViewport(ViewportState(scale: 0)),
+        ),
+        isNull,
+      );
+    });
+
+    test('a Euclidean document paints exactly what it did before', () {
+      // The goldens say this too, byte for byte; this says *why* they
+      // still can, at the one call the phase added to `paint`.
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(-1, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0.5));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Segment(id: 's', point1: a, point2: b));
+      final canvas = _CircleRecordingCanvas();
+      painterFor(construction, viewport: viewport).paint(canvas, size);
+      expect(
+        canvas.circles.where((c) => c.$2 == viewport.worldToScreenLength(1)),
+        isEmpty,
+      );
+    });
+
+    test('a hyperbolic document strokes it and washes the outside', () {
+      final construction = Construction(
+        kernel: const DocumentKernel(metric: FundamentalConic.hyperbolic),
+      );
+      construction.add(FreePoint(id: 'a', position: const Vec2(0.2, 0.1)));
+
+      final circles = _CircleRecordingCanvas();
+      painterFor(construction, viewport: viewport).paint(circles, size);
+      final disc = absoluteDisc(FundamentalConic.hyperbolic, viewport)!;
+      expect(
+        circles.circles.any(
+          (c) => c.$1 == disc.centre && (c.$2 - disc.radius).abs() < 1e-9,
+        ),
+        isTrue,
+      );
+
+      // And the wash: the region outside the disc, so a point well beyond
+      // the boundary is inside the painted path and one inside the disc
+      // is not. That is the whole message — out there is not the plane.
+      final paths = _PathRecordingCanvas();
+      painterFor(construction, viewport: viewport).paint(paths, size);
+      expect(paths.paths, hasLength(1));
+      final outside = paths.paths.single;
+      expect(
+        outside.contains(viewport.worldToScreen(const Vec2(2.5, 0))),
+        isTrue,
+      );
+      expect(
+        outside.contains(viewport.worldToScreen(const Vec2(0.3, 0))),
+        isFalse,
+      );
+    });
+  });
 }
 
 /// A [GeoLocus] with hand-picked samples (cf. the hit-tester's stub):
@@ -908,6 +1012,20 @@ class _LineRecordingCanvas implements Canvas {
   @override
   void drawLine(Offset p1, Offset p2, Paint paint) {
     lines.add((p1, p2));
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+/// Records the centre/radius pairs handed to [drawCircle]; every other
+/// canvas call is a no-op.
+class _CircleRecordingCanvas implements Canvas {
+  final List<(Offset, double)> circles = [];
+
+  @override
+  void drawCircle(Offset centre, double radius, Paint paint) {
+    circles.add((centre, radius));
   }
 
   @override

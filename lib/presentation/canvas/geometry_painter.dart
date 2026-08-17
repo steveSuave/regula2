@@ -13,6 +13,7 @@ import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/projective/absolute.dart';
 import '../../domain/projective/conic_matrix.dart';
 import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
@@ -20,6 +21,41 @@ import 'dash_path.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
+
+/// Where the document's fundamental conic is on screen, or null when its
+/// geometry has no real absolute to draw (Phase 126).
+///
+/// Only the **hyperbolic** absolute is drawable: `x² + y² − w² = 0` is the
+/// unit circle, the Beltrami–Klein disc's boundary, and the region outside
+/// it is not part of the hyperbolic plane at all — a figure dragged across
+/// it does not merely look wrong, it goes undefined. The wash is what
+/// makes that legible before it happens.
+///
+/// The **elliptic** absolute `x² + y² + w² = 0` has no real points, and
+/// that is a fact about the geometry rather than a gap in the drawing:
+/// elliptic space has no boundary and no unreachable region, the whole
+/// real projective plane being the space. Drawing anything would be
+/// inventing an edge that is not there. **Euclidean** draws nothing for
+/// the mirror-image reason — its absolute is the line at infinity, real
+/// enough but with no points in any chart.
+///
+/// Centre and radius come from the viewport rather than from a projection
+/// of the conic, which is exact rather than approximate: the absolute is a
+/// world-space circle about the origin, and a circle stays a circle under
+/// everything the viewport does to it, rotation included.
+({Offset centre, double radius})? absoluteDisc(
+  FundamentalConic metric,
+  CanvasViewport viewport,
+) {
+  if (metric != FundamentalConic.hyperbolic) {
+    return null;
+  }
+  final radius = viewport.worldToScreenLength(1);
+  if (!radius.isFinite || radius <= 0) {
+    return null;
+  }
+  return (centre: viewport.worldToScreen(Vec2.zero), radius: radius);
+}
 
 /// Paints the construction in insertion order (first added = bottom).
 ///
@@ -44,6 +80,7 @@ class GeometryPainter extends CustomPainter {
     this.showGrid = false,
     this.axisColor = const Color(0xFF757575),
     this.gridColor = const Color(0xFFE3E6EA),
+    this.absoluteColor = const Color(0xFFB26A00),
   });
 
   /// Stroke widths of the background layer (logical px) and the font size
@@ -130,6 +167,16 @@ class GeometryPainter extends CustomPainter {
   final Color axisColor;
   final Color gridColor;
 
+  /// The fundamental conic of a non-Euclidean document, and the wash over
+  /// the region outside it (Phase 126).
+  final Color absoluteColor;
+
+  /// Stroke width (logical px) of the absolute, and the alpha of the wash
+  /// over the region outside it. The stroke is heavier than an axis
+  /// because it is not chrome: it is the edge of the plane.
+  static const double _absoluteStrokeWidth = 2;
+  static const double _outsideAlpha = 0.09;
+
   @override
   void paint(Canvas canvas, Size size) {
     // Infinite lines are drawn with far-away endpoints; the clip keeps
@@ -139,6 +186,7 @@ class GeometryPainter extends CustomPainter {
     if (showGrid || showAxes) {
       _drawBackground(canvas, size);
     }
+    _drawAbsolute(canvas, size);
 
     for (final object in construction.objects) {
       final hidden = !object.attributes.visible;
@@ -207,6 +255,34 @@ class GeometryPainter extends CustomPainter {
   /// with tick labels — drawn first, so every object paints over it.
   /// Grid and axes are view chrome, not objects: hit testing, selection
   /// and fit never see them.
+  /// Draws the document's fundamental conic and washes the region that is
+  /// not part of the plane (Phase 126). See [absoluteDisc] for which
+  /// geometries have anything to draw and why the other two do not.
+  void _drawAbsolute(Canvas canvas, Size size) {
+    final disc = absoluteDisc(construction.kernel.metric, viewport);
+    if (disc == null) {
+      return;
+    }
+    final outside = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(Offset.zero & size),
+      Path()
+        ..addOval(Rect.fromCircle(center: disc.centre, radius: disc.radius)),
+    );
+    canvas.drawPath(
+      outside,
+      Paint()..color = absoluteColor.withValues(alpha: _outsideAlpha),
+    );
+    canvas.drawCircle(
+      disc.centre,
+      disc.radius,
+      Paint()
+        ..color = absoluteColor
+        ..strokeWidth = _absoluteStrokeWidth
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
   void _drawBackground(Canvas canvas, Size size) {
     final step = gridStep(viewport.state.scale);
     // Grid and axes are world-space (Phase 43 decision): under view
@@ -1058,5 +1134,6 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.showAxes != showAxes ||
       oldDelegate.showGrid != showGrid ||
       oldDelegate.axisColor != axisColor ||
-      oldDelegate.gridColor != gridColor;
+      oldDelegate.gridColor != gridColor ||
+      oldDelegate.absoluteColor != absoluteColor;
 }
