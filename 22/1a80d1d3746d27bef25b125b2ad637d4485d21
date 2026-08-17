@@ -1,0 +1,28 @@
+lib/domain/projective/tracing/singularity.dart
+  s_17fa7314429764::t_c042c96a39f3dd 19-45
+  s_17fa7314429764::t_11430b321aac80 360-365,368-372
+lib/domain/construction/objects/intersection_point.dart
+  s_17fa7314429764::t_9243c398c47457 119-143
+lib/domain/construction/construction.dart
+  s_17fa7314429764::t_297ac25057eab0 157-163
+  s_17fa7314429764::t_4b3163f8c52e74 675-720
+  s_17fa7314429764::t_6586eeeb967f9b 583-591,597,601-607
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_17fa7314429764::t_c845eb5a59b25a 1058-1181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "221a80d1d3746d27bef25b125b2ad637d4485d21",
+  "prompts": {},
+  "sessions": {
+    "s_17fa7314429764": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "547c8021-d6cb-4838-8d42-3db8e1c0c4a4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
