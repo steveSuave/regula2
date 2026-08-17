@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/conic_matrix.dart';
 import '../../projective/conic_shape.dart';
 import '../../projective/proj_point.dart';
@@ -69,7 +70,7 @@ class FivePointConic extends GeoCircle {
   List<GeoObject> get parents => points;
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     _conic = _through();
     _circle = _conic?.toCircleEq();
     _drawable = _conic != null && ConicShape.of(_conic!).isDrawable;

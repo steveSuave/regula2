@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/conic_matrix.dart';
 import '../../projective/conic_shape.dart';
 import '../../projective/conics.dart';
@@ -72,7 +73,7 @@ class BifocalConic extends GeoCircle {
   List<GeoObject> get parents => [focus1, focus2, point];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final f1 = focus1.projPoint;
     final f2 = focus2.projPoint;
     final p = point.projPoint;

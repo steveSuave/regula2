@@ -1,5 +1,7 @@
 import '../../math/angle_geometry.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
+import '../../projective/ck_measure.dart';
 import '../geo_object.dart';
 import '../object_attributes.dart';
 
@@ -100,21 +102,30 @@ class LineAngle extends GeoAngle {
   final int? sign2;
 
   AngleGeometry? _angle;
+  double? _measure;
 
   @override
   AngleGeometry? get angle => _angle;
+
+  /// Chart marker, Cayley-Klein measure (Phase 124). Euclidean angle
+  /// measure is already elliptic and the chart formula is exactly the CK
+  /// one, so Euclidean keeps its exact chart answer; a proper absolute
+  /// measures between the carriers projectively.
+  @override
+  double? get measure => _measure ?? _angle?.measure;
 
   @override
   List<GeoObject> get parents => [line1, line2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final l1 = line1.line;
     final l2 = line2.line;
     final p1 = line1.projLine;
     final p2 = line2.projLine;
     if (l1 == null || l2 == null || p1 == null || p2 == null) {
       _angle = null;
+      _measure = null;
       return;
     }
     // Parallel carriers meet at infinity, coincident ones on the zero
@@ -122,10 +133,14 @@ class LineAngle extends GeoAngle {
     final vertex = p1.meet(p2).toVec2();
     if (vertex == null) {
       _angle = null;
+      _measure = null;
       return;
     }
     final s1 = sign1;
     final s2 = sign2;
+    _measure = absolute.isEuclidean
+        ? null
+        : angleBetweenLines(absolute, p1, p2);
     _angle = (s1 == null || s2 == null)
         ? AngleGeometry.betweenLines(vertex, l1.direction, l2.direction)
         : AngleGeometry.betweenHalfLines(

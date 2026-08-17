@@ -2,6 +2,7 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/domain/projective/proj_line.dart';
@@ -27,7 +28,7 @@ class StubProjectivePoint extends GeoPoint {
   List<GeoObject> get parents => const [];
 
   @override
-  void recompute() {}
+  void recompute([Absolute absolute = Absolute.euclidean]) {}
 }
 
 /// The line sibling of [StubProjectivePoint].
@@ -46,7 +47,7 @@ class StubProjectiveLine extends GeoLine {
   List<GeoObject> get parents => const [];
 
   @override
-  void recompute() {}
+  void recompute([Absolute absolute = Absolute.euclidean]) {}
 }
 
 /// The circle sibling of [StubProjectivePoint] (Phase 109): a parent
@@ -67,7 +68,7 @@ class StubProjectiveCircle extends GeoCircle {
   List<GeoObject> get parents => const [];
 
   @override
-  void recompute() {}
+  void recompute([Absolute absolute = Absolute.euclidean]) {}
 }
 
 /// A conic-valued stub that is *defined* whenever its conic has real ink —
@@ -95,5 +96,5 @@ class StubProjectiveConic extends GeoCircle {
   List<GeoObject> get parents => const [];
 
   @override
-  void recompute() {}
+  void recompute([Absolute absolute = Absolute.euclidean]) {}
 }

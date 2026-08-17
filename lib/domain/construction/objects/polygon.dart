@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../geo_object.dart';
 
 /// The closed region over [vertices], in loop order — the first
@@ -42,7 +43,7 @@ class Polygon extends GeoPolygon {
   List<GeoObject> get parents => vertices;
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final positions = <Vec2>[];
     for (final vertex in vertices) {
       final position = vertex.projPoint?.toVec2();

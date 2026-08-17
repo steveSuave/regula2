@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 import 'line_through_two_points.dart';
@@ -67,7 +68,7 @@ class Ray extends GeoLine {
   List<GeoObject> get parents => [origin, through];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p1 = origin.position;
     final p2 = through.position;
     if (p1 == null || p2 == null) {

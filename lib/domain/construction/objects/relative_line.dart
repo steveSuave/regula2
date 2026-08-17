@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
@@ -57,7 +58,7 @@ abstract class RelativeLine extends GeoLine {
   Vec2 directionFrom(LineEq referenceLine);
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = through.projPoint;
     final ref = reference.projLine;
     if (p == null || ref == null) {

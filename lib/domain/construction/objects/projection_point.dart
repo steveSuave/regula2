@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/euclidean.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
@@ -42,7 +43,7 @@ class ProjectionPoint extends GeoPoint {
   List<GeoObject> get parents => [point, line];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = point.projPoint;
     final carrier = line.projLine;
     if (p == null || carrier == null) {

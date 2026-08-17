@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../geo_object.dart';
 
 /// The live slope of a line-valued object — the carrier's rise over run
@@ -57,7 +58,18 @@ class SlopeMeasurement extends GeoMeasurement {
   List<GeoObject> get parents => [subject];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean-only (Phase 124). Slope is Euclidean by definition -- it is a ratio
+    // of chart coordinates against a distinguished pair of axes, and
+    // neither the axes nor the ratio survives a change of absolute.
+    // Under a proper absolute this is undefined rather than wrong: a
+    // number computed in the chart would silently be the Euclidean
+    // answer to a question the document is not asking.
+    if (!absolute.isEuclidean) {
+      _value = null;
+      _anchor = null;
+      return;
+    }
     final carrier = subject as GeoLine;
     final line = carrier.line;
     if (line == null) {

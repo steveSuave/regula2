@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/euclidean.dart';
 import '../../projective/proj_line.dart';
@@ -45,7 +46,7 @@ class AngleBisectorLine extends GeoLine {
   List<GeoObject> get parents => [arm1, vertex, arm2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final a = arm1.projPoint;
     final v = vertex.projPoint;
     final b = arm2.projPoint;

@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/euclidean.dart';
 import '../../projective/proj_line.dart';
@@ -94,7 +95,7 @@ class TwoLineBisectorLine extends GeoLine {
   List<GeoObject> get parents => [line1, line2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final l1 = line1.projLine;
     final l2 = line2.projLine;
     if (l1 == null || l2 == null) {

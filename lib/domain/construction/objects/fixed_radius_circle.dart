@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
@@ -51,7 +52,7 @@ class FixedRadiusCircle extends GeoCircle {
   List<GeoObject> get parents => [center];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final c = center.projPoint;
     if (c == null) {
       _conic = null;

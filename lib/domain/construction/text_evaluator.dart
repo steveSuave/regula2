@@ -68,7 +68,7 @@ class GeoObjectEnv implements ExpressionEnv {
   double? variable(String name) => switch (bindings[name]) {
     Segment(:final start?, :final end?) => start.distanceTo(end),
     GeoMeasurement(:final value) => value,
-    GeoAngle(:final angle?) => angle.measure * _degPerRad,
+    GeoAngle(:final measure?) => measure * _degPerRad,
     _ => null,
   };
 

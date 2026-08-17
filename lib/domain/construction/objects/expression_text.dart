@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../geo_object.dart';
 import '../text_evaluator.dart';
 import '../text_template.dart';
@@ -71,7 +72,7 @@ class ExpressionText extends GeoText {
   List<GeoObject> get parents => _references;
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     _rendered = _template.render(
       GeoObjectEnv(_bindings),
       decimals: attributes.valueDecimals,

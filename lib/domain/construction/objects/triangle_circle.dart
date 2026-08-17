@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/conic_matrix.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
@@ -47,7 +48,7 @@ abstract class TriangleCircle extends GeoCircle {
   ConicMatrix? computeConic(ProjPoint a, ProjPoint b, ProjPoint c);
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final a = vertex1.projPoint;
     final b = vertex2.projPoint;
     final c = vertex3.projPoint;

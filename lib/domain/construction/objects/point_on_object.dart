@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
@@ -129,7 +130,7 @@ class PointOnObject extends GeoPoint {
   List<GeoObject> get parents => [curve];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final chartPoint = switch (curve) {
       GeoLine(:final line) && final GeoLine host => line?.pointAt(
         host.clampParameter(parameter),

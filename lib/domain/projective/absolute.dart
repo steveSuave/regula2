@@ -219,6 +219,34 @@ class Absolute {
               dualConic.yw * l.b * l.c)
           .scale(2);
 
+  /// `ℓᵀΩ*m` — the bilinear form [evaluateLine] is the quadratic form of.
+  ///
+  /// This is what angle measurement reads (`ck_measure.dart`). Under
+  /// [euclidean] it is `a₁a₂ + b₁b₂`, the dot product of the two lines'
+  /// normals, which is why the Cayley–Klein angle and the textbook
+  /// Euclidean one are the same expression rather than a limit of it.
+  Complex pairLines(ProjLine l, ProjLine m) =>
+      dualConic.xx * l.a * m.a +
+      dualConic.yy * l.b * m.b +
+      dualConic.ww * l.c * m.c +
+      dualConic.xy * (l.a * m.b + l.b * m.a) +
+      dualConic.xw * (l.a * m.c + l.c * m.a) +
+      dualConic.yw * (l.b * m.c + l.c * m.b);
+
+  /// `pᵀΩq` — the bilinear form [evaluatePoint] is the quadratic form of.
+  ///
+  /// What distance measurement reads on a *proper* absolute. Under
+  /// [euclidean] it is `w₁w₂`, which carries no information about where
+  /// the points are — the algebraic statement that Euclidean distance is
+  /// not a cross-ratio (`ck_measure.dart`).
+  Complex pairPoints(ProjPoint p, ProjPoint q) =>
+      pointConic.xx * p.x * q.x +
+      pointConic.yy * p.y * q.y +
+      pointConic.ww * p.w * q.w +
+      pointConic.xy * (p.x * q.y + p.y * q.x) +
+      pointConic.xw * (p.x * q.w + p.w * q.x) +
+      pointConic.yw * (p.y * q.w + p.w * q.y);
+
   /// `pᵀΩp`, zero exactly when [p] lies on the absolute.
   ///
   /// Under [euclidean] this is `w²`: every finite point is off the

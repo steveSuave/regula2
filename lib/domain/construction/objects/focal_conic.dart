@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/conic_matrix.dart';
 import '../../projective/conic_shape.dart';
@@ -63,7 +64,7 @@ class FocalConic extends GeoCircle {
   List<GeoObject> get parents => [focus, directrix];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final f = focus.projPoint;
     final l = directrix.projLine;
     if (f == null || l == null) {

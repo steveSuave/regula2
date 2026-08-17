@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/tolerances.dart';
@@ -162,7 +163,7 @@ class Locus extends GeoLocus {
   final Stopwatch _sinceSweep = Stopwatch();
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     // While a gesture is previewing, a sweep that costs more than its
     // share of the frame is skipped and this locus keeps the samples it
     // has (Phase 117d — see [LocusRefresh]). Safe because a locus is a

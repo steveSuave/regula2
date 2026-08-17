@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/proj_line.dart';
 import '../geo_object.dart';
@@ -46,7 +47,7 @@ class RadicalAxisLine extends GeoLine {
   List<GeoObject> get parents => [circle1, circle2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final c1 = circle1.conic;
     final c2 = circle2.conic;
     if (c1 == null || c2 == null) {

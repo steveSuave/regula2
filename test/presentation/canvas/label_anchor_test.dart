@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
@@ -11,6 +10,7 @@ import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/presentation/canvas/label_anchor.dart';
@@ -155,5 +155,5 @@ class _StubLocus extends GeoLocus {
   List<GeoObject> get parents => const [];
 
   @override
-  void recompute() {}
+  void recompute([Absolute absolute = Absolute.euclidean]) {}
 }

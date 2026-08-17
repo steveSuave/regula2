@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/proj_transform.dart';
 import '../geo_object.dart';
@@ -42,7 +43,7 @@ class TranslatedPoint extends GeoPoint {
   List<GeoObject> get parents => [point, vectorFrom, vectorTo];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = point.projPoint;
     final from = vectorFrom.projPoint;
     final to = vectorTo.projPoint;

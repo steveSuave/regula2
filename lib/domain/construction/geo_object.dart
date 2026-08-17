@@ -2,6 +2,7 @@ import '../math/angle_geometry.dart';
 import '../math/circle_eq.dart';
 import '../math/line_eq.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 import '../projective/conic_matrix.dart';
 import '../projective/proj_line.dart';
 import '../projective/proj_point.dart';
@@ -68,11 +69,33 @@ sealed class GeoObject {
   /// Whether the object currently has valid geometry (see class doc).
   bool get isDefined;
 
-  /// Recomputes this object's geometry from its parents' current state.
+  /// Recomputes this object's geometry from its parents' current state,
+  /// in the geometry [absolute] names.
   ///
   /// Must be cheap, must not throw on degenerate input — degeneracy makes
   /// the object undefined instead.
-  void recompute();
+  ///
+  /// **Why the absolute is a parameter** (PLAN §"The threading decision").
+  /// 38 of the 50 kinds depend on it — incidence does not, but every
+  /// metric and affine construction and every measurement does — and a
+  /// near-universal dependency belongs in the signature rather than in a
+  /// back-reference or an ambient value. It keeps a kind a pure function
+  /// of (parents, params, ambient), which is what lets a test ask one kind
+  /// the same question under two geometries with no global to set and
+  /// unset.
+  ///
+  /// **The default is migration scaffolding, and is scheduled for
+  /// removal** at the end of Phase 125, when every kind that needs the
+  /// absolute takes it. It exists so the ~140 test call sites that mean
+  /// "Euclidean" keep saying so without being rewritten mid-migration —
+  /// the same trade Phases 106–121 made with the lift-from-affine
+  /// defaults on the projective accessors, and it inverts the same way
+  /// once the migration is over: after it, a metric kind that forgot to
+  /// read the absolute would silently compute Euclidean instead of
+  /// failing to compile. [Construction] passes `kernel.absolute` at every
+  /// call site from the start, so the default is never a live fallback in
+  /// shipped code — only a convenience at the declarations.
+  void recompute([Absolute absolute = Absolute.euclidean]);
 }
 
 /// A point-valued object. [position] is null while undefined, which
@@ -225,7 +248,21 @@ LineEq? orientedAlong(LineEq? projected, Vec2? direction) {
 abstract class GeoAngle extends GeoObject {
   GeoAngle({required super.id, super.attributes});
 
+  /// The angle as *drawable* geometry — vertex, start arm, sweep.
+  ///
+  /// Chart data, permanently: it is where the marker arc is painted, the
+  /// same way a `GeoMeasurement`'s anchor is where a label is placed.
   AngleGeometry? get angle;
+
+  /// The angle's *measure* in radians — what a label prints and an
+  /// expression reads.
+  ///
+  /// Separate from [angle] because the two part company under a
+  /// non-Euclidean absolute (Phase 124): the marker is still drawn
+  /// between the two chords on screen, while the measure is the
+  /// Cayley–Klein angle, which is a different number. Under the Euclidean
+  /// absolute they coincide exactly and this default is the whole story.
+  double? get measure => angle?.measure;
 
   @override
   bool get isDefined => angle != null;

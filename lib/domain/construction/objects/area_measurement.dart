@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import '../../math/polygon_math.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../geo_object.dart';
 import 'arc.dart';
 import 'sector.dart';
@@ -57,7 +58,18 @@ class AreaMeasurement extends GeoMeasurement {
   List<GeoObject> get parents => [subject];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean-only (Phase 124). Area is an integral too, and diverges further: a
+    // hyperbolic triangle's area is its angular *defect*, π minus the
+    // angle sum, which shares no algebra with the shoelace formula.
+    // Under a proper absolute this is undefined rather than wrong: a
+    // number computed in the chart would silently be the Euclidean
+    // answer to a question the document is not asking.
+    if (!absolute.isEuclidean) {
+      _value = null;
+      _anchor = null;
+      return;
+    }
     _value = null;
     _anchor = null;
     switch (subject) {
