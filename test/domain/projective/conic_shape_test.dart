@@ -6,6 +6,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/conic_shape.dart';
+import 'package:regula/domain/projective/conics.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/domain/projective/tolerances.dart';
@@ -489,6 +490,155 @@ void main() {
           expect(1 - chordMid.norm, lessThanOrEqualTo(flatness * 1.5));
         }
       }
+    });
+
+    /// The worst distance from the true curve to the chord it was
+    /// approximated by, over every segment of every stroke — measured at
+    /// the *curve's* midpoint between the two vertices' parameters, which
+    /// is what the walk's own acceptance test looks at.
+    double worstSagitta(ConicShape shape, List<ConicPolyline> strokes) {
+      var worst = 0.0;
+      for (final stroke in strokes) {
+        final points = stroke.points;
+        for (var i = 0; i + 1 < points.length; i++) {
+          final a = points[i];
+          final b = points[i + 1];
+          final pa = shape.parameterOf(ProjPoint.real(a.x, a.y));
+          final pb = shape.parameterOf(ProjPoint.real(b.x, b.y));
+          if (pa == null || pb == null) continue;
+          // The pencil parameter is π-periodic; take the short way round.
+          var span = pb - pa;
+          if (span.abs() > math.pi / 2) span -= span.sign * math.pi;
+          final mid = shape.chartPointAt(pa + span / 2);
+          if (mid == null) continue;
+          final chordMid = Vec2(0.5 * (a.x + b.x), 0.5 * (a.y + b.y));
+          final sagitta = mid.distanceTo(chordMid);
+          if (sagitta > worst) worst = sagitta;
+        }
+      }
+      return worst;
+    }
+
+    // Phase 120c. Both figures are from saved user documents that drew as
+    // visible polygons: the walk hit `maxDepth` and emitted the chord
+    // anyway. The sweep parameter is a pencil angle, so |dX/dφ| spreads by
+    // ~1e7 on these — about 24 bisections' worth, twice the old cap of 12.
+    // Neither needs more than a fraction of the sample budget; the
+    // assertions below pin that it is depth, not cost, that was wrong.
+    /// The world box a `canvasSize` canvas covers at `pan`/`scale` —
+    /// `CanvasViewport.visibleWorldBox` without the presentation layer.
+    ({Vec2 min, Vec2 max}) worldBox(Vec2 pan, double scale, double w, double h) {
+      const margin = 8.0;
+      return (
+        min: Vec2(pan.x - margin / scale, pan.y - (h + margin) / scale),
+        max: Vec2(pan.x + (w + margin) / scale, pan.y + margin / scale),
+      );
+    }
+
+    test('an ellipse written far from the origin meets its flatness', () {
+      // square-ellipse.rgl: a bifocal conic about a focal pair ~2000 world
+      // units out, at the document's own viewport — 0.14 px per world
+      // unit, so half a pixel is 3.6 units.
+      final shape = ConicShape.of(
+        bifocalConicOf(
+          Vec2(-1730.493482610943, 2125.130820547624),
+          Vec2(-496.3195485298029, 2181.511437724128),
+          Vec2(-1309.501527037075, 2903.5892335453036),
+          difference: false,
+        ),
+      );
+      expect(shape.kind, ConicClass.ellipse);
+      const scale = 0.14050706424869222;
+      final box = worldBox(
+        Vec2(-5308.188376016837, 5505.715962582011),
+        scale,
+        960,
+        720,
+      );
+      const flatness = 0.5 / scale;
+      final strokes = shape.polylines(
+        min: box.min,
+        max: box.max,
+        flatness: flatness,
+      );
+      expect(worstSagitta(shape, strokes), lessThanOrEqualTo(flatness));
+      // Depth was the binding constraint, not the budget: capped at 12 the
+      // same call strays many times its tolerance.
+      expect(
+        worstSagitta(
+          shape,
+          shape.polylines(
+            min: box.min,
+            max: box.max,
+            flatness: flatness,
+            maxDepth: 12,
+          ),
+        ),
+        greaterThan(5 * flatness),
+      );
+    });
+
+    test('both branches of a hyperbola meet their flatness', () {
+      // square-hyperbola.rgl, viewed at 1 px per world unit. The second
+      // branch is the one that drew as three straight facets.
+      final shape = ConicShape.of(
+        ConicMatrix.throughFivePoints([
+          ProjPoint.real(501.20703125, -516.53515625),
+          ProjPoint.real(616.54296875, -234.26171875),
+          ProjPoint.real(554.46875, -362.6640625),
+          ProjPoint.real(675.2578125, -237.38671875),
+          ProjPoint.real(945.7109375, -407.140625),
+        ])!,
+      );
+      expect(shape.kind, ConicClass.hyperbola);
+      final box = worldBox(Vec2(42, 214), 1, 891, 864);
+      final strokes = shape.polylines(
+        min: box.min,
+        max: box.max,
+        flatness: 0.5,
+      );
+      expect(strokes, hasLength(2));
+      expect(worstSagitta(shape, strokes), lessThanOrEqualTo(0.5));
+      expect(
+        worstSagitta(
+          shape,
+          shape.polylines(
+            min: box.min,
+            max: box.max,
+            flatness: 0.5,
+            maxDepth: 12,
+          ),
+        ),
+        greaterThan(100),
+      );
+    });
+
+    test('the deeper walk spends the same samples, not more', () {
+      // maxSamples is the cost cap and it was never the binding one — the
+      // two figures above draw identically with a budget 50× larger.
+      final shape = ConicShape.of(
+        ConicMatrix.throughFivePoints([
+          ProjPoint.real(501.20703125, -516.53515625),
+          ProjPoint.real(616.54296875, -234.26171875),
+          ProjPoint.real(554.46875, -362.6640625),
+          ProjPoint.real(675.2578125, -237.38671875),
+          ProjPoint.real(945.7109375, -407.140625),
+        ])!,
+      );
+      final box = worldBox(Vec2(42, 214), 1, 891, 864);
+      final counts = [
+        for (final budget in [4000, 200000])
+          shape
+              .polylines(
+                min: box.min,
+                max: box.max,
+                flatness: 0.5,
+                maxSamples: budget,
+              )
+              .map((s) => s.points.length)
+              .toList(),
+      ];
+      expect(counts[0], counts[1]);
     });
 
     test('a huge conic in a small box stays within its sample budget', () {
