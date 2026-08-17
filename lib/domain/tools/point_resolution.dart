@@ -56,6 +56,7 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
         curves[i],
         curves[j],
         input.position,
+        absolute: input.absolute,
       );
       if (branch != null && branch.distance < bestDistance) {
         bestDistance = branch.distance;
@@ -70,6 +71,7 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
         curve2: curve2,
         branchIndex: index,
         id: newId(),
+        absolute: input.absolute,
       ),
       isNew: true,
     );
@@ -115,10 +117,11 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
 /// [absolute] must be the *document's*, because the candidate list it
 /// indexes into is filtered against it (Phase 125): a caller left on the
 /// default would index a different list from the one the construction
-/// stores. Its callers in `lib/domain/tools/` have no construction to
-/// read it from yet and so take the default, which is correct only while
-/// the codec refuses non-Euclidean documents — **Phase 126 has to carry
-/// the kernel into the tool layer before it lifts that refusal.**
+/// stores. Its callers in `lib/domain/tools/` take it from
+/// [ToolInput.absolute], which the canvas fills from
+/// `Construction.kernel` (Phase 126) — that threading is what let the
+/// codec stop refusing non-Euclidean documents, and it has to stay ahead
+/// of anything that widens where those documents come from.
 ({int index, double distance})? nearestIntersectionBranch(
   GeoObject curve1,
   GeoObject curve2,

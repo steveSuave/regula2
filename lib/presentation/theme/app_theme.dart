@@ -23,6 +23,14 @@ abstract final class AppTheme {
   static const Color _darkAxis = Color(0xFF8F969E);
   static const Color _darkGrid = Color(0xFF262C33);
 
+  /// The Cayley-Klein absolute on the light canvas (Phase 126): a muted
+  /// amber. Deliberately unlike both chrome and any object color — the
+  /// absolute is neither. It is not a construction the user made, and it
+  /// is not decoration either: it is the edge of the plane they are
+  /// drawing in, and crossing it is what makes a figure undefined.
+  static const Color _lightAbsolute = Color(0xFFB26A00);
+  static const Color _darkAbsolute = Color(0xFFE0A44B);
+
   /// Default object color on the light canvas: a deep blue.
   static const Color _lightPrimary = Color(0xFF1565C0);
 
@@ -45,7 +53,13 @@ abstract final class AppTheme {
       seedColor: _seed,
     ).copyWith(primary: _lightPrimary, tertiary: _lightTertiary),
     scaffoldBackgroundColor: _lightCanvas,
-    extensions: const [CanvasColors(axis: _lightAxis, grid: _lightGrid)],
+    extensions: const [
+      CanvasColors(
+        axis: _lightAxis,
+        grid: _lightGrid,
+        absolute: _lightAbsolute,
+      ),
+    ],
   );
 
   static ThemeData dark() => ThemeData(
@@ -54,7 +68,9 @@ abstract final class AppTheme {
       brightness: Brightness.dark,
     ).copyWith(primary: _darkPrimary, tertiary: _darkTertiary),
     scaffoldBackgroundColor: _darkCanvas,
-    extensions: const [CanvasColors(axis: _darkAxis, grid: _darkGrid)],
+    extensions: const [
+      CanvasColors(axis: _darkAxis, grid: _darkGrid, absolute: _darkAbsolute),
+    ],
   );
 }
 
@@ -64,7 +80,11 @@ abstract final class AppTheme {
 /// segmented buttons) already read for their own chrome.
 @immutable
 class CanvasColors extends ThemeExtension<CanvasColors> {
-  const CanvasColors({required this.axis, required this.grid});
+  const CanvasColors({
+    required this.axis,
+    required this.grid,
+    this.absolute = const Color(0xFFB26A00),
+  });
 
   /// Axis strokes and tick labels.
   final Color axis;
@@ -72,9 +92,17 @@ class CanvasColors extends ThemeExtension<CanvasColors> {
   /// Grid hairlines.
   final Color grid;
 
+  /// The fundamental conic of a non-Euclidean document, and the wash over
+  /// the region outside it (Phase 126).
+  final Color absolute;
+
   @override
-  CanvasColors copyWith({Color? axis, Color? grid}) =>
-      CanvasColors(axis: axis ?? this.axis, grid: grid ?? this.grid);
+  CanvasColors copyWith({Color? axis, Color? grid, Color? absolute}) =>
+      CanvasColors(
+        axis: axis ?? this.axis,
+        grid: grid ?? this.grid,
+        absolute: absolute ?? this.absolute,
+      );
 
   @override
   CanvasColors lerp(CanvasColors? other, double t) {
@@ -84,6 +112,7 @@ class CanvasColors extends ThemeExtension<CanvasColors> {
     return CanvasColors(
       axis: Color.lerp(axis, other.axis, t)!,
       grid: Color.lerp(grid, other.grid, t)!,
+      absolute: Color.lerp(absolute, other.absolute, t)!,
     );
   }
 }

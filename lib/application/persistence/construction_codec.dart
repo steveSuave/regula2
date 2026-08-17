@@ -320,14 +320,22 @@ List<String> _separateDuplicateBranches(Construction construction) {
   return repaired;
 }
 
-/// The document's kernel block (v2 hook, PLAN §M-CK): absent → Euclidean,
-/// which is what every v1 document is.
+/// The document's kernel block (PLAN §M-CK): absent → Euclidean, which is
+/// what every v1 document is.
 ///
-/// A named-but-unimplemented metric is refused rather than approximated.
-/// Drawing a hyperbolic document in Euclidean geometry is the failure the
-/// version stamp was bought to prevent, and it would be no less wrong for
-/// happening inside the build that understands the key. M-CK deletes the
-/// second guard, not the first.
+/// **The second guard is gone as of Phase 126** — hyperbolic and elliptic
+/// documents load, which is what the milestone was for. The first stays
+/// and always will: an *unknown* metric name is refused rather than
+/// approximated, because drawing a document in a geometry other than its
+/// own is precisely the failure the version stamp was bought to prevent,
+/// and it would be no less wrong for happening inside the build that
+/// understands the key.
+///
+/// Lifting the refusal was gated on the tool layer taking the document's
+/// absolute (`ToolInput.absolute`), not on the kernels being finished:
+/// while the tools were on the Euclidean default, loading such a document
+/// meant every crossing the user tapped wrote an address into the file
+/// that named a different crossing on reload.
 DocumentKernel _decodeKernel(Object? json) {
   if (json == null) {
     return const DocumentKernel();
@@ -345,12 +353,6 @@ DocumentKernel _decodeKernel(Object? json) {
   final metric = FundamentalConic.byName(metricName);
   if (metric == null) {
     throw FormatException('Unknown "kernel" metric "$metricName"');
-  }
-  if (metric != FundamentalConic.euclidean) {
-    throw FormatException(
-      'This document uses ${metric.name} geometry, which this build does '
-      'not implement',
-    );
   }
   return DocumentKernel(metric: metric);
 }
@@ -547,6 +549,11 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       curve2: any(1),
       branchIndex: _intParam(id, params, 'branchIndex'),
       attributes: attributes,
+      // The document's geometry, for the constructor's canonical remap:
+      // a pre-120c file can name its pair the other way round, and the
+      // translation between the two numberings is only meaningful in the
+      // absolute the rest of the document is read in (Phase 126).
+      absolute: construction.kernel.absolute,
     ),
     'ReflectedPoint' => ReflectedPoint(
       id: id,

@@ -5,6 +5,10 @@ import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
+import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/complex.dart';
 
@@ -171,30 +175,71 @@ void main() {
       expect(Construction().kernel.absolute, Absolute.euclidean);
     });
 
-    test(
-      'a reserved but unimplemented metric is refused, not approximated',
-      () {
-        // The failure this build must not have: drawing a hyperbolic
-        // document in Euclidean geometry. M-CK replaces the throw with an
-        // implementation; until then, refusing is the honest answer.
-        for (final metric in ['hyperbolic', 'elliptic']) {
-          final json = encode(Construction())
-            ..['kernel'] = <String, dynamic>{'metric': metric}
-            ..['version'] = 2;
-          expect(
-            () => decodeDocument(json),
-            throwsA(
-              isA<FormatException>().having(
-                (e) => e.message,
-                'message',
-                allOf(contains(metric), contains('does not implement')),
-              ),
-            ),
-            reason: metric,
-          );
-        }
-      },
-    );
+    test('both proper metrics now load, and reach the graph (Phase 126)', () {
+      // Was "a reserved but unimplemented metric is refused". The refusal
+      // was the honest answer while nothing could draw such a document;
+      // lifting it is what M-CK was for. What the refusal was protecting
+      // against — a document drawn in a geometry other than its own — is
+      // now protected by the thing that actually prevents it: the kernel
+      // reaching every recompute and every tool.
+      for (final metric in [
+        FundamentalConic.hyperbolic,
+        FundamentalConic.elliptic,
+      ]) {
+        final json = encode(Construction())
+          ..['kernel'] = <String, dynamic>{'metric': metric.name}
+          ..['version'] = 2;
+        final decoded = decodeDocument(json);
+        expect(decoded.kernel.metric, metric, reason: metric.name);
+        expect(
+          decoded.construction.kernel.absolute,
+          Absolute.of(metric),
+          reason: metric.name,
+        );
+        expect(
+          decoded.construction.kernel.absolute.isEuclidean,
+          isFalse,
+          reason: metric.name,
+        );
+      }
+    });
+
+    test('a non-Euclidean document round-trips through encode', () {
+      // The encoder reads the kernel off the construction, so this also
+      // pins that a document cannot be written under an absolute other
+      // than the one its objects were computed in (Phase 123).
+      for (final metric in [
+        FundamentalConic.hyperbolic,
+        FundamentalConic.elliptic,
+      ]) {
+        final construction = Construction(
+          kernel: DocumentKernel(metric: metric),
+        );
+        final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+        final b = FreePoint(id: 'b', position: const Vec2(0.8, 0));
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(Midpoint(id: 'm', point1: a, point2: b));
+
+        final json = encode(construction);
+        expect(json['version'], 2, reason: metric.name);
+        expect(
+          (json['kernel']! as Map<String, dynamic>)['metric'],
+          metric.name,
+          reason: metric.name,
+        );
+
+        final decoded = decodeDocument(json);
+        expect(decoded.construction.kernel.metric, metric, reason: metric.name);
+        // And the geometry came back with it: the CK midpoint of
+        // (0,0)–(0.8,0) is not the affine 0.4.
+        final m = decoded.construction.byId('m')! as GeoPoint;
+        final original = construction.byId('m')! as GeoPoint;
+        expect(m.position!.x, closeTo(original.position!.x, 1e-12));
+        expect(m.position!.x, isNot(closeTo(0.4, 1e-6)), reason: metric.name);
+      }
+    });
 
     test('an unknown metric name is refused', () {
       final json = encode(Construction())

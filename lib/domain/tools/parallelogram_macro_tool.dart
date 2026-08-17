@@ -57,6 +57,7 @@ class ParallelogramMacroTool extends MultiPointTool {
       curve1: parallelThroughC,
       curve2: parallelThroughA,
       branchIndex: 0,
+      absolute: absolute,
     );
     final corner = dedupedDerivedPoint(cornerD);
 

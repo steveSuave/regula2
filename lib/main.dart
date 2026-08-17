@@ -86,6 +86,7 @@ import 'presentation/canvas/twist_gate.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/delete_selection.dart';
 import 'presentation/panels/export_dialog.dart';
+import 'presentation/panels/geometry_menu.dart';
 import 'presentation/panels/object_tree_panel.dart';
 import 'presentation/panels/toolbar.dart';
 import 'presentation/shortcuts/app_shortcuts.dart';
@@ -382,6 +383,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       showGrid: settings.showGrid && options.includeAxesGrid,
       axisColor: canvasColors?.axis ?? const Color(0xFF757575),
       gridColor: canvasColors?.grid ?? const Color(0xFFE3E6EA),
+      absoluteColor: canvasColors?.absolute ?? const Color(0xFFB26A00),
     );
     await savePngBytes(bytes);
   }
@@ -1061,6 +1063,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   onPressed: () => ref.read(viewportProvider.notifier).reset(),
                 ),
                 _gridMenu(),
+                const GeometryMenu(),
                 IconButton(
                   tooltip: 'Keyboard shortcuts (?)',
                   isSelected: _showCheatSheet,

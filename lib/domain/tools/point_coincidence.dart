@@ -4,6 +4,7 @@ import '../construction/geo_object.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 
 /// How far a probe displaces each mutable root, relative to the root's
 /// magnitude (floored at 1 world unit): far enough that an accidental
@@ -62,10 +63,20 @@ double _tolerance(Vec2 at) => 1e-6 * math.max(1.0, at.norm);
 /// the tolerance stays in *world units*, because what it screens is
 /// "would the user see one dot or two", a question about the chart the
 /// figure is drawn in and not a projective invariant.
+///
+/// [absolute] must be the document's (Phase 126). This is the one probe
+/// that recomputes the **whole construction** rather than a candidate, so
+/// a caller left on the Euclidean default in a non-Euclidean document does
+/// not merely answer the wrong question — it leaves every object in the
+/// document computed in the wrong geometry, until the next mutation
+/// happens to recompute it. The restore pass at the end is what makes that
+/// visible rather than transient, and it is why the tool layer had to take
+/// the kernel before the codec could load such a document at all.
 GeoPoint? coincidentExistingPoint(
   Iterable<GeoObject> objects,
   GeoPoint candidate, {
   math.Random? random,
+  Absolute absolute = Absolute.euclidean,
 }) {
   final position = candidate.position;
   if (position == null) {
@@ -110,7 +121,7 @@ GeoPoint? coincidentExistingPoint(
           math.max(1.0, base.abs());
       root.parameter = base + (rng.nextBool() ? magnitude : -magnitude);
     }
-    _recomputeCarriers(all, privateChain);
+    _recomputeCarriers(all, privateChain, absolute);
     final moved = candidate.position;
     matches = [
       if (moved != null)
@@ -123,7 +134,7 @@ GeoPoint? coincidentExistingPoint(
 
   savedPositions.forEach((root, saved) => root.position = saved);
   savedParameters.forEach((root, saved) => root.parameter = saved);
-  _recomputeCarriers(all, privateChain);
+  _recomputeCarriers(all, privateChain, absolute);
 
   return matches.isEmpty ? null : matches.first;
 }
@@ -178,13 +189,17 @@ void _collectMutableRoots(
 /// and loci are skipped: no point position depends on them, nothing reads
 /// them while probing, and the restore pass brings their carrier inputs
 /// back bit-exactly, so they are never observed stale.
-void _recomputeCarriers(List<GeoObject> all, List<GeoObject> privateChain) {
+void _recomputeCarriers(
+  List<GeoObject> all,
+  List<GeoObject> privateChain,
+  Absolute absolute,
+) {
   for (final object in all) {
     if (object is GeoPoint || object is GeoLine || object is GeoCircle) {
-      object.recompute();
+      object.recompute(absolute);
     }
   }
   for (final object in privateChain) {
-    object.recompute();
+    object.recompute(absolute);
   }
 }

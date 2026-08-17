@@ -218,6 +218,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             gridColor:
                 Theme.of(context).extension<CanvasColors>()?.grid ??
                 const Color(0xFFE3E6EA),
+            absoluteColor:
+                Theme.of(context).extension<CanvasColors>()?.absolute ??
+                const Color(0xFFB26A00),
           ),
           foregroundPainter: _MarqueePainter(
             band: _band,
@@ -693,6 +696,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             hit: target,
             objects: fresh.objects,
             text: content,
+            absolute: fresh.kernel.absolute,
           ),
         );
   }
@@ -730,6 +734,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         objects: construction.objects,
         gridSnapStep: _gridSnapStep(viewport),
         viewExtent: viewport.screenToWorldLength(context.size?.width ?? 0),
+        // The document's geometry, not a display setting: a tool that
+        // snaps to a crossing writes a `branchIndex` into the file, and
+        // that address is only meaningful against the absolute the
+        // candidate list was filtered by (Phase 126).
+        absolute: construction.kernel.absolute,
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a

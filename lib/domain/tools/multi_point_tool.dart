@@ -3,6 +3,7 @@ import '../commands/command.dart';
 import '../commands/macro_command.dart';
 import '../construction/geo_object.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 import 'point_coincidence.dart';
 import 'point_resolution.dart';
 import 'tool.dart';
@@ -69,6 +70,15 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// never survive a perturbation.
   List<GeoObject> get constructionObjects => _constructionObjects;
 
+  /// The document's geometry as of the latest collected input, stashed
+  /// alongside [_constructionObjects] for the same reason: the dedupe
+  /// probe runs from [buildObjects], which has no [ToolInput] to read
+  /// (Phase 126). Euclidean until an input says otherwise.
+  Absolute _absolute = Absolute.euclidean;
+
+  /// [_absolute], for subclasses that recompute a candidate themselves.
+  Absolute get absolute => _absolute;
+
   /// The points collected so far (up to `pointCount − 1` entries).
   /// Existing points track their live positions; new free points are not
   /// yet in the construction and sit where they were tapped.
@@ -121,6 +131,7 @@ abstract class MultiPointTool implements ToolInputPreview {
       return null;
     }
     _constructionObjects = List.of(input.objects);
+    _absolute = input.absolute;
     final vertex = resolvePoint(input, newId);
     if (!vertex.isNew &&
         _collected.any((v) => identical(v.point, vertex.point))) {
@@ -139,7 +150,12 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// parallelogram) reuses the existing fourth point instead of stacking
   /// an exact duplicate on top of it.
   GeoPoint dedupedDerivedPoint(GeoPoint candidate) =>
-      coincidentExistingPoint(_constructionObjects, candidate) ?? candidate;
+      coincidentExistingPoint(
+        _constructionObjects,
+        candidate,
+        absolute: _absolute,
+      ) ??
+      candidate;
 
   /// Commits everything collected — new free points first, then
   /// [buildObjects] — as one undo unit, and resets the collection.
@@ -174,5 +190,6 @@ abstract class MultiPointTool implements ToolInputPreview {
   void reset() {
     _collected.clear();
     _constructionObjects = const [];
+    _absolute = Absolute.euclidean;
   }
 }
