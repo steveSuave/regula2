@@ -70,6 +70,76 @@ void main() {
       expect(circles, greaterThan(6));
     });
 
+    test('every kind keeps the one degeneracy convention when its whole '
+        'figure collapses (Phase 121)', () {
+      // The convention is "projective value total, projection nullable":
+      // a degeneracy gives a *degenerate but real* homogeneous value —
+      // the line at infinity, a line pair, a doubled line — and it is
+      // only the projection into the chart that goes null. Nothing may
+      // give up early and null its projective value while still handing
+      // back an affine one, or the reverse.
+      //
+      // Checking that per kind would need 44 hand-built degeneracies.
+      // Collapsing every free point onto one position produces all of
+      // them at once: coincident endpoints, collinear triples, zero
+      // radii, undefined intersections, arms without an angle. What is
+      // asserted is the *implication* — an affine view means a
+      // projective value, and the two agree — which is exactly the half
+      // of the convention observable from outside.
+      final construction = buildKitchenSink();
+      for (final object in buildPostV1Kinds().objects) {
+        construction.add(object);
+      }
+      for (final root in construction.objects.whereType<FreePoint>()) {
+        construction.moveFreePoint(root.id, const Vec2(3, -2));
+      }
+
+      var checked = 0;
+      for (final object in construction.objects) {
+        switch (object) {
+          case GeoPoint(:final position?):
+            checked++;
+            final projected = object.projPoint?.toVec2();
+            expect(projected, isNotNull, reason: 'projPoint of ${object.id}');
+            expect(
+              projected!.distanceTo(position),
+              lessThan(1e-9),
+              reason: 'lift∘project of ${object.id}',
+            );
+          case GeoLine(:final line?):
+            checked++;
+            final projected = object.projLine?.toLineEq();
+            expect(projected, isNotNull, reason: 'projLine of ${object.id}');
+            expect(
+              projected!.closeTo(line),
+              isTrue,
+              reason: 'lift∘project of ${object.id}',
+            );
+          case GeoCircle(:final circle?):
+            checked++;
+            final projected = object.conic?.toCircleEq();
+            expect(projected, isNotNull, reason: 'conic of ${object.id}');
+            expect(
+              projected!.closeTo(circle),
+              isTrue,
+              reason: 'lift∘project of ${object.id}',
+            );
+          default:
+            break;
+        }
+      }
+      // Much of the figure is undefined here, which is the point — but a
+      // collapse that left *nothing* defined would make the loop vacuous
+      // and the test worthless. 29 views survive today: a degeneracy is
+      // mostly a *value*, not an absence (a midpoint of coincident points
+      // is that point, a zero-radius circle is a circle).
+      expect(
+        checked,
+        greaterThan(20),
+        reason: 'the collapsed figure still has defined views to check',
+      );
+    });
+
     test('undefined affine views propagate to null projective views', () {
       final construction = Construction();
       final a = FreePoint(id: 'a', position: const Vec2(1, 2));

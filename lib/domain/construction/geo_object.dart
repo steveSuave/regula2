@@ -27,6 +27,30 @@ import 'object_attributes.dart';
 /// circles that stopped intersecting mid-drag. Undefined objects stay in
 /// the graph and come back to life when the degeneracy passes; consumers
 /// (painter, hit tester) must skip them while undefined.
+///
+/// **The one degeneracy convention (Phase 121): the projective value is
+/// total, the projection is nullable.** A degeneracy is a *value*, not an
+/// absence — two coincident points join to the zero triple, three
+/// collinear points circumscribe the line pair of their line with the
+/// line at infinity, two parallels meet at a point at infinity. So a
+/// kind's [GeoPoint.projPoint] / [GeoLine.projLine] / [GeoCircle.conic]
+/// answers null in exactly two situations and no others: a parent's own
+/// projective value is null, or the computed homogeneous value is the
+/// **zero triple**, which is not a projective object at all. Everything
+/// else — "is it real", "is it finite", "is it a circle rather than some
+/// other conic" — is the *projection's* question, which is why
+/// [isDefined] means "real and finite after projection" and nothing
+/// weaker. The epsilon bands V1 used to null things out with (a tangency
+/// window, a parallel gate, a concentricity guard) are gone: near-degenerate
+/// input now yields genuine faraway geometry, and only exact degeneracy
+/// degenerates.
+///
+/// Three sanctioned exceptions, each argued where it lives rather than
+/// here: `IntersectionPoint`'s realness gate (a *complex* carrier yields
+/// no candidates rather than a mined real point — Phase 110),
+/// `PointOnObject` on a carrier with no chart (§Parameterization keeps
+/// carrier parameters real), and the Phase 112 consumer kinds, whose
+/// outputs are chart quantities by definition.
 sealed class GeoObject {
   GeoObject({required this.id, ObjectAttributes? attributes})
     : attributes = attributes ?? const ObjectAttributes();
