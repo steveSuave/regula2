@@ -22,14 +22,13 @@ class AngleTool extends TwoLineOrThreePointTool {
     GeoLine line2,
     Vec2 tap1,
     Vec2 tap2,
-  ) =>
-      LineAngle.near(
-        id: id,
-        line1: line1,
-        line2: line2,
-        tap1: tap1,
-        tap2: tap2,
-      );
+  ) => LineAngle.near(
+    id: id,
+    line1: line1,
+    line2: line2,
+    tap1: tap1,
+    tap2: tap2,
+  );
 
   @override
   GeoObject buildFromPoints(
@@ -37,6 +36,5 @@ class AngleTool extends TwoLineOrThreePointTool {
     GeoPoint arm1,
     GeoPoint vertex,
     GeoPoint arm2,
-  ) =>
-      VertexAngle(id: id, arm1: arm1, vertex: vertex, arm2: arm2);
+  ) => VertexAngle(id: id, arm1: arm1, vertex: vertex, arm2: arm2);
 }

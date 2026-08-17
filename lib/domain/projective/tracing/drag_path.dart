@@ -24,10 +24,8 @@ class DragPath {
   /// The dragged point's chart position at real parameter [t] — the
   /// affine interpolation `start·(1−t) + end·t`, exact at both endpoints
   /// (`at(0) == start`, `at(1) == end`, bitwise).
-  Vec2 at(double t) => Vec2(
-        start.x * (1 - t) + end.x * t,
-        start.y * (1 - t) + end.y * t,
-      );
+  Vec2 at(double t) =>
+      Vec2(start.x * (1 - t) + end.x * t, start.y * (1 - t) + end.y * t);
 
   /// The dragged point's homogeneous position at complex parameter [t] —
   /// the same interpolation continued holomorphically, `w` exactly one.

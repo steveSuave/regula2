@@ -25,8 +25,7 @@ class DistanceTool extends TwoPointTool {
 
   @override
   ToolResult onInput(ToolInput input) {
-    if (input.hit case final GeoCircle subject
-        when collectedVertices.isEmpty) {
+    if (input.hit case final GeoCircle subject when collectedVertices.isEmpty) {
       return ToolCommitted(
         AddObjectCommand(LengthMeasurement(id: newId(), subject: subject)),
       );

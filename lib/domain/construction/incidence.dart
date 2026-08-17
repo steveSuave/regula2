@@ -35,12 +35,13 @@ import 'objects/two_line_bisector_line.dart';
 /// tool's duplicate check (a point incident on both curves *is* their
 /// intersection).
 bool structurallyIncident(GeoObject curve, GeoPoint point) {
-  if (point case PointOnObject(curve: final host)
-      when identical(host, curve)) {
+  if (point case PointOnObject(curve: final host) when identical(host, curve)) {
     return true;
   }
-  if (point case IntersectionPoint(:final curve1, :final curve2)
-      when identical(curve1, curve) || identical(curve2, curve)) {
+  if (point case IntersectionPoint(
+    :final curve1,
+    :final curve2,
+  ) when identical(curve1, curve) || identical(curve2, curve)) {
     return true;
   }
   if (onCarrierDefiningPoints(curve).any((p) => identical(p, point))) {
@@ -55,26 +56,26 @@ bool structurallyIncident(GeoObject curve, GeoPoint point) {
 /// [Sector]'s direction-only `end` — and unknown future kinds contribute
 /// none.
 List<GeoPoint> onCarrierDefiningPoints(GeoObject curve) => switch (curve) {
-      LineThroughTwoPoints() => [curve.point1, curve.point2],
-      Segment() => [curve.point1, curve.point2],
-      Ray() => [curve.origin, curve.through],
-      // Perpendicular and parallel lines pass through their point.
-      RelativeLine() => [curve.through],
-      AngleBisectorLine() => [curve.vertex],
-      // Both tangent branches pass through the external point.
-      TangentLine() => [curve.point],
-      CircleCenterPoint() => [curve.onCircle],
-      ThreePointCircle() => [curve.point1, curve.point2, curve.point3],
-      // Five points determine the conic, so all five are on it.
-      FivePointConic() => curve.points,
-      // A bifocal conic passes through the point that fixed its semi-axis
-      // — but not through its foci, which are off the curve entirely.
-      BifocalConic() => [curve.point],
-      Arc() => [curve.start, curve.via, curve.end],
-      // A sector's start pins its radius; its end fixes an angle only.
-      Sector() => [curve.start],
-      _ => const [],
-    };
+  LineThroughTwoPoints() => [curve.point1, curve.point2],
+  Segment() => [curve.point1, curve.point2],
+  Ray() => [curve.origin, curve.through],
+  // Perpendicular and parallel lines pass through their point.
+  RelativeLine() => [curve.through],
+  AngleBisectorLine() => [curve.vertex],
+  // Both tangent branches pass through the external point.
+  TangentLine() => [curve.point],
+  CircleCenterPoint() => [curve.onCircle],
+  ThreePointCircle() => [curve.point1, curve.point2, curve.point3],
+  // Five points determine the conic, so all five are on it.
+  FivePointConic() => curve.points,
+  // A bifocal conic passes through the point that fixed its semi-axis
+  // — but not through its foci, which are off the curve entirely.
+  BifocalConic() => [curve.point],
+  Arc() => [curve.start, curve.via, curve.end],
+  // A sector's start pins its radius; its end fixes an angle only.
+  Sector() => [curve.start],
+  _ => const [],
+};
 
 /// Derived structural incidences (Phase 44b): points provably on [curve]
 /// by a construction theorem over parent ties — still zero epsilon.
@@ -93,8 +94,12 @@ bool _derivedIncident(GeoObject curve, GeoPoint point) =>
       (final TwoLineBisectorLine b, _) =>
         structurallyIncident(b.line1, point) &&
             structurallyIncident(b.line2, point),
-      (final PerpendicularBisectorLine b, final Midpoint m) =>
-        _samePair(m.point1, m.point2, b.point1, b.point2),
+      (final PerpendicularBisectorLine b, final Midpoint m) => _samePair(
+        m.point1,
+        m.point2,
+        b.point1,
+        b.point2,
+      ),
       _ => false,
     };
 

@@ -95,8 +95,7 @@ class LineEq {
 
   /// Geometric equality: same line regardless of orientation.
   bool closeTo(LineEq other, [double epsilon = defaultEpsilon]) =>
-      isParallelTo(other, epsilon) &&
-      other.distanceTo(pointOnLine) <= epsilon;
+      isParallelTo(other, epsilon) && other.distanceTo(pointOnLine) <= epsilon;
 
   @override
   bool operator ==(Object other) =>

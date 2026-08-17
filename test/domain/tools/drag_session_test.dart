@@ -692,12 +692,7 @@ void main() {
         ..add(e2);
       final points = [
         for (var i = 0; i < 4; i++)
-          IntersectionPoint(
-            id: 'i$i',
-            curve1: e1,
-            curve2: e2,
-            branchIndex: i,
-          ),
+          IntersectionPoint(id: 'i$i', curve1: e1, curve2: e2, branchIndex: i),
       ];
       for (final p in points) {
         c.add(p);
@@ -706,11 +701,7 @@ void main() {
     }
 
     /// One gesture: grab [point], run the waypoints, release, commit.
-    void gesture(
-      Construction c,
-      FreePoint point,
-      List<Vec2> waypoints,
-    ) {
+    void gesture(Construction c, FreePoint point, List<Vec2> waypoints) {
       final session = DragSession.start(c, c.byId(point.id)!, point.position)!;
       for (final w in waypoints) {
         session.update(w);
@@ -738,7 +729,8 @@ void main() {
       expect(
         points.map((p) => p.branchIndex).toSet(),
         hasLength(4),
-        reason: 'branches collapsed: '
+        reason:
+            'branches collapsed: '
             '${points.map((p) => '${p.id}#${p.branchIndex}').join(' ')}',
       );
       // Distinct addresses must mean distinct roots.

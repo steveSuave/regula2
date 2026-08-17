@@ -26,14 +26,16 @@ import 'tool.dart';
 /// idempotent.
 class NamePointsTool implements Tool {
   NamePointsTool.alphabet({this.startLetter = 'A'})
-      : letters = null,
-        assert(startLetter != null, 'alphabet mode needs a start letter');
+    : letters = null,
+      assert(startLetter != null, 'alphabet mode needs a start letter');
 
   NamePointsTool.string(String this.letters)
-      : startLetter = null,
-        assert(letters.isNotEmpty, 'string mode needs at least one character'),
-        assert(letters.split('').toSet().length == letters.length,
-            'string mode needs distinct characters (names are unique)');
+    : startLetter = null,
+      assert(letters.isNotEmpty, 'string mode needs at least one character'),
+      assert(
+        letters.split('').toSet().length == letters.length,
+        'string mode needs distinct characters (names are unique)',
+      );
 
   /// Empty input → alphabet from A; a single Latin letter → alphabet from
   /// it (case respected); anything else → string mode, one character per
@@ -120,9 +122,9 @@ class NamePointsTool implements Tool {
   }
 
   static Set<String> _usedNames(Iterable<GeoObject> objects) => {
-        for (final object in objects)
-          if (object.attributes.name.isNotEmpty) object.attributes.name,
-      };
+    for (final object in objects)
+      if (object.attributes.name.isNotEmpty) object.attributes.name,
+  };
 
   static bool _isLatinLetter(String ch) {
     final code = ch.codeUnitAt(0);

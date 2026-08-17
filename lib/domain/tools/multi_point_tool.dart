@@ -82,12 +82,16 @@ abstract class MultiPointTool implements ToolInputPreview {
   bool get hasPartialInput => _collected.isNotEmpty;
 
   @override
-  List<Vec2> get previewPositions =>
-      [for (final v in _collected) if (v.isNew) ?v.point.position];
+  List<Vec2> get previewPositions => [
+    for (final v in _collected)
+      if (v.isNew) ?v.point.position,
+  ];
 
   @override
-  List<String> get previewObjectIds =>
-      [for (final v in _collected) if (!v.isNew) v.point.id];
+  List<String> get previewObjectIds => [
+    for (final v in _collected)
+      if (!v.isNew) v.point.id,
+  ];
 
   @override
   ToolResult onInput(ToolInput input) {

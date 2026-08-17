@@ -22,14 +22,15 @@ void main() {
     DocumentKernel kernel = const DocumentKernel(),
   }) =>
       jsonDecode(
-        jsonEncode(
-          encodeDocument(
-            construction,
-            viewport: const ViewportState(),
-            kernel: kernel,
-          ),
-        ),
-      ) as Map<String, dynamic>;
+            jsonEncode(
+              encodeDocument(
+                construction,
+                viewport: const ViewportState(),
+                kernel: kernel,
+              ),
+            ),
+          )
+          as Map<String, dynamic>;
 
   group('version stamp', () {
     test('an ordinary document is still written as v1', () {
@@ -56,8 +57,7 @@ void main() {
       expect(json['kernel'], {'metric': 'hyperbolic'});
     });
 
-    test('a new object kind does not bump it — novelty is not misreading',
-        () {
+    test('a new object kind does not bump it — novelty is not misreading', () {
       // A `FivePointConic` is determined by its five parents, so it stores
       // no params and needs nothing v2 offers. A v1 build meeting one
       // refuses the whole file by its unknown type, which is exactly the
@@ -90,9 +90,7 @@ void main() {
       // Viewport rotation and the display flags are absent-means-default,
       // so a v1 build reads such a file correctly. Only a key whose
       // absence would be *misread* is worth locking it out for.
-      final json = encode(
-        Construction(),
-      );
+      final json = encode(Construction());
       expect(json.containsKey('showAxes'), isTrue);
       expect((json['viewport'] as Map).containsKey('rotation'), isTrue);
       expect(json['version'], 1);
@@ -142,10 +140,7 @@ void main() {
       final json = encode(buildKitchenSink());
       expect(json.containsKey('kernel'), isFalse);
       expect(decodeDocument(json).kernel, const DocumentKernel());
-      expect(
-        decodeDocument(json).kernel.metric,
-        FundamentalConic.euclidean,
-      );
+      expect(decodeDocument(json).kernel.metric, FundamentalConic.euclidean);
     });
 
     test('an explicit Euclidean kernel round-trips', () {
@@ -162,28 +157,30 @@ void main() {
       expect(decodeDocument(json).kernel, const DocumentKernel());
     });
 
-    test('a reserved but unimplemented metric is refused, not approximated',
-        () {
-      // The failure this build must not have: drawing a hyperbolic
-      // document in Euclidean geometry. M-CK replaces the throw with an
-      // implementation; until then, refusing is the honest answer.
-      for (final metric in ['hyperbolic', 'elliptic']) {
-        final json = encode(Construction())
-          ..['kernel'] = <String, dynamic>{'metric': metric}
-          ..['version'] = 2;
-        expect(
-          () => decodeDocument(json),
-          throwsA(
-            isA<FormatException>().having(
-              (e) => e.message,
-              'message',
-              allOf(contains(metric), contains('does not implement')),
+    test(
+      'a reserved but unimplemented metric is refused, not approximated',
+      () {
+        // The failure this build must not have: drawing a hyperbolic
+        // document in Euclidean geometry. M-CK replaces the throw with an
+        // implementation; until then, refusing is the honest answer.
+        for (final metric in ['hyperbolic', 'elliptic']) {
+          final json = encode(Construction())
+            ..['kernel'] = <String, dynamic>{'metric': metric}
+            ..['version'] = 2;
+          expect(
+            () => decodeDocument(json),
+            throwsA(
+              isA<FormatException>().having(
+                (e) => e.message,
+                'message',
+                allOf(contains(metric), contains('does not implement')),
+              ),
             ),
-          ),
-          reason: metric,
-        );
-      }
-    });
+            reason: metric,
+          );
+        }
+      },
+    );
 
     test('an unknown metric name is refused', () {
       final json = encode(Construction())
@@ -220,10 +217,11 @@ void main() {
     });
 
     test('every reserved metric name is distinct and stable', () {
-      expect(
-        FundamentalConic.values.map((m) => m.name),
-        ['euclidean', 'hyperbolic', 'elliptic'],
-      );
+      expect(FundamentalConic.values.map((m) => m.name), [
+        'euclidean',
+        'hyperbolic',
+        'elliptic',
+      ]);
       for (final metric in FundamentalConic.values) {
         expect(FundamentalConic.byName(metric.name), metric);
       }
@@ -232,16 +230,12 @@ void main() {
   });
 
   group('homogeneous params (Phase 120 hook)', () {
-    const triple = [
-      Complex(1.5, -2.25),
-      Complex(0, 3),
-      Complex(-7, 0),
-    ];
+    const triple = [Complex(1.5, -2.25), Complex(0, 3), Complex(-7, 0)];
 
     test('round-trips component for component, through JSON', () {
-      final params = jsonDecode(
-        jsonEncode({'p': encodeHomogeneousParam(triple)}),
-      ) as Map<String, dynamic>;
+      final params =
+          jsonDecode(jsonEncode({'p': encodeHomogeneousParam(triple)}))
+              as Map<String, dynamic>;
       expect(homogeneousParam('x', params, 'p', length: 3), triple);
     });
 
@@ -285,7 +279,9 @@ void main() {
         {},
         {'p': 1.0},
         {'p': <Object>[]},
-        {'p': <String, dynamic>{'wrong': <Object>[]}},
+        {
+          'p': <String, dynamic>{'wrong': <Object>[]},
+        },
       ]) {
         expect(
           () => homogeneousParam('x', params, 'p', length: 3),

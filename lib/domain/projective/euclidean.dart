@@ -48,10 +48,10 @@ ProjLine perpendicularThrough(ProjPoint p, ProjLine l) =>
 /// point at infinity (the affine limit); the midpoint of two points at
 /// infinity is the zero triple.
 ProjPoint midpointOf(ProjPoint p, ProjPoint q) => ProjPoint(
-      p.x * q.w + q.x * p.w,
-      p.y * q.w + q.y * p.w,
-      const Complex(2) * (p.w * q.w),
-    );
+  p.x * q.w + q.x * p.w,
+  p.y * q.w + q.y * p.w,
+  const Complex(2) * (p.w * q.w),
+);
 
 /// The centroid of [a], [b] and [c] — the affine `(a + b + c) / 3`
 /// homogenized: `[Σ xᵢwⱼwₖ : Σ yᵢwⱼwₖ : 3·w₁w₂w₃]`.
@@ -148,7 +148,7 @@ ProjLine twoLineBisectorOf(ProjLine l1, ProjLine l2, int branch) {
 /// infinity the result is [q] itself for `t ≠ 0` (the affine limit) and
 /// the zero triple at `t = 0`; likewise with the roles swapped.
 ProjPoint lerpOf(ProjPoint p, ProjPoint q, double t) => ProjPoint(
-      (p.x * q.w).scale(1 - t) + (q.x * p.w).scale(t),
-      (p.y * q.w).scale(1 - t) + (q.y * p.w).scale(t),
-      p.w * q.w,
-    );
+  (p.x * q.w).scale(1 - t) + (q.x * p.w).scale(t),
+  (p.y * q.w).scale(1 - t) + (q.y * p.w).scale(t),
+  p.w * q.w,
+);

@@ -106,8 +106,8 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   /// this layer (the `snapThreshold` precedent).
   double _gridSnapStep(CanvasViewport viewport) =>
       ref.read(documentSettingsProvider).snapToGrid
-          ? gridStep(viewport.state.scale)
-          : 0;
+      ? gridStep(viewport.state.scale)
+      : 0;
 
   /// In-progress rubber band, in screen coordinates; null when no band
   /// is being dragged. Local widget state — nothing outside the canvas
@@ -197,8 +197,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             defaultColor: Theme.of(context).colorScheme.primary,
             selectionColor: Theme.of(context).colorScheme.tertiary,
             selectedIds: ref.watch(selectionProvider),
-            previewMarkers:
-                tool is ToolInputPreview ? tool.previewPositions : const [],
+            previewMarkers: tool is ToolInputPreview
+                ? tool.previewPositions
+                : const [],
             previewObjectIds: tool is ToolInputPreview
                 ? tool.previewObjectIds.toSet()
                 : const {},
@@ -211,9 +212,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             showGrid: ref.watch(documentSettingsProvider).showGrid,
             // Theme-less hosts (bare-widget tests) keep the painter's
             // built-in light colors.
-            axisColor: Theme.of(context).extension<CanvasColors>()?.axis ??
+            axisColor:
+                Theme.of(context).extension<CanvasColors>()?.axis ??
                 const Color(0xFF757575),
-            gridColor: Theme.of(context).extension<CanvasColors>()?.grid ??
+            gridColor:
+                Theme.of(context).extension<CanvasColors>()?.grid ??
                 const Color(0xFFE3E6EA),
           ),
           foregroundPainter: _MarqueePainter(
@@ -236,9 +239,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   void _handlePointerSignal(PointerSignalEvent event) {
     switch (event) {
       case PointerScaleEvent():
-        GestureBinding.instance.pointerSignalResolver.register(event, (
-          event,
-        ) {
+        GestureBinding.instance.pointerSignalResolver.register(event, (event) {
           final pinch = event as PointerScaleEvent;
           final viewport = CanvasViewport(ref.read(viewportProvider));
           ref
@@ -246,9 +247,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
               .set(viewport.zoomedAbout(pinch.localPosition, pinch.scale));
         });
       case PointerScrollEvent():
-        GestureBinding.instance.pointerSignalResolver.register(event, (
-          event,
-        ) {
+        GestureBinding.instance.pointerSignalResolver.register(event, (event) {
           final scroll = event as PointerScrollEvent;
           final viewport = CanvasViewport(ref.read(viewportProvider));
           final keyboard = HardwareKeyboard.instance;
@@ -259,12 +258,15 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             // counterclockwise, mirroring scroll-up-zooms-in. (Shift
             // can't be the modifier: browsers turn Shift+wheel into
             // horizontal deltas.)
-            ref.read(viewportProvider.notifier).set(
+            ref
+                .read(viewportProvider.notifier)
+                .set(
                   CanvasViewport.pinning(
                     world: viewport.screenToWorld(scroll.localPosition),
                     focal: scroll.localPosition,
                     scale: viewport.state.scale,
-                    rotation: viewport.state.rotation -
+                    rotation:
+                        viewport.state.rotation -
                         scroll.scrollDelta.dy *
                             GeometryCanvas.scrollRotatePerPixel,
                   ),
@@ -292,8 +294,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     }
   }
 
-  bool get _spaceHeld => HardwareKeyboard.instance.logicalKeysPressed
-      .contains(LogicalKeyboardKey.space);
+  bool get _spaceHeld => HardwareKeyboard.instance.logicalKeysPressed.contains(
+    LogicalKeyboardKey.space,
+  );
 
   @override
   void dispose() {
@@ -357,8 +360,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         // touch (Phase 43) and native trackpad pan-zoom (Phase 43b —
         // macOS folds the trackpad rotate gesture into PointerPanZoom).
         // Two *mouse* pointers stay inert.
-        twist: _firstDownKind == PointerDeviceKind.touch ||
-                _panZoomPointers > 0
+        twist: _firstDownKind == PointerDeviceKind.touch || _panZoomPointers > 0
             ? TwistGate()
             : null,
       );
@@ -383,13 +385,15 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     // positive-clockwise (screen y-down); the view state is
     // positive-counterclockwise, hence the negation.
     nav.lastFocal = details.localFocalPoint;
-    ref.read(viewportProvider.notifier).set(
+    ref
+        .read(viewportProvider.notifier)
+        .set(
           CanvasViewport.pinning(
             world: nav.fixedWorld,
             focal: details.localFocalPoint,
             scale: nav.startScale * details.scale,
-            rotation: nav.startRotation -
-                (nav.twist?.applied(details.rotation) ?? 0),
+            rotation:
+                nav.startRotation - (nav.twist?.applied(details.rotation) ?? 0),
           ),
         );
   }
@@ -427,7 +431,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       return;
     }
     final viewport = CanvasViewport(current);
-    ref.read(viewportProvider.notifier).set(
+    ref
+        .read(viewportProvider.notifier)
+        .set(
           focal == null
               ? ViewportState(
                   pan: current.pan,
@@ -516,9 +522,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       setState(() => _band = Rect.fromPoints(anchor, screen));
       return;
     }
-    ref
-        .read(toolProvider.notifier)
-        .updateDrag(viewport.screenToWorld(screen));
+    ref.read(toolProvider.notifier).updateDrag(viewport.screenToWorld(screen));
   }
 
   void _panEnd(CanvasViewport viewport) {
@@ -533,7 +537,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       if (object == null || offset == labelDrag.startOffset) {
         return;
       }
-      ref.read(commandStackProvider.notifier).execute(
+      ref
+          .read(commandStackProvider.notifier)
+          .execute(
             ChangeAttributesCommand({
               object.id: object.attributes.copyWith(
                 labelDx: offset.dx,
@@ -571,10 +577,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       within,
       cardinalAngle: -viewport.state.rotation,
     );
-    ref.read(selectionProvider.notifier).selectMany(
-          [for (final object in banded) object.id],
-          additive: HardwareKeyboard.instance.isShiftPressed,
-        );
+    ref.read(selectionProvider.notifier).selectMany([
+      for (final object in banded) object.id,
+    ], additive: HardwareKeyboard.instance.isShiftPressed);
   }
 
   void _panCancel() {
@@ -680,12 +685,16 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     if (target != null && !fresh.contains(target.id)) {
       return;
     }
-    ref.read(toolProvider.notifier).handleInput(ToolInput(
-          input.position,
-          hit: target,
-          objects: fresh.objects,
-          text: content,
-        ));
+    ref
+        .read(toolProvider.notifier)
+        .handleInput(
+          ToolInput(
+            input.position,
+            hit: target,
+            objects: fresh.objects,
+            text: content,
+          ),
+        );
   }
 
   void _handleTap(
@@ -699,8 +708,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     // rebuilds, and the hit test must see the tap-time state.
     final construction = ref.read(constructionProvider).construction;
     final tool = ref.read(toolProvider).tool;
-    final threshold =
-        viewport.screenToWorldLength(GeometryCanvas.hitThresholdFor(kind));
+    final threshold = viewport.screenToWorldLength(
+      GeometryCanvas.hitThresholdFor(kind),
+    );
     final hits = const CanvasHitTester().hitTestAll(
       construction.objects,
       world,
@@ -719,8 +729,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         snapThreshold: threshold,
         objects: construction.objects,
         gridSnapStep: _gridSnapStep(viewport),
-        viewExtent:
-            viewport.screenToWorldLength(context.size?.width ?? 0),
+        viewExtent: viewport.screenToWorldLength(context.size?.width ?? 0),
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a

@@ -32,8 +32,10 @@ String? labelText(GeoObject object) {
   final value = switch (object) {
     Segment(:final start?, :final end?) when attributes.showValue =>
       formatLength(start.distanceTo(end), decimals: decimals),
-    GeoAngle(:final angle?) when attributes.showValue =>
-      formatAngle(angle.measure, decimals: decimals),
+    GeoAngle(:final angle?) when attributes.showValue => formatAngle(
+      angle.measure,
+      decimals: decimals,
+    ),
     AreaMeasurement(:final value?) => formatArea(value, decimals: decimals),
     GeoMeasurement(:final value?) => formatLength(value, decimals: decimals),
     _ => null,
@@ -71,10 +73,12 @@ Offset labelBaseTopLeft(
     final direction = viewport.worldToScreenDirection(
       angle.startDirection.rotated(angle.sweep / 2),
     );
-    final support = 0.5 *
+    final support =
+        0.5 *
         (textSize.width * direction.dx.abs() +
             textSize.height * direction.dy.abs());
-    final center = viewport.worldToScreen(angle.vertex) +
+    final center =
+        viewport.worldToScreen(angle.vertex) +
         direction *
             (object.attributes.angleMarkerRadius +
                 _angleLabelClearance +
@@ -110,7 +114,8 @@ Rect? labelScreenRect(GeoObject object, CanvasViewport viewport) {
   )..layout();
   final size = textPainter.size;
   textPainter.dispose();
-  final topLeft = labelBaseTopLeft(object, viewport, size) +
+  final topLeft =
+      labelBaseTopLeft(object, viewport, size) +
       Offset(attributes.labelDx, attributes.labelDy);
   return topLeft & size;
 }

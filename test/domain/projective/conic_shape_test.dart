@@ -12,14 +12,8 @@ import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/domain/projective/tolerances.dart';
 
 /// `a·x² + b·xy + c·y² + d·x + e·y + f = 0`.
-ConicMatrix conic(
-  double a,
-  double b,
-  double c,
-  double d,
-  double e,
-  double f,
-) => ConicMatrix.coefficients(a, b, c, d, e, f);
+ConicMatrix conic(double a, double b, double c, double d, double e, double f) =>
+    ConicMatrix.coefficients(a, b, c, d, e, f);
 
 final unitCircle = conic(1, 0, 1, 0, 0, -1);
 final ellipse = conic(1 / 4, 0, 1 / 9, 0, 0, -1); // x²/4 + y²/9 = 1
@@ -103,7 +97,9 @@ void main() {
       expect(strokes, isNotEmpty);
       for (final p in strokes.expand((s) => s.points)) {
         expect(
-          16 * p.x * p.x + 24 * p.x * p.y + 9 * p.y * p.y -
+          16 * p.x * p.x +
+              24 * p.x * p.y +
+              9 * p.y * p.y -
               130 * p.x +
               90 * p.y +
               100,
@@ -138,7 +134,12 @@ void main() {
       final doubled = ConicShape.of(doubleLine);
       expect(doubled.kind, ConicClass.doubleLine);
       expect(doubled.lines, hasLength(1));
-      expect(doubled.lines.single.toLineEq()!.closeTo(ProjLine.real(1, 0, 0).toLineEq()!), isTrue);
+      expect(
+        doubled.lines.single.toLineEq()!.closeTo(
+          ProjLine.real(1, 0, 0).toLineEq()!,
+        ),
+        isTrue,
+      );
     });
 
     test('conjugate complex components leave one real point', () {
@@ -247,16 +248,15 @@ void main() {
         expect(entry.value.containsPoint(shape.basePoint!), isTrue);
       });
 
-      Glados(any.pencilAngle).test(
-        '${entry.key}: pointAt stays on the conic',
-        (phi) {
-          final shape = ConicShape.of(entry.value);
-          final p = shape.pointAt(phi);
-          expect(p.isZero, isFalse);
-          expect(p.isReal(), isTrue);
-          expect(entry.value.containsPoint(p), isTrue, reason: 'φ = $phi');
-        },
-      );
+      Glados(any.pencilAngle).test('${entry.key}: pointAt stays on the conic', (
+        phi,
+      ) {
+        final shape = ConicShape.of(entry.value);
+        final p = shape.pointAt(phi);
+        expect(p.isZero, isFalse);
+        expect(p.isReal(), isTrue);
+        expect(entry.value.containsPoint(p), isTrue, reason: 'φ = $phi');
+      });
 
       Glados(any.pencilAngle).test(
         '${entry.key}: parameterOf inverts pointAt',
@@ -328,10 +328,8 @@ void main() {
     Vec2 min(Vec2 a, Vec2 b) => Vec2(math.min(a.x, b.x), math.min(a.y, b.y));
     Vec2 max(Vec2 a, Vec2 b) => Vec2(math.max(a.x, b.x), math.max(a.y, b.y));
 
-    ({Vec2 min, Vec2 max}) boundsOf(List<Vec2> points) => (
-      min: points.reduce(min),
-      max: points.reduce(max),
-    );
+    ({Vec2 min, Vec2 max}) boundsOf(List<Vec2> points) =>
+        (min: points.reduce(min), max: points.reduce(max));
 
     test('a fully visible circle is one closed loop covering the rim', () {
       final strokes = ConicShape.of(
@@ -349,7 +347,10 @@ void main() {
       expect(bounds.min.y, closeTo(-1, 1e-3));
       expect(bounds.max.y, closeTo(1, 1e-3));
       // No duplicated endpoint: the closing edge is the painter's to add.
-      expect(stroke.points.first.distanceTo(stroke.points.last), greaterThan(0));
+      expect(
+        stroke.points.first.distanceTo(stroke.points.last),
+        greaterThan(0),
+      );
     });
 
     test('clipping is exact: a half-visible circle ends on the edge', () {
@@ -368,7 +369,10 @@ void main() {
       expect(stroke.points.first.y.abs(), closeTo(1, 1e-9));
       expect(stroke.points.last.y.abs(), closeTo(1, 1e-9));
       // Entry and exit are the two ends of the same half, not the same point.
-      expect(stroke.points.first.distanceTo(stroke.points.last), closeTo(2, 1e-6));
+      expect(
+        stroke.points.first.distanceTo(stroke.points.last),
+        closeTo(2, 1e-6),
+      );
     });
 
     test('a circle outside the box draws nothing', () {
@@ -457,10 +461,7 @@ void main() {
     test('classes with no curve draw nothing', () {
       const box = (min: Vec2(-5, -5), max: Vec2(5, 5));
       for (final a in [imaginaryEllipse, originPoint]) {
-        expect(
-          ConicShape.of(a).polylines(min: box.min, max: box.max),
-          isEmpty,
-        );
+        expect(ConicShape.of(a).polylines(min: box.min, max: box.max), isEmpty);
       }
     });
 
@@ -527,7 +528,12 @@ void main() {
     // assertions below pin that it is depth, not cost, that was wrong.
     /// The world box a `canvasSize` canvas covers at `pan`/`scale` —
     /// `CanvasViewport.visibleWorldBox` without the presentation layer.
-    ({Vec2 min, Vec2 max}) worldBox(Vec2 pan, double scale, double w, double h) {
+    ({Vec2 min, Vec2 max}) worldBox(
+      Vec2 pan,
+      double scale,
+      double w,
+      double h,
+    ) {
       const margin = 8.0;
       return (
         min: Vec2(pan.x - margin / scale, pan.y - (h + margin) / scale),
@@ -874,7 +880,8 @@ void main() {
     test('an ellipse extends to its semi-axes', () {
       // x²/4 + y²/9 = 1.
       final shape = ConicShape.of(ellipse);
-      final horizontal = shape.extremesAlong(0)..sort((a, b) => a.x.compareTo(b.x));
+      final horizontal = shape.extremesAlong(0)
+        ..sort((a, b) => a.x.compareTo(b.x));
       expect(horizontal, hasLength(2));
       expect(horizontal.first.x, closeTo(-2, 1e-9));
       expect(horizontal.last.x, closeTo(2, 1e-9));

@@ -141,8 +141,8 @@ void _armTraceDiagnostics() {
   if (kReleaseMode) {
     return;
   }
-  TraceDiagnostics.sink =
-      (String line) => developer.log(line, name: 'regula.trace');
+  TraceDiagnostics.sink = (String line) =>
+      developer.log(line, name: 'regula.trace');
   TraceDiagnostics.enabled = true;
   if (kIsWeb && kDebugMode) {
     // Said once, up front, because it cost two sessions of hunting a
@@ -341,8 +341,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     setState(() {
       _pickingExportRegion = false;
       _exportRegion = region;
-      _exportOptions =
-          _exportOptions.copyWith(framing: ExportFramingChoice.region);
+      _exportOptions = _exportOptions.copyWith(
+        framing: ExportFramingChoice.region,
+      );
     });
     _exportPng();
   }
@@ -356,10 +357,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       ExportFramingChoice.fitConstruction =>
         fitConstructionFraming(construction.objects, canvasSize) ??
             currentViewFraming(viewportState, canvasSize),
-      ExportFramingChoice.currentView =>
-        currentViewFraming(viewportState, canvasSize),
-      ExportFramingChoice.region =>
-        regionFraming(viewportState, _exportRegion!),
+      ExportFramingChoice.currentView => currentViewFraming(
+        viewportState,
+        canvasSize,
+      ),
+      ExportFramingChoice.region => regionFraming(
+        viewportState,
+        _exportRegion!,
+      ),
     };
     final theme = Theme.of(context);
     // "As shown": the export renders the document's own toggles, gated
@@ -371,8 +376,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       viewport: framing.viewport,
       logicalSize: framing.logicalSize,
       pixelRatio: options.scale.toDouble(),
-      background:
-          options.transparent ? null : theme.scaffoldBackgroundColor,
+      background: options.transparent ? null : theme.scaffoldBackgroundColor,
       defaultColor: theme.colorScheme.primary,
       showAxes: settings.showAxes && options.includeAxesGrid,
       showGrid: settings.showGrid && options.includeAxesGrid,
@@ -437,8 +441,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             child: const Text('Clear'),
           ),
           TextButton(
-            onPressed: () =>
-                Clipboard.setData(ClipboardData(text: report)),
+            onPressed: () => Clipboard.setData(ClipboardData(text: report)),
             child: const Text('Copy'),
           ),
           TextButton(
@@ -468,13 +471,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     if (moved.isEmpty) {
       return;
     }
-    ref.read(commandStackProvider.notifier).execute(
+    ref
+        .read(commandStackProvider.notifier)
+        .execute(
           ChangeAttributesCommand({
             for (final entry in moved.entries)
-              entry.key: construction.byId(entry.key)!.attributes.copyWith(
-                    labelDx: entry.value.dx,
-                    labelDy: entry.value.dy,
-                  ),
+              entry.key: construction
+                  .byId(entry.key)!
+                  .attributes
+                  .copyWith(labelDx: entry.value.dx, labelDy: entry.value.dy),
           }),
         );
   }
@@ -667,7 +672,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
     ref
         .read(toolProvider.notifier)
-        .activate(RegularPolygonMacroTool(newId: newObjectId, sideCount: sides));
+        .activate(
+          RegularPolygonMacroTool(newId: newObjectId, sideCount: sides),
+        );
   }
 
   /// The one undo entry point — the Ctrl/⌘ Z shortcut and the app-bar
@@ -882,9 +889,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.parabolaTool:
         tools.activate(FocalConicTool(newId: newObjectId));
       case AppAction.ellipseTool:
-        tools.activate(
-          BifocalConicTool(newId: newObjectId, difference: false),
-        );
+        tools.activate(BifocalConicTool(newId: newObjectId, difference: false));
       case AppAction.hyperbolaTool:
         tools.activate(BifocalConicTool(newId: newObjectId, difference: true));
       case AppAction.focalConicTool:
@@ -896,9 +901,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.sectorTool:
         tools.activate(ThreePointTool(newId: newObjectId, build: buildSector));
       case AppAction.reflectAboutLineTool:
-        tools.activate(TransformObjectTool.reflectAboutLine(newId: newObjectId));
+        tools.activate(
+          TransformObjectTool.reflectAboutLine(newId: newObjectId),
+        );
       case AppAction.reflectAboutPointTool:
-        tools.activate(TransformObjectTool.reflectAboutPoint(newId: newObjectId));
+        tools.activate(
+          TransformObjectTool.reflectAboutPoint(newId: newObjectId),
+        );
       case AppAction.rotateAroundPointTool:
         _activateRotateTool();
       case AppAction.translateByVectorTool:
@@ -1078,8 +1087,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   icon: const Icon(Icons.undo),
                   // Enabled while a tool holds pending input even on an
                   // empty stack — the two-stage first press has work to do.
-                  onPressed:
-                      undoRedo.canUndo || toolMidCollection ? _undo : null,
+                  onPressed: undoRedo.canUndo || toolMidCollection
+                      ? _undo
+                      : null,
                 ),
                 IconButton(
                   tooltip: 'Redo',
@@ -1114,13 +1124,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       right: 12,
       child: Consumer(
         builder: (context, ref, _) {
-          final rotation =
-              ref.watch(viewportProvider.select((state) => state.rotation));
+          final rotation = ref.watch(
+            viewportProvider.select((state) => state.rotation),
+          );
           if (rotation == 0) {
             return const SizedBox.shrink();
           }
-          final degrees =
-              (normalizeAngle(rotation) * 180 / math.pi).round();
+          final degrees = (normalizeAngle(rotation) * 180 / math.pi).round();
           final scheme = Theme.of(context).colorScheme;
           return Material(
             key: const ValueKey('compass-button'),
@@ -1170,7 +1180,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _levelView() {
     final current = ref.read(viewportProvider);
     final center = _canvasCenter;
-    ref.read(viewportProvider.notifier).set(
+    ref
+        .read(viewportProvider.notifier)
+        .set(
           center == null
               ? ViewportState(pan: current.pan, scale: current.scale)
               : CanvasViewport.pinning(
@@ -1245,7 +1257,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// and Delete act on the current selection at activation, which the
   /// toolbar's pure tool factories don't do.
   Widget _hideDeleteGroup({required bool active}) {
-    const idleTooltip = 'Hide & delete: tap objects to hide, reveal or '
+    const idleTooltip =
+        'Hide & delete: tap objects to hide, reveal or '
         'delete them';
     final button = PopupMenuButton<VoidCallback>(
       key: const ValueKey('hide-delete-group'),
@@ -1308,8 +1321,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       itemBuilder: (context) => [
         CheckedPopupMenuItem(
           checked: settings.showAxes,
-          value: () =>
-              ref.read(documentSettingsProvider.notifier).toggleAxes(),
+          value: () => ref.read(documentSettingsProvider.notifier).toggleAxes(),
           child: ToolMenuRow(
             label: 'Show axes',
             display: shortcutDisplayFor(AppAction.toggleAxes),
@@ -1317,8 +1329,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ),
         CheckedPopupMenuItem(
           checked: settings.showGrid,
-          value: () =>
-              ref.read(documentSettingsProvider.notifier).toggleGrid(),
+          value: () => ref.read(documentSettingsProvider.notifier).toggleGrid(),
           child: ToolMenuRow(
             label: 'Show grid',
             display: shortcutDisplayFor(AppAction.toggleGrid),
@@ -1469,4 +1480,3 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 }
-

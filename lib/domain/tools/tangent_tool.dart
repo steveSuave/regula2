@@ -40,14 +40,13 @@ class TangentTool implements ToolInputPreview {
 
   @override
   List<String> get previewObjectIds => [
-        if (!_pointIsNew) ?_point?.id,
-        ?_circle?.id,
-      ];
+    if (!_pointIsNew) ?_point?.id,
+    ?_circle?.id,
+  ];
 
   @override
   ToolResult onInput(ToolInput input) {
-    final circleHit =
-        input.hits.whereType<GeoCircle>().firstOrNull;
+    final circleHit = input.hits.whereType<GeoCircle>().firstOrNull;
     if (input.hit is! GeoPoint && circleHit != null) {
       if (_circle != null) return const ToolIgnored();
       _circle = circleHit;

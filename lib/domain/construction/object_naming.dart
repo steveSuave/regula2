@@ -18,12 +18,15 @@ import 'geo_object.dart';
 String nextAutoName(Set<String> usedNames, GeoObject object) {
   final pool = switch (object) {
     GeoPoint() => _upperLatin,
-    GeoLine() || GeoCircle() || GeoPolygon() || GeoMeasurement() ||
-    GeoLocus() || GeoText() =>
-      _lowerLatin,
+    GeoLine() ||
+    GeoCircle() ||
+    GeoPolygon() ||
+    GeoMeasurement() ||
+    GeoLocus() ||
+    GeoText() => _lowerLatin,
     GeoAngle() => _lowerGreek,
   };
-  for (var round = 0;; round++) {
+  for (var round = 0; ; round++) {
     final suffix = round == 0 ? '' : '$round';
     for (final letter in pool) {
       final candidate = '$letter$suffix';
@@ -44,11 +47,14 @@ String nextNameFrom(Set<String> usedNames, String startLetter) {
   final pool = _upperLatin.contains(startLetter)
       ? _upperLatin
       : _lowerLatin.contains(startLetter)
-          ? _lowerLatin
-          : throw ArgumentError.value(
-              startLetter, 'startLetter', 'must be a single Latin letter');
+      ? _lowerLatin
+      : throw ArgumentError.value(
+          startLetter,
+          'startLetter',
+          'must be a single Latin letter',
+        );
   final start = pool.indexOf(startLetter);
-  for (var round = 0;; round++) {
+  for (var round = 0; ; round++) {
     final suffix = round == 0 ? '' : '$round';
     for (var i = round == 0 ? start : 0; i < pool.length; i++) {
       final candidate = '${pool[i]}$suffix';
@@ -68,7 +74,7 @@ String nextNameFrom(Set<String> usedNames, String startLetter) {
 String evictedName(Set<String> usedNames, String wanted) {
   final stripped = wanted.replaceFirst(RegExp(r'\d+$'), '');
   final base = stripped.isEmpty ? wanted : stripped;
-  for (var n = 1;; n++) {
+  for (var n = 1; ; n++) {
     final candidate = '$base$n';
     if (candidate != wanted && !usedNames.contains(candidate)) {
       return candidate;

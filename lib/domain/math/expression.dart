@@ -111,7 +111,7 @@ const double _degPerRad = 180 / math.pi;
 /// unbounded, implementation). Table-driven so later additions (Phase 58's
 /// deferred integrals included) are one-line entries.
 final Map<String, (int, int?, double Function(List<double>))>
-    _numericFunctions = {
+_numericFunctions = {
   'sqrt': (1, 1, (a) => math.sqrt(a[0])),
   'sin': (1, 1, (a) => math.sin(a[0] / _degPerRad)),
   'cos': (1, 1, (a) => math.cos(a[0] / _degPerRad)),
@@ -312,7 +312,9 @@ class _Parser {
             i++;
           }
         }
-        tokens.add(_Token(_TokenType.number, source.substring(start, i), start));
+        tokens.add(
+          _Token(_TokenType.number, source.substring(start, i), start),
+        );
         continue;
       }
       if (ch == 'π') {

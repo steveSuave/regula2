@@ -132,12 +132,7 @@ void main() {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(1, 0));
       final c = FreePoint(id: 'c', position: const Vec2(2, 0));
-      final circle = ThreePointCircle(
-        id: 'k',
-        point1: a,
-        point2: b,
-        point3: c,
-      );
+      final circle = ThreePointCircle(id: 'k', point1: a, point2: b, point3: c);
       expect(circle.conic, isNotNull);
 
       final length = LengthMeasurement(id: 'len', subject: circle);
@@ -150,7 +145,11 @@ void main() {
       (k) {
         final center = StubProjectivePoint(ProjPoint.lift(const Vec2(1, 2)));
         final rim = StubProjectivePoint(ProjPoint.lift(const Vec2(4, 2)));
-        final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+        final circle = CircleCenterPoint(
+          id: 'k',
+          center: center,
+          onCircle: rim,
+        );
         final plain = LengthMeasurement(id: 'm1', subject: circle);
 
         final scaled = LengthMeasurement(

@@ -89,7 +89,8 @@ GeoPoint? coincidentExistingPoint(
     }
     for (final root in parameterRoots) {
       final base = savedParameters[root]!;
-      final magnitude = (0.5 + rng.nextDouble() / 2) *
+      final magnitude =
+          (0.5 + rng.nextDouble() / 2) *
           _probeScale *
           math.max(1.0, base.abs());
       root.parameter = base + (rng.nextBool() ? magnitude : -magnitude);
@@ -114,10 +115,7 @@ GeoPoint? coincidentExistingPoint(
 
 /// [candidate] and its ancestors not in the construction, in dependency
 /// order — what a probe must recompute after the construction-wide pass.
-List<GeoObject> _privateAncestorChain(
-  List<GeoObject> all,
-  GeoPoint candidate,
-) {
+List<GeoObject> _privateAncestorChain(List<GeoObject> all, GeoPoint candidate) {
   final inConstruction = Set<GeoObject>.identity()..addAll(all);
   final seen = Set<GeoObject>.identity();
   final chain = <GeoObject>[];

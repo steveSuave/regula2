@@ -120,12 +120,12 @@ ViewportState? fittedViewport(
   final scale = (width <= 0 && height <= 0)
       ? 1.0
       : math
-          .min(
-            width > 0 ? availableWidth / width : double.infinity,
-            height > 0 ? availableHeight / height : double.infinity,
-          )
-          .clamp(CanvasViewport.minScale, CanvasViewport.maxScale)
-          .toDouble();
+            .min(
+              width > 0 ? availableWidth / width : double.infinity,
+              height > 0 ? availableHeight / height : double.infinity,
+            )
+            .clamp(CanvasViewport.minScale, CanvasViewport.maxScale)
+            .toDouble();
   // The bounds center, rotated by −rotation back into world axes so
   // `pinning` (which solves in world coordinates) can put it at the
   // canvas center. At rotation 0 this reduces exactly to the old

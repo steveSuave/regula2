@@ -19,7 +19,10 @@
 /// detour) and traced slots have been cleared. Callers must re-resolve
 /// statically (e.g. `moveFreePoint` to the intended target).
 class TraceStepBudgetException implements Exception {
-  const TraceStepBudgetException({required this.tReached, required this.trials});
+  const TraceStepBudgetException({
+    required this.tReached,
+    required this.trials,
+  });
 
   /// The path parameter of the last *accepted* step — how far along the
   /// path continuation got before starving.

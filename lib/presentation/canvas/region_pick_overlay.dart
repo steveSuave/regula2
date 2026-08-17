@@ -30,14 +30,14 @@ class _RegionPickOverlayState extends State<RegionPickOverlay> {
   Rect? _rect;
 
   Offset _clamp(Offset position, Size bounds) => Offset(
-        position.dx.clamp(0.0, bounds.width),
-        position.dy.clamp(0.0, bounds.height),
-      );
+    position.dx.clamp(0.0, bounds.width),
+    position.dy.clamp(0.0, bounds.height),
+  );
 
   void _reset() => setState(() {
-        _anchor = null;
-        _rect = null;
-      });
+    _anchor = null;
+    _rect = null;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -103,9 +103,9 @@ class _RegionPickOverlayState extends State<RegionPickOverlay> {
                             'Drag to select the export region — Esc to '
                             'cancel',
                             style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onInverseSurface,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onInverseSurface,
                             ),
                           ),
                         ),

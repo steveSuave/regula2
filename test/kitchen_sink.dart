@@ -312,8 +312,14 @@ Construction buildPostV1Kinds() {
         attributes: const ObjectAttributes(name: 'P', strokeWidth: 2),
       ),
     )
-    ..add(FocalConic(id: 'focal', focus: focus, directrix: directrix,
-        eccentricity: 0.5))
+    ..add(
+      FocalConic(
+        id: 'focal',
+        focus: focus,
+        directrix: directrix,
+        eccentricity: 0.5,
+      ),
+    )
     ..add(f1)
     ..add(f2)
     ..add(on)

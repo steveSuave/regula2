@@ -43,11 +43,7 @@ void main() {
       const radius = 5.0;
       final k = conicThrough([
         for (var i = 0; i < 5; i++)
-          centre +
-              Vec2(
-                radius * math.cos(i * 1.1),
-                radius * math.sin(i * 1.1),
-              ),
+          centre + Vec2(radius * math.cos(i * 1.1), radius * math.sin(i * 1.1)),
       ]);
       expect(k.isDefined, isTrue);
       expect(k.circle!.center.closeTo(centre), isTrue);
@@ -349,53 +345,52 @@ void main() {
     );
 
     Glados2(similarities, any.intInRange(0, 3)).test(
-        'five points of a conic reconstruct it, in every class', (
-      transform,
-      which,
-    ) {
-      final (base, samples) = switch (which) {
-        0 => (
-          ConicMatrix.coefficients(0.25, 0, 1, 0, 0, -1),
-          [
-            for (final t in const [0.0, 1.0, 2.0, 3.0, 4.0])
-              Vec2(2 * math.cos(t), math.sin(t)),
-          ],
-        ),
-        1 => (
-          ConicMatrix.coefficients(1, 0, 0, 0, -1, 0),
-          [
-            for (final t in const [-2.0, -1.0, 0.0, 1.0, 2.0]) Vec2(t, t * t),
-          ],
-        ),
-        _ => (
-          ConicMatrix.coefficients(0, 1, 0, 0, 0, -1),
-          [
-            for (final t in const [-2.0, -1.0, 1.0, 2.0, 3.0]) Vec2(t, 1 / t),
-          ],
-        ),
-      };
-      final k = conicThroughProjective([
-        for (final p in samples) transform.apply(ProjPoint.lift(p)),
-      ]);
-      expect(k.isDefined, isTrue);
-      expect(k.conic!.closeTo(transform.applyToConic(base), 1e-6), isTrue);
-      // A similarity fixes the line at infinity, so it fixes the class —
-      // for the two *open* classes. A parabola is the measure-zero wall
-      // between them: its doubled meet with ℓ∞ is only √eps-accurate, so a
-      // reconstructed one reads as whichever side the rounding lands on.
-      // Harmless, because `kind` labels the curve and never selects a code
-      // path (PLAN §119: a parabola's arm is not a case, it is the arc
-      // between the parameters where the curve passes through infinity).
-      expect(
-        ConicShape.of(k.conic!).kind,
-        which == 1
-            ? isIn(const [
-                ConicClass.parabola,
-                ConicClass.ellipse,
-                ConicClass.hyperbola,
-              ])
-            : ConicShape.of(base).kind,
-      );
-    });
+      'five points of a conic reconstruct it, in every class',
+      (transform, which) {
+        final (base, samples) = switch (which) {
+          0 => (
+            ConicMatrix.coefficients(0.25, 0, 1, 0, 0, -1),
+            [
+              for (final t in const [0.0, 1.0, 2.0, 3.0, 4.0])
+                Vec2(2 * math.cos(t), math.sin(t)),
+            ],
+          ),
+          1 => (
+            ConicMatrix.coefficients(1, 0, 0, 0, -1, 0),
+            [
+              for (final t in const [-2.0, -1.0, 0.0, 1.0, 2.0]) Vec2(t, t * t),
+            ],
+          ),
+          _ => (
+            ConicMatrix.coefficients(0, 1, 0, 0, 0, -1),
+            [
+              for (final t in const [-2.0, -1.0, 1.0, 2.0, 3.0]) Vec2(t, 1 / t),
+            ],
+          ),
+        };
+        final k = conicThroughProjective([
+          for (final p in samples) transform.apply(ProjPoint.lift(p)),
+        ]);
+        expect(k.isDefined, isTrue);
+        expect(k.conic!.closeTo(transform.applyToConic(base), 1e-6), isTrue);
+        // A similarity fixes the line at infinity, so it fixes the class —
+        // for the two *open* classes. A parabola is the measure-zero wall
+        // between them: its doubled meet with ℓ∞ is only √eps-accurate, so a
+        // reconstructed one reads as whichever side the rounding lands on.
+        // Harmless, because `kind` labels the curve and never selects a code
+        // path (PLAN §119: a parabola's arm is not a case, it is the arc
+        // between the parameters where the curve passes through infinity).
+        expect(
+          ConicShape.of(k.conic!).kind,
+          which == 1
+              ? isIn(const [
+                  ConicClass.parabola,
+                  ConicClass.ellipse,
+                  ConicClass.hyperbola,
+                ])
+              : ConicShape.of(base).kind,
+        );
+      },
+    );
   });
 }

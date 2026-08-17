@@ -179,68 +179,72 @@ void main() {
       expect(p1.tracedBranch.isActive, isFalse);
     });
 
-    test('persistent miss: conjugate roots continue through the complex '
-        'domain and the endpoint matches the static solve, labels included',
-        () {
-      // Center rides y = 5 while the line is y = 0: never intersects,
-      // both branches complex the whole way (x = cx ± 4i). The long
-      // horizontal path forces the controller to subdivide.
-      final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
-      final h0 = <ProjPoint>[p0.projPoint!];
-      final h1 = <ProjPoint>[p1.projPoint!];
-      final result = construction.recomputeAlongPath(
-        'c',
-        const DragPath(Vec2(0, 5), Vec2(40, 5)),
-        onStep: (_) {
-          h0.add(p0.projPoint!);
-          h1.add(p1.projPoint!);
-        },
-      );
+    test(
+      'persistent miss: conjugate roots continue through the complex '
+      'domain and the endpoint matches the static solve, labels included',
+      () {
+        // Center rides y = 5 while the line is y = 0: never intersects,
+        // both branches complex the whole way (x = cx ± 4i). The long
+        // horizontal path forces the controller to subdivide.
+        final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
+        final h0 = <ProjPoint>[p0.projPoint!];
+        final h1 = <ProjPoint>[p1.projPoint!];
+        final result = construction.recomputeAlongPath(
+          'c',
+          const DragPath(Vec2(0, 5), Vec2(40, 5)),
+          onStep: (_) {
+            h0.add(p0.projPoint!);
+            h1.add(p1.projPoint!);
+          },
+        );
 
-      expect(h0, hasLength(1 + result.acceptedSteps));
-      final sign0 = chartIm(h0.first).sign;
-      final sign1 = chartIm(h1.first).sign;
-      expect(sign0, isNot(sign1));
-      for (var i = 0; i < h0.length; i++) {
-        // Never drawable, never lost: complex the whole way, each branch
-        // pinned to its own conjugate side.
-        expect(p0.position, isNull);
-        expect(chartIm(h0[i]).sign, sign0);
-        expect(chartIm(h1[i]).sign, sign1);
-      }
-      // No realness transition happened, so labels are preserved: a
-      // fresh static solve at the endpoint picks the same roots.
-      final tracked0 = p0.projPoint!;
-      final tracked1 = p1.projPoint!;
-      construction.moveFreePoint('c', const Vec2(40, 5));
-      expect(p0.projPoint!.closeTo(tracked0), isTrue);
-      expect(p1.projPoint!.closeTo(tracked1), isTrue);
-    });
+        expect(h0, hasLength(1 + result.acceptedSteps));
+        final sign0 = chartIm(h0.first).sign;
+        final sign1 = chartIm(h1.first).sign;
+        expect(sign0, isNot(sign1));
+        for (var i = 0; i < h0.length; i++) {
+          // Never drawable, never lost: complex the whole way, each branch
+          // pinned to its own conjugate side.
+          expect(p0.position, isNull);
+          expect(chartIm(h0[i]).sign, sign0);
+          expect(chartIm(h1[i]).sign, sign1);
+        }
+        // No realness transition happened, so labels are preserved: a
+        // fresh static solve at the endpoint picks the same roots.
+        final tracked0 = p0.projPoint!;
+        final tracked1 = p1.projPoint!;
+        construction.moveFreePoint('c', const Vec2(40, 5));
+        expect(p0.projPoint!.closeTo(tracked0), isTrue);
+        expect(p1.projPoint!.closeTo(tracked1), isTrue);
+      },
+    );
 
-    test('near-tangency approach: the controller is forced to halve and '
-        'still matches — endpoint equals the static solve, labels included',
-        () {
-      // Descend from y = 5 toward the tangency at y = 3, stopping just
-      // above it: the conjugate pair shrinks toward the touch point, the
-      // separation collapses with it, and the whole-path trial (and its
-      // first refinements) violate the Cinderella bound.
-      final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
-      final sign0 = chartIm(p0.projPoint!).sign;
-      final sign1 = chartIm(p1.projPoint!).sign;
-      final result = construction.recomputeAlongPath(
-        'c',
-        const DragPath(Vec2(0, 5), Vec2(0, 3.05)),
-      );
+    test(
+      'near-tangency approach: the controller is forced to halve and '
+      'still matches — endpoint equals the static solve, labels included',
+      () {
+        // Descend from y = 5 toward the tangency at y = 3, stopping just
+        // above it: the conjugate pair shrinks toward the touch point, the
+        // separation collapses with it, and the whole-path trial (and its
+        // first refinements) violate the Cinderella bound.
+        final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
+        final sign0 = chartIm(p0.projPoint!).sign;
+        final sign1 = chartIm(p1.projPoint!).sign;
+        final result = construction.recomputeAlongPath(
+          'c',
+          const DragPath(Vec2(0, 5), Vec2(0, 3.05)),
+        );
 
-      expect(result.rejectedSteps, greaterThan(0));
-      expect(chartIm(p0.projPoint!).sign, sign0);
-      expect(chartIm(p1.projPoint!).sign, sign1);
-      final tracked0 = p0.projPoint!;
-      final tracked1 = p1.projPoint!;
-      construction.moveFreePoint('c', const Vec2(0, 3.05));
-      expect(p0.projPoint!.closeTo(tracked0), isTrue);
-      expect(p1.projPoint!.closeTo(tracked1), isTrue);
-    });
+        expect(result.rejectedSteps, greaterThan(0));
+        expect(chartIm(p0.projPoint!).sign, sign0);
+        expect(chartIm(p1.projPoint!).sign, sign1);
+        final tracked0 = p0.projPoint!;
+        final tracked1 = p1.projPoint!;
+        construction.moveFreePoint('c', const Vec2(0, 3.05));
+        expect(p0.projPoint!.closeTo(tracked0), isTrue);
+        expect(p1.projPoint!.closeTo(tracked1), isTrue);
+      },
+    );
 
     test('through-infinity loophole (glados counterexample): a wide secant '
         'step whose chordal wrap made the far branch look nearer is '
@@ -317,11 +321,13 @@ void main() {
           const DragPath(Vec2(0, 5), Vec2(0, 0)),
           stepBudget: 40,
         ),
-        throwsA(isA<TraceStepBudgetException>().having(
-          (e) => e.tReached,
-          'tReached',
-          allOf(greaterThan(0.2), lessThan(0.4)),
-        )),
+        throwsA(
+          isA<TraceStepBudgetException>().having(
+            (e) => e.tReached,
+            'tReached',
+            allOf(greaterThan(0.2), lessThan(0.4)),
+          ),
+        ),
       );
 
       // The pass cleaned up: slots inactive, and the caller's static bail
@@ -343,7 +349,7 @@ void main() {
     final seeds = [ProjPoint.real(0, 0, 1), ProjPoint.real(0.05, 0, 1)];
 
     (Construction, _ScriptedIntersectionPoint, _ScriptedIntersectionPoint)
-        scriptedRig({
+    scriptedRig({
       required int branchA,
       required int branchB,
       required List<ProjPoint> tracedCandidates,
@@ -388,8 +394,7 @@ void main() {
     const path = DragPath(Vec2(0, 0), Vec2(1, 0));
 
     test('two distinct-seeded branches grabbing the same candidate refuse '
-        'the step, and with no step size resolving it the budget starves',
-        () {
+        'the step, and with no step size resolving it the budget starves', () {
       // Both seeds are nearest x = 0.1 while a genuinely distinct
       // alternative exists at x = 5 — matching went ambiguous, so every
       // trial must be refused rather than silently merging the branches.
@@ -406,33 +411,37 @@ void main() {
           stepBudget: 25,
           onStep: accepted.add,
         ),
-        throwsA(isA<TraceStepBudgetException>()
-            .having((e) => e.tReached, 'tReached', 0)
-            .having((e) => e.trials, 'trials', 25)),
+        throwsA(
+          isA<TraceStepBudgetException>()
+              .having((e) => e.tReached, 'tReached', 0)
+              .having((e) => e.trials, 'trials', 25),
+        ),
       );
       expect(accepted, isEmpty);
       expect(a.tracedBranch.isActive, isFalse);
       expect(b.tracedBranch.isActive, isFalse);
     });
 
-    test('a shared grab of coincident candidates (a double root) is benign',
-        () {
-      // The two candidates sit within doubleRootEpsilon of each other:
-      // there is no distinct alternative for halving to disambiguate,
-      // and riding the touch point together is correct.
-      final (construction, a, b) = scriptedRig(
-        branchA: 0,
-        branchB: 1,
-        tracedCandidates: [
-          ProjPoint.real(0.1, 0, 1),
-          ProjPoint.real(0.1 + 1e-8, 0, 1),
-        ],
-      );
-      final result = construction.recomputeAlongPath('d', path);
-      expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
-      expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
-      expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
-    });
+    test(
+      'a shared grab of coincident candidates (a double root) is benign',
+      () {
+        // The two candidates sit within doubleRootEpsilon of each other:
+        // there is no distinct alternative for halving to disambiguate,
+        // and riding the touch point together is correct.
+        final (construction, a, b) = scriptedRig(
+          branchA: 0,
+          branchB: 1,
+          tracedCandidates: [
+            ProjPoint.real(0.1, 0, 1),
+            ProjPoint.real(0.1 + 1e-8, 0, 1),
+          ],
+        );
+        final result = construction.recomputeAlongPath('d', path);
+        expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
+        expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
+        expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
+      },
+    );
 
     test('branches seeded coincident are married and ride the same root '
         'without refusal', () {
@@ -453,8 +462,7 @@ void main() {
   });
 
   group('recomputeAlongPath: static fallbacks', () {
-    test('nothing seedable collapses to a single static solve at the end',
-        () {
+    test('nothing seedable collapses to a single static solve at the end', () {
       // line1's carrier is undefined (coincident endpoints), so its
       // intersection has no identity to continue.
       final construction = Construction();
@@ -607,8 +615,7 @@ void main() {
       return (construction, touch);
     }
 
-    test('the candidates really do coincide — the premise of this group',
-        () {
+    test('the candidates really do coincide — the premise of this group', () {
       final (_, touch) = tangencyRig();
       final candidates = intersectionCandidates(touch.curve1, touch.curve2);
       expect(candidates, hasLength(2));
@@ -667,10 +674,7 @@ void main() {
       expect(result.acceptedSteps, greaterThan(0));
       // A short drag cannot move the tracked root far — a swap onto the
       // other branch would jump it across the circle.
-      expect(
-        crossing.position!.distanceTo(before.toVec2()!),
-        lessThan(1),
-      );
+      expect(crossing.position!.distanceTo(before.toVec2()!), lessThan(1));
     });
   });
 
@@ -800,8 +804,7 @@ void main() {
 
   group('recomputeAlongPath: complex detour (Phase 115)', () {
     test('through a tangency: the pass detours and crosses — points go '
-        'complex, come back real, no jump, no swap, deterministic sides',
-        () {
+        'complex, come back real, no jump, no swap, deterministic sides', () {
       // Same crossing that starves a 40-trial budget: with the default
       // budget the controller creeps to the trigger, extrapolates
       // t* = 0.4 from the collapsing separation, and walks the upper
@@ -1059,8 +1062,11 @@ void main() {
           const DragPath(Vec2(0, 6), Vec2(0, 4)),
         ),
         throwsA(
-          isA<TraceStepBudgetException>()
-              .having((e) => e.tReached, 'tReached', greaterThan(0.99)),
+          isA<TraceStepBudgetException>().having(
+            (e) => e.tReached,
+            'tReached',
+            greaterThan(0.99),
+          ),
         ),
       );
       construction.moveFreePoint('c2', const Vec2(0, 4));
@@ -1313,15 +1319,12 @@ void main() {
         point: foci[5],
         difference: false,
       );
-      construction..add(e1)..add(e2);
+      construction
+        ..add(e1)
+        ..add(e2);
       final points = [
         for (var i = 0; i < 4; i++)
-          IntersectionPoint(
-            id: 'i$i',
-            curve1: e1,
-            curve2: e2,
-            branchIndex: i,
-          ),
+          IntersectionPoint(id: 'i$i', curve1: e1, curve2: e2, branchIndex: i),
       ];
       for (final p in points) {
         construction.add(p);
@@ -1358,7 +1361,8 @@ void main() {
           expect(
             points.map((p) => p.branchIndex).toSet(),
             hasLength(4),
-            reason: 'trial $trial move $move collapsed: '
+            reason:
+                'trial $trial move $move collapsed: '
                 '${points.map((p) => p.branchIndex).toList()}',
           );
         }
@@ -1369,10 +1373,7 @@ void main() {
         'across a drag (Phase 120c)', () {
       final (construction, points) = fourWayRig();
       expect(
-        intersectionCandidates(
-          points.first.curve1,
-          points.first.curve2,
-        ).length,
+        intersectionCandidates(points.first.curve1, points.first.curve2).length,
         4,
       );
       expect(points.map((p) => p.branchIndex).toSet(), {0, 1, 2, 3});
@@ -1400,7 +1401,8 @@ void main() {
         expect(
           points.map((p) => p.branchIndex).toSet(),
           hasLength(4),
-          reason: 'branches collapsed after dragging to $to: '
+          reason:
+              'branches collapsed after dragging to $to: '
               '${points.map((p) => '${p.id}#${p.branchIndex}').join(' ')}',
         );
       }
@@ -1423,7 +1425,8 @@ void main() {
       PointOnObject,
       IntersectionPoint,
       IntersectionPoint,
-    ) cinderellaRig() {
+    )
+    cinderellaRig() {
       final construction = Construction();
       final a = fp('a', -10, 0);
       final b = fp('b', 10, 0);

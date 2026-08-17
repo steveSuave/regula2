@@ -127,10 +127,7 @@ class ConicShape {
   /// a pencil), and only the answers are carried back. Everything this shape
   /// then computes — [pointAt], [polylines] — runs on the caller's own
   /// matrix, so nothing but the classification pays for the change of frame.
-  factory ConicShape.of(
-    ConicMatrix conic, [
-    double eps = projectiveEpsilon,
-  ]) {
+  factory ConicShape.of(ConicMatrix conic, [double eps = projectiveEpsilon]) {
     if (conic.isZero || !conic.isReal(eps)) {
       return ConicShape._(ConicClass.none, conic, const [], null, 0, 1, eps);
     }
@@ -621,9 +618,7 @@ class ConicShape {
     }
     if (arcs.isEmpty) return const [];
 
-    final inside = [
-      for (final arc in arcs) visible(0.5 * (arc.from + arc.to)),
-    ];
+    final inside = [for (final arc in arcs) visible(0.5 * (arc.from + arc.to))];
     if (!inside.contains(false)) {
       return [
         ConicPolyline(
@@ -790,8 +785,11 @@ class ConicShape {
     );
   }
 
-  static Complex _componentOf(ProjPoint p, int axis) =>
-      switch (axis) { 0 => p.x, 1 => p.y, _ => p.w };
+  static Complex _componentOf(ProjPoint p, int axis) => switch (axis) {
+    0 => p.x,
+    1 => p.y,
+    _ => p.w,
+  };
 
   @override
   String toString() => 'ConicShape($kind)';

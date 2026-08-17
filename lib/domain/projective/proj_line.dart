@@ -19,14 +19,17 @@ class ProjLine {
 
   /// The line with real homogeneous coefficients `[a, b, c]`.
   ProjLine.real(double a, double b, double c)
-      : this(Complex(a), Complex(b), Complex(c));
+    : this(Complex(a), Complex(b), Complex(c));
 
   /// Lifts the affine line [l] coefficient-wise.
   ProjLine.lift(LineEq l) : this(Complex(l.a), Complex(l.b), Complex(l.c));
 
   /// The line at infinity, `w = 0` — every point at infinity lies on it.
-  static const ProjLine infinity =
-      ProjLine(Complex.zero, Complex.zero, Complex.one);
+  static const ProjLine infinity = ProjLine(
+    Complex.zero,
+    Complex.zero,
+    Complex.one,
+  );
 
   final Complex a;
   final Complex b;
@@ -58,10 +61,10 @@ class ProjLine {
   /// triples) — always exactly one point. The zero point when the lines are
   /// projectively equal.
   ProjPoint meet(ProjLine other) => ProjPoint(
-        b * other.c - c * other.b,
-        c * other.a - a * other.c,
-        a * other.b - b * other.a,
-      );
+    b * other.c - c * other.b,
+    c * other.a - a * other.c,
+    a * other.b - b * other.a,
+  );
 
   /// The incidence form `⟨p, l⟩` — same value as `p.incidence(this)`.
   Complex incidence(ProjPoint p) => p.incidence(this);

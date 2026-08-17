@@ -23,6 +23,7 @@ class ConicTool extends MultiPointTool {
   int get pointCount => 5;
 
   @override
-  List<GeoObject> buildObjects(List<GeoPoint> points) =>
-      [FivePointConic(id: newId(), points: points)];
+  List<GeoObject> buildObjects(List<GeoPoint> points) => [
+    FivePointConic(id: newId(), points: points),
+  ];
 }

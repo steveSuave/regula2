@@ -33,7 +33,8 @@ void main() {
       expect(
         json['version'],
         1,
-        reason: '${file.path} must stay a v1 document — the corpus tests the '
+        reason:
+            '${file.path} must stay a v1 document — the corpus tests the '
             'v1 decode path, and a newer file here would test nothing',
       );
     }
@@ -79,27 +80,31 @@ void main() {
         }
       });
 
-      test('round-trips through the current encoder with identical geometry',
-          () {
-        // The migration contract: a v1 file re-saved by today's app and
-        // reopened is the same construction, object for object. Once the
-        // encoder emits v2 this is the v1 → v2 migration itself.
-        final before = decodeDocument(_read(file));
-        final reencoded = jsonDecode(
-          jsonEncode(
-            encodeDocument(
-              before.construction,
-              viewport: before.viewport,
-              settings: before.settings,
-            ),
-          ),
-        ) as Map<String, dynamic>;
-        final after = decodeDocument(reencoded);
+      test(
+        'round-trips through the current encoder with identical geometry',
+        () {
+          // The migration contract: a v1 file re-saved by today's app and
+          // reopened is the same construction, object for object. Once the
+          // encoder emits v2 this is the v1 → v2 migration itself.
+          final before = decodeDocument(_read(file));
+          final reencoded =
+              jsonDecode(
+                    jsonEncode(
+                      encodeDocument(
+                        before.construction,
+                        viewport: before.viewport,
+                        settings: before.settings,
+                      ),
+                    ),
+                  )
+                  as Map<String, dynamic>;
+          final after = decodeDocument(reencoded);
 
-        expect(after.viewport, before.viewport);
-        expect(after.settings, before.settings);
-        _expectSameConstruction(after.construction, before.construction);
-      });
+          expect(after.viewport, before.viewport);
+          expect(after.settings, before.settings);
+          _expectSameConstruction(after.construction, before.construction);
+        },
+      );
     });
   }
 
@@ -123,7 +128,11 @@ void main() {
       );
       expect(
         decoded.settings,
-        const DocumentSettings(showAxes: true, showGrid: true, snapToGrid: true),
+        const DocumentSettings(
+          showAxes: true,
+          showGrid: true,
+          snapToGrid: true,
+        ),
       );
     });
 
@@ -140,12 +149,13 @@ void main() {
 }
 
 /// Every document in the corpus, in a stable order.
-List<File> _corpusFiles() => Directory('test/fixtures')
-    .listSync(recursive: true)
-    .whereType<File>()
-    .where((f) => f.path.endsWith('.json') || f.path.endsWith('.rgl'))
-    .toList()
-  ..sort((a, b) => a.path.compareTo(b.path));
+List<File> _corpusFiles() =>
+    Directory('test/fixtures')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.json') || f.path.endsWith('.rgl'))
+        .toList()
+      ..sort((a, b) => a.path.compareTo(b.path));
 
 Map<String, dynamic> _read(File file) =>
     jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;

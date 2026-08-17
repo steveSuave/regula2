@@ -87,7 +87,12 @@ void main() {
       ..add(line);
     final m = PointOnObject(id: 'm', curve: line, parameter: 2);
     final circle = FixedRadiusCircle(id: 'k', center: m, radius: 3);
-    final p = IntersectionPoint(id: 'p', curve1: line, curve2: circle, branchIndex: 0);
+    final p = IntersectionPoint(
+      id: 'p',
+      curve1: line,
+      curve2: circle,
+      branchIndex: 0,
+    );
     construction
       ..add(m)
       ..add(circle)

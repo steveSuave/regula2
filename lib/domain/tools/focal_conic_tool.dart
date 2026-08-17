@@ -15,19 +15,19 @@ import 'point_and_line_tool.dart';
 /// dialog's tool is not identified by its builder).
 class FocalConicTool extends PointAndLineTool {
   FocalConicTool({required super.newId, this.eccentricity = 1})
-      : super(
-          build: ({
-            required String id,
-            required GeoPoint through,
-            required GeoLine reference,
-          }) =>
-              FocalConic(
-            id: id,
-            focus: through,
-            directrix: reference,
-            eccentricity: eccentricity,
-          ),
-        );
+    : super(
+        build:
+            ({
+              required String id,
+              required GeoPoint through,
+              required GeoLine reference,
+            }) => FocalConic(
+              id: id,
+              focus: through,
+              directrix: reference,
+              eccentricity: eccentricity,
+            ),
+      );
 
   /// The ratio the built conic holds — `1` (the default) is a parabola.
   final double eccentricity;

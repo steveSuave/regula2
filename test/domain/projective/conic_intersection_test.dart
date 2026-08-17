@@ -482,8 +482,22 @@ void main() {
   group('splitDegenerateConic', () {
     final crossingLines = ConicMatrix.coefficients(1, 0, -1, 0, 0, 0); // y = ±x
     final parallelLines = ConicMatrix.coefficients(1, 0, 0, 0, 0, -1); // x = ±1
-    final originPoint = ConicMatrix.coefficients(1, 0, 1, 0, 0, 0); // x² + y² = 0
-    final doubleLine = ConicMatrix.coefficients(1, 0, 0, 0, 0, 0); // x = 0, twice
+    final originPoint = ConicMatrix.coefficients(
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+    ); // x² + y² = 0
+    final doubleLine = ConicMatrix.coefficients(
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ); // x = 0, twice
 
     test('recovers two real crossing lines', () {
       final (g, h) = splitDegenerateConic(crossingLines);

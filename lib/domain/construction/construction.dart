@@ -232,7 +232,7 @@ class Construction {
   /// [ArgumentError] when [id] is not a [PointOnObject] or [stepBudget]
   /// < 1.
   ({int acceptedSteps, int rejectedSteps, int detours})
-      recomputeAlongParameterPath(
+  recomputeAlongParameterPath(
     String id,
     double from,
     double to, {
@@ -279,22 +279,22 @@ class Construction {
         final anchor = form.pointOnLine;
         final direction = form.direction;
         return (p) => ProjPoint(
-              Complex(anchor.x) + p.scale(direction.x),
-              Complex(anchor.y) + p.scale(direction.y),
-              Complex.one,
-            );
+          Complex(anchor.x) + p.scale(direction.x),
+          Complex(anchor.y) + p.scale(direction.y),
+          Complex.one,
+        );
       case GeoCircle(circle: final form?):
         final center = form.center;
         final radius = form.radius;
         return (p) => ProjPoint(
-              Complex(center.x) + p.cos.scale(radius),
-              Complex(center.y) + p.sin.scale(radius),
-              Complex.one,
-            );
+          Complex(center.x) + p.cos.scale(radius),
+          Complex(center.y) + p.sin.scale(radius),
+          Complex.one,
+        );
       default:
         return (_) => throw StateError(
-              'No chart to continue: the carrier of ${object.id} is undefined',
-            );
+          'No chart to continue: the carrier of ${object.id} is undefined',
+        );
     }
   }
 
@@ -344,9 +344,8 @@ class Construction {
       for (final o in _objects.values)
         if (o is Locus && affected.contains(o.id)) o,
     ];
-    final affectedCore = {
-      ...affected,
-    }..removeAll([for (final l in affectedLoci) l.id]);
+    final affectedCore = {...affected}
+      ..removeAll([for (final l in affectedLoci) l.id]);
     final excluded = <GeoObject>{};
     for (final o in _objects.values) {
       if (o is Locus) {
@@ -398,8 +397,10 @@ class Construction {
         onStep?.call(1);
         return (acceptedSteps: 1, rejectedSteps: 0, detours: 0);
       }
-      final checkpoints =
-          List<TracedBranchCheckpoint?>.filled(seeded.length, null);
+      final checkpoints = List<TracedBranchCheckpoint?>.filled(
+        seeded.length,
+        null,
+      );
       void snapshot() {
         for (var i = 0; i < seeded.length; i++) {
           checkpoints[i] = seeded[i].tracedBranch.checkpoint();
@@ -446,7 +447,8 @@ class Construction {
           while (theta > 0) {
             TraceDiagnostics.checkpoint(
               'drag detour arc',
-              detail: () => 'theta=${theta.toStringAsFixed(6)} '
+              detail: () =>
+                  'theta=${theta.toStringAsFixed(6)} '
                   'dTheta=${dTheta.toStringAsExponential(2)} '
                   'trials=${accepted + rejected}/$stepBudget',
             );
@@ -473,7 +475,10 @@ class Construction {
               accepted++;
               TraceDiagnostics.count(TraceCounter.dragAccepted);
               theta = trialTheta;
-              dTheta = math.min(dTheta * 2 < theta ? dTheta * 2 : theta, maxDetourArcStep);
+              dTheta = math.min(
+                dTheta * 2 < theta ? dTheta * 2 : theta,
+                maxDetourArcStep,
+              );
               snapshot();
             } else {
               rejected++;
@@ -492,7 +497,8 @@ class Construction {
       while (t < 1) {
         TraceDiagnostics.checkpoint(
           'drag walk',
-          detail: () => 't=${t.toStringAsFixed(9)} '
+          detail: () =>
+              't=${t.toStringAsFixed(9)} '
               'step=${step.toStringAsExponential(2)} '
               'sep=${sepCurr.toStringAsExponential(2)} '
               'trials=${accepted + rejected}/$stepBudget',
@@ -515,7 +521,8 @@ class Construction {
         if (!overStepLimit) {
           driveReal(trialT);
           _recomputeAffected(affectedCore);
-          accept = trialAccepted(seeded, checkpoints, trialT - t) &&
+          accept =
+              trialAccepted(seeded, checkpoints, trialT - t) &&
               collisionFree(checkPairs);
         }
         if (accept) {
@@ -655,13 +662,10 @@ class Construction {
       }
       final byPair = <String, List<IntersectionPoint>>{};
       for (final o in seeded) {
-        byPair.putIfAbsent('${o.curve1.id} ${o.curve2.id}', () => [])
-            .add(o);
+        byPair.putIfAbsent('${o.curve1.id} ${o.curve2.id}', () => []).add(o);
       }
       for (final group in byPair.values) {
-        final after = {
-          for (final o in group) proposed[o] ?? o.branchIndex,
-        };
+        final after = {for (final o in group) proposed[o] ?? o.branchIndex};
         if (after.length != group.length) {
           TraceDiagnostics.count(TraceCounter.dragRejected);
           continue;
@@ -671,7 +675,11 @@ class Construction {
           if (index != null) o.branchIndex = index;
         }
       }
-      return (acceptedSteps: accepted, rejectedSteps: rejected, detours: detours);
+      return (
+        acceptedSteps: accepted,
+        rejectedSteps: rejected,
+        detours: detours,
+      );
     } finally {
       for (final o in seeded) {
         o.tracedBranch.clear();
@@ -748,10 +756,11 @@ class Construction {
   void setIntersectionBranch(String id, int branchIndex) {
     final object = _objects[id];
     if (object is! IntersectionPoint) {
-      throw ArgumentError('$id is not an IntersectionPoint in this construction');
+      throw ArgumentError(
+        '$id is not an IntersectionPoint in this construction',
+      );
     }
-    if (branchIndex < 0 ||
-        branchIndex >= IntersectionPoint.maxBranchCount) {
+    if (branchIndex < 0 || branchIndex >= IntersectionPoint.maxBranchCount) {
       throw ArgumentError.value(
         branchIndex,
         'branchIndex',
@@ -876,8 +885,7 @@ class Construction {
 
   void addListener(void Function() listener) => _listeners.add(listener);
 
-  void removeListener(void Function() listener) =>
-      _listeners.remove(listener);
+  void removeListener(void Function() listener) => _listeners.remove(listener);
 
   void _recomputeDependentsOf(String id) {
     final affected = transitiveDependentsOf(id);

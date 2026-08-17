@@ -134,8 +134,10 @@ double _capsuleOverlapArea(Capsule capsule, Rect rect) {
     return 0;
   }
   final midpoint = capsule.a + along * ((range.$1 + range.$2) / 2);
-  final depth = (capsule.halfWidth + _signedInsideDepth(midpoint, rect))
-      .clamp(0.0, 2 * capsule.halfWidth);
+  final depth = (capsule.halfWidth + _signedInsideDepth(midpoint, rect)).clamp(
+    0.0,
+    2 * capsule.halfWidth,
+  );
   return crossed * depth;
 }
 
@@ -194,16 +196,19 @@ Map<String, Offset> declutterLabels({
       total += labelWeight * _overlapArea(rect, placedRects[other.id]!);
     }
     for (final obstacle in rects) {
-      total += inkWeight *
+      total +=
+          inkWeight *
           ownFactor(obstacle.ownerId) *
           _overlapArea(rect, obstacle.rect);
     }
     for (final capsule in capsules) {
-      total += inkWeight *
+      total +=
+          inkWeight *
           ownFactor(capsule.ownerId) *
           _capsuleOverlapArea(capsule, rect);
     }
-    total += offCanvasWeight *
+    total +=
+        offCanvasWeight *
         (rect.width * rect.height - _overlapArea(rect, canvas));
     return total;
   }
@@ -252,8 +257,8 @@ Iterable<Offset> _candidateOffsets(LabelBox label, double maxOffset) sync* {
   for (var i = 0; i < 16; i++) {
     final theta = i * math.pi / 8;
     final direction = Offset(math.cos(theta), math.sin(theta));
-    final besideExtent = direction.dx.abs() * halfSize.dx +
-        direction.dy.abs() * halfSize.dy;
+    final besideExtent =
+        direction.dx.abs() * halfSize.dx + direction.dy.abs() * halfSize.dy;
     for (final gap in const [4.0, 12.0, 20.0]) {
       var offset = direction * (gap + besideExtent) - halfSize;
       final distance = offset.distance;

@@ -361,7 +361,11 @@ void main() {
               ToolInput(const Vec2(1, 0), hit: circle, objects: objects),
             ))
             .onInput(
-              ToolInput(const Vec2(3.9, 0.1), hit: horizontal, objects: objects),
+              ToolInput(
+                const Vec2(3.9, 0.1),
+                hit: horizontal,
+                objects: objects,
+              ),
             ),
         isA<ToolIgnored>(),
         reason: 'the same crossing, collected the other way round',

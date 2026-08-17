@@ -182,10 +182,7 @@ void main() {
         final circ = CircleCenterPoint(
           id: 'circ',
           center: FreePoint(id: 'o', position: c.center),
-          onCircle: FreePoint(
-            id: 'r',
-            position: c.center + Vec2(c.radius, 0),
-          ),
+          onCircle: FreePoint(id: 'r', position: c.center + Vec2(c.radius, 0)),
         );
         final touches = tangentPointsToCircle(e, circ.circle!);
         expect(touches, hasLength(2));
@@ -204,7 +201,8 @@ void main() {
           expect(
             tangent.line!.closeTo(expected, 1e-6),
             isTrue,
-            reason: 'branch $branch of $e / $c: '
+            reason:
+                'branch $branch of $e / $c: '
                 '${tangent.line} vs $expected',
           );
           expect(

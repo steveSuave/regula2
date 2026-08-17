@@ -47,29 +47,28 @@ GeoObject? equivalentExisting(
 }
 
 bool _covered(GeoObject object) => switch (object) {
-      ReflectedPoint() ||
-      CentralReflectionPoint() ||
-      RotatedPoint() ||
-      TranslatedPoint() ||
-      HomotheticPoint() ||
-      Segment() ||
-      Ray() ||
-      LineThroughTwoPoints() ||
-      CircleCenterPoint() ||
-      DiameterCircle() ||
-      CompassCircle() ||
-      ThreePointCircle() ||
-      NinePointCircle() ||
-      InscribedCircle() ||
-      ApolloniusCircle() ||
-      FivePointConic() ||
-      BifocalConic() ||
-      Arc() ||
-      Sector() ||
-      VertexAngle() =>
-        true,
-      _ => false,
-    };
+  ReflectedPoint() ||
+  CentralReflectionPoint() ||
+  RotatedPoint() ||
+  TranslatedPoint() ||
+  HomotheticPoint() ||
+  Segment() ||
+  Ray() ||
+  LineThroughTwoPoints() ||
+  CircleCenterPoint() ||
+  DiameterCircle() ||
+  CompassCircle() ||
+  ThreePointCircle() ||
+  NinePointCircle() ||
+  InscribedCircle() ||
+  ApolloniusCircle() ||
+  FivePointConic() ||
+  BifocalConic() ||
+  Arc() ||
+  Sector() ||
+  VertexAngle() => true,
+  _ => false,
+};
 
 bool _equivalent(GeoObject existing, GeoObject candidate) {
   if (existing.runtimeType != candidate.runtimeType) {

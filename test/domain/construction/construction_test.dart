@@ -156,7 +156,12 @@ void main() {
       final center = FreePoint(id: 'e', position: const Vec2(0, 1));
       final rim = FreePoint(id: 'f', position: const Vec2(3, 1));
       final k = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
-      final p = IntersectionPoint(id: 'p', curve1: l, curve2: k, branchIndex: 0);
+      final p = IntersectionPoint(
+        id: 'p',
+        curve1: l,
+        curve2: k,
+        branchIndex: 0,
+      );
       final m = Midpoint(id: 'm', point1: a, point2: p);
       c
         ..add(a)
@@ -180,8 +185,7 @@ void main() {
       expect(notified, 1);
     });
 
-    test('throws for unknown ids, other kinds, and out-of-range indices',
-        () {
+    test('throws for unknown ids, other kinds, and out-of-range indices', () {
       final c = Construction();
       final a = FreePoint(id: 'a', position: const Vec2(-10, 0));
       final b = FreePoint(id: 'b', position: const Vec2(10, 0));
@@ -189,7 +193,12 @@ void main() {
       final center = FreePoint(id: 'e', position: const Vec2(0, 1));
       final rim = FreePoint(id: 'f', position: const Vec2(3, 1));
       final k = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
-      final p = IntersectionPoint(id: 'p', curve1: l, curve2: k, branchIndex: 0);
+      final p = IntersectionPoint(
+        id: 'p',
+        curve1: l,
+        curve2: k,
+        branchIndex: 0,
+      );
       c
         ..add(a)
         ..add(b)

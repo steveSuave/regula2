@@ -89,8 +89,10 @@ void main() {
     test('isCircularPoint recognizes I and J at solver-noise tilt', () {
       expect(isCircularPoint(circularPointI), isTrue);
       expect(isCircularPoint(circularPointJ), isTrue);
-      expect(isCircularPoint(circularPointI.scaledBy(const Complex(3, -2))),
-          isTrue);
+      expect(
+        isCircularPoint(circularPointI.scaledBy(const Complex(3, -2))),
+        isTrue,
+      );
       // The doubled I/J of near-concentric circles arrive with ~1e-8 tilt.
       expect(
         isCircularPoint(

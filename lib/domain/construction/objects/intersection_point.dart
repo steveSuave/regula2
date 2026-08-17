@@ -126,9 +126,9 @@ class IntersectionPoint extends GeoPoint {
     required super.id,
     super.attributes,
   }) : assert(
-          canonicalPairOrder(curve1, curve2),
-          'IntersectionPoint stores its pair in canonical order',
-        ) {
+         canonicalPairOrder(curve1, curve2),
+         'IntersectionPoint stores its pair in canonical order',
+       ) {
     recompute();
   }
 
@@ -259,7 +259,8 @@ class IntersectionPoint extends GeoPoint {
       if (candidates[i].toVec2() == null) continue;
       var repeated = false;
       for (var j = 0; j < i && !repeated; j++) {
-        repeated = candidates[j].toVec2() != null &&
+        repeated =
+            candidates[j].toVec2() != null &&
             candidates[i].closeTo(candidates[j], doubleRootEpsilon);
       }
       if (!repeated) count++;

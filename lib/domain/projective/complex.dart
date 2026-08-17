@@ -38,10 +38,8 @@ class Complex {
 
   Complex operator -() => Complex(-re, -im);
 
-  Complex operator *(Complex other) => Complex(
-        re * other.re - im * other.im,
-        re * other.im + im * other.re,
-      );
+  Complex operator *(Complex other) =>
+      Complex(re * other.re - im * other.im, re * other.im + im * other.re);
 
   /// Complex division via Smith's algorithm (scales by the larger component
   /// of the divisor to avoid overflow/underflow of the naive formula).
@@ -137,6 +135,5 @@ class Complex {
   int get hashCode => Object.hash(re, im);
 
   @override
-  String toString() =>
-      im >= 0 ? '$re + ${im}i' : '$re - ${-im}i';
+  String toString() => im >= 0 ? '$re + ${im}i' : '$re - ${-im}i';
 }

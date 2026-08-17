@@ -37,7 +37,8 @@ class DocumentSettings {
   int get hashCode => Object.hash(showAxes, showGrid, snapToGrid);
 
   @override
-  String toString() => 'DocumentSettings(showAxes: $showAxes, '
+  String toString() =>
+      'DocumentSettings(showAxes: $showAxes, '
       'showGrid: $showGrid, snapToGrid: $snapToGrid)';
 }
 

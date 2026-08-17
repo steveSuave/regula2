@@ -39,20 +39,22 @@ void main() {
       expect(ConicShape.of(k.conic!).kind, ConicClass.parabola);
     });
 
-    test('the eccentricity picks the class, and is what parents cannot say',
-        () {
-      ConicClass classOf(double e) => ConicShape.of(
-        FocalConic(
-          id: 'k',
-          focus: FreePoint(id: 'f', position: const Vec2(2, -1)),
-          directrix: verticalAt(-1),
-          eccentricity: e,
-        ).conic!,
-      ).kind;
-      expect(classOf(0.5), ConicClass.ellipse);
-      expect(classOf(1), ConicClass.parabola);
-      expect(classOf(2), ConicClass.hyperbola);
-    });
+    test(
+      'the eccentricity picks the class, and is what parents cannot say',
+      () {
+        ConicClass classOf(double e) => ConicShape.of(
+          FocalConic(
+            id: 'k',
+            focus: FreePoint(id: 'f', position: const Vec2(2, -1)),
+            directrix: verticalAt(-1),
+            eccentricity: e,
+          ).conic!,
+        ).kind;
+        expect(classOf(0.5), ConicClass.ellipse);
+        expect(classOf(1), ConicClass.parabola);
+        expect(classOf(2), ConicClass.hyperbola);
+      },
+    );
 
     test('parents are the focus then the directrix', () {
       final f = FreePoint(id: 'f', position: Vec2.zero);

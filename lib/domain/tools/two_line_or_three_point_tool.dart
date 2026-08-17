@@ -53,16 +53,16 @@ abstract class TwoLineOrThreePointTool implements ToolInputPreview {
 
   @override
   List<Vec2> get previewPositions => [
-        for (final p in _points)
-          if (p.isNew) ?p.point.position,
-      ];
+    for (final p in _points)
+      if (p.isNew) ?p.point.position,
+  ];
 
   @override
   List<String> get previewObjectIds => [
-        ?_line1?.id,
-        for (final p in _points)
-          if (!p.isNew) p.point.id,
-      ];
+    ?_line1?.id,
+    for (final p in _points)
+      if (!p.isNew) p.point.id,
+  ];
 
   @override
   ToolResult onInput(ToolInput input) {

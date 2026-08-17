@@ -257,8 +257,7 @@ void main() {
           (p.projPoint!.x / p.projPoint!.w).im.sign;
       final side = imSide(p0);
 
-      final session =
-          DragSession.start(construction, b, const Vec2(10, 0))!;
+      final session = DragSession.start(construction, b, const Vec2(10, 0))!;
       session.update(const Vec2(-20, 0));
       session.end()!.apply(construction);
       expect(p0.branchIndex, 1);
@@ -282,10 +281,7 @@ void main() {
       );
       expect(json['version'], requiredFormatVersion(json));
       expect(json['version'], minimumConstructionFormatVersion);
-      expect(
-        json['version'],
-        lessThanOrEqualTo(constructionFormatVersion),
-      );
+      expect(json['version'], lessThanOrEqualTo(constructionFormatVersion));
     });
 
     test('writes objects in insertion (= topological) order', () {
@@ -625,67 +621,84 @@ void main() {
     /// A document with two intersection points on the same ordered pair
     /// at the same branch — which is what a pre-120c build could write.
     Map<String, dynamic> documentWithDuplicate(int secondBranch) => {
-          'version': 1,
-          'viewport': {
-            'pan': [0, 0],
-            'scale': 1,
-            'rotation': 0,
-          },
-          'objects': [
-            {'id': 'o', 'type': 'FreePoint', 'parents': <String>[], 'params': {'x': 0, 'y': 0}},
-            {'id': 'x', 'type': 'FreePoint', 'parents': <String>[], 'params': {'x': 4, 'y': 0}},
-            {'id': 'y', 'type': 'FreePoint', 'parents': <String>[], 'params': {'x': 0, 'y': 4}},
-            {
-              'id': 'l',
-              'type': 'LineThroughTwoPoints',
-              'parents': ['o', 'x'],
-              'params': <String, dynamic>{},
-            },
-            {
-              'id': 'k',
-              'type': 'CircleCenterPoint',
-              'parents': ['o', 'y'],
-              'params': <String, dynamic>{},
-            },
-            {
-              'id': 'p1',
-              'type': 'IntersectionPoint',
-              'parents': ['l', 'k'],
-              'params': {'branchIndex': 1},
-            },
-            {
-              'id': 'p2',
-              'type': 'IntersectionPoint',
-              'parents': ['l', 'k'],
-              'params': {'branchIndex': secondBranch},
-            },
-          ],
-        };
+      'version': 1,
+      'viewport': {
+        'pan': [0, 0],
+        'scale': 1,
+        'rotation': 0,
+      },
+      'objects': [
+        {
+          'id': 'o',
+          'type': 'FreePoint',
+          'parents': <String>[],
+          'params': {'x': 0, 'y': 0},
+        },
+        {
+          'id': 'x',
+          'type': 'FreePoint',
+          'parents': <String>[],
+          'params': {'x': 4, 'y': 0},
+        },
+        {
+          'id': 'y',
+          'type': 'FreePoint',
+          'parents': <String>[],
+          'params': {'x': 0, 'y': 4},
+        },
+        {
+          'id': 'l',
+          'type': 'LineThroughTwoPoints',
+          'parents': ['o', 'x'],
+          'params': <String, dynamic>{},
+        },
+        {
+          'id': 'k',
+          'type': 'CircleCenterPoint',
+          'parents': ['o', 'y'],
+          'params': <String, dynamic>{},
+        },
+        {
+          'id': 'p1',
+          'type': 'IntersectionPoint',
+          'parents': ['l', 'k'],
+          'params': {'branchIndex': 1},
+        },
+        {
+          'id': 'p2',
+          'type': 'IntersectionPoint',
+          'parents': ['l', 'k'],
+          'params': {'branchIndex': secondBranch},
+        },
+      ],
+    };
 
-    test('two points on one branch are separated, and the file stays fixed',
-        () {
-      // They are the same intersection by construction: same parents,
-      // same branch means the same candidate on every recompute, for
-      // ever. The user sees two points stacked on one crossing and the
-      // other crossing empty — then taps it, and they accumulate.
-      final doc = decodeDocument(documentWithDuplicate(1));
-      expect(doc.repairedIntersections, ['p2']);
-      final points = doc.construction.objects
-          .whereType<IntersectionPoint>()
-          .toList();
-      expect(points.map((p) => p.branchIndex).toSet(), hasLength(2));
-      expect(
-        points[0].position!.distanceTo(points[1].position!),
-        greaterThan(1),
-        reason: 'separated branches must occupy separate crossings',
-      );
-      // Re-encoding writes the separated indices, so opening and saving
-      // repairs the document permanently.
-      final again = decodeDocument(
-        encodeDocument(doc.construction, viewport: const ViewportState()),
-      );
-      expect(again.repairedIntersections, isEmpty);
-    });
+    test(
+      'two points on one branch are separated, and the file stays fixed',
+      () {
+        // They are the same intersection by construction: same parents,
+        // same branch means the same candidate on every recompute, for
+        // ever. The user sees two points stacked on one crossing and the
+        // other crossing empty — then taps it, and they accumulate.
+        final doc = decodeDocument(documentWithDuplicate(1));
+        expect(doc.repairedIntersections, ['p2']);
+        final points = doc.construction.objects
+            .whereType<IntersectionPoint>()
+            .toList();
+        expect(points.map((p) => p.branchIndex).toSet(), hasLength(2));
+        expect(
+          points[0].position!.distanceTo(points[1].position!),
+          greaterThan(1),
+          reason: 'separated branches must occupy separate crossings',
+        );
+        // Re-encoding writes the separated indices, so opening and saving
+        // repairs the document permanently.
+        final again = decodeDocument(
+          encodeDocument(doc.construction, viewport: const ViewportState()),
+        );
+        expect(again.repairedIntersections, isEmpty);
+      },
+    );
 
     test('a well-formed document is untouched', () {
       final doc = decodeDocument(documentWithDuplicate(0));

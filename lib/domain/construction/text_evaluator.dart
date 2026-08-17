@@ -45,7 +45,8 @@ List<GeoObject> bindReferences(
       switch (byName[name]) {
         null => throw FormatException("No object named '$name'"),
         GeoText() => throw FormatException(
-            "Texts can't reference other texts ('$name')"),
+          "Texts can't reference other texts ('$name')",
+        ),
         final object => object,
       },
   ];
@@ -65,11 +66,11 @@ class GeoObjectEnv implements ExpressionEnv {
   /// area) and stay accessor-only.
   @override
   double? variable(String name) => switch (bindings[name]) {
-        Segment(:final start?, :final end?) => start.distanceTo(end),
-        GeoMeasurement(:final value) => value,
-        GeoAngle(:final angle?) => angle.measure * _degPerRad,
-        _ => null,
-      };
+    Segment(:final start?, :final end?) => start.distanceTo(end),
+    GeoMeasurement(:final value) => value,
+    GeoAngle(:final angle?) => angle.measure * _degPerRad,
+    _ => null,
+  };
 
   @override
   bool isObjectFunction(String name) => objectFunctionNames.contains(name);
@@ -85,8 +86,10 @@ class GeoObjectEnv implements ExpressionEnv {
       args.add(object);
     }
     return switch ((name, args)) {
-      ('dist', [final GeoPoint p, final GeoPoint q]) =>
-        _distance(p.projPoint?.toVec2(), q.projPoint?.toVec2()),
+      ('dist', [final GeoPoint p, final GeoPoint q]) => _distance(
+        p.projPoint?.toVec2(),
+        q.projPoint?.toVec2(),
+      ),
       ('len', [Segment(:final start?, :final end?)]) => start.distanceTo(end),
       ('len', [final GeoCircle curve]) => _circleLength(curve),
       ('angle', [final GeoPoint a, final GeoPoint b, final GeoPoint c]) =>
@@ -95,12 +98,14 @@ class GeoObjectEnv implements ExpressionEnv {
           b.projPoint?.toVec2(),
           c.projPoint?.toVec2(),
         ),
-      ('area', [GeoPolygon(:final polygonVertices?)]) =>
-        polygonSignedArea(polygonVertices).abs(),
+      ('area', [GeoPolygon(:final polygonVertices?)]) => polygonSignedArea(
+        polygonVertices,
+      ).abs(),
       ('area', [final GeoCircle curve]) => _circleArea(curve),
       ('radius', [GeoCircle(:final conic?)]) => conic.toCircleEq()?.radius,
-      ('perimeter', [GeoPolygon(:final polygonVertices?)]) =>
-        _polygonPerimeter(polygonVertices),
+      ('perimeter', [GeoPolygon(:final polygonVertices?)]) => _polygonPerimeter(
+        polygonVertices,
+      ),
       ('x', [final GeoPoint p]) => p.projPoint?.toVec2()?.x,
       ('y', [final GeoPoint p]) => p.projPoint?.toVec2()?.y,
       _ => null,

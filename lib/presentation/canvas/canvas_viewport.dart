@@ -38,8 +38,9 @@ class CanvasViewport {
   /// there — the cursor pins the content. Scale is clamped to
   /// [minScale]..[maxScale]; at a bound the state returns unchanged.
   ViewportState zoomedAbout(Offset focal, double factor) {
-    final newScale =
-        (state.scale * factor).clamp(minScale, maxScale).toDouble();
+    final newScale = (state.scale * factor)
+        .clamp(minScale, maxScale)
+        .toDouble();
     if (newScale == state.scale) {
       return state;
     }
@@ -56,13 +57,13 @@ class CanvasViewport {
   /// delta, so the world point at the canvas origin moves the other way.
   /// Backs viewport nudging; scale and rotation are untouched.
   ViewportState pannedByScreen(Offset delta) => ViewportState(
-        // The new origin world point is whatever currently sits delta
-        // *before* the origin — valid at any rotation, since
-        // screenToWorld already folds the angle in.
-        pan: screenToWorld(-delta),
-        scale: state.scale,
-        rotation: state.rotation,
-      );
+    // The new origin world point is whatever currently sits delta
+    // *before* the origin — valid at any rotation, since
+    // screenToWorld already folds the angle in.
+    pan: screenToWorld(-delta),
+    scale: state.scale,
+    rotation: state.rotation,
+  );
 
   /// The state with [scale] (clamped) and [rotation] whose pan puts the
   /// [world] point at the [focal] screen point — the shared solve behind
@@ -82,10 +83,7 @@ class CanvasViewport {
     final c = math.cos(rotation);
     final s = math.sin(rotation);
     return ViewportState(
-      pan: Vec2(
-        world.x - (fx * c + fy * s),
-        world.y - (fy * c - fx * s),
-      ),
+      pan: Vec2(world.x - (fx * c + fy * s), world.y - (fy * c - fx * s)),
       scale: clamped,
       rotation: rotation,
     );
@@ -110,10 +108,7 @@ class CanvasViewport {
     final c = math.cos(state.rotation);
     final s = math.sin(state.rotation);
     // Unflip and unscale, then rotate by −θ back into world axes.
-    return Vec2(
-      state.pan.x + rx * c + ry * s,
-      state.pan.y + ry * c - rx * s,
-    );
+    return Vec2(state.pan.x + rx * c + ry * s, state.pan.y + ry * c - rx * s);
   }
 
   /// Screen-space polar angle of the world-space polar angle
@@ -137,13 +132,11 @@ class CanvasViewport {
   }
 
   /// Screen pixels covered by [worldLength] world units.
-  double worldToScreenLength(double worldLength) =>
-      worldLength * state.scale;
+  double worldToScreenLength(double worldLength) => worldLength * state.scale;
 
   /// World units covered by [screenLength] screen pixels — e.g. the 8 px
   /// hit-test threshold expressed in world units.
-  double screenToWorldLength(double screenLength) =>
-      screenLength / state.scale;
+  double screenToWorldLength(double screenLength) => screenLength / state.scale;
 
   /// Axis-aligned world bounds enclosing a [canvasSize] canvas, grown by
   /// [margin] screen pixels on every side.
@@ -153,10 +146,7 @@ class CanvasViewport {
   /// so this is a superset rather than the region itself. That is the
   /// right side to err on — it is a clip bound for unbounded curves, and
   /// the canvas trims whatever it over-includes.
-  ({Vec2 min, Vec2 max}) visibleWorldBox(
-    Size canvasSize, {
-    double margin = 0,
-  }) {
+  ({Vec2 min, Vec2 max}) visibleWorldBox(Size canvasSize, {double margin = 0}) {
     final corners = [
       screenToWorld(Offset(-margin, -margin)),
       screenToWorld(Offset(canvasSize.width + margin, -margin)),

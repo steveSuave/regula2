@@ -93,7 +93,10 @@ void main() {
         FreePoint(id: 'q1', position: const Vec2(0, 4.5)),
         FreePoint(id: 'q2', position: const Vec2(-4.5, 0)),
         FreePoint(id: 'q3', position: const Vec2(0, -4.5)),
-        FreePoint(id: 'q4', position: Vec2(2.431360376406629, 3.786619431635534)),
+        FreePoint(
+          id: 'q4',
+          position: Vec2(2.431360376406629, 3.786619431635534),
+        ),
       ],
     );
     for (final p in circle.points) {
@@ -105,16 +108,18 @@ void main() {
     final tool = IntersectionTool(newId: newId);
     tool.onInput(ToolInput(const Vec2(5, 0), hit: k, objects: []));
     // The four meets are (±3.436…, ±2.906…); tap near the first quadrant.
-    final result = tool.onInput(
-      ToolInput(
-        const Vec2(3.4, 2.9),
-        hit: circle,
-        objects: construction.objects.toList(),
-      ),
-    ) as ToolCommitted;
+    final result =
+        tool.onInput(
+              ToolInput(
+                const Vec2(3.4, 2.9),
+                hit: circle,
+                objects: construction.objects.toList(),
+              ),
+            )
+            as ToolCommitted;
 
-    final point = (result.command as AddObjectCommand).object
-        as IntersectionPoint;
+    final point =
+        (result.command as AddObjectCommand).object as IntersectionPoint;
     expect(
       point.candidateCount,
       4,
@@ -151,13 +156,15 @@ void main() {
 
     final tool = IntersectionTool(newId: newId);
     tool.onInput(ToolInput(const Vec2(5, 0), hit: k, objects: []));
-    final result = tool.onInput(
-      ToolInput(
-        const Vec2(99, 0),
-        hit: far,
-        objects: construction.objects.toList(),
-      ),
-    ) as ToolCommitted;
+    final result =
+        tool.onInput(
+              ToolInput(
+                const Vec2(99, 0),
+                hit: far,
+                objects: construction.objects.toList(),
+              ),
+            )
+            as ToolCommitted;
     result.command.apply(construction);
 
     final point = construction.objects.last as IntersectionPoint;
@@ -168,10 +175,7 @@ void main() {
     // (3, 0) would land it *inside* the ellipse, which still does not
     // meet it — a conic is a curve, not a region.)
     for (final p in far.points) {
-      construction.moveFreePoint(
-        p.id,
-        p.position! - const Vec2(95, 0),
-      );
+      construction.moveFreePoint(p.id, p.position! - const Vec2(95, 0));
     }
     expect(point.isDefined, isTrue);
   });

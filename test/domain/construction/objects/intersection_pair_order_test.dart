@@ -77,8 +77,11 @@ void main() {
 
   /// Taps the two ellipses at [where] through the real tool, naming them in
   /// the given order — which is what the user's tap order decides.
-  IntersectionPoint? tap(Construction construction, Vec2 where,
-      {required bool flip}) {
+  IntersectionPoint? tap(
+    Construction construction,
+    Vec2 where, {
+    required bool flip,
+  }) {
     final tool = IntersectionTool(newId: () => 'i${nextId++}');
     final first = construction.byId(flip ? 'e2' : 'e1')!;
     final second = construction.byId(flip ? 'e1' : 'e2')!;
@@ -141,7 +144,8 @@ void main() {
         expect(
           defined[i].position!.distanceTo(defined[j].position!),
           greaterThan(1e-6),
-          reason: '${defined[i].id} and ${defined[j].id} share a crossing '
+          reason:
+              '${defined[i].id} and ${defined[j].id} share a crossing '
               '($reason)',
         );
       }
@@ -274,8 +278,7 @@ void main() {
     expect(seen.toSet(), hasLength(2), reason: 'two states, not a drift');
   });
 
-  test('however the names permute, all four survive and none ever doubles',
-      () {
+  test('however the names permute, all four survive and none ever doubles', () {
     final (construction, points, home) = seatedRig();
     final start = (construction.byId('D')! as FreePoint).position;
     // Varying the excursion is what makes the names roll rather than

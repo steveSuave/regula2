@@ -40,7 +40,6 @@ class ThemeModeNotifier extends _$ThemeModeNotifier {
   /// Flips to the opposite of [current] — the brightness actually being
   /// rendered, which the caller reads from its `Theme`. Toggling from
   /// "system" therefore lands on the mode that visibly changes something.
-  void toggle(Brightness current) => setMode(
-        current == Brightness.dark ? ThemeMode.light : ThemeMode.dark,
-      );
+  void toggle(Brightness current) =>
+      setMode(current == Brightness.dark ? ThemeMode.light : ThemeMode.dark);
 }

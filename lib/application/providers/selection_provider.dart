@@ -44,9 +44,9 @@ class SelectionNotifier extends _$SelectionNotifier {
 
   /// Selects every object currently in the construction (Ctrl/Cmd+A).
   void selectAll() => state = {
-        for (final object in ref.read(constructionProvider).construction.objects)
-          object.id,
-      };
+    for (final object in ref.read(constructionProvider).construction.objects)
+      object.id,
+  };
 
   void clear() => state = const {};
 

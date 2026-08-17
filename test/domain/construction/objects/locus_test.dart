@@ -674,7 +674,9 @@ void main() {
       final locus = rig();
       final canonical = locus.coreSamples!;
       final off = canonical
-          .where((p) => (p.distanceTo(thalesCentre) - thalesRadius).abs() > 1e-6)
+          .where(
+            (p) => (p.distanceTo(thalesCentre) - thalesRadius).abs() > 1e-6,
+          )
           .toList();
       expect(
         off.length,

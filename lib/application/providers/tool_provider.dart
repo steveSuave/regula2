@@ -212,7 +212,8 @@ class ToolNotifier extends _$ToolNotifier {
           when object.attributes.name.isEmpty && object.attributes.visible:
         final name = nextAutoName(used, object);
         used.add(name);
-        final hideLabel = object is GeoLine ||
+        final hideLabel =
+            object is GeoLine ||
             object is GeoCircle ||
             object is GeoPolygon ||
             object is GeoLocus ||

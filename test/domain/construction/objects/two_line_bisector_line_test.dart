@@ -211,8 +211,7 @@ void main() {
       }
     });
 
-    test('nearly parallel lines bisect to the mid-parallel (V1 band gone)',
-        () {
+    test('nearly parallel lines bisect to the mid-parallel (V1 band gone)', () {
       // Sine ≈ 1e-10 between the carriers — inside V1's parallel epsilon,
       // where it returned nothing. The genuine bisector is ≈ y = 0.5.
       final l1 = StubProjectiveLine(ProjLine.real(0, 1, 0));

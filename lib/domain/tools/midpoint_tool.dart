@@ -43,7 +43,11 @@ class MidpointTool extends TwoPointTool {
 
   @override
   List<GeoObject> buildObjects(List<GeoPoint> points) {
-    final midpoint = Midpoint(id: newId(), point1: points[0], point2: points[1]);
+    final midpoint = Midpoint(
+      id: newId(),
+      point1: points[0],
+      point2: points[1],
+    );
     return [if (identical(dedupedDerivedPoint(midpoint), midpoint)) midpoint];
   }
 }

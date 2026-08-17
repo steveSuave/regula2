@@ -94,10 +94,7 @@ void main() {
     CircleCenterPoint circleOf(String id, CircleEq c) => CircleCenterPoint(
       id: id,
       center: FreePoint(id: '$id-o', position: c.center),
-      onCircle: FreePoint(
-        id: '$id-r',
-        position: c.center + Vec2(c.radius, 0),
-      ),
+      onCircle: FreePoint(id: '$id-r', position: c.center + Vec2(c.radius, 0)),
     );
 
     Glados2(any.circleEq, any.circleEq).test(
@@ -121,8 +118,7 @@ void main() {
       },
     );
 
-    test('concentric circles carry ℓ∞: projective value, no affine view',
-        () {
+    test('concentric circles carry ℓ∞: projective value, no affine view', () {
       final o = FreePoint(id: 'o', position: const Vec2(1, 2));
       final c1 = CircleCenterPoint(
         id: 'c1',

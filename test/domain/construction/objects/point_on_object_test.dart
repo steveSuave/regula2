@@ -297,7 +297,11 @@ void main() {
         'projPoint null', () {
       // Wholly at infinity: projLine exists, the chart view does not.
       final atInfinity = StubProjectiveLine(ProjLine.infinity);
-      final onInfinity = PointOnObject(id: 'p', curve: atInfinity, parameter: 2);
+      final onInfinity = PointOnObject(
+        id: 'p',
+        curve: atInfinity,
+        parameter: 2,
+      );
       expect(atInfinity.projLine, isNotNull);
       expect(onInfinity.isDefined, isFalse);
       expect(onInfinity.projPoint, isNull);
@@ -306,7 +310,11 @@ void main() {
       final complexLine = StubProjectiveLine(
         ProjLine(Complex.one, const Complex(0, 1), Complex.zero),
       );
-      final onComplex = PointOnObject(id: 'q', curve: complexLine, parameter: 2);
+      final onComplex = PointOnObject(
+        id: 'q',
+        curve: complexLine,
+        parameter: 2,
+      );
       expect(onComplex.isDefined, isFalse);
       expect(onComplex.projPoint, isNull);
     });
@@ -316,12 +324,7 @@ void main() {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(1, 0));
       final c = FreePoint(id: 'c', position: const Vec2(2, 0));
-      final circle = ThreePointCircle(
-        id: 'k',
-        point1: a,
-        point2: b,
-        point3: c,
-      );
+      final circle = ThreePointCircle(id: 'k', point1: a, point2: b, point3: c);
       expect(circle.conic, isNotNull);
       expect(circle.circle, isNull);
 
@@ -398,10 +401,7 @@ void main() {
         final carrier = line.line!;
         final recovered = carrier.parameterAt(p.position!);
         expect(recovered, closeTo(t, 1e-6 * (1 + t.abs())));
-        expect(
-          carrier.pointAt(recovered).closeTo(p.position!, 1e-6),
-          isTrue,
-        );
+        expect(carrier.pointAt(recovered).closeTo(p.position!, 1e-6), isTrue);
       },
     );
 
@@ -417,10 +417,7 @@ void main() {
         final p = PointOnObject(id: 'p', curve: circle, parameter: t);
         final carrier = circle.circle!;
         final recovered = carrier.angleAt(p.position!);
-        expect(
-          carrier.pointAt(recovered).closeTo(p.position!, 1e-6),
-          isTrue,
-        );
+        expect(carrier.pointAt(recovered).closeTo(p.position!, 1e-6), isTrue);
       },
     );
 

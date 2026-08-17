@@ -20,10 +20,7 @@ import 'tolerances.dart';
 /// multiplicity, at the reduced accuracy inherent to them (a double root is
 /// only good to ~sqrt(machine eps), a triple root to ~cbrt).
 List<Complex> solveCubic(Complex c3, Complex c2, Complex c1, Complex c0) {
-  final scale = math.max(
-    math.max(c3.abs, c2.abs),
-    math.max(c1.abs, c0.abs),
-  );
+  final scale = math.max(math.max(c3.abs, c2.abs), math.max(c1.abs, c0.abs));
   if (scale == 0 || !scale.isFinite) return const [];
   if (c3.abs <= polynomialDegreeDropEpsilon * scale) {
     return solveQuadratic(c2, c1, c0, scale);
@@ -88,7 +85,12 @@ Complex _cbrt(Complex z) {
 }
 
 Complex _polishPolyRoot(
-    Complex x, Complex c3, Complex c2, Complex c1, Complex c0) {
+  Complex x,
+  Complex c3,
+  Complex c2,
+  Complex c1,
+  Complex c0,
+) {
   final f = ((c3 * x + c2) * x + c1) * x + c0;
   final fp = (c3.scale(3) * x + c2.scale(2)) * x + c1;
   if (fp.abs2 < 1e-30) return x;

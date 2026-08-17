@@ -94,15 +94,15 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
         continue;
       }
       groups[switch (object) {
-        GeoPoint() => 'Points',
-        GeoLine() => 'Lines',
-        GeoCircle() => 'Circles',
-        GeoAngle() => 'Angles',
-        GeoPolygon() => 'Polygons',
-        GeoMeasurement() => 'Measurements',
-        GeoText() => 'Texts',
-        GeoLocus() => 'Loci',
-      }]!
+            GeoPoint() => 'Points',
+            GeoLine() => 'Lines',
+            GeoCircle() => 'Circles',
+            GeoAngle() => 'Angles',
+            GeoPolygon() => 'Polygons',
+            GeoMeasurement() => 'Measurements',
+            GeoText() => 'Texts',
+            GeoLocus() => 'Loci',
+          }]!
           .add(object);
     }
     final visibleGroups = [
@@ -157,10 +157,11 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
                             // A divider between groups (not above the
                             // first) keeps the headers readable as
                             // section breaks rather than rows.
-                            for (final (index, MapEntry(
-                                  key: label,
-                                  value: objects,
-                                )) in visibleGroups.indexed) ...[
+                            for (final (
+                                  index,
+                                  MapEntry(key: label, value: objects),
+                                )
+                                in visibleGroups.indexed) ...[
                               if (index > 0)
                                 const Divider(
                                   height: 17,
@@ -169,29 +170,25 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
                                 ),
                               _GroupHeader(
                                 label: label,
-                                ids: [
-                                  for (final object in objects) object.id,
-                                ],
+                                ids: [for (final object in objects) object.id],
                                 // Search overrides folding: a matching row
                                 // hidden inside a folded group would read
                                 // as "no matches".
-                                folded: query.isEmpty &&
-                                    !_expanded.contains(label),
+                                folded:
+                                    query.isEmpty && !_expanded.contains(label),
                                 onToggleFold: query.isEmpty
                                     ? () => setState(() {
-                                          if (!_expanded.remove(label)) {
-                                            _expanded.add(label);
-                                          }
-                                        })
+                                        if (!_expanded.remove(label)) {
+                                          _expanded.add(label);
+                                        }
+                                      })
                                     : null,
                               ),
-                              if (query.isNotEmpty ||
-                                  _expanded.contains(label))
+                              if (query.isNotEmpty || _expanded.contains(label))
                                 for (final object in objects)
                                   _ObjectRow(
                                     object: object,
-                                    selected:
-                                        selectedIds.contains(object.id),
+                                    selected: selectedIds.contains(object.id),
                                   ),
                             ],
                           ],
@@ -244,8 +241,7 @@ class _GroupHeader extends ConsumerWidget {
     return Tooltip(
       message: 'Select all $lower',
       child: InkWell(
-        onTap: () =>
-            select(additive: HardwareKeyboard.instance.isShiftPressed),
+        onTap: () => select(additive: HardwareKeyboard.instance.isShiftPressed),
         onLongPress: () {
           HapticFeedback.selectionClick();
           select(additive: true);
@@ -327,10 +323,11 @@ class _ObjectRow extends ConsumerWidget {
           attributes.visible ? Icons.visibility : Icons.visibility_off,
           size: 18,
         ),
-        onPressed: () => ref.read(commandStackProvider.notifier).execute(
+        onPressed: () => ref
+            .read(commandStackProvider.notifier)
+            .execute(
               ChangeAttributesCommand({
-                object.id:
-                    attributes.copyWith(visible: !attributes.visible),
+                object.id: attributes.copyWith(visible: !attributes.visible),
               }),
             ),
       ),

@@ -108,11 +108,14 @@ GeoObject buildProjectionPoint({
   required String id,
   required GeoPoint through,
   required GeoLine reference,
-}) =>
-    ProjectionPoint(id: id, point: through, line: reference);
+}) => ProjectionPoint(id: id, point: through, line: reference);
 
-GeoObject buildThreePointCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
-    ThreePointCircle(id: id, point1: a, point2: b, point3: c);
+GeoObject buildThreePointCircle(
+  String id,
+  GeoPoint a,
+  GeoPoint b,
+  GeoPoint c,
+) => ThreePointCircle(id: id, point1: a, point2: b, point3: c);
 
 GeoObject buildCompassCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     CompassCircle(id: id, radiusPoint1: a, radiusPoint2: b, center: c);
@@ -123,8 +126,12 @@ GeoObject buildArc(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
 GeoObject buildSector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     Sector(id: id, center: a, start: b, end: c);
 
-GeoObject buildApolloniusCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
-    ApolloniusCircle(id: id, point1: a, point2: b, point3: c);
+GeoObject buildApolloniusCircle(
+  String id,
+  GeoPoint a,
+  GeoPoint b,
+  GeoPoint c,
+) => ApolloniusCircle(id: id, point1: a, point2: b, point3: c);
 
 const _lineBuilders = {
   buildLine,
@@ -184,7 +191,8 @@ class GeometryToolbar extends ConsumerWidget {
     final circlesActive =
         tool is FixedRadiusCircleTool ||
         tool is TriangleCircleTool ||
-        (tool is TwoPointTool && _twoPointCircleBuilders.contains(tool.build)) ||
+        (tool is TwoPointTool &&
+            _twoPointCircleBuilders.contains(tool.build)) ||
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
     // Every conic tool is its own type, so the group needs no builder
     // sets — see `FocalConicTool` for why they are types and not builders.
@@ -318,7 +326,11 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.harmonicConjugateTool,
             ),
             ('Centroid', _center(Centroid.new), AppAction.centroidTool),
-            ('Orthocenter', _center(Orthocenter.new), AppAction.orthocenterTool),
+            (
+              'Orthocenter',
+              _center(Orthocenter.new),
+              AppAction.orthocenterTool,
+            ),
             ('Incenter', _center(Incenter.new), AppAction.incenterTool),
             (
               'Circumcenter',
@@ -329,7 +341,8 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: const Icon(Icons.timeline),
-          tooltip: 'Lines: line, segment, ray, perpendicular, parallel, '
+          tooltip:
+              'Lines: line, segment, ray, perpendicular, parallel, '
               'bisectors, tangents, polar, radical axis',
           active: linesActive,
           items: [
@@ -358,8 +371,10 @@ class GeometryToolbar extends ConsumerWidget {
             (
               'Parallel line',
               _pick(
-                () =>
-                    PointAndLineTool(newId: newObjectId, build: ParallelLine.new),
+                () => PointAndLineTool(
+                  newId: newObjectId,
+                  build: ParallelLine.new,
+                ),
               ),
               AppAction.parallelTool,
             ),
@@ -397,7 +412,8 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: const Icon(Icons.circle_outlined),
-          tooltip: 'Circles: center + rim, by diameter, by radius, '
+          tooltip:
+              'Circles: center + rim, by diameter, by radius, '
               'three-point, compass, arc, sector, nine-point, inscribed, '
               'Apollonius',
           active: circlesActive,
@@ -452,7 +468,8 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: const ConicIcon(),
-          tooltip: 'Conics: through five points, parabola by focus and '
+          tooltip:
+              'Conics: through five points, parabola by focus and '
               'directrix, ellipse and hyperbola by their foci, or by a '
               'given eccentricity',
           active: conicsActive,
@@ -661,7 +678,8 @@ class GeometryToolbar extends ConsumerWidget {
 }
 
 /// Wraps a synchronous tool factory as a [ToolPick].
-ToolPick _pick(Tool Function() create) => () async => create();
+ToolPick _pick(Tool Function() create) =>
+    () async => create();
 
 ToolPick _twoPoint(TwoPointBuilder build) =>
     _pick(() => TwoPointTool(newId: newObjectId, build: build));
@@ -706,9 +724,7 @@ class _ToolGroup extends ConsumerWidget {
       popUpAnimationStyle: AnimationStyle.noAnimation,
       icon: active
           ? IconTheme.merge(
-              data: IconThemeData(
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              data: IconThemeData(color: Theme.of(context).colorScheme.primary),
               child: icon,
             )
           : icon,
@@ -855,11 +871,10 @@ Future<TwoPointBuilder?> askRatioBuilder(BuildContext context) async {
 /// Null when cancelled; unparseable, non-finite or **zero** input reads
 /// as cancel — ratio 0 would collapse every image onto the center,
 /// the [_parseLength] non-positive precedent.
-Future<double?> askDilationRatio(BuildContext context) =>
-    showDialog<double>(
-      context: context,
-      builder: (context) => const _DilationDialog(),
-    );
+Future<double?> askDilationRatio(BuildContext context) => showDialog<double>(
+  context: context,
+  builder: (context) => const _DilationDialog(),
+);
 
 /// Asks for a rotation angle in degrees (counter-clockwise; negative =
 /// clockwise) and returns it in *radians* — the shared path behind the
@@ -903,13 +918,12 @@ Future<double?> _askLength(
   String title,
   AppAction action, {
   String? hint,
-}) =>
-    showDialog<double>(
-      context: context,
-      builder: (context) => hint == null
-          ? _LengthDialog(title: title, action: action)
-          : _LengthDialog(title: title, action: action, hint: hint),
-    );
+}) => showDialog<double>(
+  context: context,
+  builder: (context) => hint == null
+      ? _LengthDialog(title: title, action: action)
+      : _LengthDialog(title: title, action: action, hint: hint),
+);
 
 /// Asks for a conic's eccentricity — the shared path behind the Conics
 /// flyout item and the `G ⇧ C` shortcut. A pure ratio rather than a
@@ -917,21 +931,20 @@ Future<double?> _askLength(
 /// anything else reads as cancel. The three classes are named in the
 /// hint because the number is the only thing that distinguishes them.
 Future<double?> askEccentricity(BuildContext context) => _askLength(
-      context,
-      'Conic eccentricity',
-      AppAction.focalConicTool,
-      hint: 'ratio — below 1 an ellipse, 1 a parabola, above 1 a hyperbola',
-    );
+  context,
+  'Conic eccentricity',
+  AppAction.focalConicTool,
+  hint: 'ratio — below 1 an ellipse, 1 a parabola, above 1 a hyperbola',
+);
 
 /// Asks for a regular polygon's side count — the shared path behind the
 /// Macros flyout item and the `X G` shortcut. Integer 3–100; anything
 /// else (cancel, garbage, out of range) reads as cancel, matching the
 /// other dialog tools.
-Future<int?> askPolygonSideCount(BuildContext context) =>
-    showDialog<int>(
-      context: context,
-      builder: (context) => const _SideCountDialog(),
-    );
+Future<int?> askPolygonSideCount(BuildContext context) => showDialog<int>(
+  context: context,
+  builder: (context) => const _SideCountDialog(),
+);
 
 /// Asks for the Phase 53 naming sequence and returns the configured
 /// [NamePointsTool] — the shared path behind the Points flyout item and
@@ -957,12 +970,11 @@ Future<String?> askTextContent(
   BuildContext context, {
   String? initial,
   required String? Function(String content) validate,
-}) =>
-    showDialog<String>(
-      context: context,
-      builder: (context) =>
-          _TextContentDialog(initial: initial, validate: validate),
-    );
+}) => showDialog<String>(
+  context: context,
+  builder: (context) =>
+      _TextContentDialog(initial: initial, validate: validate),
+);
 
 /// The dialog owns its [TextEditingController] so it outlives the exit
 /// animation (disposing right after `showDialog` returns crashes the
@@ -991,7 +1003,8 @@ class _RatioDialogState extends State<_RatioDialog> {
         controller: _controller,
         autofocus: true,
         decoration: const InputDecoration(
-          hintText: '0 = first point, 1 = second — '
+          hintText:
+              '0 = first point, 1 = second — '
               'e.g. 0.25, 1/4 or 1/sqrt(2)',
         ),
         onSubmitted: (text) => Navigator.pop(context, _parseRatio(text)),
@@ -1042,7 +1055,8 @@ class _DilationDialogState extends State<_DilationDialog> {
         controller: _controller,
         autofocus: true,
         decoration: const InputDecoration(
-          hintText: 'image = center + ratio · (point − center) — e.g. 2, '
+          hintText:
+              'image = center + ratio · (point − center) — e.g. 2, '
               '-1/2 or sqrt(2)',
         ),
         onSubmitted: (text) => Navigator.pop(context, _parse(text)),
@@ -1206,7 +1220,8 @@ class _TextContentDialogState extends State<_TextContentDialog> {
         minLines: 1,
         maxLines: 4,
         decoration: InputDecoration(
-          hintText: 'Wrap live calculations in braces — '
+          hintText:
+              'Wrap live calculations in braces — '
               'e.g. AB = {dist(A, B)}',
           errorText: _error,
         ),
@@ -1252,8 +1267,9 @@ class _NamePointsDialogState extends State<_NamePointsDialog> {
       return;
     }
     if (text.split('').toSet().length != text.length) {
-      setState(() => _error =
-          'Each character may appear only once (names are unique)');
+      setState(
+        () => _error = 'Each character may appear only once (names are unique)',
+      );
       return;
     }
     Navigator.pop(context, NamePointsTool.fromInput(text));
@@ -1270,7 +1286,8 @@ class _NamePointsDialogState extends State<_NamePointsDialog> {
         controller: _controller,
         autofocus: true,
         decoration: InputDecoration(
-          hintText: 'empty = A, B, C…; one letter = start there; '
+          hintText:
+              'empty = A, B, C…; one letter = start there; '
               'a word = one point per letter',
           errorText: _error,
         ),

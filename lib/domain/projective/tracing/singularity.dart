@@ -200,7 +200,6 @@ class SeparationMinimum {
   bool get isCollision => separation <= doubleRootEpsilon;
 }
 
-
 /// Locates the next minimum of [separationAt] ahead of [from] by direct
 /// measurement — a geometric forward bracket followed by a ternary
 /// search — searching no further than [end]. Null when the separation
@@ -417,9 +416,9 @@ class DetourArc {
 
   /// The complex path parameter at arc angle [theta] ∈ [0, π].
   Complex tAt(double theta) => Complex(
-        center + radius * math.cos(theta),
-        orientation * radius * math.sin(theta),
-      );
+    center + radius * math.cos(theta),
+    orientation * radius * math.sin(theta),
+  );
 
   /// Plans the arc from [entry] around the estimated singularity [tStar],
   /// or null when no valid arc exists.
@@ -449,6 +448,7 @@ class DetourArc {
   }
 
   @override
-  String toString() => 'DetourArc(entry: $entry, exit: $exit, '
+  String toString() =>
+      'DetourArc(entry: $entry, exit: $exit, '
       'radius: $radius, orientation: $orientation)';
 }

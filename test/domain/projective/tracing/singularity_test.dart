@@ -5,20 +5,22 @@ import 'package:regula/domain/projective/tracing/singularity.dart';
 
 void main() {
   group('estimateSingularParameter', () {
-    test('recovers t* exactly from the tangency collapse law s = C·√(t*−t)',
-        () {
-      const tStar = 0.4;
-      const c = 3.0;
-      double s(double t) => c * math.sqrt(tStar - t);
-      final estimate = estimateSingularParameter(
-        t1: 0.3,
-        s1: s(0.3),
-        t2: 0.35,
-        s2: s(0.35),
-      );
-      expect(estimate, isNotNull);
-      expect(estimate, closeTo(tStar, 1e-12));
-    });
+    test(
+      'recovers t* exactly from the tangency collapse law s = C·√(t*−t)',
+      () {
+        const tStar = 0.4;
+        const c = 3.0;
+        double s(double t) => c * math.sqrt(tStar - t);
+        final estimate = estimateSingularParameter(
+          t1: 0.3,
+          s1: s(0.3),
+          t2: 0.35,
+          s2: s(0.35),
+        );
+        expect(estimate, isNotNull);
+        expect(estimate, closeTo(tStar, 1e-12));
+      },
+    );
 
     Glados2(
       // t* ∈ [0.05, 1.0], C ∈ [0.1, 5.0]; samples at 3/4 and 7/8 of the
@@ -110,8 +112,7 @@ void main() {
   });
 
   group('DetourArc', () {
-    test('plans a safety-margined arc strictly enclosing the singularity',
-        () {
+    test('plans a safety-margined arc strictly enclosing the singularity', () {
       final arc = DetourArc.plan(entry: 0.3, tStar: 0.4, orientation: 1)!;
       expect(arc.entry, 0.3);
       expect(arc.radius, closeTo(detourSafety * 0.1, 1e-15));
@@ -143,15 +144,17 @@ void main() {
       expect(arc.tAt(math.pi / 2).im, closeTo(arc.radius, 1e-15));
     });
 
-    test('shrinks to fit the path end while still enclosing the singularity',
-        () {
-      // Safety-margined radius would put the exit past 1; the shrunken
-      // arc must still strictly enclose t* and stay strictly inside.
-      final arc = DetourArc.plan(entry: 0.5, tStar: 0.9, orientation: 1)!;
-      expect(arc.exit, lessThan(1));
-      expect(arc.exit, greaterThan(0.9));
-      expect(arc.entry, 0.5);
-    });
+    test(
+      'shrinks to fit the path end while still enclosing the singularity',
+      () {
+        // Safety-margined radius would put the exit past 1; the shrunken
+        // arc must still strictly enclose t* and stay strictly inside.
+        final arc = DetourArc.plan(entry: 0.5, tStar: 0.9, orientation: 1)!;
+        expect(arc.exit, lessThan(1));
+        expect(arc.exit, greaterThan(0.9));
+        expect(arc.entry, 0.5);
+      },
+    );
 
     test('refuses arcs that cannot enclose: singular or near-singular '
         'endpoint, singularity behind the entry', () {
@@ -163,15 +166,23 @@ void main() {
       // t* behind or at the entry.
       expect(DetourArc.plan(entry: 0.5, tStar: 0.5, orientation: 1), isNull);
       expect(DetourArc.plan(entry: 0.5, tStar: 0.4, orientation: 1), isNull);
-      expect(DetourArc.plan(entry: 0.5, tStar: double.nan, orientation: 1), isNull);
-      expect(DetourArc.plan(entry: 0.5, tStar: double.infinity, orientation: 1), isNull);
+      expect(
+        DetourArc.plan(entry: 0.5, tStar: double.nan, orientation: 1),
+        isNull,
+      );
+      expect(
+        DetourArc.plan(entry: 0.5, tStar: double.infinity, orientation: 1),
+        isNull,
+      );
     });
 
     Glados2(
       any.intInRange(0, 900).map((i) => i / 1000),
       any.intInRange(1, 1000).map((i) => i / 1000),
-    ).test('every planned arc strictly encloses t* inside (entry, 1)',
-        (entry, fraction) {
+    ).test('every planned arc strictly encloses t* inside (entry, 1)', (
+      entry,
+      fraction,
+    ) {
       final tStar = entry + fraction * (1 - entry);
       final arc = DetourArc.plan(entry: entry, tStar: tStar, orientation: 1);
       if (arc == null) {
@@ -252,8 +263,7 @@ void main() {
       }
     });
 
-    test('does not throttle when the samples point at no collision ahead',
-        () {
+    test('does not throttle when the samples point at no collision ahead', () {
       expect(
         collisionStepLimit(t1: 0.1, s1: 0.5, t2: 0.2, s2: 0.5),
         double.infinity,
@@ -267,8 +277,7 @@ void main() {
     test('is self-scaling: a slowly closing separation barely throttles', () {
       // s falls by 1% over a 0.1 step: the collision extrapolates ~10
       // units ahead, so nothing near-term is capped.
-      final limit =
-          collisionStepLimit(t1: 0.1, s1: 1.0, t2: 0.2, s2: 0.99);
+      final limit = collisionStepLimit(t1: 0.1, s1: 1.0, t2: 0.2, s2: 0.99);
       expect(limit, greaterThan(1));
     });
   });
@@ -288,8 +297,7 @@ void main() {
       expect(found.isCollision, isTrue);
     });
 
-    test('locates a √ collision — the tangency law — just as accurately',
-        () {
+    test('locates a √ collision — the tangency law — just as accurately', () {
       // Classification is covered below; what matters here is that the
       // parameter comes out right whatever the exponent, which is the
       // whole reason for measuring instead of extrapolating.
@@ -441,8 +449,7 @@ void main() {
     });
 
     test('a near-miss is still refined to the floor — the cheap stopping '
-        'rule applies only once a probe has been below the threshold',
-        () {
+        'rule applies only once a probe has been below the threshold', () {
       // The relaxed rule may never decide the *verdict*: a miss is told
       // from a collision below its own closest approach, so stopping
       // early here would read this profile as a collision — the

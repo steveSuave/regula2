@@ -78,12 +78,12 @@ import 'objects/segment.dart';
 /// the same scan — parents are always in the construction, so they
 /// appear in [objects] like everything else.
 List<Vec2> _incidentPoints(Iterable<GeoObject> objects, GeoLine line) => [
-      for (final object in objects)
-        if (object is GeoPoint &&
-            object.attributes.visible &&
-            structurallyIncident(line, object))
-          ?object.position,
-    ];
+  for (final object in objects)
+    if (object is GeoPoint &&
+        object.attributes.visible &&
+        structurallyIncident(line, object))
+      ?object.position,
+];
 
 /// Ray mode 2: origin end fixed, far end at the outermost incident point
 /// strictly ahead of the origin; null (unclamped) when no visible
