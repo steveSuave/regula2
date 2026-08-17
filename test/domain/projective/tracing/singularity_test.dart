@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:glados/glados.dart';
-import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/tracing/singularity.dart';
 
 void main() {
@@ -203,42 +202,23 @@ void main() {
     });
   });
 
-  group('detourOrientation', () {
-    test('is odd: reversing the drag flips the half-plane', () {
-      const pairs = [
-        (Vec2(0, 5), Vec2(0, 0)),
-        (Vec2(0, 0), Vec2(0, 5)),
-        (Vec2(-1, 2), Vec2(3, -4)),
-        (Vec2(0, 0), Vec2(7, 0)), // horizontal: decided by dx
-        (Vec2(7, 0), Vec2(0, 0)),
-      ];
-      for (final (start, end) in pairs) {
-        final forward = detourOrientation(start, end);
-        final back = detourOrientation(end, start);
-        expect(forward.abs(), 1.0);
-        expect(back, -forward, reason: '$start → $end');
-      }
+  group('detour orientation (Phase 120c convention)', () {
+    test('drags take a constant half-plane', () {
+      // Constant is the design, not an implementation detail: it reads
+      // nothing about the gesture, so pointer noise has no seam to land
+      // on, and it makes a round trip close a loop around the branch
+      // point — which is the honest monodromy of the root split. The
+      // reversal-identity rule it replaced (`detourOrientation`, odd in
+      // the drag direction) is gone; see singularity.dart.
+      expect(dragDetourOrientation.abs(), 1.0);
     });
 
-    test('descending and leftward drags detour upper (the recorded rule)',
-        () {
-      expect(detourOrientation(const Vec2(0, 5), const Vec2(0, 0)), 1);
-      expect(detourOrientation(const Vec2(0, 0), const Vec2(0, 5)), -1);
-      expect(detourOrientation(const Vec2(3, 0), const Vec2(0, 0)), 1);
-      expect(detourOrientation(const Vec2(0, 0), const Vec2(3, 0)), -1);
-    });
-
-    test('the 1D rule (parameter drives) is odd and matches the horizontal '
-        'convention', () {
+    test('the 1D rule stays for locus runs, and is odd', () {
       expect(detourOrientation1D(5, 0), 1);
       expect(detourOrientation1D(0, 5), -1);
       expect(detourOrientation1D(-2, -7), 1);
       for (final (from, to) in const [(0.0, 5.0), (3.0, -4.0), (1.5, 1.6)]) {
         expect(detourOrientation1D(from, to), -detourOrientation1D(to, from));
-        expect(
-          detourOrientation1D(from, to),
-          detourOrientation(Vec2(from, 0), Vec2(to, 0)),
-        );
       }
     });
   });

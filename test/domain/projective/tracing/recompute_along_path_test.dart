@@ -840,31 +840,41 @@ void main() {
       expect(p1.projPoint!.closeTo(tracked1, 1e-6), isTrue);
     });
 
-    test('there and back across the tangency is an identity: each branch '
-        'returns to its own conjugate side (odd orientation, zero net '
-        'winding)', () {
+    test('there and back across the tangency trades the two branches, and '
+        'a second round trip trades them back (Phase 120c: honest '
+        'monodromy)', () {
       final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
       final seed0 = p0.projPoint!;
       final seed1 = p1.projPoint!;
 
-      final down = construction.recomputeAlongPath(
-        'c',
-        const DragPath(Vec2(0, 5), Vec2(0, 0)),
-      );
-      final up = construction.recomputeAlongPath(
-        'c',
-        const DragPath(Vec2(0, 0), Vec2(0, 5)),
-      );
+      void roundTrip() {
+        final down = construction.recomputeAlongPath(
+          'c',
+          const DragPath(Vec2(0, 5), Vec2(0, 0)),
+        );
+        final up = construction.recomputeAlongPath(
+          'c',
+          const DragPath(Vec2(0, 0), Vec2(0, 5)),
+        );
+        expect(down.detours, 1);
+        expect(up.detours, 1);
+      }
 
-      expect(down.detours, 1);
-      expect(up.detours, 1);
-      // A fixed absolute half-plane would swap the conjugates here (one
-      // net winding around the branch point); the odd orientation rule
-      // retraces the same physical side and restores both labels.
+      // The half-plane is constant, so the outward leg passes over the
+      // branch point and the return leg — which parameterizes the reverse
+      // path — passes under it. The round trip closes a loop, and a loop
+      // around a branch point is not the identity: the conjugate mates
+      // trade places. That is the geometry, not an artifact.
+      roundTrip();
+      expect(p0.projPoint!.closeTo(seed1, 1e-9), isTrue);
+      expect(p1.projPoint!.closeTo(seed0, 1e-9), isTrue);
+      expect(chartIm(p0.projPoint!).sign, chartIm(seed1).sign);
+      expect(chartIm(p1.projPoint!).sign, chartIm(seed0).sign);
+
+      // The split is an involution, so going round again restores both.
+      roundTrip();
       expect(p0.projPoint!.closeTo(seed0, 1e-9), isTrue);
       expect(p1.projPoint!.closeTo(seed1, 1e-9), isTrue);
-      expect(chartIm(p0.projPoint!).sign, chartIm(seed0).sign);
-      expect(chartIm(p1.projPoint!).sign, chartIm(seed1).sign);
     });
 
     test('a co-traced regular pair rides the detour unharmed: no enclosed '
@@ -1055,7 +1065,7 @@ void main() {
     });
   });
 
-  group('recomputeAlongPath: detour half-plane alternates (Phase 120c)', () {
+  group('recomputeAlongPath: round trips are honest (Phase 120c)', () {
     /// Two equal-radius circles on free centres, overlapping, with one
     /// crossing materialized — the reported rig, and the shape of
     /// `cinderella-jumping.rgl`. Dragging b left past |ab| = 2r and back
@@ -1081,18 +1091,20 @@ void main() {
       return (construction, p);
     }
 
-    /// Drags b out to x = −300 and back to −120 over [frames] frames each
-    /// way, with [jitter] world units of noise in y — pointer sampling.
-    /// Returns the sign of the surviving crossing's y.
-    double thereAndBack(int frames, double jitter, int seed) {
+    /// Drags b out to x = −300 and back to −120 [trips] times, over
+    /// [frames] frames each way, with [jitter] world units of noise in y
+    /// — pointer sampling. Returns the sign of the crossing's y.
+    double roundTrips(int trips, int frames, double jitter, int seed) {
       final (construction, p) = equalCircles();
       final rng = math.Random(seed);
       final memory = <String, ProjPoint>{};
       var from = const Vec2(-120, 0);
       double y() => (rng.nextDouble() - 0.5) * 2 * jitter;
       final targets = <Vec2>[
-        for (var i = 1; i <= frames; i++) Vec2(-120 - 180 * i / frames, y()),
-        for (var i = 1; i <= frames; i++) Vec2(-300 + 180 * i / frames, y()),
+        for (var trip = 0; trip < trips; trip++) ...[
+          for (var i = 1; i <= frames; i++) Vec2(-120 - 180 * i / frames, y()),
+          for (var i = 1; i <= frames; i++) Vec2(-300 + 180 * i / frames, y()),
+        ],
       ];
       for (final to in targets) {
         try {
@@ -1110,72 +1122,59 @@ void main() {
       return p.position!.y.sign;
     }
 
-    test('a there-and-back drag returns the crossing to its own side, '
-        'whatever the pointer noise', () {
-      // The old rule read the half-plane off the drag direction, taking
-      // its sign from dy and only falling back to dx when dy was exactly
-      // zero — so its seam sat on the horizontal axis, which is where
-      // this gesture lives. Exactly horizontal it was right every time;
-      // with a twentieth of a pixel of noise in y it sent the point back
-      // on the far side of the circle about a third of the time.
-      final start = thereAndBack(20, 0, 0);
+    test('one round trip trades the crossings, two restore them', () {
+      // The detour half-plane is constant, so a round trip closes a loop
+      // around the branch point. A loop around a branch point is not the
+      // identity — the two crossings genuinely trade places, which is
+      // Cinderella's behaviour and the geometry's own answer. The root
+      // split is an involution, so a second trip trades them back.
+      final start = roundTrips(0, 20, 0, 0);
       expect(start, -1, reason: 'the rig starts on the lower crossing');
+      expect(roundTrips(1, 20, 0, 0), -start);
+      expect(roundTrips(2, 20, 0, 0), start);
+      expect(roundTrips(3, 20, 0, 0), -start);
+    });
+
+    test('the outcome does not depend on pointer noise or frame timing', () {
+      // The defect this convention also closes: the old rule read the
+      // half-plane off the drag direction, taking its sign from dy and
+      // consulting dx only when dy was exactly zero — so its seam lay on
+      // the horizontal axis, which is where this gesture lives, and a
+      // twentieth of a pixel of jitter flipped the result about a third
+      // of the time. A constant reads nothing about the gesture, so
+      // there is no seam for noise to land on.
+      final expected = roundTrips(1, 20, 0, 0);
       for (final jitter in [0.0, 0.05, 1.0]) {
         for (var seed = 0; seed < 20; seed++) {
           expect(
-            thereAndBack(20, jitter, 1000 + seed),
-            start,
-            reason: 'jitter $jitter, seed $seed came back on the far side',
+            roundTrips(1, 20, jitter, 1000 + seed),
+            expected,
+            reason: 'jitter $jitter, seed $seed disagreed',
           );
         }
       }
-      // Coarse frames are a fast pointer: fewer, wider passes, which is
-      // where a pass is likeliest to starve rather than detour.
+      // Coarse frames are a fast pointer: fewer, wider passes.
       for (var seed = 0; seed < 20; seed++) {
-        expect(thereAndBack(3, 1, 2000 + seed), start);
+        expect(roundTrips(1, 3, 1, 2000 + seed), expected);
       }
     });
 
-    test('the second detour around a collision takes the other half-plane',
-        () {
-      // The mechanism itself, without the statistics: one crossing out,
-      // one back, and the recorded half-planes must be opposites.
-      final (construction, p) = equalCircles();
-      expect(p.lastDetourOrientation, isNull);
-      final out = construction.recomputeAlongPath(
-        'b',
-        const DragPath(Vec2(-120, 0), Vec2(-300, 0)),
-      );
-      expect(out.detours, 1);
-      final first = p.lastDetourOrientation;
-      expect(first, isNotNull);
-      final back = construction.recomputeAlongPath(
-        'b',
-        const DragPath(Vec2(-300, 0), Vec2(-120, 0)),
-      );
-      expect(back.detours, 1);
-      expect(p.lastDetourOrientation, -first!);
-    });
-
-    test('alternation is not gesture-scoped: a there-and-back split across '
-        'two drags is still an identity', () {
-      // The common way to do it — drag, release, drag back. Anything
-      // that reset at mouse-up would hand the return leg the same
-      // half-plane as the outward one and swap the branches.
+    test('a round trip split across two gestures trades them too', () {
+      // Gesture boundaries drop the seed memory and clear the slots, with
+      // a static solve in between. The half-plane is a constant, so
+      // nothing about the outcome depends on where the gestures split.
       final (construction, p) = equalCircles();
       final side = p.position!.y.sign;
       construction.recomputeAlongPath(
         'b',
         const DragPath(Vec2(-120, 0), Vec2(-300, 0)),
       );
-      // Gesture boundary: seed memory dropped, slots cleared, a static
-      // solve in between — everything a mouse-up does.
       construction.moveFreePoint('b', const Vec2(-300, 0));
       construction.recomputeAlongPath(
         'b',
         const DragPath(Vec2(-300, 0), Vec2(-120, 0)),
       );
-      expect(p.position!.y.sign, side);
+      expect(p.position!.y.sign, -side);
     });
   });
 
@@ -1590,13 +1589,18 @@ void main() {
       expect(p0.projPoint!.closeTo(tracked0, 1e-6), isTrue);
       expect(p1.projPoint!.closeTo(tracked1, 1e-6), isTrue);
 
-      // There and back is an identity: the 1D orientation rule is odd.
+      // A round trip trades the branches, like the free-point drag: the
+      // parameter drive takes the same constant half-plane, so its
+      // reversal closes the same loop around the branch point (Phase
+      // 120c). A second trip restores them.
       final up = construction.recomputeAlongParameterPath('M', bottom, top);
       expect(up.detours, 1);
+      expect(p0.projPoint!.closeTo(seed1, 1e-9), isTrue);
+      expect(p1.projPoint!.closeTo(seed0, 1e-9), isTrue);
+      construction.recomputeAlongParameterPath('M', top, bottom);
+      construction.recomputeAlongParameterPath('M', bottom, top);
       expect(p0.projPoint!.closeTo(seed0, 1e-9), isTrue);
       expect(p1.projPoint!.closeTo(seed1, 1e-9), isTrue);
-      expect(chartIm(p0.projPoint!).sign, chartIm(seed0).sign);
-      expect(chartIm(p1.projPoint!).sign, chartIm(seed1).sign);
     });
 
     test('a circle-carrier drive detours through tangency: the chart form '

@@ -154,13 +154,11 @@ class Construction {
   /// from the last two accepted steps' separations
   /// ([estimateSingularParameter]) and the pass walks a [DetourArc]: the
   /// same interpolation continued holomorphically around the singularity
-  /// through one half-plane of the path's own parameter. Which one
-  /// *alternates per colliding point* — the negation of the half-plane
-  /// that point last detoured in — which is what makes a there-and-back
-  /// drag an identity, and it replaces reading the half-plane off the
-  /// drag direction, whose seam lay on the horizontal axis (Phase 120c;
-  /// see [_alternatingOrientation], which still opens on the direction
-  /// rule for a collision with no history). On the
+  /// through [dragDetourOrientation]'s half-plane of the path's own
+  /// parameter — a **constant**, so a round trip closes a loop around the
+  /// branch point and honestly trades the two roots (Phase 120c; see
+  /// `singularity.dart` for why the constant, and for the
+  /// reversal-identity convention it replaced). On the
   /// arc the affected [IntersectionPoint]s accept complex carriers
   /// ([TracedBranch.allowComplexCarriers], arc-scoped) and the identical
   /// acceptance machinery walks it: away from the singularity the roots
@@ -207,7 +205,6 @@ class Construction {
       id: id,
       driveReal: (t) => object.position = path.at(t),
       driveComplex: (t) => object.tracedPosition = path.evaluate(t),
-      orientation: detourOrientation(path.start, path.end),
       stepBudget: stepBudget,
       seedMemory: seedMemory,
       onStep: onStep,
@@ -260,7 +257,6 @@ class Construction {
         final s = Complex.one - t;
         object.tracedPosition = evaluate(s.scale(from) + t.scale(to));
       },
-      orientation: detourOrientation1D(from, to),
       stepBudget: stepBudget,
       seedMemory: seedMemory,
       onStep: onStep,
@@ -305,8 +301,8 @@ class Construction {
   /// The shared tracing walk (Phases 114–116) behind [recomputeAlongPath]
   /// and [recomputeAlongParameterPath]: [driveReal] puts the dragged
   /// object at real path parameter `t` (including its own recompute, if
-  /// it needs one), [driveComplex] at a complex `t` during a detour arc;
-  /// [orientation] is the drive's odd detour orientation. See
+  /// it needs one), [driveComplex] at a complex `t` during a detour arc.
+  /// Detours take the constant [dragDetourOrientation]. See
   /// [recomputeAlongPath] for the full contract.
   /// [seedMemory], when provided, is *gesture-scoped* continuation state
   /// (Phase 116b): a pass whose start state leaves an intersection
@@ -326,7 +322,6 @@ class Construction {
     required String id,
     required void Function(double t) driveReal,
     required void Function(Complex t) driveComplex,
-    required double orientation,
     required int stepBudget,
     Map<String, ProjPoint>? seedMemory,
     void Function(double t)? onStep,
@@ -580,31 +575,15 @@ class Construction {
                     s2: sepCurr,
                   )
                 : (measured.isCollision && measured.t > t ? measured.t : null);
-            // The half-plane alternates per culprit rather than being
-            // read off the drag direction (Phase 120c — see
-            // [IntersectionPoint.lastDetourOrientation]). [orientation]
-            // is only the opening move, for a collision none of these
-            // points has crossed before.
-            final arcOrientation = _alternatingOrientation(
-              culprits,
-              orientation,
-            );
             final arc = tStar == null
                 ? null
                 : DetourArc.plan(
                     entry: t,
                     tStar: tStar,
-                    orientation: arcOrientation,
+                    orientation: dragDetourOrientation,
                   );
             if (arc != null) {
               traceArc(arc);
-              // Only the culprits wound around anything: the arc encloses
-              // *their* branch point, and every other slot's value is
-              // analytic there, so winding around it is the identity for
-              // them however the arc was oriented.
-              for (final o in culprits) {
-                o.lastDetourOrientation = arcOrientation;
-              }
               detours++;
               TraceDiagnostics.count(TraceCounter.dragDetours);
               t = arc.exit;
@@ -670,52 +649,6 @@ class Construction {
       }
       _notify();
     }
-  }
-
-  /// The half-plane the next detour around [culprits]' collision must be
-  /// walked in: the negation of what they last used, or [fallback] when
-  /// none of them has detoured before.
-  ///
-  /// Alternation is what makes a there-and-back drag an identity, and it
-  /// replaces reading the half-plane off the drag direction — which was
-  /// odd in the direction, as it must be, but took the direction's sign
-  /// from `dy` and only fell back to `dx` when `dy` was *exactly* zero.
-  /// The seam of that rule therefore sat on the horizontal axis, which is
-  /// where "drag the two circles onto each other" lives, so `dy` was pure
-  /// pointer noise and each frame's half-plane was chosen by the sign of
-  /// the jitter. Measured on two equal-radius circles dragged past
-  /// tangency and back: exactly horizontal returned correctly 60 times out
-  /// of 60, and ±0.05 px of y-jitter sent the point back on the far side
-  /// of the circle in about a third of runs (Phase 120c). Any ±1 rule on
-  /// directions has such a seam somewhere; alternation has none because it
-  /// never looks at the direction.
-  ///
-  /// **The trade is that this carries state and so is not
-  /// self-correcting.** A memoryless rule recovers on the next frame; if a
-  /// crossing detours on the way out but the way back bails
-  /// ([TraceStepBudgetException]) instead of detouring, the parity is
-  /// wrong from then on. Detours were measured firing symmetrically on all
-  /// 60 randomized frame subdivisions of the rig above, so this is the
-  /// rare path — but it is a real one.
-  ///
-  /// Histories that disagree fall back rather than picking a winner: the
-  /// culprits of one collision are its two branches and normally share a
-  /// history exactly, so disagreement means the premise does not hold.
-  double _alternatingOrientation(
-    List<IntersectionPoint> culprits,
-    double fallback,
-  ) {
-    double? required;
-    for (final o in culprits) {
-      final last = o.lastDetourOrientation;
-      if (last == null) continue;
-      if (required == null) {
-        required = -last;
-      } else if (required != -last) {
-        return fallback;
-      }
-    }
-    return required ?? fallback;
   }
 
   /// The measured minimum of [culprits]' candidate separation ahead of

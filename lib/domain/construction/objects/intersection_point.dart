@@ -23,13 +23,7 @@ import '../geo_object.dart';
 ///
 /// [branchIndex] (`0..maxBranchCount − 1`) addresses the canonical order,
 /// which agrees with the old deterministic orderings on real transverse
-/// cases (PLAN §Migration). **Every bound on it belongs to
-/// [maxBranchCount]**: the constructor's, `Construction`'s adoption
-/// step and `Construction.setIntersectionBranch`. Three separate `0..1`
-/// literals survived into the conic era and each broke something
-/// different — the constructor threw on the third crossing (120b),
-/// adoption silently collapsed branches onto one index, and the commit
-/// primitive threw out of the drag's command (both 120c).
+/// cases (PLAN §Migration):
 ///
 /// - line ∩ line: one point, the index clamps to it.
 /// - line ∩ circle: ordered along the line's direction. The line parent's
@@ -87,12 +81,18 @@ class IntersectionPoint extends GeoPoint {
   /// conic ∩ conic via the pencil (Phase 105). Line ∩ line has one and
   /// the line ∩ conic and circle ∩ circle pairs two.
   ///
-  /// The bound was `0 or 1` until Phase 120b. That was right for as long
-  /// as every `GeoCircle` was a circle — and it survived Phase 110's
-  /// four-candidate conic ∩ conic solver only because no kind could yet
-  /// *produce* a general conic. The first `FivePointConic` tapped against
-  /// another conic made the tool throw on the third crossing, and would
-  /// have made the codec refuse to reload any document containing one.
+  /// **Every bound on [branchIndex] must derive from this constant** —
+  /// the constructor's, `Construction`'s pass-end adoption step, and
+  /// `Construction.setIntersectionBranch`. Three separate hand-written
+  /// `0..1` literals survived into the conic era and each broke something
+  /// different: the constructor threw on the third crossing (120b);
+  /// adoption silently collapsed branches onto one index, because capping
+  /// it makes adoption *asymmetric* rather than merely partial; and the
+  /// commit primitive threw out of the drag's own command, which is why
+  /// the crossings went on merging in the app after the engine had
+  /// stopped merging them (both 120c). The bound is on the *addressing
+  /// space*, never on the current candidate count — that varies as the
+  /// parents move, and [recompute] clamps to it.
   static const int maxBranchCount = 4;
 
   /// Each a [GeoLine] or [GeoCircle] (enforced in the constructor).
@@ -121,31 +121,6 @@ class IntersectionPoint extends GeoPoint {
   /// sweep-and-restore recompute would drag the root along the sweep
   /// (that machinery dissolves when Phase 117 rewrites loci on tracing).
   final TracedBranch tracedBranch = TracedBranch();
-
-  /// The half-plane (`+1` upper, `−1` lower) of the last detour arc walked
-  /// around a root collision this point took part in, or null if it has
-  /// never detoured. Read and written only by `Construction._traceAlong`.
-  ///
-  /// **This is what makes a there-and-back drag an identity** (Phase
-  /// 120c). Reversing a path conjugates its parameter's imaginary axis —
-  /// the return leg's `Im s > 0` is the outward leg's `Im t < 0` — so the
-  /// two legs trace the *same* bump, and cancel, exactly when they detour
-  /// on opposite sides *in their own parameters*. Each detour therefore
-  /// takes the negation of what this records.
-  ///
-  /// The alternation generalizes past a single clean out-and-back: between
-  /// two consecutive crossings of one singularity the path must leave its
-  /// neighbourhood and come back, crossing every *other* singularity an
-  /// even number of times on the way, so a per-point counter still
-  /// alternates on that point's own crossings and the windings telescope
-  /// to zero.
-  ///
-  /// It is deliberately **not** gesture-scoped: a there-and-back done as
-  /// two separate drags is the common case, and any state that resets at
-  /// mouse-up would hand the return leg the same half-plane as the
-  /// outward one. It is not persisted either — a freshly loaded document
-  /// has no history to be consistent with.
-  double? lastDetourOrientation;
 
   ProjPoint? _point;
   int _candidateCount = 0;
