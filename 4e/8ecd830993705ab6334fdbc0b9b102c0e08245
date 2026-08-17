@@ -1,0 +1,55 @@
+lib/domain/tools/intersection_tool.dart
+  s_17fa7314429764::t_d68c6d6ec5a1c3 74-77,84-86
+  s_17fa7314429764::t_7501cc8c0c63c3 119-126,129,131-132,137-141,147
+  s_17fa7314429764::t_ee5c6c7c222122 25-28,98-99,102-104,115-117
+test/application/persistence/v1_migration_corpus_test.dart
+  s_17fa7314429764::t_a4c92a0e9ae142 9
+  s_17fa7314429764::t_f7a308c0fa2e16 61-78
+test/domain/construction/objects/intersection_pair_order_test.dart
+  s_17fa7314429764::t_b04f2505a54425 1-197
+lib/application/persistence/construction_codec.dart
+  s_17fa7314429764::t_26def58074fb48 258-265,267,275,280-281,283,285,288-289,297,299,302,306
+docs/PLAN.md
+  s_17fa7314429764::t_723be16325aab8 154-158
+docs/STATUS.md
+  s_17fa7314429764::t_596c092043ab5a 11-37
+test/domain/tools/intersection_tool_test.dart
+  s_17fa7314429764::t_fbaaa94c58fb87 94-97
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_17fa7314429764::t_d364063694f0ef 39
+  s_17fa7314429764::t_30584edc6abd32 1519-1525
+  s_17fa7314429764::t_7fe173f459d013 371-372
+  s_17fa7314429764::t_52d3263252c658 357-360,363-364
+  s_17fa7314429764::t_5abc08256fd5d2 1562-1563
+test/domain/construction/objects/locus_test.dart
+  s_17fa7314429764::t_430d4213896bb0 547-551,580
+lib/domain/construction/objects/intersection_point.dart
+  s_17fa7314429764::t_941c1af457c7b8 11
+  s_17fa7314429764::t_6edaeeea0fb2d1 70-84,100,102-108,110-117,123-127,135-162
+  s_17fa7314429764::t_f68b2da87eddf3 54-66
+  s_17fa7314429764::t_de80610189e22c 101,109,118-122
+  s_17fa7314429764::t_40b8a9aa597c96 128-131
+  s_17fa7314429764::t_476f1894c4e59a 271-282
+  s_17fa7314429764::t_f95dfee988d0f3 163
+test/domain/tools/drag_session_tracing_test.dart
+  s_17fa7314429764::t_037151c5052fef 285-289,296-297,331,335,346
+  s_17fa7314429764::t_6e198a55cf5096 302,307,313
+docs/TODO.md
+  s_17fa7314429764::t_1b1338457f1c96 139-142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "4e8ecd830993705ab6334fdbc0b9b102c0e08245",
+  "prompts": {},
+  "sessions": {
+    "s_17fa7314429764": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "547c8021-d6cb-4838-8d42-3db8e1c0c4a4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
