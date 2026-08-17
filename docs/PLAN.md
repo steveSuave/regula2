@@ -209,7 +209,7 @@ The obvious carrier is the conic itself, and for two of the three geometries tha
 
 ### Four tiers of kind, not two, and the affine one is the finding (pinned in Phase 123)
 
-The outline said measurement switches and incidence does not. Between them sit the *affine* kinds, and they are the milestone's real cost. Measured by import census over the 52 object files: 12 import `euclidean.dart`, 14 import `circles.dart` / `angle_geometry.dart` / `triangle_centers.dart`, one overlaps — **25 of 52 kinds are geometry-dependent**, and they do not all switch the same way.
+The outline said measurement switches and incidence does not. Between them sit the *affine* kinds, and they are the milestone's real cost. The tiers, and the audit that filled them in, are below; the counts are the audit's, not the import census's, which undercounted badly (§"The audit").
 
 1. **Incidence** — joins, meets, `IntersectionPoint`, `PolarLine`, `TangentLine`, `FivePointConic`, `HarmonicConjugatePoint`. Projective, untouched, and the reason the kernel track was worth doing.
 2. **Affine (ℓ∞-founded)** — `Midpoint`, `Centroid`, `ParallelLine`, `TranslatedPoint`, `SegmentRatioPoint`, `HomotheticPoint`, `CentralReflectionPoint`. These read the *line* at infinity rather than the two points on it, and ℓ∞ is distinguished **only because the Euclidean absolute is degenerate and ℓ∞ is the line carrying it**. With a proper absolute conic there is no distinguished line, so nothing here is automatic. They split by whether the construction is secretly harmonic:
@@ -221,20 +221,53 @@ The outline said measurement switches and incidence does not. Between them sit t
 
 **Phase 122's circle fast path is Euclidean-specific and is safe anyway** — worth recording, because it looks like a correctness dependency hiding inside a performance optimization and is not one. `intersectionCandidates` short-circuits two circles on the exact test `xy = 0, xx = yy`, which is the *Euclidean* circle shape. Under another absolute a "circle" is bitangent to it and does not have that shape, so the test simply does not fire and the general pencil route runs — correct, only slower. The dispatch being exact rather than tolerant is what makes this automatic; a tolerance would have had to be re-derived per geometry.
 
-### How the absolute reaches a recompute is decided by the audit, not before it (pinned in Phase 123)
+### The audit: 38 of 50 kinds, and the import census was not close (pinned in Phase 123)
 
-`GeoObject.recompute()` takes no arguments and objects hold no back-reference to their `Construction`, so there is today no route by which an ambient setting could reach a kind. The candidates each have a real cost — threading it as a parameter churns a signature the reuse contract protects across all 52 kinds; a back-reference puts a `Construction` into every stub test and a cycle into the model; a scoped ambient value keeps the signature but reintroduces exactly the hidden global state the pure-domain rule exists to prevent.
+`lib/domain/construction/objects/` holds **53 files: 50 concrete kinds and 3 abstract bases** (`RelativeLine`, `TriangleCenterPoint`, `TriangleCircle`). Phase 121's "44 kinds" is these 50 minus the six measurement kinds, which carry no projective value and so had no degeneracy convention to audit — the two counts agree, they answer different questions.
 
-**This is deliberately left open until the audit closes.** The lesson of Phase 122 is that the representation question should be answered after measuring which code actually holds the problem, and the same applies here: if the 25 geometry-dependent kinds all reach the metric through three kernel modules, then threading the absolute into *those* and giving their callers one route to it is the whole change, and the right route is obvious once the caller list is exact rather than estimated. Choosing now would be guessing at a number Phase 123 is going to produce.
+**Absolute-dependent: 38 of 50** — tier 1 twelve, tier 2 seven, tier 3 twenty-five, tier 4 six. The import census that scoped this phase said 25, and it was wrong in the way censuses are: it counted imports of `euclidean.dart`, `circles.dart`, `angle_geometry.dart` and `triangle_centers.dart` and so missed two whole routes to the metric.
+
+- **`proj_transform.dart` is a fifth metric kernel module.** Five transform kinds reach the absolute through it and import none of the four: `ReflectedPoint` and `RotatedPoint` are metric, `TranslatedPoint`, `HomotheticPoint` and `CentralReflectionPoint` affine. `ProjTransform.reflection` even carries `a² + b²` in its `m22` — a **third** independent arrival at the dual absolute, after `normalDirectionOf` and `focalConicOf`.
+- **The six measurement kinds import nothing metric because they measure in the chart directly** — `toVec2().distanceTo`, `AngleGeometry.fromRays`, `CircleEq.radius`. That is the Phase 112 metric boundary working exactly as designed, and it makes them invisible to an import census.
+
+| Tier | Count | Kinds | Reached through |
+|---|---|---|---|
+| 1 · incidence — no change | 12 | `FreePoint`, `LineThroughTwoPoints`, `PolarLine`, `TangentLine`, `FivePointConic`, `HarmonicConjugatePoint`, `Segment`, `Ray`, `Polygon`, `PointOnObject`, `Locus`, `ExpressionText` | join / meet / pole / polar of the *parents*, cross-ratio |
+| 2 · affine — ℓ∞-founded | 7 | `Midpoint`, `Centroid`, `SegmentRatioPoint`, `TranslatedPoint`, `HomotheticPoint`, `CentralReflectionPoint`, `ParallelLine` | `midpointOf`, `centroidOf`, `lerpOf`, `parallelThrough`, `ProjTransform.{translationTaking, homothety, pointReflection}` |
+| 3 · metric — I,J-founded | 25 | the perpendiculars and bisectors, all eleven circle kinds, `ReflectedPoint`, `RotatedPoint`, `ProjectionPoint`, `Circumcenter`, `Orthocenter`, `Incenter`, `RadicalAxisLine`, `CircleCenter`, `FocalConic`, `BifocalConic`, `Arc`, `Sector`, **`IntersectionPoint`** | `euclidean.dart`, `circles.dart`, `conics.dart`, `triangle_centers.dart`, `ProjTransform.{reflection, rotation}`, `isCircularPoint` |
+| 4 · chart-metric — measurements | 6 | `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `VertexAngle`, `LineAngle`, `SlopeMeasurement` | `toVec2` / `toCircleEq` / `toLineEq`, then chart arithmetic |
+
+**The metric is one operation, not a scattering — pole/polar against the absolute, plus harmonic conjugation.** This is the audit's structural result and it is what makes the milestone tractable. Read as projective constructions rather than as formulas, most of tier 2 and tier 3 are already the CK construction with the Euclidean absolute substituted in:
+
+- `perpendicularThrough(P, ℓ) = P ∨ normalDirectionOf(ℓ)`, and `normalDirectionOf(ℓ)` **is** the pole of `ℓ` w.r.t. the absolute. Generalizes verbatim.
+- `ReflectedPoint` is the harmonic homology with axis `ℓ` and centre the pole of `ℓ`; `CentralReflectionPoint` is the harmonic homology with centre `C` and axis the polar of `C`, which under the Euclidean absolute is ℓ∞ — which is why it currently reads as an affine homothety of ratio −1. Both generalize verbatim.
+- `Midpoint` is the harmonic conjugate of `AB ∩ ℓ∞`, i.e. of the absolute's points on `AB`, as above.
+
+So the tier-3 work is largely *rewriting formulas as the pole/polar constructions they already are* and then substituting — not inventing per-kind CK geometry. The exceptions are real and are where Phases 124–125 will actually spend: `Incenter` and `InscribedCircle` route through `triangle_centers.dart`, which computes in `Vec2` and lifts back, so they need re-founding rather than substitution; `RadicalAxisLine` relies on the exact Euclidean circle coefficient shape; `CircleCenter` is `poleOf(ℓ∞)` and the CK centre is the pole of the chord of contact with the absolute, a different line; `FixedRadiusCircle` carries a **radius as a stored param**, which is a metric quantity and so changes meaning with the geometry; `BifocalConic` was already recorded in §"The conic constructors" as the one that genuinely needs the chart.
+
+**`branchIndex` addressing is relative to the absolute, and that is the milestone's sharpest constraint.** `intersectionCandidates` filters `isCircularPoint` out of its candidate list on *both* the line∩conic and conic∩conic routes, and `_canonicalOrder` keys on the directed centre line, a centre being `poleOf(ℓ∞)`. Both are Euclidean. So the candidate list a `branchIndex` addresses — the address space every saved document is written in, and the one PLAN calls permanent — **is a function of the document's absolute.** Consequences, all of which land on the milestone rather than on Phase 123:
+
+- Per-document this is consistent: the absolute is fixed at load, so a document's addresses mean what they meant when it was saved. Nothing existing breaks.
+- **Switching a live document's geometry is a re-addressing event**, not a display setting. Every `IntersectionPoint` may need re-pointing, by chordal match, exactly as the Phase 120c decoder repair re-points a duplicate. The alternative — refuse to switch a document containing intersection points — is worse UX for the same correctness.
+- This is precisely the failure class Phase 120c spent a phase on (two points silently sharing one crossing, permanently, saveable). The mode switch must go through a command that re-points and reports, or it will reproduce it.
+
+### The threading decision, closed on the audit (pinned in Phase 123)
+
+The previous section left this open pending the caller count, on Phase 122's rule. The count came back **38 of 50**, so the ambient setting is not an exceptional dependency to be smuggled in — it is nearly universal, and a nearly universal dependency belongs in the signature.
+
+**`GeoObject.recompute()` gains the absolute as a parameter.** The twelve tier-1 kinds ignore it. This keeps every kind a pure function of (parents, params, ambient), keeps the domain layer free of ambient state, and — the property M-CK actually needs — lets a test ask one kind the same question under two geometries with no global to set and unset.
+
+Rejected, with reasons, so they are not revisited: a **back-reference** from `GeoObject` to its `Construction` puts a cycle in the model and forces a whole `Construction` into every stub test, of which this suite has many; a **scoped ambient value** keeps the signature but reintroduces exactly the hidden global state the pure-domain rule exists to prevent, and would be read from inside a traced pass, where it would be invisible. The reuse contract's protection of `construction.dart` is of its *algorithm* — insertion-order-is-topological-order, the dependents map, one notification — not of the arity of the call it makes seven times.
 
 ### The phase decomposition
 
-- **Phase 123 — the absolute, and the audit that scopes the milestone.** The `Absolute` type (dual primary) with the three instances; `DocumentKernel` carried from the codec into `Construction` and the providers so the setting exists end to end and round-trips; hyperbolic and elliptic still refused at load. The per-kind audit across all 52 files, classifying each into the four tiers above and naming the refusals. **Zero Euclidean behaviour change** is the safety property that makes everything after it incremental — the suite, the goldens and the tracing checksums must all be untouched.
-- **Phase 124 — measurement on cross-ratio.** The tier-4 kinds re-founded, with Euclidean as the degenerate case that reproduces today's numbers.
-- **Phase 125 — perpendicularity, circles and the tier-2/3 substitutions**, plus the refusals made real in the tools and the inspector.
-- **Phase 126 — the mode as a UI**, disc-boundary rendering for hyperbolic, and the codec's refusal turned into support.
+- **Phase 123 — the absolute, and the audit that scopes the milestone.** The `Absolute` type (dual primary) with the three instances; `DocumentKernel` carried from the codec into `Construction` and the providers so the setting exists end to end and round-trips; hyperbolic and elliptic still refused at load. The audit above, across all 53 files. **Zero Euclidean behaviour change** is the safety property that makes everything after it incremental — the suite, the goldens and the tracing checksums must all be untouched.
+- **Phase 124 — measurement on cross-ratio.** The tier-4 kinds re-founded, with Euclidean as the degenerate case that reproduces today's numbers. Their *anchors* stay chart quantities: an anchor is where a label is drawn, not something measured.
+- **Phase 125 — the tier-2/3 substitutions**, taken in the order the audit gives them: the verbatim pole/polar generalizations first, then the five genuine re-foundings (`Incenter`/`InscribedCircle`, `RadicalAxisLine`, `CircleCenter`, `FixedRadiusCircle`'s radius param, `BifocalConic`), then the refusals made real in the tools and the inspector.
+- **Phase 126 — the mode as a UI**, disc-boundary rendering for hyperbolic, the codec's refusal turned into support, and the geometry switch as a **re-addressing command** per §"The audit" — it re-points intersection points and reports, or it reproduces the Phase 120c defect.
 
-Numbering after 123 is provisional and will move as the audit lands.
+Numbering after 123 is provisional and will move as 124 lands.
+
 
 ## Milestone outlines
 
