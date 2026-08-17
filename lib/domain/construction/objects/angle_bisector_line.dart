@@ -2,7 +2,7 @@ import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
-import '../../projective/euclidean.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';

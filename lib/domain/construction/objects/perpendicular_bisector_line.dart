@@ -1,6 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../projective/absolute.dart';
-import '../../projective/euclidean.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 

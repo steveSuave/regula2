@@ -1,6 +1,6 @@
 import '../../projective/circles.dart';
 import '../../projective/conic_matrix.dart';
-import '../../projective/euclidean.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_circle.dart';
 

@@ -3,7 +3,7 @@
 /// A real circle is exactly a real conic through the circular points I and
 /// J (`conic_matrix.dart`), so every Euclidean circle construction has a
 /// polynomial formula in homogeneous coordinates. Everything here follows
-/// the layer conventions (`euclidean.dart`): holomorphic — no conjugation,
+/// the layer conventions (`metric.dart`): holomorphic — no conjugation,
 /// no division, no square roots — and multihomogeneous in each argument,
 /// so rescaling an input rescales the output and the projective value is
 /// invariant. Degenerate inputs propagate as the zero matrix or a

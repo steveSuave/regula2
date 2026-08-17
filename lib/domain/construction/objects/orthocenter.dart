@@ -1,4 +1,4 @@
-import '../../projective/euclidean.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_center_point.dart';
 

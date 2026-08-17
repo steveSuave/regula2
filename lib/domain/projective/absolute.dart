@@ -192,7 +192,7 @@ class Absolute {
   /// This is the metric's single most-used operation. Under [euclidean] it
   /// is `[a : b : 0]`, the point at infinity of the directions
   /// perpendicular to [l] — so `perpendicularThrough(p, l)` is the join of
-  /// `p` with this point in *every* geometry, and `euclidean.dart`'s
+  /// `p` with this point in *every* geometry, and `metric.dart`'s
   /// `normalDirectionOf` is this function with the absolute inlined.
   ProjPoint poleOf(ProjLine l) => dualConic.applyToLine(l);
 

@@ -1,6 +1,6 @@
 /// **V1's affine bisector routines, frozen as a test oracle.**
 ///
-/// Superseded in Phase 110 by `lib/domain/projective/euclidean.dart`
+/// Superseded in Phase 110 by `lib/domain/projective/metric.dart`
 /// (`angleBisectorOf` / `twoLineBisectorOf`) and left with no `lib/`
 /// consumer; moved here in Phase 121.
 ///
