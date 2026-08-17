@@ -1,0 +1,23 @@
+lib/domain/projective/conic_shape.dart
+  s_17fa7314429764::t_dc711711e66f34 543-563,572
+test/domain/projective/conic_shape_test.dart
+  s_17fa7314429764::t_df6a5953217241 528-537,539-541,543-547,551-558,560-561,571-572
+  s_17fa7314429764::t_1fc7ccbdc8a8e8 9,594-599,606-607,628,633-634
+  s_17fa7314429764::t_49e0947eaf39ed 495-527,538,542,548-550,559,562-570,573-593,600-605,608-627,629-632,635-643
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7000c984d4e73ca243e5baeeabc46c0a626cf0a8",
+  "prompts": {},
+  "sessions": {
+    "s_17fa7314429764": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "547c8021-d6cb-4838-8d42-3db8e1c0c4a4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
