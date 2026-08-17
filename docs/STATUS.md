@@ -8,6 +8,35 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 130 (V2 Session 32) — 2026-08-18
+
+**Done — Phase 126 (M-CK3) complete on `phase-126-ck-ui`, five commits.** The first phase of the milestone the user can *see*: three phases of kernel work were reachable only from tests, and this one opens the door. Suite **2500** green (from 2471), analyze clean, 32 goldens byte-identical, perf gate PASS at 1% / 7% of budget with unchanged checksums, `flutter build web --wasm` compiles.
+
+- **The order was the design: the tool layer first, the codec's refusal last.** The refusal had been standing in for threading that was missing, so deleting it first would have shipped the failure it was protecting against. `ToolInput.absolute` is filled by the canvas from `Construction.kernel` and threaded through `resolvePoint`, `IntersectionTool`, `MidpointTool`, `MultiPointTool` and the macro tools; the `IntersectionPoint` factory takes it for the canonical remap alone.
+- **Two findings from that threading, both pre-existing.** `coincidentExistingPoint` does not merely *answer* in the wrong geometry when defaulted — it perturbs every mutable root and recomputes the **whole construction**, so it leaves the entire document computed Euclidean, silently, until something else happens to recompute it. And three `recompute()` calls in `locus.dart` were still on the default: the static settle after a sweep, and both drive steps inside `_TracedSweep`, which had the absolute in hand the whole time.
+- **The re-addressing premise is now demonstrated, not argued.** Two `FivePointConic`s through Euclidean-concyclic points that *miss*: two candidates under Euclidean, four under hyperbolic, and I and J sort **around** the complex pair rather than after it — so address 0 is a crossing in one geometry and a circular point in the other. A five-point conic is tier 1, so both conics are bit-identical in both geometries and the crossings do not move by an ulp. Only the numbering does.
+- **`Construction.kernel` stopped being `final` without becoming a setter.** The only route is `switchKernel`, which switches, recomputes, re-points by chordal match and returns the report — there is no call that switches without re-addressing. The rule generalizes and is in PLAN: **when a mutation carries an obligation, make the obligation the only route rather than a rule the caller must remember.**
+- **`SetGeometryCommand` records what the switch decided and replays it verbatim.** Nearest-match is not invertible: running it backwards can land a point where it never was, and a point with no position at the switch was never matched in either direction. What could not be matched is *reported*, not repaired.
+- **The codec's refusal became support** — hyperbolic and elliptic documents load and round-trip with their geometry intact. The first guard stays: an *unknown* metric name is still refused. Version rule untouched, `test/fixtures/` still v1.
+- **Disc-boundary rendering, and two deliberate silences.** `absoluteDisc` gives the hyperbolic unit circle with the outside washed, because that region is not part of the plane. Elliptic draws nothing because it *has* no real absolute and no edge; Euclidean because its absolute is ℓ∞, real but in no chart. Centre and radius come from the viewport, which is exact under rotation rather than approximate.
+- **The mode as UI**: a geometry menu beside "Axes & grid", the switch through the command stack so it undoes like the edit it is, and the re-addressing report in a snack bar. Plus **the mini-tutorial the user asked for**, in the menu itself — four things to build that look different in each geometry, and the note that nothing in the toolbar changes; what changes is which theorems are true.
+- **Gauss–Bonnet is a test now, not a promise.** A triangle's angle sum is exactly π under Euclidean, less under hyperbolic, more under elliptic, and the hyperbolic defect grows with the triangle and vanishes in the small limit. That is a *global* fact about three independent `VertexAngle`s, so an angle measure wrong by a scale, a sign, a supplement or a chart artefact cannot survive it — and it is the first claim the in-app guide makes, which is the right one to verify first.
+
+**Next**
+- Merge `phase-126-ck-ui`. That closes M-CK's four opened phases; the milestone's remaining work is the debt below rather than a numbered plan.
+- **The load-time report for `repairedIntersections`** — long-standing, and now cheap: the geometry switch built exactly the reporting path the decoder needs, and the decoder still computes its repair list and shows nobody.
+- Phase 125's coverage-gate debt: per-kind correctness beyond angle, and **`RotatedPoint`**, which is a gap rather than a refusal (a rotation about the disc centre *is* the Euclidean matrix).
+- Still open, unchanged: the wasm browser smoke with the first deploy (the build compiles, the repo has no remote); no reply from the reporter on the mixed-tap-order re-test.
+
+**Gotchas**
+- **A whole-construction probe's parameter is not just what it answers in — it is what the document is left in.** `coincidentExistingPoint` restores the roots bit-exactly and then recomputes; a wrong absolute on that last pass rewrites every derived object in the document. Anything that recomputes more than its own subject needs the same scrutiny.
+- **`branchIndex` divergence hides where taps cannot reach.** Real crossings are tier 1 of canonical order in every geometry, so a tap on a visible crossing addresses identically under either absolute — which is why the tool-layer hole was invisible. The divergence lives in the *complex* candidates, where I and J interleave, and it surfaces on reload. A test that only taps real crossings proves nothing here.
+- **The re-addressing report is usually empty, and that is correct.** Most of a document is real transverse crossings that keep their indices. An unconditional "your points may have moved" warning would be noise and would train the user to dismiss the one time it matters.
+- **Elliptic drawing nothing is a fact, not a TODO.** Twice while writing this it looked like a gap to fill. Elliptic space has no boundary and no unreachable region; anything drawn there is an edge the geometry does not have.
+- The macro tools (square, rhombus, rectangle, parallelogram, right trapezium) now pass the absolute to their `IntersectionPoint`s, but they are still **Euclidean-shape** constructions built on parallels and perpendiculars, and `parallelThrough` refuses under a proper absolute. They degrade rather than generalize; that is expected and unaddressed.
+
+---
+
 ## Session 129 (V2 Session 31) — 2026-08-18
 
 **Done — Phase 125 (M-CK2) complete and merged.** The bulk of the milestone: 32 kinds, zero Euclidean behaviour change. Suite **2471** green (from 2438), analyze clean, 32 goldens byte-identical, perf gate PASS at 7% of budget with unchanged checksums. Merged as `1b76be8`.
