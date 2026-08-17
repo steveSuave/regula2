@@ -1,0 +1,39 @@
+lib/domain/construction/document_kernel.dart
+  s_864df67dc11e5d::t_28c7124eed803f 1-22
+  s_864df67dc11e5d::t_c1305b32e900cc 23
+lib/application/persistence/construction_codec.dart
+  s_864df67dc11e5d::t_bde186c627ca19 2
+  s_864df67dc11e5d::t_b34be14f2e9fa9 212
+  s_864df67dc11e5d::t_035910d2fe4e0d 114-119
+test/domain/projective/absolute_test.dart
+  s_864df67dc11e5d::t_7c8310a471d932 1-90,95-136,143-155,159-162,167-205,209-214
+  s_864df67dc11e5d::t_4844e91e1c3432 91-94,137-142,156-158,163-166,206-208
+lib/domain/projective/conic_matrix.dart
+  s_864df67dc11e5d::t_83822761f76ec1 217-228
+lib/domain/projective/absolute.dart
+  s_864df67dc11e5d::t_53d14021030b9b 1-245
+lib/domain/construction/construction.dart
+  s_864df67dc11e5d::t_3cec1889d1a2be 13
+  s_864df67dc11e5d::t_271aefa5e2d523 38-53
+test/application/persistence/codec_v2_test.dart
+  s_864df67dc11e5d::t_4e9e99e12965c3 7
+  s_864df67dc11e5d::t_6bda92a0de5af6 21-24,27,50-52
+  s_864df67dc11e5d::t_ea7fd5f70bc64f 158-173
+  s_864df67dc11e5d::t_659ded2963f275 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8fe4e77ad8454c5e6585e6b1db68053ea7b96097",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
