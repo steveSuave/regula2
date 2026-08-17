@@ -333,6 +333,52 @@ void main() {
       );
     });
 
+    test('the reversed parent order dedups too, defined or not '
+        '(Phase 120c)', () {
+      // `branchIndex` addresses the canonical order of
+      // `intersectionCandidates(curve1, curve2)`, which is not the order
+      // of the reversed pair — so the same crossing carries a different
+      // index depending on which curve the user tapped first. Proximity
+      // covered that while the crossing was real; with it complex, the
+      // reversed tap built a fresh duplicate. That is how the reported
+      // document came to hold points on *both* orderings, two of them
+      // exact duplicates of points it already had.
+      final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
+      final circle = circleAtOrigin();
+      var objects = <GeoObject>[o, x, horizontal, circle];
+      final existing = committedPoint(
+        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal))).onInput(
+          ToolInput(const Vec2(3.9, 0.1), hit: circle),
+        ),
+      );
+      objects = [...objects, existing];
+
+      expect(
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: circle, objects: objects),
+            ))
+            .onInput(
+              ToolInput(const Vec2(3.9, 0.1), hit: horizontal, objects: objects),
+            ),
+        isA<ToolIgnored>(),
+        reason: 'the same crossing, collected the other way round',
+      );
+      // The *other* crossing is still free in either order.
+      expect(
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: circle, objects: objects),
+            ))
+            .onInput(
+              ToolInput(
+                const Vec2(-3.9, 0.1),
+                hit: horizontal,
+                objects: objects,
+              ),
+            ),
+        isA<ToolCommitted>(),
+      );
+    });
+
     test('two lines sharing a defining point reuse that point', () {
       final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
       final vertical = LineThroughTwoPoints(id: 'v', point1: o, point2: y);

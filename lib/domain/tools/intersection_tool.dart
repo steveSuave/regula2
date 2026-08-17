@@ -3,6 +3,8 @@ import '../construction/geo_object.dart';
 import '../construction/incidence.dart';
 import '../construction/objects/intersection_point.dart';
 import '../math/vec2.dart';
+import '../projective/proj_point.dart';
+import '../projective/tracing/traced_branch.dart';
 import 'point_coincidence.dart';
 import 'point_resolution.dart';
 import 'tool.dart';
@@ -22,12 +24,13 @@ import 'tool.dart';
 /// pair intersected twice — so the tap is refused instead of stacking a
 /// duplicate on it, like the transform tool's duplicate image (Phase
 /// 40); the collected curve stays armed. "Already on this branch" is an
-/// [IntersectionPoint] built on the same ordered pair at the same index,
-/// or any point [structurallyIncident] on both curves whose position
-/// classifies to it. A multi-branch pair dedups per branch: an existing
-/// point on another branch doesn't block this one. A point occupying the
-/// crossing by
-/// *theorem* rather than by incident parents (a centroid at the third
+/// [IntersectionPoint] on the same *unordered* pair whose branch is this
+/// one — directly when it was built in this parent order, and by matching
+/// the two orders' candidates when it was built in the other — or any
+/// point [structurallyIncident] on both curves whose position classifies
+/// to it. A multi-branch pair dedups per branch: an existing point on
+/// another branch doesn't block this one. A point occupying the crossing
+/// by *theorem* rather than by incident parents (a centroid at the third
 /// median's crossing) is caught by the numeric identity probe
 /// ([coincidentExistingPoint]) and refused the same way.
 ///
@@ -106,24 +109,60 @@ class IntersectionTool implements ToolInputPreview {
   /// The structural test is what stops accumulation across a degeneracy
   /// (Phase 120c). Proximity can only speak for a point that has a
   /// position, so while the crossings are complex — mid-drag, or with
-  /// the curves pulled apart — every tap on the pair used to look
-  /// unoccupied and stacked another point. The user's file had six on
-  /// one conic pair, four of them at the same branch.
+  /// the curves pulled apart — every tap on the pair looked unoccupied
+  /// and stacked another point. The reported file had six on one conic
+  /// pair, two *exact* duplicates among them (same ordered parents, same
+  /// branch — the same intersection object twice, which no later fix can
+  /// separate because they are by construction the same point).
+  ///
+  /// It also spans **parent order**. `branchIndex` addresses the canonical
+  /// order of `intersectionCandidates(curve1, curve2)`, which is not the
+  /// order of the reversed pair, so a point built by tapping the two
+  /// curves the other way round carries a different index for the same
+  /// crossing. Proximity papered over that while the crossing was real;
+  /// with it complex, the reversed-order tap built a fresh duplicate —
+  /// which is how the reported file came to hold points on *both*
+  /// orderings. Reversed candidates are therefore matched to this pair's
+  /// by nearest chordal distance, a measure that is defined on complex
+  /// candidates too.
   bool _existingIntersection(
     Iterable<GeoObject> objects,
     GeoObject curve1,
     GeoObject curve2,
     int index,
   ) {
+    List<ProjPoint>? here;
     for (final object in objects) {
       if (object is! GeoPoint || !object.attributes.visible) {
         continue;
       }
-      if (object is IntersectionPoint &&
-          identical(object.curve1, curve1) &&
-          identical(object.curve2, curve2) &&
-          object.branchIndex == index) {
-        return true;
+      if (object is IntersectionPoint) {
+        final sameOrder = identical(object.curve1, curve1) &&
+            identical(object.curve2, curve2);
+        final reversed = identical(object.curve1, curve2) &&
+            identical(object.curve2, curve1);
+        if (sameOrder && object.branchIndex == index) {
+          return true;
+        }
+        if (reversed) {
+          here ??= intersectionCandidates(curve1, curve2);
+          final theirs = intersectionCandidates(object.curve1, object.curve2);
+          if (object.branchIndex < theirs.length && here.isNotEmpty) {
+            final target = theirs[object.branchIndex];
+            var best = 0;
+            var bestDistance = double.infinity;
+            for (var i = 0; i < here.length; i++) {
+              final d = TracedBranch.chordalDistance(target, here[i]);
+              if (d < bestDistance) {
+                bestDistance = d;
+                best = i;
+              }
+            }
+            if (best == index) {
+              return true;
+            }
+          }
+        }
       }
       if (object.position != null &&
           structurallyIncident(curve1, object) &&
