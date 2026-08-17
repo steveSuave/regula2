@@ -1,5 +1,6 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 
@@ -45,7 +46,7 @@ class PolarLine extends GeoLine {
   List<GeoObject> get parents => [point, circle];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = point.projPoint;
     final a = circle.conic;
     if (p == null || a == null) {

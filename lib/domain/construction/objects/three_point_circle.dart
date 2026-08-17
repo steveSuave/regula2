@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
@@ -42,7 +43,7 @@ class ThreePointCircle extends GeoCircle {
   List<GeoObject> get parents => [point1, point2, point3];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p1 = point1.projPoint;
     final p2 = point2.projPoint;
     final p3 = point3.projPoint;

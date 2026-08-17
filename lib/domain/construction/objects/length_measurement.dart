@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../geo_object.dart';
 import 'sector.dart';
 
@@ -53,7 +54,18 @@ class LengthMeasurement extends GeoMeasurement {
   List<GeoObject> get parents => [subject];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean-only (Phase 124). Arc length is an *integral* of distance, not a substitution:
+    // a hyperbolic circle of radius r has circumference 2π·sinh r, and no
+    // re-founding of the endpoint formula produces that.
+    // Under a proper absolute this is undefined rather than wrong: a
+    // number computed in the chart would silently be the Euclidean
+    // answer to a question the document is not asking.
+    if (!absolute.isEuclidean) {
+      _value = null;
+      _anchor = null;
+      return;
+    }
     final curve = subject as GeoCircle;
     final circle = curve.conic?.toCircleEq();
     if (circle == null) {

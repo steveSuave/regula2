@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
@@ -34,7 +35,7 @@ class CircleCenter extends GeoPoint {
   List<GeoObject> get parents => [circle];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final pole = circle.conic?.poleOf(ProjLine.infinity);
     _point = (pole == null || pole.isZero) ? null : pole;
   }

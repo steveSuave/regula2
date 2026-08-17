@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
@@ -42,7 +43,7 @@ class DiameterCircle extends GeoCircle {
   List<GeoObject> get parents => [point1, point2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final a = point1.projPoint;
     final b = point2.projPoint;
     if (a == null || b == null) {

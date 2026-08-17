@@ -107,7 +107,7 @@ class Construction {
     for (final parent in object.parents) {
       _dependents.putIfAbsent(parent.id, () => {}).add(object.id);
     }
-    object.recompute();
+    object.recompute(kernel.absolute);
     _notify();
   }
 
@@ -268,7 +268,7 @@ class Construction {
         // The two-product lerp form, like DragPath.at: bitwise-exact
         // endpoints, so the commit's static solve lands identically.
         object.parameter = from * (1 - t) + to * t;
-        object.recompute();
+        object.recompute(kernel.absolute);
       },
       driveComplex: (t) {
         final s = Complex.one - t;
@@ -707,7 +707,7 @@ class Construction {
       // on — the accepted end, or the last trial of a bail. Slots are
       // cleared first: a locus sweep seeds its own chain.
       for (final locus in affectedLoci) {
-        locus.recompute();
+        locus.recompute(kernel.absolute);
       }
       _notify();
     }
@@ -787,7 +787,7 @@ class Construction {
       );
     }
     object.branchIndex = branchIndex;
-    object.recompute();
+    object.recompute(kernel.absolute);
     _recomputeDependentsOf(id);
     _notify();
   }
@@ -820,7 +820,7 @@ class Construction {
       throw ArgumentError('$id is not a PointOnObject in this construction');
     }
     object.parameter = parameter;
-    object.recompute();
+    object.recompute(kernel.absolute);
     _recomputeDependentsOf(id);
     _notify();
   }
@@ -841,7 +841,7 @@ class Construction {
     }
     object.attributes = attributes;
     if (object is GeoText) {
-      object.recompute();
+      object.recompute(kernel.absolute);
     }
     _notify();
   }
@@ -920,7 +920,7 @@ class Construction {
     TraceDiagnostics.count(TraceCounter.chainSolves);
     for (final object in _objects.values) {
       if (affected.contains(object.id)) {
-        object.recompute();
+        object.recompute(kernel.absolute);
       }
     }
   }

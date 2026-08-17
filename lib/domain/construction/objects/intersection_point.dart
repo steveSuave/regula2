@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/conic_intersection.dart';
 import '../../projective/conic_matrix.dart';
@@ -228,7 +229,7 @@ class IntersectionPoint extends GeoPoint {
   List<GeoObject> get parents => [curve1, curve2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final candidates = intersectionCandidates(
       curve1,
       curve2,

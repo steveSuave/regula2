@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/proj_transform.dart';
 import '../geo_object.dart';
@@ -48,7 +49,7 @@ class HomotheticPoint extends GeoPoint {
   List<GeoObject> get parents => [point, center];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = point.projPoint;
     final c = center.projPoint;
     if (p == null || c == null) {

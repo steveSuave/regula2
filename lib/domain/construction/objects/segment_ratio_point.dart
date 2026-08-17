@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/euclidean.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
@@ -46,7 +47,7 @@ class SegmentRatioPoint extends GeoPoint {
   List<GeoObject> get parents => [point1, point2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p1 = point1.projPoint;
     final p2 = point2.projPoint;
     if (p1 == null || p2 == null) {

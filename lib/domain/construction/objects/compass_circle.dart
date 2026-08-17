@@ -1,4 +1,5 @@
 import '../../math/circle_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
@@ -43,7 +44,7 @@ class CompassCircle extends GeoCircle {
   List<GeoObject> get parents => [radiusPoint1, radiusPoint2, center];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final r1 = radiusPoint1.projPoint;
     final r2 = radiusPoint2.projPoint;
     final c = center.projPoint;

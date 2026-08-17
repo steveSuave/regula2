@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
@@ -42,7 +43,7 @@ class HarmonicConjugatePoint extends GeoPoint {
   List<GeoObject> get parents => [point1, point2, point3];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final a = point1.projPoint;
     final b = point2.projPoint;
     final c = point3.projPoint;

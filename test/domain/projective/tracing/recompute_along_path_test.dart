@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-
 import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/bifocal_conic.dart';
@@ -14,6 +13,7 @@ import 'package:regula/domain/construction/objects/perpendicular_bisector_line.d
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/domain/projective/tolerances.dart';
 import 'package:regula/domain/projective/tracing/drag_path.dart';
@@ -46,7 +46,7 @@ class _ScriptedIntersectionPoint extends IntersectionPoint {
   ProjPoint? get projPoint => _tracked;
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     if (tracedBranch.isActive) {
       _tracked = tracedBranch.follow(tracedCandidates);
       return;
@@ -1715,7 +1715,7 @@ class _CountingLocus extends Locus {
   int recomputes = 0;
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     recomputes++;
     super.recompute();
   }

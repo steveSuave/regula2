@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
@@ -43,7 +44,7 @@ class FreePoint extends GeoPoint {
   List<GeoObject> get parents => const [];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     // Free points are roots: nothing to derive.
   }
 }

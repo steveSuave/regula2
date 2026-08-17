@@ -1,4 +1,5 @@
 import '../../math/line_eq.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 
@@ -36,7 +37,7 @@ class LineThroughTwoPoints extends GeoLine {
   List<GeoObject> get parents => [point1, point2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     _carrier = carrierThrough(point1, point2);
     final p1 = point1.position;
     final p2 = point2.position;

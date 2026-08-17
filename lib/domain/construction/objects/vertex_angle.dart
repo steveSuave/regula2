@@ -1,4 +1,6 @@
 import '../../math/angle_geometry.dart';
+import '../../projective/absolute.dart';
+import '../../projective/ck_measure.dart';
 import '../geo_object.dart';
 
 /// The angle at [vertex] swept counter-clockwise from the ray towards
@@ -31,20 +33,47 @@ class VertexAngle extends GeoAngle {
   final GeoPoint arm2;
 
   AngleGeometry? _angle;
+  double? _measure;
 
   @override
   AngleGeometry? get angle => _angle;
 
   @override
+  double? get measure => _measure ?? _angle?.measure;
+
+  @override
   List<GeoObject> get parents => [arm1, vertex, arm2];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final a = arm1.projPoint?.toVec2();
     final v = vertex.projPoint?.toVec2();
     final b = arm2.projPoint?.toVec2();
     _angle = (a == null || v == null || b == null)
         ? null
         : AngleGeometry.fromRays(a, v, b);
+    _measure = _ckMeasure(absolute);
+  }
+
+  /// The Cayley-Klein measure of the marked wedge, or null to fall back to
+  /// the marker's own sweep.
+  ///
+  /// Euclidean angle measure is elliptic and the chart formula is already
+  /// exactly it (agreement pinned to 7.4e-13 in `ck_measure_test.dart`),
+  /// so Euclidean keeps the chart answer: exact, cheaper, and it keeps a
+  /// right angle reading exactly pi/2. This is the Phase 122 circle
+  /// fast-path rule -- the general formula is the definition, the
+  /// specialization is what runs where it is exact.
+  double? _ckMeasure(Absolute absolute) {
+    if (absolute.isEuclidean) {
+      return null;
+    }
+    final v = vertex.projPoint;
+    final a = arm1.projPoint;
+    final b = arm2.projPoint;
+    if (v == null || a == null || b == null) {
+      return null;
+    }
+    return angleBetweenLines(absolute, v.join(a), v.join(b));
   }
 }

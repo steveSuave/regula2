@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/proj_transform.dart';
 import '../geo_object.dart';
@@ -39,7 +40,7 @@ class ReflectedPoint extends GeoPoint {
   List<GeoObject> get parents => [point, mirror];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = point.projPoint;
     final axis = mirror.projLine;
     if (p == null || axis == null) {

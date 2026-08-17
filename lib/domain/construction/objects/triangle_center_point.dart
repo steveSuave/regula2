@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
@@ -43,7 +44,7 @@ abstract class TriangleCenterPoint extends GeoPoint {
   ProjPoint? computeCenter(ProjPoint a, ProjPoint b, ProjPoint c);
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final a = vertex1.projPoint;
     final b = vertex2.projPoint;
     final c = vertex3.projPoint;

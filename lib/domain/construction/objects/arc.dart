@@ -1,6 +1,7 @@
 import '../../math/angle_geometry.dart';
 import '../../math/circle_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
@@ -89,7 +90,7 @@ class Arc extends GeoCircle {
   List<GeoObject> get parents => [start, via, end];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final s = start.projPoint;
     final v = via.projPoint;
     final e = end.projPoint;

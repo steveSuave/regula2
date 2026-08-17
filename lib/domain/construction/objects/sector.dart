@@ -1,6 +1,7 @@
 import '../../math/angle_geometry.dart';
 import '../../math/circle_eq.dart';
 import '../../math/vec2.dart';
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
@@ -94,7 +95,7 @@ class Sector extends GeoCircle {
   List<GeoObject> get parents => [center, start, end];
 
   @override
-  void recompute() {
+  void recompute([Absolute absolute = Absolute.euclidean]) {
     final c = center.projPoint;
     final s = start.projPoint;
     final e = end.projPoint;
