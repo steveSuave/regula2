@@ -75,16 +75,16 @@ sealed class GeoObject {
   void recompute();
 }
 
-/// A point-valued object. [position] is null while undefined — for a
-/// migrated kind that means "not real and finite": the projective value
-/// exists, but projects outside the affine chart (see [projPoint]).
+/// A point-valued object. [position] is null while undefined, which
+/// means "not real and finite": the projective value exists, but
+/// projects outside the affine chart (see [projPoint]).
 abstract class GeoPoint extends GeoObject {
   GeoPoint({required super.id, super.attributes});
 
   Vec2? get position;
 
   /// The point in homogeneous coordinates — the canonical V2 view (PLAN
-  /// §Migration strategy). New domain code reads this, never [position].
+  /// §Architecture). New domain code reads this, never [position].
   ///
   /// Abstract since Phase 121. Through the migration this carried a
   /// default that lifted [position] to `[x, y, 1]`, which was right for a
@@ -101,17 +101,16 @@ abstract class GeoPoint extends GeoObject {
 }
 
 /// A line-valued object (infinite lines, rays, segments share the carrier
-/// [line] for intersection math). [line] is null while undefined — for a
-/// migrated kind that means "not real, or the line at infinity": the
-/// projective carrier exists but has no affine implicit form (see
-/// [projLine]).
+/// [line] for intersection math). [line] is null while undefined, which
+/// means "not real, or the line at infinity": the projective carrier
+/// exists but has no affine implicit form (see [projLine]).
 abstract class GeoLine extends GeoObject {
   GeoLine({required super.id, super.attributes});
 
   LineEq? get line;
 
   /// The carrier in homogeneous coefficients — the canonical V2 view
-  /// (PLAN §Migration strategy). New domain code reads this, never [line].
+  /// (PLAN §Architecture). New domain code reads this, never [line].
   ///
   /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
   /// lift-from-affine default went. A kind stores homogeneous state,
@@ -151,16 +150,16 @@ abstract class GeoLine extends GeoObject {
   bool get isDefined => line != null;
 }
 
-/// A circle-valued object. [circle] is null while undefined — for a
-/// migrated kind that means "not a real circle": the conic exists but does
-/// not project to a center-and-radius form (see [conic]).
+/// A circle-valued object. [circle] is null while undefined, which means
+/// "not a real circle": the conic exists but does not project to a
+/// center-and-radius form (see [conic]).
 abstract class GeoCircle extends GeoObject {
   GeoCircle({required super.id, super.attributes});
 
   CircleEq? get circle;
 
   /// The carrier as a projective conic — the canonical V2 view (PLAN
-  /// §Migration strategy). New domain code reads this, never [circle].
+  /// §Architecture). New domain code reads this, never [circle].
   ///
   /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
   /// lift-from-affine default went. A kind stores a [ConicMatrix],
