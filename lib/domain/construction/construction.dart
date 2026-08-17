@@ -12,6 +12,7 @@ import '../projective/tracing/trace_step_budget_exception.dart';
 import '../projective/tracing/traced_branch.dart';
 import 'document_kernel.dart';
 import 'geo_object.dart';
+import 'geometry_change.dart';
 import 'object_attributes.dart';
 import 'objects/expression_text.dart';
 import 'objects/free_point.dart';
@@ -35,21 +36,26 @@ import 'trace_acceptance.dart';
 /// import Flutter (see CLAUDE.md); the application layer bridges this to
 /// Riverpod.
 class Construction {
-  Construction({this.kernel = const DocumentKernel()});
+  Construction({DocumentKernel kernel = const DocumentKernel()})
+    : _kernel = kernel;
 
   /// The geometry this document is drawn in — the absolute every metric
   /// recompute is founded on (PLAN §"M-CK — Cayley–Klein").
   ///
-  /// **Final, deliberately.** This build implements one geometry, and the
-  /// codec refuses to load a document in either other one, so there is no
-  /// route by which it could change. That is not merely convenient: the
-  /// candidate list an `IntersectionPoint`'s `branchIndex` addresses is
-  /// itself a function of the absolute (the circular-point filter, and
-  /// canonical order's centre), so switching a live document's geometry
-  /// re-addresses every intersection point and has to go through a command
-  /// that re-points and reports — PLAN §"The audit", assigned to Phase
-  /// 126. A settable field here is exactly how that would get skipped.
-  final DocumentKernel kernel;
+  /// **Read-only, and there is no setter — deliberately.** Through Phase
+  /// 125 this was a `final` field, on the reasoning that a settable one is
+  /// exactly how the re-addressing would get skipped. Phase 126 has to
+  /// make it changeable and keeps the guarantee by changing the *shape* of
+  /// the mutation rather than trusting the caller: the only way to alter
+  /// it is [switchKernel], which cannot switch without re-pointing, and
+  /// which hands back the report of what it did. The candidate list an
+  /// `IntersectionPoint`'s `branchIndex` addresses is itself a function of
+  /// the absolute (the circular-point filter, and canonical order's
+  /// centre), so a switch that merely assigned would leave every stored
+  /// address naming whatever crossing now sits at that index — PLAN
+  /// §"The audit".
+  DocumentKernel get kernel => _kernel;
+  DocumentKernel _kernel;
 
   final LinkedHashMap<String, GeoObject> _objects =
       LinkedHashMap<String, GeoObject>();
@@ -797,6 +803,119 @@ class Construction {
     object.branchIndex = branchIndex;
     object.recompute(kernel.absolute);
     _recomputeDependentsOf(id);
+    _notify();
+  }
+
+  /// Changes the document's geometry, re-points every intersection point
+  /// at the crossing it was actually on, and reports what moved.
+  ///
+  /// **The only way to change [kernel]**, and it is a method rather than a
+  /// setter because the two halves cannot be separated: `branchIndex`
+  /// addresses the candidate list *as filtered and ordered against the
+  /// absolute*, so assigning a new geometry without re-pointing leaves
+  /// every stored address naming whatever crossing now happens to sit at
+  /// that index. Points then land on each other's crossings while others
+  /// sit vacant — the Phase 120c defect, reached from a third direction
+  /// (PLAN §"The audit").
+  ///
+  /// Matching is by chordal distance from where the point was, the same
+  /// primitive as the constructor's canonical remap and a tracing pass's
+  /// branch adoption, and for the same reason: the two orderings are not
+  /// related by a fixed permutation, so only the geometry can say which
+  /// crossing is which. It is defined on complex candidates too, so a
+  /// point whose crossing is currently imaginary is still matched.
+  ///
+  /// One pass in insertion (= topological) order, re-pointing each
+  /// intersection as soon as its carriers have settled, so everything
+  /// downstream is computed against the address the point will keep.
+  /// Notifies once, at the end.
+  ///
+  /// See [GeometryChange] for what the report holds — in particular why
+  /// an undo must restore the old addresses verbatim rather than re-match.
+  GeometryChange switchKernel(DocumentKernel kernel) {
+    final from = _kernel;
+    if (kernel == from) {
+      return GeometryChange(from: from, to: kernel);
+    }
+    // Where each intersection point sits *now*, in the old geometry. Read
+    // before anything is touched: this is the only evidence of which
+    // crossing the user meant, and the switch destroys it.
+    final was = <String, ProjPoint>{};
+    for (final object in _objects.values) {
+      if (object is IntersectionPoint) {
+        final p = object.projPoint;
+        if (p != null && !p.isZero) {
+          was[object.id] = p;
+        }
+      }
+    }
+
+    _kernel = kernel;
+    final readdressed = <Readdressing>[];
+    final unmatched = <String>[];
+    for (final object in _objects.values) {
+      object.recompute(kernel.absolute);
+      if (object is! IntersectionPoint) {
+        continue;
+      }
+      final target = was[object.id];
+      if (target == null) {
+        unmatched.add(object.id);
+        continue;
+      }
+      final candidates = intersectionCandidates(
+        object.curve1,
+        object.curve2,
+        absolute: kernel.absolute,
+      );
+      if (candidates.isEmpty) {
+        unmatched.add(object.id);
+        continue;
+      }
+      var best = 0;
+      var bestDistance = double.infinity;
+      for (var i = 0; i < candidates.length; i++) {
+        final d = TracedBranch.chordalDistance(target, candidates[i]);
+        if (d < bestDistance) {
+          bestDistance = d;
+          best = i;
+        }
+      }
+      if (best != object.branchIndex) {
+        readdressed.add((id: object.id, from: object.branchIndex, to: best));
+        object.branchIndex = best;
+        object.recompute(kernel.absolute);
+      }
+    }
+    _notify();
+    return GeometryChange(
+      from: from,
+      to: kernel,
+      readdressed: readdressed,
+      unmatched: unmatched,
+    );
+  }
+
+  /// Replays a geometry switch that [switchKernel] already decided —
+  /// **undo and redo only** (`SetGeometryCommand`).
+  ///
+  /// Takes the addresses instead of deriving them, which is the whole
+  /// point: re-matching is not invertible. The match is nearest-position,
+  /// and a point that had no position at the switch was never matched in
+  /// the first place, so a round trip through two matches is not the
+  /// identity. A command that performed the switch holds both address
+  /// maps and can restore either exactly.
+  void replayKernel(DocumentKernel kernel, Map<String, int> addresses) {
+    _kernel = kernel;
+    for (final object in _objects.values) {
+      if (object is IntersectionPoint) {
+        final address = addresses[object.id];
+        if (address != null) {
+          object.branchIndex = address;
+        }
+      }
+      object.recompute(kernel.absolute);
+    }
     _notify();
   }
 
