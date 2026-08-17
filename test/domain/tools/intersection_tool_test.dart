@@ -91,7 +91,10 @@ void main() {
         t.onInput(ToolInput(const Vec2(-3.9, 0), hit: horizontal)),
       );
 
-      expect(point.parents, [circle, horizontal]);
+      // The pair is stored in canonical order ('c…' before 'h'), not tap
+      // order — two points on one pair must share one branch numbering
+      // (Phase 120c). Which crossing the tap lands on is unaffected.
+      expect(point.parents, unorderedEquals([circle, horizontal]));
       expect(point.position!.closeTo(const Vec2(-4, 0)), isTrue);
     });
 

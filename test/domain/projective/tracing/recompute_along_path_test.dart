@@ -36,7 +36,7 @@ class _ScriptedIntersectionPoint extends IntersectionPoint {
     required super.branchIndex,
     required this.staticCandidates,
     required this.tracedCandidates,
-  });
+  }) : super.canonical();
 
   final List<ProjPoint> staticCandidates;
   final List<ProjPoint> tracedCandidates;
@@ -354,18 +354,22 @@ void main() {
       final center = fp('o', 5, 0);
       final line = LineThroughTwoPoints(id: 'l', point1: d, point2: g);
       final circle = FixedRadiusCircle(id: 'k', center: center, radius: 3);
+      // Canonical pair order (id ascending) — the scripted double extends
+      // the generative constructor, which asserts it. Line ∩ conic
+      // candidates are ordered by *type*, not argument order, so naming
+      // the circle first changes nothing the rig depends on.
       final a = _ScriptedIntersectionPoint(
         id: 'sa',
-        curve1: line,
-        curve2: circle,
+        curve1: circle,
+        curve2: line,
         branchIndex: branchA,
         staticCandidates: seeds,
         tracedCandidates: tracedCandidates,
       );
       final b = _ScriptedIntersectionPoint(
         id: 'sb',
-        curve1: line,
-        curve2: circle,
+        curve1: circle,
+        curve2: line,
         branchIndex: branchB,
         staticCandidates: seeds,
         tracedCandidates: tracedCandidates,
@@ -1512,9 +1516,13 @@ void main() {
       expect(ySide(e0), side0);
       expect(ySide(e1), side1);
       // The directed center line reversed: canonical order flipped and
-      // the pass adopted it.
-      expect(e0.branchIndex, 1);
-      expect(e1.branchIndex, 0);
+      // the pass adopted it. The rig names the circles kD, kC — the
+      // non-canonical order — so the constructor stored (kC, kD) and
+      // renumbered both points onto it (Phase 120c); the *sides* asserted
+      // above are what the demo is about, and the indices are their
+      // mirror.
+      expect(e0.branchIndex, 0);
+      expect(e1.branchIndex, 1);
       // A static recompute — commit, bail, reload — re-selects the
       // traced branch.
       construction.setPointOnObjectParameter('C', to);
@@ -1551,7 +1559,8 @@ void main() {
         seedMemory: memory,
       );
       expect(ySide(e0), side0);
-      expect(e0.branchIndex, 1);
+      // Mirrored by the canonical pair order, as above.
+      expect(e0.branchIndex, 0);
 
       // The discriminator, on a fresh rig: the same two passes without
       // memory lose the identity at the undefined boundary — the second

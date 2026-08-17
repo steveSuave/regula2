@@ -6,6 +6,7 @@ import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 import '../../kitchen_sink.dart';
@@ -57,11 +58,24 @@ void main() {
             entry['type'],
             reason: 'type of ${entry['id']}',
           );
-          expect(
-            [for (final parent in object.parents) parent.id],
-            entry['parents'],
-            reason: 'parents of ${entry['id']}',
-          );
+          final parents = [for (final parent in object.parents) parent.id];
+          if (object is IntersectionPoint) {
+            // An intersection stores its pair in canonical order whichever
+            // way round the file names it (Phase 120c) — two points on one
+            // pair have to share one branch numbering. The pair is what
+            // the file pins; its order is not.
+            expect(
+              parents,
+              unorderedEquals(entry['parents'] as List),
+              reason: 'parents of ${entry['id']}',
+            );
+          } else {
+            expect(
+              parents,
+              entry['parents'],
+              reason: 'parents of ${entry['id']}',
+            );
+          }
         }
       });
 

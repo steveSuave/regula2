@@ -544,6 +544,11 @@ void main() {
         curve2: bar,
         branchIndex: 1,
       );
+      // The pair is stored canonically, so the requested branch may be
+      // renumbered onto that order (Phase 120c) — what this test is about
+      // is that the sweep's flips are *restored*, not which label they
+      // restore to.
+      final seated = d.branchIndex;
       final traced = Midpoint(id: 'tr', point1: d, point2: driver);
       final locus = Locus(
         id: 'loc',
@@ -572,7 +577,7 @@ void main() {
         greaterThan((1.8 * uniformDefined).round()),
         reason: 'both halves of the eight are traced',
       );
-      expect(d.branchIndex, 1, reason: 'flips restored after the sweep');
+      expect(d.branchIndex, seated, reason: 'flips restored after the sweep');
     });
 
     test('undefined host makes the locus undefined, and it recovers', () {

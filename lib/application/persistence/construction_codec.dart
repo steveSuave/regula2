@@ -54,7 +54,6 @@ import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/projective/complex.dart';
 import '../../domain/projective/proj_point.dart';
-import '../../domain/projective/tracing/traced_branch.dart';
 import '../providers/document_settings_provider.dart';
 import '../providers/viewport_provider.dart';
 import 'document_kernel.dart';
@@ -256,61 +255,38 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
 /// about nothing here, they simply both read a document that should never
 /// have been written. Re-encoding after a repair writes the separated
 /// indices, so opening and saving fixes the file for good.
-/// Occupancy is judged on the **unordered** pair. `branchIndex` addresses
-/// the canonical order of `intersectionCandidates(curve1, curve2)`, which
-/// is not the reversed pair's order, so two points built by tapping the
-/// same two curves in opposite orders carry different indices for the
-/// same crossing — and the reported document holds points on both
-/// orderings for exactly that reason. Each point's crossing is therefore
-/// identified in one *reference* ordering per unordered pair, by nearest
-/// chordal match, the same way `IntersectionTool` dedups.
+/// Occupancy is judged per curve *pair*, and one index names one crossing
+/// across every point on it: [IntersectionPoint] stores its pair in
+/// canonical order whichever way round the file names it (Phase 120c), so
+/// the two orderings' incompatible numberings — the reason the reported
+/// document holds points on both orderings of one conic pair — are
+/// reconciled before this runs. Canonicalizing an old file's reversed pair
+/// can itself land two points on one crossing, which is the case this
+/// repair then separates.
 List<String> _separateDuplicateBranches(Construction construction) {
-  final reference = <String, (GeoObject, GeoObject, List<ProjPoint>)>{};
+  final candidatesOf = <String, List<ProjPoint>>{};
   final taken = <String, Set<int>>{};
   final repaired = <String>[];
-
-  /// The index in [candidates] nearest [target], chordally.
-  int nearest(List<ProjPoint> candidates, ProjPoint target) {
-    var best = 0;
-    var bestDistance = double.infinity;
-    for (var i = 0; i < candidates.length; i++) {
-      final d = TracedBranch.chordalDistance(target, candidates[i]);
-      if (d < bestDistance) {
-        bestDistance = d;
-        best = i;
-      }
-    }
-    return best;
-  }
 
   // Pass 1: which crossing each point claims, and who claimed it first.
   // Two passes, because a one-pass repair can re-point a duplicate onto a
   // crossing that a *later* point legitimately holds — which is not a
   // repair, just a different collision.
-  final claims = <IntersectionPoint, (String, List<ProjPoint>, int)>{};
+  final claims = <IntersectionPoint, String>{};
   for (final object in construction.objects) {
     if (object is! IntersectionPoint) {
       continue;
     }
-    final key = ([object.curve1.id, object.curve2.id]..sort()).join(' ');
-    final ref = reference.putIfAbsent(
+    final key = '${object.curve1.id} ${object.curve2.id}';
+    final candidates = candidatesOf.putIfAbsent(
       key,
-      () => (
-        object.curve1,
-        object.curve2,
-        intersectionCandidates(object.curve1, object.curve2),
-      ),
+      () => intersectionCandidates(object.curve1, object.curve2),
     );
-    final refCandidates = ref.$3;
-    final mine = identical(object.curve1, ref.$1)
-        ? refCandidates
-        : intersectionCandidates(object.curve1, object.curve2);
-    if (refCandidates.isEmpty || object.branchIndex >= mine.length) {
+    if (object.branchIndex >= candidates.length) {
       continue;
     }
-    final crossing = nearest(refCandidates, mine[object.branchIndex]);
-    claims[object] = (key, mine, crossing);
-    taken.putIfAbsent(key, () => <int>{}).add(crossing);
+    claims[object] = key;
+    taken.putIfAbsent(key, () => <int>{}).add(object.branchIndex);
   }
 
   // Pass 2: the first claimant of each crossing keeps it; every later one
@@ -318,21 +294,16 @@ List<String> _separateDuplicateBranches(Construction construction) {
   final settled = <String, Set<int>>{};
   for (final entry in claims.entries) {
     final object = entry.key;
-    final (key, mine, crossing) = entry.value;
+    final key = entry.value;
     final held = settled.putIfAbsent(key, () => <int>{});
-    if (held.add(crossing)) {
+    if (held.add(object.branchIndex)) {
       continue;
     }
-    final ref = reference[key]!;
-    final refCandidates = ref.$3;
-    for (var i = 0; i < refCandidates.length; i++) {
+    for (var i = 0; i < candidatesOf[key]!.length; i++) {
       if (taken[key]!.contains(i) || !held.add(i)) {
         continue;
       }
-      construction.setIntersectionBranch(
-        object.id,
-        identical(object.curve1, ref.$1) ? i : nearest(mine, refCandidates[i]),
-      );
+      construction.setIntersectionBranch(object.id, i);
       repaired.add(object.id);
       break;
     }

@@ -282,31 +282,35 @@ void main() {
         expect(ySide(e1), side1, reason: 'x = $x');
       }
       expect(c.position!.closeTo(const Vec2(-9, 0)), isTrue);
-      expect(e0.branchIndex, 1);
+      // The rig names the circles in the non-canonical order, so the
+      // constructor stored the pair the other way round and renumbered
+      // both points onto it (Phase 120c). The sides asserted above are
+      // the demo's subject; the indices are their mirror.
+      expect(e0.branchIndex, 0);
       expect(session.traceStats!.bailed, isFalse);
 
       final command = session.end()! as SetPointOnObjectParameterCommand;
       expect(
         command.branchChanges,
         unorderedEquals(const [
-          (id: 'E0', from: 0, to: 1),
-          (id: 'E1', from: 1, to: 0),
+          (id: 'E0', from: 1, to: 0),
+          (id: 'E1', from: 0, to: 1),
         ]),
       );
       // Rollback exact: parameter and branch indices restored.
       expect(c.parameter, startParameter);
-      expect(e0.branchIndex, 0);
+      expect(e0.branchIndex, 1);
       expect(ySide(e0), side0);
 
       command.apply(demo);
       expect(c.position!.closeTo(const Vec2(-9, 0)), isTrue);
-      expect(e0.branchIndex, 1);
+      expect(e0.branchIndex, 0);
       expect(ySide(e0), side0);
       expect(ySide(e1), side1);
 
       command.undo(demo);
       expect(c.parameter, startParameter);
-      expect(e0.branchIndex, 0);
+      expect(e0.branchIndex, 1);
       expect(ySide(e0), side0);
 
       command.apply(demo);
@@ -324,11 +328,11 @@ void main() {
       // Re-emerged on its own side — the gesture's seed memory bridged
       // the undefined frame boundary.
       expect(ySide(e0), side0);
-      expect(e0.branchIndex, 1);
+      expect(e0.branchIndex, 0);
 
       session.cancel();
       expect(c.parameter, startParameter);
-      expect(e0.branchIndex, 0);
+      expect(e0.branchIndex, 1);
       expect(ySide(e0), side0);
     });
 
@@ -339,7 +343,7 @@ void main() {
       final session = DragSession.start(demo, c, const Vec2(5, 0))!;
       session.update(const Vec2(-9, 0));
       expect(ySide(e0), -side0);
-      expect(e0.branchIndex, 0);
+      expect(e0.branchIndex, 1);
       session.cancel();
     });
   });

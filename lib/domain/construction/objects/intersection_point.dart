@@ -8,6 +8,7 @@ import '../../projective/proj_point.dart';
 import '../../projective/tolerances.dart';
 import '../../projective/tracing/traced_branch.dart';
 import '../geo_object.dart';
+import '../object_attributes.dart';
 
 /// One intersection point of two curves (lines and/or circles).
 ///
@@ -50,15 +51,37 @@ import '../geo_object.dart';
 /// reads the slot's motion/separation bookkeeping to keep that matching
 /// unambiguous (Phase 114; complex detours around degeneracies are 115).
 ///
+/// The parent pair is stored in **canonical order** ([canonicalPairOrder]),
+/// whichever way round the caller named it. `branchIndex` addresses the
+/// canonical order of `intersectionCandidates(curve1, curve2)`, and the
+/// reversed pair is a *different* order — so a construction holding points
+/// on both orderings of the same two curves holds two incompatible address
+/// spaces for one set of crossings, and nothing that compares indices
+/// (creation's duplicate refusal, a tracing pass's branch adoption, the
+/// codec's repair) can see across them. Two points then drift onto the
+/// same crossing under a drag and one crossing is left vacant — the
+/// accumulation reported in Phase 120c, whose last root cause this was.
+/// Normalizing at the constructor puts every point on a pair into one
+/// numbering, which is what makes those guards total.
+///
 /// Segments intersect via their infinite carrier line for now — clipping
 /// to the segment's extent is a later refinement (tracked in PLAN).
 class IntersectionPoint extends GeoPoint {
-  IntersectionPoint({
-    required this.curve1,
-    required this.curve2,
-    required this.branchIndex,
-    required super.id,
-    super.attributes,
+  /// Builds the point that is branch [branchIndex] of
+  /// `intersectionCandidates(curve1, curve2)` — the caller's order, which
+  /// is how the tool and the codec both name a crossing.
+  ///
+  /// The pair is then **stored canonically** (see [canonicalPairOrder]),
+  /// remapping the index onto the canonical order's numbering when the
+  /// caller named the curves the other way round. The crossing the caller
+  /// asked for is the crossing the object tracks; only its *address*
+  /// changes.
+  factory IntersectionPoint({
+    required GeoObject curve1,
+    required GeoObject curve2,
+    required int branchIndex,
+    required String id,
+    ObjectAttributes? attributes,
   }) {
     if (branchIndex < 0 || branchIndex >= maxBranchCount) {
       throw ArgumentError.value(
@@ -74,7 +97,68 @@ class IntersectionPoint extends GeoPoint {
     if (identical(curve1, curve2)) {
       throw ArgumentError('Cannot intersect a curve with itself');
     }
+    if (canonicalPairOrder(curve1, curve2)) {
+      return IntersectionPoint.canonical(
+        curve1: curve1,
+        curve2: curve2,
+        branchIndex: branchIndex,
+        id: id,
+        attributes: attributes,
+      );
+    }
+    return IntersectionPoint.canonical(
+      curve1: curve2,
+      curve2: curve1,
+      branchIndex: _readdress(curve1, curve2, branchIndex),
+      id: id,
+      attributes: attributes,
+    );
+  }
+
+  /// The generative constructor, for callers that already hold the pair in
+  /// [canonicalPairOrder] — subclasses (which cannot redirect through a
+  /// factory) and the factory itself. Prefer the unnamed constructor:
+  /// it accepts either order and renumbers.
+  IntersectionPoint.canonical({
+    required this.curve1,
+    required this.curve2,
+    required this.branchIndex,
+    required super.id,
+    super.attributes,
+  }) : assert(
+          canonicalPairOrder(curve1, curve2),
+          'IntersectionPoint stores its pair in canonical order',
+        ) {
     recompute();
+  }
+
+  /// The same branch, renumbered from `(a, b)`'s canonical order into
+  /// `(b, a)`'s.
+  ///
+  /// The two orders are *not* related by a fixed permutation: the ordering
+  /// key is the directed centre line `a → b`, which reverses the
+  /// real-finite tier while leaving the points at infinity and the
+  /// non-real ones where they are — so the permutation depends on how many
+  /// candidates are currently real, which changes as the parents move.
+  /// Matching by chordal distance is therefore the only sound translation,
+  /// and it is defined on complex candidates too, so it still speaks while
+  /// the crossing is imaginary. With no candidates to match against
+  /// (an undefined parent) the index passes through unchanged.
+  static int _readdress(GeoObject a, GeoObject b, int index) {
+    final from = intersectionCandidates(a, b);
+    final to = intersectionCandidates(b, a);
+    if (index >= from.length || to.isEmpty) return index;
+    final target = from[index];
+    var best = 0;
+    var bestDistance = double.infinity;
+    for (var i = 0; i < to.length; i++) {
+      final d = TracedBranch.chordalDistance(target, to[i]);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = i;
+      }
+    }
+    return best;
   }
 
   /// The most branches any carrier pair can have: **four**, from
@@ -183,6 +267,18 @@ class IntersectionPoint extends GeoPoint {
     return count;
   }
 }
+
+/// Whether `(curve1, curve2)` is the canonical order for an
+/// [IntersectionPoint]'s parent pair — object id ascending, which is
+/// stable across a save/load round trip and independent of which curve the
+/// user happened to tap first.
+///
+/// A pair's *ordering* is load-bearing (`intersectionCandidates` orders
+/// real crossings along the directed centre line `curve1 → curve2`), so
+/// every point on the same two curves has to agree on one. Which order
+/// that is carries no meaning; that they share it is the whole point.
+bool canonicalPairOrder(GeoObject curve1, GeoObject curve2) =>
+    curve1.id.compareTo(curve2.id) <= 0;
 
 /// The intersection candidates of two curve objects (each a [GeoLine] or
 /// [GeoCircle]), in canonical order, zero triples dropped and the circular

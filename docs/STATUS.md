@@ -8,6 +8,33 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 125 (V2 Session 27) — 2026-08-17
+
+**Done**
+- The reporter said the ellipse issue still stood and **sent a screen recording** (`~/Movies/2026-08-17_17-58-54.mkv`, 55 s). It settled in one pass what three rounds of rig-building had not: frames pulled at 1 fps, then 3 fps across the failure, show two bifocal ellipses with four crossings, points G/H/I/J on them, a focus dragged — and at 50.3–50.8 s the two *lower* crossings go complex and H and I vanish, then at 51.3 s **come back stacked on one side**, the other crossing vacant. Exactly the report, with the mechanism visible: a partial degeneracy, two of four crossings, not the whole pair separating.
+- Reproducing it still took work, and the failures are worth recording because each killed a plausible theory: 1176 loop drags (asymmetric excursions), 770 two-gesture round trips (release *while* the points are undefined, which is what the reporter describes), coarse gestures down to **one frame per drag** — every one of which fired the static bail, 770/770 — and a candidate-list histogram proving the `min(branchIndex, len-1)` clamp never bites for conic∩conic (always 4). **Zero violations in all of them.**
+- What broke it on the first try was **mixing tap order**: three crossings tapped one way round, the fourth the other. **1237 of 3078.** All-same-order: zero. The signature was unmistakable — a point born at a distinct crossing with `branchIndex` 1, then after one drag holding index 0 and sitting exactly on top of another point.
+- **Root cause: `branchIndex` is only meaningful relative to a parent order, and the two orders are not a fixed permutation of each other.** The ordering key is the directed centre line `curve1 → curve2`; reversing it flips the **real-finite tier only**, leaving points at infinity and non-real ones alone. So how the two numberings correspond depends on how many candidates are currently real — which changes as the figure moves. Two points on opposite orderings are two incompatible address spaces, and every guard added last session (tool dedup, atomic adoption, decoder repair) compares within one. Last session'"'"s cross-order chordal match in the tool patched the *creation* route only; adoption was still free to walk them together.
+- **Fix: `IntersectionPoint` stores its pair in canonical order (object id ascending) whichever way round the caller names it**, renumbering the requested branch onto that order by chordal match at construction. The crossing the caller asked for is the crossing it tracks; only the address changes. This is a modelling correction, not a patch — the *unordered* pair is the intersection'"'"s identity, and tap order never meant anything. Every consumer (`construction.dart` adoption, `trace_acceptance.dart`, `locus.dart`, the codec, the tool) reads `curve1, curve2` as a pair and became correct for free; the tool'"'"s cross-order machinery and the codec'"'"s reference-ordering machinery both **deleted as dead**, so this landed smaller than the patch it replaces.
+- **No format change.** No build writes a non-canonical pair, so finding one in a file *is* the marker that it predates this — the version field is not needed to tell them apart, and all six fixtures stay v1. An old file'"'"s reversed pair is canonicalized on load, and if that lands two points on one crossing the existing decoder repair separates them.
+- Behaviour change, deliberate: branch **labels** mirror for pairs that used to be stored reversed. Positions do not. Six expectations record it (the Cinderella rigs at engine and session level, the v1 corpus'"'"s parents-order assertion, the circle-first tap test, a locus flip-restoration assertion rewritten to assert *restored* rather than a literal).
+- Regression test is the recording'"'"s own sequence: tap three crossings in mixed tap orders, drag away until they vanish, drag back, tap the vacancy, drag again — asserting no two points share a crossing and no two share a branch. Plus canonical storage and renumbering on a reversed tap. **Both fail on the pre-fix tree** (checked by stashing the two lib files).
+- Suite **2378 green**, 32 goldens byte-identical, analyze clean, perf gate PASS on VM, dart2js and dart2wasm (2% / 10% of the 8 ms budget, checksums identical).
+
+**Next**
+- Merge `phase-120c-conic-defects` — the branch now carries all three defects plus this root cause, and has been offered three times.
+- Ask the reporter to re-test the recorded sequence specifically: tap the four crossings in *different* orders (e1 first for some, e2 first for others), which is what the recording did and what every previous rig had not.
+- Phase 121 as planned, plus the three items this arc added: unify the locus detour orientation with the drag constant (fixture diffs reviewed deliberately), widen `locus.dart`'"'"s two-candidate index-flip guard, and consider a load-time validation/report pass.
+
+**Gotchas**
+- **Ask for a recording.** Three rounds of rig-building could not reproduce this; 55 seconds of video located it in one pass, because it showed the *partial* degeneracy (two of four crossings) and, implicitly, that the four points had not all been built the same way. For any "still broken" report where the rig passes, a screen recording is the cheapest next move — `ffmpeg -vf fps=N` plus contact sheets reads it quickly.
+- **A guard that compares indices is only as good as the address space they live in.** Last session closed three mutation routes and still missed this, because all three compared `branchIndex` within one parent order. Normalizing the *representation* is what made those guards total — and it deleted more code than it added.
+- **Note which theories a fuzz kills, not just that it passed.** The bail path, the clamp path, the release-while-undefined path and the asymmetric-loop path were all eliminated by measurement here. Without recording that, a future session re-runs them.
+- The `assert` on `IntersectionPoint.canonical` is load-bearing: it is what caught the scripted test double building a non-canonical pair. Keep it.
+- `canonicalPairOrder` compares **ids**, which are stable across save/load and independent of tap order. It does not matter which order is canonical, only that every point on a pair agrees; do not "improve" it into something geometric, which would move as the figure moves — the exact bug this fixes.
+
+---
+
 ## Session 124 (V2 Session 26) — 2026-08-17
 
 **Done**
