@@ -1,0 +1,29 @@
+docs/PLAN.md
+  s_8729439c97a013::t_3814fe03326f6b 164-174
+lib/domain/projective/conic_intersection.dart
+  s_8729439c97a013::t_40a3ebb7fb2637 169-262
+  s_8729439c97a013::t_f201e6f1f07b48 344-353
+  s_8729439c97a013::t_0b15211029fda7 91-95
+test/domain/projective/conic_intersection_test.dart
+  s_8729439c97a013::t_94172a9162094e 276-407
+  s_8729439c97a013::t_a0c4a397980c6e 6
+  s_8729439c97a013::t_adb193bb49658c 52-65
+docs/TODO.md
+  s_8729439c97a013::t_ba34361ec4890b 47-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b7d3450c9a2564e3ed05e8814d567701badb5193",
+  "prompts": {},
+  "sessions": {
+    "s_8729439c97a013": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a95a9766-6868-4b9e-98a7-b90d41a51a17",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
