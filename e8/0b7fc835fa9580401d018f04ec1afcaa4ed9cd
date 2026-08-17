@@ -1,0 +1,72 @@
+test/v1_oracle/intersections.dart
+  s_cfee4ea9eee223::t_bea60c36546cc3 1-16,18-118
+  s_cfee4ea9eee223::t_2076a0f1b3be24 17
+test/domain/construction/objects/intersection_point_test.dart
+  s_cfee4ea9eee223::t_52ad103ef0df99 18
+test/domain/projective/conic_matrix_test.dart
+  s_cfee4ea9eee223::t_bea60c36546cc3 12
+  s_cfee4ea9eee223::t_bd2b8898ad6a99 13
+test/domain/projective/conic_intersection_test.dart
+  s_cfee4ea9eee223::t_bea60c36546cc3 12
+  s_cfee4ea9eee223::t_babef25f6c30dd 13
+test/domain/projective/euclidean_test.dart
+  s_cfee4ea9eee223::t_52ad103ef0df99 12
+test/v1_oracle/angle_bisector.dart
+  s_cfee4ea9eee223::t_bea60c36546cc3 17-18,21-66
+  s_cfee4ea9eee223::t_79a382ea00f1ef 1-16
+  s_cfee4ea9eee223::t_dc43b1eb9040e2 19-20
+test/v1_oracle/circle_relations_test.dart
+  s_cfee4ea9eee223::t_d994252cab1406 8
+  s_cfee4ea9eee223::t_dc43b1eb9040e2 9-11
+test/v1_oracle/tangents_test.dart
+  s_cfee4ea9eee223::t_dc43b1eb9040e2 6
+  s_cfee4ea9eee223::t_bea60c36546cc3 1-4,7-100
+  s_cfee4ea9eee223::t_d994252cab1406 5
+test/domain/construction/objects/radical_axis_line_test.dart
+  s_cfee4ea9eee223::t_d46d86d964b0dd 14
+test/domain/construction/objects/tangent_line_test.dart
+  s_cfee4ea9eee223::t_52ad103ef0df99 16
+test/v1_oracle/circle_relations.dart
+  s_cfee4ea9eee223::t_bea60c36546cc3 18-107
+  s_cfee4ea9eee223::t_79a382ea00f1ef 1-17
+test/domain/construction/objects/polar_line_test.dart
+  s_cfee4ea9eee223::t_d46d86d964b0dd 17
+test/domain/projective/circles_test.dart
+  s_cfee4ea9eee223::t_52ad103ef0df99 13
+test/domain/projective/proj_point_test.dart
+  s_cfee4ea9eee223::t_52ad103ef0df99 6
+test/v1_oracle/angle_bisector_test.dart
+  s_cfee4ea9eee223::t_dc43b1eb9040e2 6-7
+  s_cfee4ea9eee223::t_d994252cab1406 5
+test/v1_oracle/harmonic_test.dart
+  s_cfee4ea9eee223::t_bea60c36546cc3 1-4,7-111
+  s_cfee4ea9eee223::t_d994252cab1406 5
+  s_cfee4ea9eee223::t_dc43b1eb9040e2 6
+test/v1_oracle/tangents.dart
+  s_cfee4ea9eee223::t_dc43b1eb9040e2 18-19
+  s_cfee4ea9eee223::t_79a382ea00f1ef 1-15
+  s_cfee4ea9eee223::t_bea60c36546cc3 16-17,20-53
+test/v1_oracle/intersections_test.dart
+  s_cfee4ea9eee223::t_22ec818b2dfeeb 1-190
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_cfee4ea9eee223::t_d46d86d964b0dd 11
+test/v1_oracle/harmonic.dart
+  s_cfee4ea9eee223::t_79a382ea00f1ef 1-15
+  s_cfee4ea9eee223::t_bea60c36546cc3 16-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e80b7fc835fa9580401d018f04ec1afcaa4ed9cd",
+  "prompts": {},
+  "sessions": {
+    "s_cfee4ea9eee223": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b4ca906-2c3f-4d82-ab85-f72027c94e9f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
