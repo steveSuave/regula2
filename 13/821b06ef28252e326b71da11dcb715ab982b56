@@ -1,0 +1,63 @@
+test/domain/tools/ck_tool_kernel_test.dart
+  s_864df67dc11e5d::t_cd2080d9a9aa7f 175-176
+  s_864df67dc11e5d::t_f19d3eb0056eb2 61
+  s_864df67dc11e5d::t_7573043202d87d 156-166
+  s_864df67dc11e5d::t_abfd4fd2869fe0 1-60,62-155,167-174,177-213
+lib/domain/tools/point_coincidence.dart
+  s_864df67dc11e5d::t_260fc5f03703dd 66-74,79
+  s_864df67dc11e5d::t_9c6a30b3d9506c 7,124,137,192-196,199,203
+lib/domain/construction/objects/intersection_point.dart
+  s_864df67dc11e5d::t_8e3fa4fa9c233d 80-87,94,122,157-164
+lib/application/persistence/construction_codec.dart
+  s_864df67dc11e5d::t_beb11efd9a8a70 550-554
+lib/domain/tools/midpoint_tool.dart
+  s_864df67dc11e5d::t_d3f73d90e64571 36-41
+lib/presentation/canvas/geometry_canvas.dart
+  s_864df67dc11e5d::t_d46aca61b34024 696,734-738
+lib/domain/tools/rhombus_macro_tool.dart
+  s_864df67dc11e5d::t_fe1a79223baed6 103
+lib/domain/tools/square_macro_tool.dart
+  s_864df67dc11e5d::t_fe1a79223baed6 65,85
+lib/domain/tools/point_resolution.dart
+  s_864df67dc11e5d::t_4ead66e24120a0 59
+  s_864df67dc11e5d::t_c5cd552d2162e3 74
+  s_864df67dc11e5d::t_dc268b4d82441a 120-124
+lib/domain/tools/intersection_tool.dart
+  s_864df67dc11e5d::t_6b9750af7670ee 6
+  s_864df67dc11e5d::t_c5cd552d2162e3 90
+  s_864df67dc11e5d::t_b4250626a0d141 74-80
+  s_864df67dc11e5d::t_d3f73d90e64571 92,99-101,103-104,143,160-165
+  s_864df67dc11e5d::t_f19d3eb0056eb2 102
+lib/domain/construction/objects/locus.dart
+  s_864df67dc11e5d::t_36354c4926f7d7 714
+  s_864df67dc11e5d::t_cadb021e8b5f11 722
+  s_864df67dc11e5d::t_572cb02f47a3e0 240
+lib/domain/tools/parallelogram_macro_tool.dart
+  s_864df67dc11e5d::t_fe1a79223baed6 60
+lib/domain/tools/right_trapezium_macro_tool.dart
+  s_864df67dc11e5d::t_fe1a79223baed6 53
+lib/domain/tools/rectangle_macro_tool.dart
+  s_864df67dc11e5d::t_fe1a79223baed6 96
+lib/domain/tools/multi_point_tool.dart
+  s_864df67dc11e5d::t_01da911c290566 6,73-81,134,153-158,193
+lib/domain/tools/tool.dart
+  s_864df67dc11e5d::t_bab17fffacf828 66
+  s_864df67dc11e5d::t_cc74ae063bcb23 34-44,55
+  s_864df67dc11e5d::t_d30497cb56e1c3 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "13821b06ef28252e326b71da11dcb715ab982b56",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
