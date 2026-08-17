@@ -167,13 +167,13 @@ List<ProjPoint> intersectConicConic(
 // ---------------------------------------------------------------------------
 
 ConicMatrix _adjugate(ConicMatrix m) => ConicMatrix(
-      m.yy * m.ww - m.yw * m.yw,
-      m.xw * m.yw - m.xy * m.ww,
-      m.xx * m.ww - m.xw * m.xw,
-      m.xy * m.yw - m.yy * m.xw,
-      m.xy * m.xw - m.xx * m.yw,
-      m.xx * m.yy - m.xy * m.xy,
-    );
+  m.yy * m.ww - m.yw * m.yw,
+  m.xw * m.yw - m.xy * m.ww,
+  m.xx * m.ww - m.xw * m.xw,
+  m.xy * m.yw - m.yy * m.xw,
+  m.xy * m.xw - m.xx * m.yw,
+  m.xx * m.yy - m.xy * m.xy,
+);
 
 /// The pencil member `a + λ·b`.
 ConicMatrix _member(ConicMatrix a, Complex lambda, ConicMatrix b) =>

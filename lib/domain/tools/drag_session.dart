@@ -168,11 +168,11 @@ class _BranchSnapshot {
   }
 
   List<BranchChange> diff() => [
-        for (final entry in _start.entries)
-          if (_construction.byId(entry.key) case final IntersectionPoint point
-              when point.branchIndex != entry.value)
-            (id: entry.key, from: entry.value, to: point.branchIndex),
-      ];
+    for (final entry in _start.entries)
+      if (_construction.byId(entry.key) case final IntersectionPoint point
+          when point.branchIndex != entry.value)
+        (id: entry.key, from: entry.value, to: point.branchIndex),
+  ];
 }
 
 /// A free point moving itself, or a derived non-point rigidly translating
@@ -184,11 +184,11 @@ class _TranslateDragSession implements DragSession {
     this._grabStart,
     List<FreePoint> points, {
     double gridSnapStep = 0,
-  })  : _gridSnapStep = gridSnapStep,
-        _pointIds = [for (final point in points) point.id],
-        _startPositions = {
-          for (final point in points) point.id: point.position,
-        } {
+  }) : _gridSnapStep = gridSnapStep,
+       _pointIds = [for (final point in points) point.id],
+       _startPositions = {
+         for (final point in points) point.id: point.position,
+       } {
     // Traced previews adopt branch identity per frame (each pass leaves
     // `branchIndex` re-derived under the tracked root — Phase 116), so
     // the session snapshots the start indices of every intersection the
@@ -369,9 +369,12 @@ class _TranslateDragSession implements DragSession {
 /// anchor; a text's body is the object). Grid snap is deliberately not
 /// consulted: a text is annotation beside the figure, not geometry on it.
 class _TextAnchorDragSession implements DragSession {
-  _TextAnchorDragSession(this._construction, ExpressionText text, this._grabStart)
-      : _textId = text.id,
-        _startAnchor = text.anchor;
+  _TextAnchorDragSession(
+    this._construction,
+    ExpressionText text,
+    this._grabStart,
+  ) : _textId = text.id,
+      _startAnchor = text.anchor;
 
   final Construction _construction;
   final String _textId;

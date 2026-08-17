@@ -20,10 +20,7 @@ typedef ExportFraming = ({ViewportState viewport, ui.Size logicalSize});
 
 /// Frames exactly what the canvas shows: the live viewport over the full
 /// canvas size.
-ExportFraming currentViewFraming(
-  ViewportState viewport,
-  ui.Size canvasSize,
-) =>
+ExportFraming currentViewFraming(ViewportState viewport, ui.Size canvasSize) =>
     (viewport: viewport, logicalSize: canvasSize);
 
 /// Frames every visible object centered with the standard fit margin,

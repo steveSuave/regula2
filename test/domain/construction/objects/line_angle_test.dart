@@ -306,10 +306,7 @@ void main() {
         );
         expect(plain.isDefined, scaled.isDefined);
         if (plain.isDefined) {
-          expect(
-            scaled.angle!.measure,
-            closeTo(plain.angle!.measure, 1e-6),
-          );
+          expect(scaled.angle!.measure, closeTo(plain.angle!.measure, 1e-6));
           expect(
             scaled.angle!.vertex.closeTo(plain.angle!.vertex, 1e-6),
             isTrue,

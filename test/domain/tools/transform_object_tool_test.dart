@@ -386,8 +386,7 @@ void main() {
       );
     });
 
-    test('reflect a five-point conic: the conic through the image points',
-        () {
+    test('reflect a five-point conic: the conic through the image points', () {
       // A similarity carries a conic to the conic through the images of
       // its points, class included — so the rebuild needs nothing beyond
       // the five image points the tool already makes.

@@ -198,30 +198,32 @@ void main() {
       );
     });
 
-    test('branches 2 and 3 are legal — conic ∩ conic has four (Phase 120b)',
-        () {
-      // The bound was 0..1 until a `FivePointConic` could be tapped
-      // against another conic. It is a *seed* addressing canonical order,
-      // and `recompute` clamps it to what the current carriers actually
-      // produce, so the constructor bounds it by the largest any pair can
-      // have rather than by this pair's count right now.
-      final l = lineThrough('l', (fp('a', 0, 0), fp('b', 1, 0)));
-      final l2 = lineThrough('l2', (fp('c', 0, 1), fp('d', 1, 2)));
-      for (final index in const [2, 3]) {
-        final point = IntersectionPoint(
-          id: 'x',
-          curve1: l,
-          curve2: l2,
-          branchIndex: index,
-        );
-        expect(point.branchIndex, index);
-        expect(
-          point.isDefined,
-          isTrue,
-          reason: 'two lines have one branch; the index clamps to it',
-        );
-      }
-    });
+    test(
+      'branches 2 and 3 are legal — conic ∩ conic has four (Phase 120b)',
+      () {
+        // The bound was 0..1 until a `FivePointConic` could be tapped
+        // against another conic. It is a *seed* addressing canonical order,
+        // and `recompute` clamps it to what the current carriers actually
+        // produce, so the constructor bounds it by the largest any pair can
+        // have rather than by this pair's count right now.
+        final l = lineThrough('l', (fp('a', 0, 0), fp('b', 1, 0)));
+        final l2 = lineThrough('l2', (fp('c', 0, 1), fp('d', 1, 2)));
+        for (final index in const [2, 3]) {
+          final point = IntersectionPoint(
+            id: 'x',
+            curve1: l,
+            curve2: l2,
+            branchIndex: index,
+          );
+          expect(point.branchIndex, index);
+          expect(
+            point.isDefined,
+            isTrue,
+            reason: 'two lines have one branch; the index clamps to it',
+          );
+        }
+      },
+    );
   });
 
   group('projective semantics (Phase 110)', () {
@@ -476,29 +478,29 @@ void main() {
       expect(x.candidateCount, 0);
     });
 
-    test('concentric circles: the doubled I, J filter away — no candidates',
-        () {
-      final k1 = StubProjectiveCircle(
-        ConicMatrix.lift(CircleEq(const Vec2(1, 2), 1)),
-      );
-      final k2 = StubProjectiveCircle(
-        ConicMatrix.lift(CircleEq(const Vec2(1, 2), 2)),
-      );
-      expect(intersectionCandidates(k1, k2), isEmpty);
-      final x = IntersectionPoint(
-        id: 'x',
-        curve1: k1,
-        curve2: k2,
-        branchIndex: 0,
-      );
-      expect(x.isDefined, isFalse);
-      expect(x.candidateCount, 0);
-    });
+    test(
+      'concentric circles: the doubled I, J filter away — no candidates',
+      () {
+        final k1 = StubProjectiveCircle(
+          ConicMatrix.lift(CircleEq(const Vec2(1, 2), 1)),
+        );
+        final k2 = StubProjectiveCircle(
+          ConicMatrix.lift(CircleEq(const Vec2(1, 2), 2)),
+        );
+        expect(intersectionCandidates(k1, k2), isEmpty);
+        final x = IntersectionPoint(
+          id: 'x',
+          curve1: k1,
+          curve2: k2,
+          branchIndex: 0,
+        );
+        expect(x.isDefined, isFalse);
+        expect(x.candidateCount, 0);
+      },
+    );
 
     test('constructed-tangency rounding snaps real (double-root band)', () {
-      final k = StubProjectiveCircle(
-        ConicMatrix.lift(CircleEq(Vec2.zero, 1)),
-      );
+      final k = StubProjectiveCircle(ConicMatrix.lift(CircleEq(Vec2.zero, 1)));
       // A hair on the miss side: the conjugate pair's imaginary part is
       // sqrt-amplified rounding noise, snapped back to the real touch
       // point (V1's world-unit tangency band, reborn relative).
@@ -538,35 +540,37 @@ void main() {
       expect(xClear.candidateCount, 0);
     });
 
-    test('line ∩ degenerate line-pair conic: real candidates (V2 semantics)',
-        () {
-      // The line pair x = ±1 (a collinear "circle" carrier's shape).
-      final pair = StubProjectiveCircle(
-        ConicMatrix.linePair(ProjLine.real(1, 0, -1), ProjLine.real(1, 0, 1)),
-      );
-      final l = StubProjectiveLine(ProjLine.real(0, 1, 0)); // y = 0
-      final candidates = intersectionCandidates(l, pair);
-      expect(candidates, hasLength(2));
-      final positions = [for (final p in candidates) p.toVec2()!];
-      expect(
-        positions.any((p) => p.closeTo(const Vec2(1, 0))),
-        isTrue,
-        reason: '$positions',
-      );
-      expect(
-        positions.any((p) => p.closeTo(const Vec2(-1, 0))),
-        isTrue,
-        reason: '$positions',
-      );
-      final x = IntersectionPoint(
-        id: 'x',
-        curve1: l,
-        curve2: pair,
-        branchIndex: 0,
-      );
-      expect(x.isDefined, isTrue);
-      expect(x.candidateCount, 2);
-    });
+    test(
+      'line ∩ degenerate line-pair conic: real candidates (V2 semantics)',
+      () {
+        // The line pair x = ±1 (a collinear "circle" carrier's shape).
+        final pair = StubProjectiveCircle(
+          ConicMatrix.linePair(ProjLine.real(1, 0, -1), ProjLine.real(1, 0, 1)),
+        );
+        final l = StubProjectiveLine(ProjLine.real(0, 1, 0)); // y = 0
+        final candidates = intersectionCandidates(l, pair);
+        expect(candidates, hasLength(2));
+        final positions = [for (final p in candidates) p.toVec2()!];
+        expect(
+          positions.any((p) => p.closeTo(const Vec2(1, 0))),
+          isTrue,
+          reason: '$positions',
+        );
+        expect(
+          positions.any((p) => p.closeTo(const Vec2(-1, 0))),
+          isTrue,
+          reason: '$positions',
+        );
+        final x = IntersectionPoint(
+          id: 'x',
+          curve1: l,
+          curve2: pair,
+          branchIndex: 0,
+        );
+        expect(x.isDefined, isTrue);
+        expect(x.candidateCount, 2);
+      },
+    );
 
     test('branch order is anchored to the affine direction, not the '
         'carrier representative sign', () {
@@ -578,9 +582,7 @@ void main() {
       final plain = StubProjectivePoint(ProjPoint.real(2, 0, 1));
       final l = LineThroughTwoPoints(id: 'l', point1: flipped, point2: plain);
       expect(l.line!.direction.dot(const Vec2(1, 0)), greaterThan(0));
-      final k = StubProjectiveCircle(
-        ConicMatrix.lift(CircleEq(Vec2.zero, 1)),
-      );
+      final k = StubProjectiveCircle(ConicMatrix.lift(CircleEq(Vec2.zero, 1)));
       final x0 = IntersectionPoint(
         id: 'x0',
         curve1: l,
@@ -710,14 +712,16 @@ void main() {
     test('an undefined carrier still yields nothing under the flag', () {
       final undefinedLine = StubProjectiveLine(null);
       expect(
-        intersectionCandidates(undefinedLine, unitCircle,
-            complexCarriers: true),
+        intersectionCandidates(
+          undefinedLine,
+          unitCircle,
+          complexCarriers: true,
+        ),
         isEmpty,
       );
     });
 
-    test('IntersectionPoint.recompute reads the flag from its traced slot',
-        () {
+    test('IntersectionPoint.recompute reads the flag from its traced slot', () {
       final x = IntersectionPoint(
         id: 'x',
         curve1: complexLine,

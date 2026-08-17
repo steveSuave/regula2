@@ -53,6 +53,7 @@ import '../../domain/construction/objects/two_line_bisector_line.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/projective/complex.dart';
+import '../../domain/projective/proj_point.dart';
 import '../providers/document_settings_provider.dart';
 import '../providers/viewport_provider.dart';
 import 'document_kernel.dart';
@@ -77,12 +78,20 @@ class DecodedDocument {
     required this.viewport,
     this.settings = const DocumentSettings(),
     this.kernel = const DocumentKernel(),
+    this.repairedIntersections = const [],
   });
 
   final Construction construction;
   final ViewportState viewport;
   final DocumentSettings settings;
   final DocumentKernel kernel;
+
+  /// Ids of [IntersectionPoint]s the reader had to re-point because the
+  /// document gave two of them the same ordered curve pair *and*
+  /// `branchIndex` — see `_separateDuplicateBranches`. Empty for every
+  /// well-formed document; non-empty means the file was written by a
+  /// build that could collapse branches, and has now been healed.
+  final List<String> repairedIntersections;
 }
 
 /// Encodes [construction] and the current [viewport] into a JSON-encodable
@@ -208,12 +217,98 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
       throw FormatException('Object "${entry['id']}": ${error.message}');
     }
   }
+  final repaired = _separateDuplicateBranches(construction);
   return DecodedDocument(
     construction: construction,
     viewport: viewport,
     settings: settings,
     kernel: kernel,
+    repairedIntersections: repaired,
   );
+}
+
+/// Re-points any [IntersectionPoint]s that arrive sharing an ordered
+/// curve pair *and* a `branchIndex`, returning their ids. Empty for every
+/// well-formed document, which is all of `test/fixtures/`.
+///
+/// Two such points are the **same intersection by construction**: they
+/// resolve to the same candidate on every recompute, for ever, and no
+/// drag can separate them. What the user sees is two points stacked on
+/// one crossing while another crossing sits empty — and tapping the empty
+/// one builds yet another point, so they accumulate. A pre-Phase-120c
+/// build could write this (adoption collapsed indices, and the tool
+/// deduped only within one parent order), and once written it is
+/// permanent: the corruption is in the data, not in the engine that
+/// reads it.
+///
+/// So the reader heals it. Each duplicate after the first takes the
+/// lowest crossing of that pair nobody holds, which restores the user's
+/// evident intent — one object per crossing, which is what they tapped.
+/// When the pair has no free crossing left the extra point keeps its
+/// index and stays a duplicate: a document holding *more* intersection
+/// points than the two curves have crossings cannot be repaired by
+/// re-pointing at all, only by deleting the surplus, and dropping an
+/// object the user made is not the decoder's call.
+///
+/// **This is a repair, not a migration.** It is not a format change and
+/// carries no version implications — a v1 reader and a v2 reader disagree
+/// about nothing here, they simply both read a document that should never
+/// have been written. Re-encoding after a repair writes the separated
+/// indices, so opening and saving fixes the file for good.
+/// Occupancy is judged per curve *pair*, and one index names one crossing
+/// across every point on it: [IntersectionPoint] stores its pair in
+/// canonical order whichever way round the file names it (Phase 120c), so
+/// the two orderings' incompatible numberings — the reason the reported
+/// document holds points on both orderings of one conic pair — are
+/// reconciled before this runs. Canonicalizing an old file's reversed pair
+/// can itself land two points on one crossing, which is the case this
+/// repair then separates.
+List<String> _separateDuplicateBranches(Construction construction) {
+  final candidatesOf = <String, List<ProjPoint>>{};
+  final taken = <String, Set<int>>{};
+  final repaired = <String>[];
+
+  // Pass 1: which crossing each point claims, and who claimed it first.
+  // Two passes, because a one-pass repair can re-point a duplicate onto a
+  // crossing that a *later* point legitimately holds — which is not a
+  // repair, just a different collision.
+  final claims = <IntersectionPoint, String>{};
+  for (final object in construction.objects) {
+    if (object is! IntersectionPoint) {
+      continue;
+    }
+    final key = '${object.curve1.id} ${object.curve2.id}';
+    final candidates = candidatesOf.putIfAbsent(
+      key,
+      () => intersectionCandidates(object.curve1, object.curve2),
+    );
+    if (object.branchIndex >= candidates.length) {
+      continue;
+    }
+    claims[object] = key;
+    taken.putIfAbsent(key, () => <int>{}).add(object.branchIndex);
+  }
+
+  // Pass 2: the first claimant of each crossing keeps it; every later one
+  // moves to a crossing of that pair nobody claimed at all.
+  final settled = <String, Set<int>>{};
+  for (final entry in claims.entries) {
+    final object = entry.key;
+    final key = entry.value;
+    final held = settled.putIfAbsent(key, () => <int>{});
+    if (held.add(object.branchIndex)) {
+      continue;
+    }
+    for (var i = 0; i < candidatesOf[key]!.length; i++) {
+      if (taken[key]!.contains(i) || !held.add(i)) {
+        continue;
+      }
+      construction.setIntersectionBranch(object.id, i);
+      repaired.add(object.id);
+      break;
+    }
+  }
+  return repaired;
 }
 
 /// The document's kernel block (v2 hook, PLAN §M-CK): absent → Euclidean,
@@ -267,15 +362,15 @@ bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
 Map<String, dynamic> _encodeObject(GeoObject object) {
   final (String type, Map<String, Object?> params) = switch (object) {
     FreePoint(:final position) => (
-        'FreePoint',
-        {'x': position.x, 'y': position.y}
-      ),
+      'FreePoint',
+      {'x': position.x, 'y': position.y},
+    ),
     Midpoint() => ('Midpoint', const {}),
     SegmentRatioPoint(:final ratio) => ('SegmentRatioPoint', {'ratio': ratio}),
     PointOnObject(:final parameter) => (
-        'PointOnObject',
-        {'parameter': parameter}
-      ),
+      'PointOnObject',
+      {'parameter': parameter},
+    ),
     // `branchIndex` is a **seed**, not an identity: it addresses the
     // canonical candidate order at load time, and from Phase 116 on a
     // drag re-derives it at every pass end (adoption), so what is saved
@@ -284,9 +379,9 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     // by a build that only ever had canonical order — which is why v1
     // needs no rewriting here.
     IntersectionPoint(:final branchIndex) => (
-        'IntersectionPoint',
-        {'branchIndex': branchIndex}
-      ),
+      'IntersectionPoint',
+      {'branchIndex': branchIndex},
+    ),
     ReflectedPoint() => ('ReflectedPoint', const {}),
     ProjectionPoint() => ('ProjectionPoint', const {}),
     HomotheticPoint(:final ratio) => ('HomotheticPoint', {'ratio': ratio}),
@@ -307,9 +402,9 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     AngleBisectorLine() => ('AngleBisectorLine', const {}),
     PerpendicularBisectorLine() => ('PerpendicularBisectorLine', const {}),
     TwoLineBisectorLine(:final branch) => (
-        'TwoLineBisectorLine',
-        {'branch': branch}
-      ),
+      'TwoLineBisectorLine',
+      {'branch': branch},
+    ),
     TangentLine(:final branch) => ('TangentLine', {'branch': branch}),
     PolarLine() => ('PolarLine', const {}),
     RadicalAxisLine() => ('RadicalAxisLine', const {}),
@@ -329,18 +424,18 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     // parents. Ordinary params, so still a v1 document: see the note on
     // `FivePointConic` above.
     FocalConic(:final eccentricity) => (
-        'FocalConic',
-        {'eccentricity': eccentricity}
-      ),
+      'FocalConic',
+      {'eccentricity': eccentricity},
+    ),
     BifocalConic(:final difference) => (
-        'BifocalConic',
-        {'difference': difference}
-      ),
+      'BifocalConic',
+      {'difference': difference},
+    ),
     CompassCircle() => ('CompassCircle', const {}),
     FixedRadiusCircle(:final radius) => (
-        'FixedRadiusCircle',
-        {'radius': radius}
-      ),
+      'FixedRadiusCircle',
+      {'radius': radius},
+    ),
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
     Polygon() => ('Polygon', const {}),
@@ -349,28 +444,28 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     // zipping the content's referenceNames (unique, first-occurrence
     // order — the TextTemplate contract) with the parents list.
     ExpressionText(:final content, :final anchor) => (
-        'ExpressionText',
-        {'content': content, 'x': anchor.x, 'y': anchor.y}
-      ),
+      'ExpressionText',
+      {'content': content, 'x': anchor.x, 'y': anchor.y},
+    ),
     AreaMeasurement() => ('AreaMeasurement', const {}),
     LengthMeasurement() => ('LengthMeasurement', const {}),
     SlopeMeasurement() => ('SlopeMeasurement', const {}),
     Locus(:final sampleCount, :final center, :final halfSpan) => (
-        'Locus',
-        {'sampleCount': sampleCount, 'center': center, 'halfSpan': halfSpan}
-      ),
+      'Locus',
+      {'sampleCount': sampleCount, 'center': center, 'halfSpan': halfSpan},
+    ),
     VertexAngle() => ('VertexAngle', const {}),
     // Absent sign params = legacy always-acute mode, so pre-31 saves
     // round-trip byte-identically.
     LineAngle(:final sign1, :final sign2) => (
-        'LineAngle',
-        {'sign1': ?sign1, 'sign2': ?sign2}
-      ),
+      'LineAngle',
+      {'sign1': ?sign1, 'sign2': ?sign2},
+    ),
     // The round-trip codec test instantiates every concrete kind, so a new
     // object type missing here fails in CI, not in a user's save.
     _ => throw UnsupportedError(
-        'No codec for object type ${object.runtimeType}',
-      ),
+      'No codec for object type ${object.runtimeType}',
+    ),
   };
   return <String, dynamic>{
     'id': object.id,
@@ -399,8 +494,9 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       _resolveParent(id, parentId, construction),
   ];
   final rawParams = json['params'];
-  final params =
-      rawParams is Map<String, dynamic> ? rawParams : const <String, dynamic>{};
+  final params = rawParams is Map<String, dynamic>
+      ? rawParams
+      : const <String, dynamic>{};
   final attributes = _decodeAttributes(id, json['attributes']);
 
   GeoPoint point(int index) => _typedParent<GeoPoint>(id, parents, index);
@@ -410,353 +506,353 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
 
   return switch (type) {
     'FreePoint' => FreePoint(
-        id: id,
-        position: Vec2(
-          _doubleParam(id, params, 'x'),
-          _doubleParam(id, params, 'y'),
-        ),
-        attributes: attributes,
+      id: id,
+      position: Vec2(
+        _doubleParam(id, params, 'x'),
+        _doubleParam(id, params, 'y'),
       ),
+      attributes: attributes,
+    ),
     'Midpoint' => Midpoint(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      attributes: attributes,
+    ),
     'SegmentRatioPoint' => SegmentRatioPoint(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        ratio: _doubleParam(id, params, 'ratio'),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      ratio: _doubleParam(id, params, 'ratio'),
+      attributes: attributes,
+    ),
     'PointOnObject' => PointOnObject(
-        id: id,
-        curve: any(0),
-        parameter: _doubleParam(id, params, 'parameter'),
-        attributes: attributes,
-      ),
+      id: id,
+      curve: any(0),
+      parameter: _doubleParam(id, params, 'parameter'),
+      attributes: attributes,
+    ),
     'IntersectionPoint' => IntersectionPoint(
-        id: id,
-        curve1: any(0),
-        curve2: any(1),
-        branchIndex: _intParam(id, params, 'branchIndex'),
-        attributes: attributes,
-      ),
+      id: id,
+      curve1: any(0),
+      curve2: any(1),
+      branchIndex: _intParam(id, params, 'branchIndex'),
+      attributes: attributes,
+    ),
     'ReflectedPoint' => ReflectedPoint(
-        id: id,
-        point: point(0),
-        mirror: line(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      mirror: line(1),
+      attributes: attributes,
+    ),
     'ProjectionPoint' => ProjectionPoint(
-        id: id,
-        point: point(0),
-        line: line(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      line: line(1),
+      attributes: attributes,
+    ),
     'HomotheticPoint' => HomotheticPoint(
-        id: id,
-        point: point(0),
-        center: point(1),
-        ratio: _doubleParam(id, params, 'ratio'),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      center: point(1),
+      ratio: _doubleParam(id, params, 'ratio'),
+      attributes: attributes,
+    ),
     'HarmonicConjugatePoint' => HarmonicConjugatePoint(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        point3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      point3: point(2),
+      attributes: attributes,
+    ),
     'CentralReflectionPoint' => CentralReflectionPoint(
-        id: id,
-        point: point(0),
-        center: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      center: point(1),
+      attributes: attributes,
+    ),
     'RotatedPoint' => RotatedPoint(
-        id: id,
-        point: point(0),
-        center: point(1),
-        angle: _doubleParam(id, params, 'angle'),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      center: point(1),
+      angle: _doubleParam(id, params, 'angle'),
+      attributes: attributes,
+    ),
     'TranslatedPoint' => TranslatedPoint(
-        id: id,
-        point: point(0),
-        vectorFrom: point(1),
-        vectorTo: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      vectorFrom: point(1),
+      vectorTo: point(2),
+      attributes: attributes,
+    ),
     'Centroid' => Centroid(
-        id: id,
-        vertex1: point(0),
-        vertex2: point(1),
-        vertex3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      vertex1: point(0),
+      vertex2: point(1),
+      vertex3: point(2),
+      attributes: attributes,
+    ),
     'Orthocenter' => Orthocenter(
-        id: id,
-        vertex1: point(0),
-        vertex2: point(1),
-        vertex3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      vertex1: point(0),
+      vertex2: point(1),
+      vertex3: point(2),
+      attributes: attributes,
+    ),
     'Incenter' => Incenter(
-        id: id,
-        vertex1: point(0),
-        vertex2: point(1),
-        vertex3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      vertex1: point(0),
+      vertex2: point(1),
+      vertex3: point(2),
+      attributes: attributes,
+    ),
     'Circumcenter' => Circumcenter(
-        id: id,
-        vertex1: point(0),
-        vertex2: point(1),
-        vertex3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      vertex1: point(0),
+      vertex2: point(1),
+      vertex3: point(2),
+      attributes: attributes,
+    ),
     'CircleCenter' => CircleCenter(
-        id: id,
-        circle: circle(0),
-        attributes: attributes,
-      ),
+      id: id,
+      circle: circle(0),
+      attributes: attributes,
+    ),
     'LineThroughTwoPoints' => LineThroughTwoPoints(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      attributes: attributes,
+    ),
     'Segment' => Segment(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      attributes: attributes,
+    ),
     'Ray' => Ray(
-        id: id,
-        origin: point(0),
-        through: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      origin: point(0),
+      through: point(1),
+      attributes: attributes,
+    ),
     'PerpendicularLine' => PerpendicularLine(
-        id: id,
-        through: point(0),
-        reference: line(1),
-        attributes: attributes,
-      ),
+      id: id,
+      through: point(0),
+      reference: line(1),
+      attributes: attributes,
+    ),
     'ParallelLine' => ParallelLine(
-        id: id,
-        through: point(0),
-        reference: line(1),
-        attributes: attributes,
-      ),
+      id: id,
+      through: point(0),
+      reference: line(1),
+      attributes: attributes,
+    ),
     'AngleBisectorLine' => AngleBisectorLine(
-        id: id,
-        arm1: point(0),
-        vertex: point(1),
-        arm2: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      arm1: point(0),
+      vertex: point(1),
+      arm2: point(2),
+      attributes: attributes,
+    ),
     'PerpendicularBisectorLine' => PerpendicularBisectorLine(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      attributes: attributes,
+    ),
     'TwoLineBisectorLine' => TwoLineBisectorLine(
-        id: id,
-        line1: line(0),
-        line2: line(1),
-        branch: _intParam(id, params, 'branch'),
-        attributes: attributes,
-      ),
+      id: id,
+      line1: line(0),
+      line2: line(1),
+      branch: _intParam(id, params, 'branch'),
+      attributes: attributes,
+    ),
     'TangentLine' => TangentLine(
-        id: id,
-        point: point(0),
-        circle: circle(1),
-        branch: _intParam(id, params, 'branch'),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      circle: circle(1),
+      branch: _intParam(id, params, 'branch'),
+      attributes: attributes,
+    ),
     'PolarLine' => PolarLine(
-        id: id,
-        point: point(0),
-        circle: circle(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point: point(0),
+      circle: circle(1),
+      attributes: attributes,
+    ),
     'RadicalAxisLine' => RadicalAxisLine(
-        id: id,
-        circle1: circle(0),
-        circle2: circle(1),
-        attributes: attributes,
-      ),
+      id: id,
+      circle1: circle(0),
+      circle2: circle(1),
+      attributes: attributes,
+    ),
     'CircleCenterPoint' => CircleCenterPoint(
-        id: id,
-        center: point(0),
-        onCircle: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      center: point(0),
+      onCircle: point(1),
+      attributes: attributes,
+    ),
     'DiameterCircle' => DiameterCircle(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      attributes: attributes,
+    ),
     'ThreePointCircle' => ThreePointCircle(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        point3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      point3: point(2),
+      attributes: attributes,
+    ),
     'NinePointCircle' => NinePointCircle(
-        id: id,
-        vertex1: point(0),
-        vertex2: point(1),
-        vertex3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      vertex1: point(0),
+      vertex2: point(1),
+      vertex3: point(2),
+      attributes: attributes,
+    ),
     'InscribedCircle' => InscribedCircle(
-        id: id,
-        vertex1: point(0),
-        vertex2: point(1),
-        vertex3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      vertex1: point(0),
+      vertex2: point(1),
+      vertex3: point(2),
+      attributes: attributes,
+    ),
     'ApolloniusCircle' => ApolloniusCircle(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        point3: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      point3: point(2),
+      attributes: attributes,
+    ),
     // Parent count is the constructor's ArgumentError, normalized to
     // FormatException by the decode loop — the Polygon convention.
     'FocalConic' => FocalConic(
-        id: id,
-        focus: point(0),
-        directrix: line(1),
-        eccentricity: _doubleParam(id, params, 'eccentricity'),
-        attributes: attributes,
-      ),
+      id: id,
+      focus: point(0),
+      directrix: line(1),
+      eccentricity: _doubleParam(id, params, 'eccentricity'),
+      attributes: attributes,
+    ),
     'BifocalConic' => BifocalConic(
-        id: id,
-        focus1: point(0),
-        focus2: point(1),
-        point: point(2),
-        difference: _boolParam(id, params, 'difference'),
-        attributes: attributes,
-      ),
+      id: id,
+      focus1: point(0),
+      focus2: point(1),
+      point: point(2),
+      difference: _boolParam(id, params, 'difference'),
+      attributes: attributes,
+    ),
     'FivePointConic' => FivePointConic(
-        id: id,
-        points: [for (var i = 0; i < parents.length; i++) point(i)],
-        attributes: attributes,
-      ),
+      id: id,
+      points: [for (var i = 0; i < parents.length; i++) point(i)],
+      attributes: attributes,
+    ),
     'CompassCircle' => CompassCircle(
-        id: id,
-        radiusPoint1: point(0),
-        radiusPoint2: point(1),
-        center: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      radiusPoint1: point(0),
+      radiusPoint2: point(1),
+      center: point(2),
+      attributes: attributes,
+    ),
     'FixedRadiusCircle' => FixedRadiusCircle(
-        id: id,
-        center: point(0),
-        radius: _doubleParam(id, params, 'radius'),
-        attributes: attributes,
-      ),
+      id: id,
+      center: point(0),
+      radius: _doubleParam(id, params, 'radius'),
+      attributes: attributes,
+    ),
     'Arc' => Arc(
-        id: id,
-        start: point(0),
-        via: point(1),
-        end: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      start: point(0),
+      via: point(1),
+      end: point(2),
+      attributes: attributes,
+    ),
     'Sector' => Sector(
-        id: id,
-        center: point(0),
-        start: point(1),
-        end: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      center: point(0),
+      start: point(1),
+      end: point(2),
+      attributes: attributes,
+    ),
     // Variable arity: every parent is a vertex, in loop order. Fewer than
     // 3 fails the Polygon constructor's ArgumentError, which the decode
     // loop normalizes to FormatException.
     'Polygon' => Polygon(
-        id: id,
-        vertices: [for (var i = 0; i < parents.length; i++) point(i)],
-        attributes: attributes,
-      ),
+      id: id,
+      vertices: [for (var i = 0; i < parents.length; i++) point(i)],
+      attributes: attributes,
+    ),
     // A tampered file (parents not matching the content's references, or
     // a text parent) is the constructor's ArgumentError, normalized to
     // FormatException by the decode loop.
     'ExpressionText' => ExpressionText(
-        id: id,
-        content: _stringParam(id, params, 'content'),
-        anchor: Vec2(
-          _doubleParam(id, params, 'x'),
-          _doubleParam(id, params, 'y'),
-        ),
-        references: parents,
-        attributes: attributes,
+      id: id,
+      content: _stringParam(id, params, 'content'),
+      anchor: Vec2(
+        _doubleParam(id, params, 'x'),
+        _doubleParam(id, params, 'y'),
       ),
+      references: parents,
+      attributes: attributes,
+    ),
     'DistanceMeasurement' => DistanceMeasurement(
-        id: id,
-        point1: point(0),
-        point2: point(1),
-        attributes: attributes,
-      ),
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      attributes: attributes,
+    ),
     // The subject's kind (polygon or circle) is the constructor's
     // business — its ArgumentError normalizes to FormatException in the
     // decode loop, the PointOnObject precedent.
     'AreaMeasurement' => AreaMeasurement(
-        id: id,
-        subject: any(0),
-        attributes: attributes,
-      ),
+      id: id,
+      subject: any(0),
+      attributes: attributes,
+    ),
     // Same normalization: a non-circular subject is the constructor's
     // ArgumentError, surfaced as FormatException by the decode loop.
     'LengthMeasurement' => LengthMeasurement(
-        id: id,
-        subject: any(0),
-        attributes: attributes,
-      ),
+      id: id,
+      subject: any(0),
+      attributes: attributes,
+    ),
     // Same normalization: a non-line subject is the constructor's
     // ArgumentError, surfaced as FormatException by the decode loop.
     'SlopeMeasurement' => SlopeMeasurement(
-        id: id,
-        subject: any(0),
-        attributes: attributes,
-      ),
+      id: id,
+      subject: any(0),
+      attributes: attributes,
+    ),
     // The driver must be a PointOnObject and the traced point must
     // depend on it — both the constructor's business; its ArgumentError
     // normalizes to FormatException in the decode loop. Absent params
     // fall back to the constructor defaults (additive, no version bump).
     'Locus' => Locus(
-        id: id,
-        driver: _typedParent<PointOnObject>(id, parents, 0),
-        traced: point(1),
-        sampleCount: _optionalIntParam(id, params, 'sampleCount') ?? 128,
-        center: _optionalDoubleParam(id, params, 'center') ?? 0,
-        halfSpan: _optionalDoubleParam(id, params, 'halfSpan') ?? 100,
-        attributes: attributes,
-      ),
+      id: id,
+      driver: _typedParent<PointOnObject>(id, parents, 0),
+      traced: point(1),
+      sampleCount: _optionalIntParam(id, params, 'sampleCount') ?? 128,
+      center: _optionalDoubleParam(id, params, 'center') ?? 0,
+      halfSpan: _optionalDoubleParam(id, params, 'halfSpan') ?? 100,
+      attributes: attributes,
+    ),
     'VertexAngle' => VertexAngle(
-        id: id,
-        arm1: point(0),
-        vertex: point(1),
-        arm2: point(2),
-        attributes: attributes,
-      ),
+      id: id,
+      arm1: point(0),
+      vertex: point(1),
+      arm2: point(2),
+      attributes: attributes,
+    ),
     'LineAngle' => LineAngle(
-        id: id,
-        line1: line(0),
-        line2: line(1),
-        sign1: _optionalIntParam(id, params, 'sign1'),
-        sign2: _optionalIntParam(id, params, 'sign2'),
-        attributes: attributes,
-      ),
+      id: id,
+      line1: line(0),
+      line2: line(1),
+      sign1: _optionalIntParam(id, params, 'sign1'),
+      sign2: _optionalIntParam(id, params, 'sign2'),
+      attributes: attributes,
+    ),
     _ => throw FormatException('Object "$id": unknown type "$type"'),
   };
 }
@@ -841,8 +937,7 @@ double? _optionalDoubleParam(
   String id,
   Map<String, dynamic> params,
   String key,
-) =>
-    params.containsKey(key) ? _doubleParam(id, params, key) : null;
+) => params.containsKey(key) ? _doubleParam(id, params, key) : null;
 
 /// The key a homogeneous param's components live under. Wrapping the list
 /// in a one-key map rather than writing it bare is what makes such a param

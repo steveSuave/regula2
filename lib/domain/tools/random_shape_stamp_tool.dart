@@ -27,10 +27,10 @@ class RandomShapeStampTool implements Tool {
     required this.minVertices,
     required this.maxVertices,
     math.Random? random,
-  })  : assert(minVertices >= 3, 'a polygon needs at least 3 vertices'),
-        assert(minVertices <= maxVertices, 'empty vertex-count range'),
-        convex = false,
-        _random = random ?? math.Random();
+  }) : assert(minVertices >= 3, 'a polygon needs at least 3 vertices'),
+       assert(minVertices <= maxVertices, 'empty vertex-count range'),
+       convex = false,
+       _random = random ?? math.Random();
 
   /// Stamps a *strictly convex* random quadrilateral: exactly four
   /// vertices on one circle — sorted distinct angles on a circle are
@@ -41,10 +41,10 @@ class RandomShapeStampTool implements Tool {
   RandomShapeStampTool.convexQuadrilateral({
     required this.newId,
     math.Random? random,
-  })  : minVertices = 4,
-        maxVertices = 4,
-        convex = true,
-        _random = random ?? math.Random();
+  }) : minVertices = 4,
+       maxVertices = 4,
+       convex = true,
+       _random = random ?? math.Random();
 
   /// Produces a fresh unique object id per call (see `PointTool.newId`).
   final String Function() newId;

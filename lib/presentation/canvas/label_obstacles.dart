@@ -80,12 +80,10 @@ DeclutterScene buildDeclutterScene(
         } else {
           // The painter's reach: far enough to cross the whole canvas.
           final start = viewport.worldToScreen(object.start!);
-          final along =
-              viewport.worldToScreen(object.throughPosition!) - start;
+          final along = viewport.worldToScreen(object.throughPosition!) - start;
           if (along.distance > 0) {
             final direction = along / along.distance;
-            final reach =
-                start.distance + canvasSize.width + canvasSize.height;
+            final reach = start.distance + canvasSize.width + canvasSize.height;
             capsule(start, start + direction * reach);
           }
         }
@@ -98,7 +96,7 @@ DeclutterScene buildDeclutterScene(
           final anchor = viewport.worldToScreen(line.pointOnLine);
           final along =
               viewport.worldToScreen(line.pointOnLine + line.direction) -
-                  anchor;
+              anchor;
           if (along.distance > 0) {
             final direction = along / along.distance;
             final reach =
@@ -135,8 +133,7 @@ DeclutterScene buildDeclutterScene(
           );
           for (final stroke in strokes) {
             chords([
-              for (final point in stroke.points)
-                viewport.worldToScreen(point),
+              for (final point in stroke.points) viewport.worldToScreen(point),
               if (stroke.closed && stroke.points.isNotEmpty)
                 viewport.worldToScreen(stroke.points.first),
             ]);
@@ -207,10 +204,7 @@ DeclutterScene buildDeclutterScene(
   if (span == null) {
     return null;
   }
-  return (
-    viewport.worldToScreen(span.start),
-    viewport.worldToScreen(span.end),
-  );
+  return (viewport.worldToScreen(span.start), viewport.worldToScreen(span.end));
 }
 
 /// Screen points along a circle branch from [startAngle] through

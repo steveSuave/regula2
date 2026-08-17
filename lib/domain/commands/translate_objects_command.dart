@@ -34,8 +34,8 @@ class TranslateObjectsCommand implements Command {
         switch (construction.byId(id)) {
           final FreePoint p => p,
           _ => throw ArgumentError(
-              '$id is not a FreePoint in this construction',
-            ),
+            '$id is not a FreePoint in this construction',
+          ),
         },
     ];
     _before.clear();

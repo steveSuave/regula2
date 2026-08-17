@@ -23,10 +23,10 @@ import 'tool.dart';
 /// rest of the construction.
 class FixedLengthSegmentTool extends MultiPointTool {
   FixedLengthSegmentTool({required super.newId, required this.length})
-      : assert(
-          length.isFinite && length > 0,
-          'the dialog admits only finite positive lengths',
-        );
+    : assert(
+        length.isFinite && length > 0,
+        'the dialog admits only finite positive lengths',
+      );
 
   /// Segment length in world units, fixed for the tool's lifetime.
   final double length;

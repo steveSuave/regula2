@@ -757,8 +757,9 @@ void main() {
     expect(sector.attributes.fillAlpha, 0.25);
   });
 
-  testWidgets('fill checkbox is withheld from a conic (Phase 120)',
-      (tester) async {
+  testWidgets('fill checkbox is withheld from a conic (Phase 120)', (
+    tester,
+  ) async {
     // A conic bounds nothing the painter can close — a hyperbola has no
     // interior, a clipped ellipse would need the viewport edges — so the
     // row would be a silent no-op. Withheld by *kind*: an undefined circle
@@ -782,8 +783,9 @@ void main() {
     );
   });
 
-  testWidgets('an undefined circle keeps its fill row (Phase 120)',
-      (tester) async {
+  testWidgets('an undefined circle keeps its fill row (Phase 120)', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     final b = addPoint('b', const Vec2(1, 0));

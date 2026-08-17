@@ -45,8 +45,12 @@ double closestAffineError(List<ProjPoint> points, double x, double y) {
 }
 
 void main() {
-  print('--- near-tangent circles: r=1 at d = 2 − ε (real pair ~sqrt(ε) apart) ---');
-  print('eps        incidence   point-error   (expected points (d/2, ±sqrt(1−d²/4)))');
+  print(
+    '--- near-tangent circles: r=1 at d = 2 − ε (real pair ~sqrt(ε) apart) ---',
+  );
+  print(
+    'eps        incidence   point-error   (expected points (d/2, ±sqrt(1−d²/4)))',
+  );
   for (var e = 3; e <= 12; e++) {
     final eps = math.pow(10.0, -e).toDouble();
     final d = 2 - eps;
@@ -60,9 +64,11 @@ void main() {
       closestAffineError(pts, ex, -ey),
     );
     final res = math.max(incidenceResidual(pts, a), incidenceResidual(pts, b));
-    print('1e-$e'.padRight(11) +
-        res.toStringAsExponential(1).padRight(12) +
-        err.toStringAsExponential(1));
+    print(
+      '1e-$e'.padRight(11) +
+          res.toStringAsExponential(1).padRight(12) +
+          err.toStringAsExponential(1),
+    );
   }
 
   print('--- just-missing circles: r=1 at d = 2 + ε (conjugate pair) ---');
@@ -80,9 +86,11 @@ void main() {
       if (n.w.abs < 1e-9) continue;
       maxIm = math.max(maxIm, (n.y / n.w).im.abs());
     }
-    print('1e-$e'.padRight(11) +
-        res.toStringAsExponential(1).padRight(12) +
-        maxIm.toStringAsExponential(1));
+    print(
+      '1e-$e'.padRight(11) +
+          res.toStringAsExponential(1).padRight(12) +
+          maxIm.toStringAsExponential(1),
+    );
   }
 
   print('--- nearly identical circles: r=1, centers δ apart ---');
@@ -94,11 +102,16 @@ void main() {
     final pts = intersectConicConic(a, b);
     final res = math.max(incidenceResidual(pts, a), incidenceResidual(pts, b));
     // True finite intersections: x = δ/2, y = ±sqrt(1 − δ²/4) ≈ ±1.
-    final err =
-        closestAffineError(pts, delta / 2, math.sqrt(1 - delta * delta / 4));
-    print('1e-$e'.padRight(11) +
-        res.toStringAsExponential(1).padRight(12) +
-        err.toStringAsExponential(1));
+    final err = closestAffineError(
+      pts,
+      delta / 2,
+      math.sqrt(1 - delta * delta / 4),
+    );
+    print(
+      '1e-$e'.padRight(11) +
+          res.toStringAsExponential(1).padRight(12) +
+          err.toStringAsExponential(1),
+    );
   }
 
   print('--- scale extremes: transverse circle pairs at radius 10^k ---');
@@ -112,9 +125,11 @@ void main() {
     final pts = intersectConicConic(a, b);
     final res = math.max(incidenceResidual(pts, a), incidenceResidual(pts, b));
     final err = closestAffineError(pts, s / 2, s * math.sqrt(3) / 2) / s;
-    print('1e$k'.padRight(11) +
-        res.toStringAsExponential(1).padRight(12) +
-        err.toStringAsExponential(1));
+    print(
+      '1e$k'.padRight(11) +
+          res.toStringAsExponential(1).padRight(12) +
+          err.toStringAsExponential(1),
+    );
   }
 
   print('--- far-offset unit circles: centers near (10^k, 0), transverse ---');
@@ -129,9 +144,11 @@ void main() {
       closestAffineError(pts, off + 0.5, math.sqrt(3) / 2),
       closestAffineError(pts, off + 0.5, -math.sqrt(3) / 2),
     );
-    print('1e$k'.padRight(11) +
-        res.toStringAsExponential(1).padRight(12) +
-        err.toStringAsExponential(1));
+    print(
+      '1e$k'.padRight(11) +
+          res.toStringAsExponential(1).padRight(12) +
+          err.toStringAsExponential(1),
+    );
   }
 
   print('--- concentric circles (all four points at I, J) ---');
@@ -140,7 +157,9 @@ void main() {
     final n = p.normalized;
     final toI = n.join(circularPointI).norm2;
     final toJ = n.join(circularPointJ).norm2;
-    print('  point $n  '
-        'dist²(I)=${toI.toStringAsExponential(1)} dist²(J)=${toJ.toStringAsExponential(1)}');
+    print(
+      '  point $n  '
+      'dist²(I)=${toI.toStringAsExponential(1)} dist²(J)=${toJ.toStringAsExponential(1)}',
+    );
   }
 }

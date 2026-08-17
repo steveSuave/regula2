@@ -203,8 +203,7 @@ void main() {
     const g = Vec2(-1, 1.7320508075688774);
     final k = (c - g).normSquared / 2;
     for (final p in points) {
-      final residual =
-          (p - c).normSquared - (p - g).normSquared - k;
+      final residual = (p - c).normSquared - (p - g).normSquared - k;
       expect(
         residual.abs() / (1 + p.norm),
         lessThan(1e-6),

@@ -275,10 +275,7 @@ class Locus extends GeoLocus {
         walker.balance = (
           cx: (minX + maxX) / 2,
           cy: (minY + maxY) / 2,
-          scale: math.max(
-            Vec2(maxX - minX, maxY - minY).norm / 2,
-            1e-9,
-          ),
+          scale: math.max(Vec2(maxX - minX, maxY - minY).norm / 2, 1e-9),
         );
       }
     }
@@ -332,11 +329,7 @@ class Locus extends GeoLocus {
   /// its parameters unwrapped by +1 (the normalized period) to keep each
   /// run's parameter list monotone. Every run ends in a gap parameter
   /// or, on non-cyclic domains, null — the domain's edge.
-  static List<_Run> _runs(
-    List<double> grid,
-    List<Vec2?> scan,
-    bool cyclic,
-  ) {
+  static List<_Run> _runs(List<double> grid, List<Vec2?> scan, bool cyclic) {
     final n = scan.length;
     final first = cyclic ? scan.indexWhere((p) => p == null) : 0;
     double parameterAt(int slot) {
@@ -547,10 +540,10 @@ class _SweepDomain {
         final d = line.direction;
         ProjPoint atT(double t) => ProjPoint.lift(line.pointAt(t));
         ProjPoint atComplexT(Complex t) => ProjPoint(
-              Complex(anchor.x) + t.scale(d.x),
-              Complex(anchor.y) + t.scale(d.y),
-              Complex.one,
-            );
+          Complex(anchor.x) + t.scale(d.x),
+          Complex(anchor.y) + t.scale(d.y),
+          Complex.one,
+        );
         final (min, max) = parameterExtent ?? (null, null);
         if (min != null && max != null) {
           // A two-sided extent (Segment): uniform over it, endpoints
@@ -560,9 +553,7 @@ class _SweepDomain {
             grid: [for (var i = 0; i < n; i++) i / (n - 1)],
             cell: 1 / (n - 1),
             evalReal: (x) => atT(min + (max - min) * x),
-            evalComplex: (x) => atComplexT(
-              Complex(min) + x.scale(max - min),
-            ),
+            evalComplex: (x) => atComplexT(Complex(min) + x.scale(max - min)),
             isCore: (_) => true,
           );
         }
@@ -592,8 +583,8 @@ class _SweepDomain {
                 : atT(tOf(x)),
             evalComplex: (x) {
               final phi = x.scale(math.pi / 2);
-              final t = Complex(edge) +
-                  (phi.sin / phi.cos).scale(sign * halfSpan);
+              final t =
+                  Complex(edge) + (phi.sin / phi.cos).scale(sign * halfSpan);
               return atComplexT(t);
             },
             isCore: (x) => x != 1 && (tOf(x) - center).abs() <= halfSpan,
@@ -622,8 +613,7 @@ class _SweepDomain {
               : atT(tOf(x)),
           evalComplex: (x) {
             final phi = (x - const Complex(0.5)).scale(math.pi);
-            final t =
-                Complex(center) + (phi.sin / phi.cos).scale(halfSpan);
+            final t = Complex(center) + (phi.sin / phi.cos).scale(halfSpan);
             return atComplexT(t);
           },
           isCore: (x) => (tOf(x) - center).abs() <= halfSpan,
@@ -674,10 +664,7 @@ class _AdvanceEnd {
 /// walk, sharing its acceptance rules verbatim.
 class _TracedSweep {
   _TracedSweep(this.chain, this.domain, this.traced)
-      : assert(
-          chain.first is PointOnObject,
-          'the chain starts at the driver',
-        );
+    : assert(chain.first is PointOnObject, 'the chain starts at the driver');
 
   final List<GeoObject> chain;
   final _SweepDomain domain;
@@ -855,7 +842,8 @@ class _TracedSweep {
             }
             // A swap that restores the original assignment ends the
             // walk — closure or trim — with no re-entry needed.
-            final closing = parity.length == end.culprits.length &&
+            final closing =
+                parity.length == end.culprits.length &&
                 end.culprits.every(parity.contains);
             if (closing) {
               if (out.length > 1 && Locus._closes(out)) {
@@ -879,8 +867,7 @@ class _TracedSweep {
             driveReal(x);
             var swapped = true;
             for (final o in end.culprits) {
-              final candidates =
-                  intersectionCandidates(o.curve1, o.curve2);
+              final candidates = intersectionCandidates(o.curve1, o.curve2);
               final matched = o.tracedBranch.matchedIndex;
               if (candidates.length != 2 || matched < 0 || matched > 1) {
                 swapped = false;
@@ -1101,7 +1088,8 @@ class _TracedSweep {
     while (d < span) {
       TraceDiagnostics.checkpoint(
         'locus leg',
-        detail: () => 'd=${d.toStringAsExponential(3)}/'
+        detail: () =>
+            'd=${d.toStringAsExponential(3)}/'
             '${span.toStringAsExponential(3)} '
             'step=${step.toStringAsExponential(2)} '
             'trials=$_trials/$_budget',
@@ -1115,10 +1103,16 @@ class _TracedSweep {
       if (trialX == x) {
         // Refinement bottomed out on the floating-point grid: the
         // boundary is localized to the last accepted parameter.
-        final culprits = foldPending ? _culprits() : const <IntersectionPoint>[];
+        final culprits = foldPending
+            ? _culprits()
+            : const <IntersectionPoint>[];
         return culprits.isNotEmpty
-            ? _AdvanceEnd(x, _EndKind.fold,
-                culprits: culprits, confident: confident)
+            ? _AdvanceEnd(
+                x,
+                _EndKind.fold,
+                culprits: culprits,
+                confident: confident,
+              )
             : _AdvanceEnd(x, _EndKind.open, confident: confident);
       }
       // A root collision extrapolated to lie inside this trial refuses
@@ -1138,7 +1132,8 @@ class _TracedSweep {
         _trials++;
         TraceDiagnostics.count(TraceCounter.locusTrials);
         driveReal(trialX);
-        ok = trialAccepted(seeded, _checkpoints, trialD - d) &&
+        ok =
+            trialAccepted(seeded, _checkpoints, trialD - d) &&
             collisionFree(_pairs);
       }
       if (ok && !_indexFlipsAreConsistent(x, trialX)) {
@@ -1292,9 +1287,9 @@ class _TracedSweep {
   /// The slots whose candidate separation has collapsed at the last
   /// accepted state — the roots coalescing at the singularity ahead.
   List<IntersectionPoint> _culprits() => [
-        for (final o in seeded)
-          if (o.tracedBranch.separation < detourTriggerSeparation) o,
-      ];
+    for (final o in seeded)
+      if (o.tracedBranch.separation < detourTriggerSeparation) o,
+  ];
 
   /// The measured minimum of the culprits' candidate separation ahead of
   /// [d] (Phase 117b) — where the roots come closest, and how close.
@@ -1377,7 +1372,8 @@ class _TracedSweep {
       while (theta > 0) {
         TraceDiagnostics.checkpoint(
           'locus detour arc',
-          detail: () => 'theta=${theta.toStringAsFixed(6)} '
+          detail: () =>
+              'theta=${theta.toStringAsFixed(6)} '
               'dTheta=${dTheta.toStringAsExponential(2)} '
               'trials=$_trials/$_budget',
         );
@@ -1399,7 +1395,10 @@ class _TracedSweep {
             ) &&
             collisionFree(_pairs)) {
           theta = trialTheta;
-          dTheta = math.min(dTheta * 2 < theta ? dTheta * 2 : theta, maxDetourArcStep);
+          dTheta = math.min(
+            dTheta * 2 < theta ? dTheta * 2 : theta,
+            maxDetourArcStep,
+          );
           _snapshot();
         } else {
           _restoreAll();

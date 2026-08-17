@@ -61,7 +61,12 @@ Vec2? incenter(Vec2 a, Vec2 b, Vec2 c, [double epsilon = defaultEpsilon]) {
 ///
 /// The nine-point (Euler) circle is then centered at the midpoint of
 /// [circumcenter] and [orthocenter] with radius `circumradius / 2`.
-double? circumradius(Vec2 a, Vec2 b, Vec2 c, [double epsilon = defaultEpsilon]) {
+double? circumradius(
+  Vec2 a,
+  Vec2 b,
+  Vec2 c, [
+  double epsilon = defaultEpsilon,
+]) {
   final o = circumcenter(a, b, c, epsilon);
   return o?.distanceTo(a);
 }

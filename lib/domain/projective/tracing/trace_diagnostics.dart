@@ -284,7 +284,9 @@ abstract final class TraceDiagnostics {
     }
     final buffer = StringBuffer()
       ..writeln('=== regula trace diagnostics ===')
-      ..writeln('frames recorded: ${_history.length} (of $_frames since reset)');
+      ..writeln(
+        'frames recorded: ${_history.length} (of $_frames since reset)',
+      );
     final times = [for (final f in _history) f.totalMs]..sort();
     double pct(double p) => times[((times.length - 1) * p).round()];
     buffer

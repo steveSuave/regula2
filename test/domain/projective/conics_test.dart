@@ -15,8 +15,7 @@ import 'generators.dart';
 List<Vec2> _sweep(ConicMatrix conic, {int count = 24}) {
   final shape = ConicShape.of(conic);
   return [
-    for (var i = 0; i < count; i++)
-      ?shape.chartPointAt(math.pi * i / count),
+    for (var i = 0; i < count; i++) ?shape.chartPointAt(math.pi * i / count),
   ];
 }
 
@@ -39,11 +38,7 @@ void main() {
       for (final e in const [0.35, 0.8, 1.0, 1.6, 3.0]) {
         final focus = const Vec2(2, -1);
         final line = ProjLine.real(3, -4, 5); // 3x − 4y + 5 = 0
-        final k = focalConicOf(
-          ProjPoint.lift(focus),
-          line,
-          Complex(e),
-        );
+        final k = focalConicOf(ProjPoint.lift(focus), line, Complex(e));
         final points = _sweep(k);
         expect(points, isNotEmpty, reason: 'e = $e produced no curve');
         for (final x in points) {
@@ -59,7 +54,11 @@ void main() {
 
     test('the eccentricity picks the class', () {
       ConicClass classOf(double e) => ConicShape.of(
-        focalConicOf(ProjPoint.real(2, -1), ProjLine.real(3, -4, 5), Complex(e)),
+        focalConicOf(
+          ProjPoint.real(2, -1),
+          ProjLine.real(3, -4, 5),
+          Complex(e),
+        ),
       ).kind;
       expect(classOf(0.5), ConicClass.ellipse);
       expect(classOf(1), ConicClass.parabola);

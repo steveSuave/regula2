@@ -20,11 +20,7 @@ void main() {
       expect(mid.closeTo((s + e) / 2), isTrue);
     });
 
-    Glados3(any.vec2, any.vec2, unitT).test('stays on the segment', (
-      s,
-      e,
-      t,
-    ) {
+    Glados3(any.vec2, any.vec2, unitT).test('stays on the segment', (s, e, t) {
       final p = DragPath(s, e).at(t);
       // Collinear with the endpoints, at the right fraction of the way.
       expect((p - s).cross(e - s).abs(), lessThan(1e-6 * (1 + (e - s).norm)));
@@ -50,10 +46,7 @@ void main() {
       (s, e, t) {
         final p = DragPath(s, e).evaluate(t);
         final chart = DragPath(s, e).at(t.re);
-        final scale = 1 +
-            s.norm +
-            e.norm +
-            t.im.abs() * ((e - s).norm + 1);
+        final scale = 1 + s.norm + e.norm + t.im.abs() * ((e - s).norm + 1);
         expect(p.w, Complex.one);
         expect((p.x.re - chart.x).abs(), lessThan(1e-9 * scale));
         expect((p.y.re - chart.y).abs(), lessThan(1e-9 * scale));

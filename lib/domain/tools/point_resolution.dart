@@ -51,8 +51,11 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
   (GeoObject, GeoObject, int)? bestPair;
   for (var i = 0; i < curves.length; i++) {
     for (var j = i + 1; j < curves.length; j++) {
-      final branch =
-          nearestIntersectionBranch(curves[i], curves[j], input.position);
+      final branch = nearestIntersectionBranch(
+        curves[i],
+        curves[j],
+        input.position,
+      );
       if (branch != null && branch.distance < bestDistance) {
         bestDistance = branch.distance;
         bestPair = (curves[i], curves[j], branch.index);

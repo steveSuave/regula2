@@ -17,7 +17,11 @@ part 'viewport_provider.g.dart';
 /// sizes, i.e. Flutter types) live in the presentation layer's `Viewport`
 /// (Phase 5), which is built from this.
 class ViewportState {
-  const ViewportState({this.pan = Vec2.zero, this.scale = 1, this.rotation = 0});
+  const ViewportState({
+    this.pan = Vec2.zero,
+    this.scale = 1,
+    this.rotation = 0,
+  });
 
   final Vec2 pan;
   final double scale;
@@ -51,17 +55,17 @@ class ViewportNotifier extends _$ViewportNotifier {
 
   /// Shifts the pan by [delta] (world units).
   void panBy(Vec2 delta) => state = ViewportState(
-        pan: state.pan + delta,
-        scale: state.scale,
-        rotation: state.rotation,
-      );
+    pan: state.pan + delta,
+    scale: state.scale,
+    rotation: state.rotation,
+  );
 
   /// Multiplies the scale by [factor] (> 1 zooms in).
   void zoomBy(double factor) => state = ViewportState(
-        pan: state.pan,
-        scale: state.scale * factor,
-        rotation: state.rotation,
-      );
+    pan: state.pan,
+    scale: state.scale * factor,
+    rotation: state.rotation,
+  );
 
   void set(ViewportState viewport) => state = viewport;
 

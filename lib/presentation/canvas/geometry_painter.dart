@@ -156,8 +156,9 @@ class GeometryPainter extends CustomPainter {
           ..style = PaintingStyle.stroke;
         _drawObject(canvas, size, object, halo, pointRadiusExtra: _haloExtra);
       }
-      final baseColor =
-          Color(object.attributes.colorArgb ?? defaultColor.toARGB32());
+      final baseColor = Color(
+        object.attributes.colorArgb ?? defaultColor.toARGB32(),
+      );
       final color = hidden
           ? baseColor.withValues(alpha: baseColor.a * dim)
           : baseColor;
@@ -314,10 +315,8 @@ class GeometryPainter extends CustomPainter {
         final tick = viewport.worldToScreen(Vec2(i * step, 0));
         paintLabel(
           formatTick(i * step),
-          (textSize) => Offset(
-            tick.dx - textSize.width / 2,
-            tick.dy + _tickLabelGap,
-          ),
+          (textSize) =>
+              Offset(tick.dx - textSize.width / 2, tick.dy + _tickLabelGap),
         );
       }
     }
@@ -374,13 +373,7 @@ class GeometryPainter extends CustomPainter {
         final start = viewport.worldToScreen(object.start!);
         final end = viewport.worldToScreen(object.end!);
         _drawStraight(canvas, start, end, paint, dashPeriod);
-        _drawTickMarks(
-          canvas,
-          start,
-          end,
-          object.attributes.tickMarks,
-          paint,
-        );
+        _drawTickMarks(canvas, start, end, object.attributes.tickMarks, paint);
       case Ray():
         final span = _clipSpan(object);
         if (span != null) {
@@ -587,8 +580,8 @@ class GeometryPainter extends CustomPainter {
   /// whole-construction scan for the common unclipped case.
   ({Vec2 start, Vec2 end})? _clipSpan(GeoLine object) =>
       object.attributes.lineClip == 0
-          ? null
-          : lineClipSpan(construction.objects, object);
+      ? null
+      : lineClipSpan(construction.objects, object);
 
   /// Equal-length tick marks (congruence notation): [count] short
   /// strokes perpendicular to the [from]→[to] stretch, centered as a
@@ -811,8 +804,7 @@ class GeometryPainter extends CustomPainter {
     }
     if (closeToCenter) {
       for (final angle in [screenStart, screenStart + screenSweep]) {
-        final rim =
-            center + Offset(math.cos(angle), math.sin(angle)) * radius;
+        final rim = center + Offset(math.cos(angle), math.sin(angle)) * radius;
         path
           ..moveTo(center.dx, center.dy)
           ..lineTo(rim.dx, rim.dy);
@@ -1011,8 +1003,7 @@ class GeometryPainter extends CustomPainter {
     final d1 = angle.startDirection;
     final d2 = d1.rotated(angle.sweep);
     // World directions rotate with the view, then the screen flips y.
-    Offset corner(Vec2 d) =>
-        vertex + viewport.worldToScreenDirection(d) * side;
+    Offset corner(Vec2 d) => vertex + viewport.worldToScreenDirection(d) * side;
     final c1 = corner(d1);
     final c12 = corner(d1 + d2);
     final c2 = corner(d2);

@@ -29,7 +29,7 @@ import 'object_attributes.dart';
 /// (painter, hit tester) must skip them while undefined.
 sealed class GeoObject {
   GeoObject({required this.id, ObjectAttributes? attributes})
-      : attributes = attributes ?? const ObjectAttributes();
+    : attributes = attributes ?? const ObjectAttributes();
 
   /// Stable unique id; referenced by the save format and dependents lookup.
   final String id;
@@ -69,9 +69,9 @@ abstract class GeoPoint extends GeoObject {
   /// [position] as its projection ([ProjPoint.toVec2]), so [isDefined]
   /// becomes the rendering question "real and finite?".
   ProjPoint? get projPoint => switch (position) {
-        null => null,
-        final p => ProjPoint.lift(p),
-      };
+    null => null,
+    final p => ProjPoint.lift(p),
+  };
 
   @override
   bool get isDefined => position != null;
@@ -96,9 +96,9 @@ abstract class GeoLine extends GeoObject {
   /// its projection ([ProjLine.toLineEq]); real-extent metadata
   /// ([parameterExtent]) stays affine either way.
   ProjLine? get projLine => switch (line) {
-        null => null,
-        final l => ProjLine.lift(l),
-      };
+    null => null,
+    final l => ProjLine.lift(l),
+  };
 
   /// The parameter span of the carrier this object actually occupies, in
   /// the carrier's arc-length parameterization (`LineEq.parameterAt`), as
@@ -148,9 +148,9 @@ abstract class GeoCircle extends GeoObject {
   /// [circle] as its projection ([ConicMatrix.toCircleEq]); angular-extent
   /// metadata ([angularExtent]) stays affine either way.
   ConicMatrix? get conic => switch (circle) {
-        null => null,
-        final c => ConicMatrix.lift(c),
-      };
+    null => null,
+    final c => ConicMatrix.lift(c),
+  };
 
   /// The angular span of the carrier this object actually occupies, as
   /// `(start, sweep)` with a counter-clockwise sweep in [0, 2π) — or null
@@ -288,9 +288,9 @@ abstract class GeoLocus extends GeoObject {
   /// the sweep's focus window; the default is every defined sample.
   /// Null exactly while [samples] is.
   List<Vec2>? get coreSamples => switch (samples) {
-        null => null,
-        final s => [for (final p in s) ?p],
-      };
+    null => null,
+    final s => [for (final p in s) ?p],
+  };
 
   @override
   bool get isDefined => samples != null;

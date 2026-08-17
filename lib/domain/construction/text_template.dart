@@ -132,9 +132,11 @@ class TextTemplate {
           buffer.write(text);
         case ExpressionSegment(:final expr):
           final value = evaluateExpression(expr, env);
-          buffer.write(value == null
-              ? '?'
-              : formatComputedValue(value, decimals: decimals));
+          buffer.write(
+            value == null
+                ? '?'
+                : formatComputedValue(value, decimals: decimals),
+          );
       }
     }
     return buffer.toString();
@@ -157,8 +159,10 @@ void _validateCalls(Expr expr, String content, int slotOffset) {
         final objectArity = _objectFunctionArity[name];
         if (objectArity != null) {
           if (args.length != objectArity) {
-            fail("'$name' takes $objectArity "
-                '${objectArity == 1 ? 'argument' : 'arguments'}');
+            fail(
+              "'$name' takes $objectArity "
+              '${objectArity == 1 ? 'argument' : 'arguments'}',
+            );
           }
           for (final arg in args) {
             if (arg is! NameRef) {
@@ -172,10 +176,12 @@ void _validateCalls(Expr expr, String content, int slotOffset) {
             fail("Unknown function '$name'");
           case (final min, final max):
             if (args.length < min || (max != null && args.length > max)) {
-              fail(max == null
-                  ? "'$name' takes at least $min arguments"
-                  : "'$name' takes $min "
-                      '${min == 1 ? 'argument' : 'arguments'}');
+              fail(
+                max == null
+                    ? "'$name' takes at least $min arguments"
+                    : "'$name' takes $min "
+                          '${min == 1 ? 'argument' : 'arguments'}',
+              );
             }
         }
         args.forEach(walk);

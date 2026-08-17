@@ -60,11 +60,11 @@ class RadicalAxisTool implements ToolInputPreview {
     GeoCircle a,
     GeoCircle b,
   ) => objects.any(
-        (object) =>
-            object is RadicalAxisLine &&
-            ((identical(object.circle1, a) && identical(object.circle2, b)) ||
-                (identical(object.circle1, b) && identical(object.circle2, a))),
-      );
+    (object) =>
+        object is RadicalAxisLine &&
+        ((identical(object.circle1, a) && identical(object.circle2, b)) ||
+            (identical(object.circle1, b) && identical(object.circle2, a))),
+  );
 
   @override
   void reset() {

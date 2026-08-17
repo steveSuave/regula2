@@ -20,8 +20,9 @@ LineEq? angleBisector(Vec2 arm1, Vec2 vertex, Vec2 arm2) {
   // For unit vectors, u+v and u−v are orthogonal and can't both be small:
   // the sum bisects ordinary angles but vanishes toward opposite rays,
   // where the difference (norm → 2) takes over via its perpendicular.
-  final direction =
-      sum.normSquared >= diff.normSquared ? sum : diff.perpendicular;
+  final direction = sum.normSquared >= diff.normSquared
+      ? sum
+      : diff.perpendicular;
   return LineEq.pointDirection(vertex, direction);
 }
 

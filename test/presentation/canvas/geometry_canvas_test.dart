@@ -787,6 +787,7 @@ void main() {
         return tester.widget<Icon>(finder).color ??
             IconTheme.of(tester.element(finder)).color;
       }
+
       expect(iconColor(Icons.circle_outlined), theme.colorScheme.primary);
       expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));
 
@@ -967,6 +968,7 @@ void main() {
       return tester.widget<Icon>(finder).color ??
           IconTheme.of(tester.element(finder)).color;
     }
+
     expect(iconColor(Icons.square_foot), theme.colorScheme.primary);
     expect(iconColor(Icons.circle_outlined), isNot(theme.colorScheme.primary));
     expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));

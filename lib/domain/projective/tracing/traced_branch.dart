@@ -62,10 +62,10 @@ class TracedBranch {
   /// The tracked root as stored by the last [seed] or [follow].
   /// Meaningless while not [isActive].
   ProjPoint get root => ProjPoint(
-        Complex(_root[0], _root[1]),
-        Complex(_root[2], _root[3]),
-        Complex(_root[4], _root[5]),
-      );
+    Complex(_root[0], _root[1]),
+    Complex(_root[2], _root[3]),
+    Complex(_root[4], _root[5]),
+  );
 
   /// The minimum pairwise chordal distance among the candidates seen at
   /// the last [seed] or [follow] — the sqrt of the same scale-invariant
@@ -111,7 +111,11 @@ class TracedBranch {
   /// on screen, is bitwise unaffected until a caller opts in. Reset by
   /// [clear], so balance never leaks across passes; set it before
   /// [seed] so the seed separation is measured under it.
-  void setBalance({required double cx, required double cy, required double scale}) {
+  void setBalance({
+    required double cx,
+    required double cy,
+    required double scale,
+  }) {
     if (!(scale > 0) || !scale.isFinite || !cx.isFinite || !cy.isFinite) {
       throw ArgumentError('Balance needs finite cx/cy and a positive scale');
     }
@@ -201,12 +205,12 @@ class TracedBranch {
   /// The slot's state, for the step controller to [restore] when it
   /// refuses a trial step.
   TracedBranchCheckpoint checkpoint() => TracedBranchCheckpoint._(
-        Float64List.fromList(_root),
-        _separation,
-        _motion,
-        _matchedIndex,
-        _hasCandidates,
-      );
+    Float64List.fromList(_root),
+    _separation,
+    _motion,
+    _matchedIndex,
+    _hasCandidates,
+  );
 
   /// Rolls the slot back to [state] (see [checkpoint]).
   void restore(TracedBranchCheckpoint state) {
@@ -223,8 +227,7 @@ class TracedBranch {
   /// candidates. Ties break to the lower index (deterministic; breaking
   /// them *well* is Phase 115's detour). [candidates] must be non-empty
   /// and zero-triple-free, as `intersectionCandidates` guarantees.
-  int nearestIndexAmong(List<ProjPoint> candidates) =>
-      _nearest(candidates).$1;
+  int nearestIndexAmong(List<ProjPoint> candidates) => _nearest(candidates).$1;
 
   (int, double) _nearest(List<ProjPoint> candidates) {
     final p = _balance(root);
@@ -246,9 +249,7 @@ class TracedBranch {
     if (!_balanced) {
       return _minPairwiseSeparation(candidates);
     }
-    return _minPairwiseSeparation(
-      [for (final c in candidates) _balance(c)],
-    );
+    return _minPairwiseSeparation([for (final c in candidates) _balance(c)]);
   }
 
   /// The chordal distance between two points — the sqrt of the

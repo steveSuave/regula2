@@ -10,11 +10,12 @@ import 'tool.dart';
 /// `PerpendicularLine.new` / `ParallelLine.new` tear-offs slot in
 /// directly (the extra optional `attributes` parameter doesn't hurt
 /// assignability).
-typedef PointAndLineBuilder = GeoObject Function({
-  required String id,
-  required GeoPoint through,
-  required GeoLine reference,
-});
+typedef PointAndLineBuilder =
+    GeoObject Function({
+      required String id,
+      required GeoPoint through,
+      required GeoLine reference,
+    });
 
 /// Collects one point and one line — in either order — then builds one
 /// object on them (perpendicular line, parallel line).
@@ -43,14 +44,13 @@ class PointAndLineTool implements ToolInputPreview {
   bool get hasPartialInput => _point != null || _line != null;
 
   @override
-  List<Vec2> get previewPositions =>
-      [if (_pointIsNew) ?_point?.position];
+  List<Vec2> get previewPositions => [if (_pointIsNew) ?_point?.position];
 
   @override
   List<String> get previewObjectIds => [
-        if (!_pointIsNew) ?_point?.id,
-        ?_line?.id,
-      ];
+    if (!_pointIsNew) ?_point?.id,
+    ?_line?.id,
+  ];
 
   @override
   ToolResult onInput(ToolInput input) {
@@ -62,8 +62,12 @@ class PointAndLineTool implements ToolInputPreview {
       case final GeoLine hit:
         if (_line != null) return const ToolIgnored();
         _line = hit;
-      case GeoCircle() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
-            GeoLocus() || GeoText():
+      case GeoCircle() ||
+          GeoAngle() ||
+          GeoPolygon() ||
+          GeoMeasurement() ||
+          GeoLocus() ||
+          GeoText():
         return const ToolIgnored();
       case null:
         if (_point != null) return const ToolIgnored();

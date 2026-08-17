@@ -15,18 +15,14 @@ import '../../../projective_stubs.dart';
 import '../../projective/generators.dart';
 
 void main() {
-  BifocalConic conicOf(
-    Vec2 a,
-    Vec2 b,
-    Vec2 p, {
-    required bool difference,
-  }) => BifocalConic(
-    id: 'k',
-    focus1: FreePoint(id: 'f1', position: a),
-    focus2: FreePoint(id: 'f2', position: b),
-    point: FreePoint(id: 'p', position: p),
-    difference: difference,
-  );
+  BifocalConic conicOf(Vec2 a, Vec2 b, Vec2 p, {required bool difference}) =>
+      BifocalConic(
+        id: 'k',
+        focus1: FreePoint(id: 'f1', position: a),
+        focus2: FreePoint(id: 'f2', position: b),
+        point: FreePoint(id: 'p', position: p),
+        difference: difference,
+      );
 
   group('BifocalConic', () {
     test('the textbook ellipse: foci (±3, 0) through (5, 0)', () {
@@ -98,8 +94,7 @@ void main() {
       expect(k.conic, isNull);
     });
 
-    test('sum branch, point on the segment: the axis doubled, still drawn',
-        () {
+    test('sum branch, point on the segment: the axis doubled, still drawn', () {
       final k = conicOf(
         const Vec2(-3, 0),
         const Vec2(3, 0),

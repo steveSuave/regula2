@@ -108,10 +108,7 @@ void main() {
         final circle = CircleCenterPoint(
           id: 'circ',
           center: FreePoint(id: 'o', position: c.center),
-          onCircle: FreePoint(
-            id: 'r',
-            position: c.center + Vec2(c.radius, 0),
-          ),
+          onCircle: FreePoint(id: 'r', position: c.center + Vec2(c.radius, 0)),
         );
         final polar = PolarLine(id: 'x', point: p, circle: circle);
         final expected = v1.polarLine(pole, circle.circle!)!;

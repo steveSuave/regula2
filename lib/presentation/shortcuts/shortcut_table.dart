@@ -776,13 +776,13 @@ final List<ShortcutBinding> shortcutTable = [
   _g(
     LogicalKeyboardKey.keyN,
     AppAction.tangentTool,
-    'Tangents from point to circle',
+    'Tangents from point to conic',
     'G N',
   ),
   _g(
     LogicalKeyboardKey.keyP,
     AppAction.polarLineTool,
-    'Polar line of a point and circle',
+    'Polar line of a point and conic',
     'G ⇧ P',
     shift: true,
   ),
@@ -819,12 +819,7 @@ final List<ShortcutBinding> shortcutTable = [
     'X P',
   ),
   _x(LogicalKeyboardKey.keyT, AppAction.trapeziumMacroTool, 'Trapezium', 'X T'),
-  _x(
-    LogicalKeyboardKey.keyR,
-    AppAction.rectangleMacroTool,
-    'Rectangle',
-    'X R',
-  ),
+  _x(LogicalKeyboardKey.keyR, AppAction.rectangleMacroTool, 'Rectangle', 'X R'),
   _x(LogicalKeyboardKey.keyH, AppAction.rhombusMacroTool, 'Rhombus', 'X H'),
   _x(LogicalKeyboardKey.keyK, AppAction.kiteMacroTool, 'Kite', 'X K'),
   _x(
@@ -911,7 +906,8 @@ class InfoRow {
 const List<InfoRow> infoRows = [
   InfoRow(
     display: 'Tap tree header',
-    label: 'Select every object of that kind '
+    label:
+        'Select every object of that kind '
         '(Shift-tap or long-press adds)',
     section: ShortcutSection.appLevel,
   ),
@@ -970,7 +966,8 @@ const List<InfoRow> infoRows = [
   ),
   InfoRow(
     display: 'len(s)',
-    label: 'Segment length; circle circumference, arc length, '
+    label:
+        'Segment length; circle circumference, arc length, '
         'sector perimeter',
     section: ShortcutSection.textCalc,
   ),
@@ -1011,7 +1008,8 @@ const List<InfoRow> infoRows = [
   ),
   InfoRow(
     display: 'sqrt, abs, …',
-    label: 'Also round, floor, ceil, min, max; sin, cos, tan and '
+    label:
+        'Also round, floor, ceil, min, max; sin, cos, tan and '
         'asin, acos, atan in degrees',
     section: ShortcutSection.textCalc,
   ),
@@ -1022,7 +1020,8 @@ const List<InfoRow> infoRows = [
   ),
   InfoRow(
     display: '?',
-    label: 'Shown while a value is undefined (unknown name, wrong kind, '
+    label:
+        'Shown while a value is undefined (unknown name, wrong kind, '
         'division by zero)',
     section: ShortcutSection.textCalc,
   ),

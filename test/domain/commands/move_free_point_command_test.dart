@@ -84,7 +84,12 @@ void main() {
       final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       final center = FreePoint(id: 'c', position: const Vec2(0, 1));
       final k = FixedRadiusCircle(id: 'k', center: center, radius: 3);
-      final p = IntersectionPoint(id: 'p', curve1: l, curve2: k, branchIndex: 0);
+      final p = IntersectionPoint(
+        id: 'p',
+        curve1: l,
+        curve2: k,
+        branchIndex: 0,
+      );
       c
         ..add(a)
         ..add(b)

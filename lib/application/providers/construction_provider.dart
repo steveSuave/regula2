@@ -45,9 +45,7 @@ class ConstructionNotifier extends _$ConstructionNotifier {
   ConstructionState build() {
     _construction = Construction();
     _construction.addListener(_onConstructionChanged);
-    ref.onDispose(
-      () => _construction.removeListener(_onConstructionChanged),
-    );
+    ref.onDispose(() => _construction.removeListener(_onConstructionChanged));
     return ConstructionState(_construction, 0);
   }
 

@@ -29,7 +29,7 @@ class ProjPoint {
 
   /// The point with real homogeneous coordinates `[x, y, w]`.
   ProjPoint.real(double x, double y, [double w = 1])
-      : this(Complex(x), Complex(y), Complex(w));
+    : this(Complex(x), Complex(y), Complex(w));
 
   /// Lifts the affine point [p] to `[p.x, p.y, 1]`.
   ProjPoint.lift(Vec2 p) : this(Complex(p.x), Complex(p.y), Complex.one);
@@ -64,10 +64,10 @@ class ProjPoint {
   /// The line through this point and [other] (cross product of the triples).
   /// The zero line when the points are projectively equal.
   ProjLine join(ProjPoint other) => ProjLine(
-        y * other.w - w * other.y,
-        w * other.x - x * other.w,
-        x * other.y - y * other.x,
-      );
+    y * other.w - w * other.y,
+    w * other.x - x * other.w,
+    x * other.y - y * other.x,
+  );
 
   /// The incidence form `⟨p, l⟩ = x·a + y·b + w·c` — bilinear, zero exactly
   /// when the point lies on the line.

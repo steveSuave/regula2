@@ -18,7 +18,7 @@ import 'multi_point_tool.dart';
 /// capturing the count would defeat.
 class RegularPolygonMacroTool extends MultiPointTool {
   RegularPolygonMacroTool({required super.newId, required this.sideCount})
-      : assert(sideCount >= 3, 'a polygon needs at least 3 sides');
+    : assert(sideCount >= 3, 'a polygon needs at least 3 sides');
 
   /// Number of vertices (= sides), fixed for the tool's lifetime.
   final int sideCount;

@@ -24,8 +24,10 @@ void main() {
     final construction = Construction();
     final a = FreePoint(id: 'a', position: const Vec2(-10, 0));
     final b = FreePoint(id: 'b', position: const Vec2(10, 0));
-    final center =
-        FreePoint(id: 'c', position: Vec2(centerStart.x, centerStart.y));
+    final center = FreePoint(
+      id: 'c',
+      position: Vec2(centerStart.x, centerStart.y),
+    );
     final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
     final circle = FixedRadiusCircle(id: 'k', center: center, radius: radius);
     final p0 = IntersectionPoint(
@@ -90,8 +92,7 @@ void main() {
     any.intInRange(-20, 21).map((i) => i / 10),
     any.intInRange(-20, 21).map((i) => i / 10),
     anyGap,
-    (double x0, double x1, double gap) =>
-        (Vec2(x0, 5), Vec2(x1, 3 + gap)),
+    (double x0, double x1, double gap) => (Vec2(x0, 5), Vec2(x1, 3 + gap)),
   );
 
   Glados(anySecantDrag, ExploreConfig(numRuns: 60)).test(
@@ -115,8 +116,10 @@ void main() {
         },
       );
       expect(steps, result.acceptedSteps);
-      expect(result.acceptedSteps + result.rejectedSteps,
-          lessThanOrEqualTo(128));
+      expect(
+        result.acceptedSteps + result.rejectedSteps,
+        lessThanOrEqualTo(128),
+      );
       // No degeneracy on the path, so the endpoint agrees with the
       // static solve including labels.
       final tracked0 = p0.projPoint!;
@@ -164,10 +167,7 @@ void main() {
       final (construction, _, p0, p1) = rig(start, 3);
       final sign0 = chartIm(p0.projPoint!).sign;
       final sign1 = chartIm(p1.projPoint!).sign;
-      final result = construction.recomputeAlongPath(
-        'c',
-        DragPath(start, end),
-      );
+      final result = construction.recomputeAlongPath('c', DragPath(start, end));
       // The whole-path trial moves each root nearly to the touch point —
       // far beyond the Cinderella bound — so the controller must halve.
       expect(result.rejectedSteps, greaterThan(0));

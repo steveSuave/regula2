@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import '../../math/vec2.dart';
 import '../complex.dart';
 import '../tolerances.dart';
 
@@ -16,17 +15,39 @@ import '../tolerances.dart';
 /// bounded number of trials and lands on the far side with branch identity
 /// decided by continuity, not by a matching tie.
 ///
-/// **Detour orientation is fixed and recorded here**: which half-plane of
-/// the path parameter an arc walks is [detourOrientation] of the drag's
-/// direction — a deterministic, *odd* rule (reversing the drag flips it).
-/// Oddness is what makes reversal compose correctly: a return pass
-/// parameterizes the reverse path, so keeping one absolute half-plane
-/// would put its detour on the *other physical side* of the singularity —
-/// the round trip would wind once around it and swap the branches (the
-/// monodromy of the root split; the toy probe caught exactly this).
-/// Flipping the half-plane with the direction retraces the same physical
-/// side, winds zero net turns, and a there-and-back drag restores every
-/// branch (identity monodromy — "no jump, no swap").
+/// **Detour orientation is recorded here, and drags take a constant one**
+/// ([dragDetourOrientation], Phase 120c).
+///
+/// A return pass parameterizes the reverse path, so its `Im s > 0` is the
+/// outward pass's `Im t < 0`. A *constant* half-plane therefore sends the
+/// outward leg over the singularity and the return leg under it: the round
+/// trip closes a loop around the branch point and the two roots trade
+/// places. That is the honest monodromy of the root split — a loop around
+/// a branch point is genuinely not the identity — and it is Cinderella's
+/// behaviour. Doing the round trip again trades them back, the split
+/// being an involution.
+///
+/// The alternative, *reversal-identity*, flips the half-plane with the
+/// drag direction so the return leg retraces the same physical side and
+/// every round trip restores every branch. Phases 115–120b shipped it,
+/// through a `detourOrientation(start, end)` rule since deleted. It was
+/// chosen and then withdrawn on the user's call (Phase 120c): the
+/// observable it buys — "a there-and-back drag changes nothing" — hides a
+/// real feature of the geometry, and getting it required reading the drag
+/// direction, which is where its own defect came from. Any ±1 rule on
+/// directions has a **seam**, two antipodal directions where it flips,
+/// and that rule's sat on the horizontal axis, because it took the sign
+/// of `dy` and consulted `dx` only when `dy` was exactly zero. Dragging
+/// two equal circles onto each other is exactly that gesture, so `dy` was
+/// pointer noise, and a twentieth of a pixel of it sent the crossing back
+/// on the far side about a third of the time. A constant needs no
+/// direction and so has no seam.
+///
+/// [detourOrientation1D] stays for
+/// the **locus** sweeps, which are a different problem: a one-directional
+/// deterministic scan with no round trip to be consistent about, and
+/// whose sheet choices at crossings are pinned by the Phase 117b
+/// fixtures. Unifying the two is a Phase 121 item, not a free change.
 
 /// Trial-step size below which the controller is considered starving and
 /// a detour is attempted (a fraction of the unit path parameter). Steps
@@ -178,7 +199,6 @@ class SeparationMinimum {
   /// [estimateSingularParameter] and its undershoot guarantee.
   bool get isCollision => separation <= doubleRootEpsilon;
 }
-
 
 /// Locates the next minimum of [separationAt] ahead of [from] by direct
 /// measurement — a geometric forward bracket followed by a ternary
@@ -341,37 +361,35 @@ const double _minimumResolution = 1e-15;
 /// figure costs chain solves on every frame and buys nothing.
 const double _collisionResolution = 1e-4;
 
-/// The detour orientation for a drag from [start] to [end]: `+1` walks
-/// arcs through the upper half-plane of the path parameter (`Im t > 0`),
-/// `−1` through the lower. The rule — descending or leftward drags
-/// detour upper — is arbitrary; what is load-bearing is that it is
-/// deterministic and *odd* (reversing the drag flips it), which is what
-/// makes a there-and-back drag an identity (see the library doc). A
-/// degenerate zero-direction path cannot starve the controller, so its
-/// value never matters.
-double detourOrientation(Vec2 start, Vec2 end) {
-  final dy = end.y - start.y;
-  if (dy != 0) {
-    return dy < 0 ? 1 : -1;
-  }
-  return end.x - start.x < 0 ? 1 : -1;
-}
+/// The half-plane every **drag** detour walks: `+1` is the upper half of
+/// the path parameter (`Im t > 0`).
+///
+/// Constant, and that is the whole design (see the library doc). It reads
+/// nothing about the gesture, so it has no seam for pointer noise to land
+/// on, and it makes a round trip close a loop around the branch point —
+/// so dragging two curves apart through a tangency and back trades the
+/// two crossings, and doing it again trades them back. Which value the
+/// constant takes is arbitrary; that it is constant is not.
+const double dragDetourOrientation = 1;
 
-/// [detourOrientation] for a scalar drive (Phase 116b: a constrained
-/// point's parameter drag): decreasing drives detour upper. The same
-/// oddness requirement applies — reversing the drive must flip the
-/// half-plane, or a there-and-back slide would wind once around the
-/// singularity and swap the branches. Matches [detourOrientation] on a
-/// horizontal path, deliberately: both are "leftward → upper".
+/// The detour orientation for a **locus** run driven from [from] to [to]:
+/// decreasing drives detour upper. Odd in the drive direction, so a run
+/// and its reverse take the same physical side.
+///
+/// Deliberately *not* [dragDetourOrientation]. A locus sweep is a
+/// one-directional deterministic scan — there is no round trip for a
+/// constant to be honest about — and which sheet a run continues onto
+/// past a crossing is pinned by the Phase 117b fixtures. Unifying the two
+/// conventions is a Phase 121 item.
 double detourOrientation1D(double from, double to) => to - from < 0 ? 1 : -1;
 
 /// A semicircular detour in complex path parameter: the arc
 /// `t(θ) = center + radius·(cos θ + i·orientation·sin θ)`, walked from
 /// `θ = π` (the real [entry], where the starving pass sits) down to
 /// `θ = 0` (the real [exit], past the singularity), keeping
-/// `orientation·Im t ≥ 0` throughout — one half-plane per arc, chosen by
-/// [detourOrientation] (see the library doc for why the choice must be
-/// odd in the drag direction).
+/// `orientation·Im t ≥ 0` throughout — one half-plane per arc:
+/// [dragDetourOrientation] for a drag, [detourOrientation1D] for a locus
+/// run (see the library doc for why they differ).
 class DetourArc {
   const DetourArc._(this.entry, this.radius, this.orientation);
 
@@ -383,7 +401,7 @@ class DetourArc {
   final double radius;
 
   /// `+1` for the upper half-plane, `−1` for the lower (see
-  /// [detourOrientation]).
+  /// [dragDetourOrientation]).
   final double orientation;
 
   /// The arc's center on the real axis, at or past the estimated
@@ -398,9 +416,9 @@ class DetourArc {
 
   /// The complex path parameter at arc angle [theta] ∈ [0, π].
   Complex tAt(double theta) => Complex(
-        center + radius * math.cos(theta),
-        orientation * radius * math.sin(theta),
-      );
+    center + radius * math.cos(theta),
+    orientation * radius * math.sin(theta),
+  );
 
   /// Plans the arc from [entry] around the estimated singularity [tStar],
   /// or null when no valid arc exists.
@@ -430,6 +448,7 @@ class DetourArc {
   }
 
   @override
-  String toString() => 'DetourArc(entry: $entry, exit: $exit, '
+  String toString() =>
+      'DetourArc(entry: $entry, exit: $exit, '
       'radius: $radius, orientation: $orientation)';
 }

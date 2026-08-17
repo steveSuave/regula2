@@ -42,10 +42,10 @@ void main() {
 
       // (1,0,1) vs (−1,0,1): join (0,−2,0), norms 2·2 — distance exactly 1.
       final seededWith = TracedBranch()
-        ..seed(ProjPoint.real(0, 0, 1), candidates: [
-          ProjPoint.real(1, 0, 1),
-          ProjPoint.real(-1, 0, 1),
-        ]);
+        ..seed(
+          ProjPoint.real(0, 0, 1),
+          candidates: [ProjPoint.real(1, 0, 1), ProjPoint.real(-1, 0, 1)],
+        );
       expect(seededWith.separation, 1.0);
     });
 
@@ -88,11 +88,9 @@ void main() {
 
     test('seed throws on the zero triple', () {
       expect(
-        () => TracedBranch().seed(const ProjPoint(
-          Complex.zero,
-          Complex.zero,
-          Complex.zero,
-        )),
+        () => TracedBranch().seed(
+          const ProjPoint(Complex.zero, Complex.zero, Complex.zero),
+        ),
         throwsArgumentError,
       );
     });
@@ -169,10 +167,10 @@ void main() {
     test('keeps the root, zeroes motion, and lifts the separation '
         'constraint for the re-acquisition step', () {
       final branch = TracedBranch()
-        ..seed(ProjPoint.real(0, 0, 1), candidates: [
-          ProjPoint.real(1, 0, 1),
-          ProjPoint.real(-1, 0, 1),
-        ]);
+        ..seed(
+          ProjPoint.real(0, 0, 1),
+          candidates: [ProjPoint.real(1, 0, 1), ProjPoint.real(-1, 0, 1)],
+        );
       branch.follow([ProjPoint.real(1, 0, 1), ProjPoint.real(-1, 0, 1)]);
       branch.coast();
       expect(branch.root, ProjPoint.real(1, 0, 1));
@@ -186,10 +184,10 @@ void main() {
   group('TracedBranch checkpoint/restore', () {
     test('restore rolls root and bookkeeping back to the checkpoint', () {
       final branch = TracedBranch()
-        ..seed(ProjPoint.real(0, 0, 1), candidates: [
-          ProjPoint.real(1, 0, 1),
-          ProjPoint.real(-1, 0, 1),
-        ]);
+        ..seed(
+          ProjPoint.real(0, 0, 1),
+          candidates: [ProjPoint.real(1, 0, 1), ProjPoint.real(-1, 0, 1)],
+        );
       branch.follow([ProjPoint.real(0.1, 0, 1), ProjPoint.real(-1, 0, 1)]);
       final root = branch.root;
       final motion = branch.motion;
@@ -337,8 +335,7 @@ void main() {
       branch.clear();
     });
 
-    test('balancing on the figure frame picks the world-near candidate',
-        () {
+    test('balancing on the figure frame picks the world-near candidate', () {
       final branch = TracedBranch()
         ..setBalance(cx: 700, cy: -400, scale: 100)
         ..seed(root, candidates: [near, parallel]);

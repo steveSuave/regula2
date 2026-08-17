@@ -154,9 +154,11 @@ class Construction {
   /// from the last two accepted steps' separations
   /// ([estimateSingularParameter]) and the pass walks a [DetourArc]: the
   /// same interpolation continued holomorphically around the singularity
-  /// through the *upper half-plane* of the path's own parameter — the
-  /// fixed orientation that makes the crossing deterministic and a
-  /// there-and-back drag an identity (see `singularity.dart`). On the
+  /// through [dragDetourOrientation]'s half-plane of the path's own
+  /// parameter — a **constant**, so a round trip closes a loop around the
+  /// branch point and honestly trades the two roots (Phase 120c; see
+  /// `singularity.dart` for why the constant, and for the
+  /// reversal-identity convention it replaced). On the
   /// arc the affected [IntersectionPoint]s accept complex carriers
   /// ([TracedBranch.allowComplexCarriers], arc-scoped) and the identical
   /// acceptance machinery walks it: away from the singularity the roots
@@ -203,7 +205,6 @@ class Construction {
       id: id,
       driveReal: (t) => object.position = path.at(t),
       driveComplex: (t) => object.tracedPosition = path.evaluate(t),
-      orientation: detourOrientation(path.start, path.end),
       stepBudget: stepBudget,
       seedMemory: seedMemory,
       onStep: onStep,
@@ -231,7 +232,7 @@ class Construction {
   /// [ArgumentError] when [id] is not a [PointOnObject] or [stepBudget]
   /// < 1.
   ({int acceptedSteps, int rejectedSteps, int detours})
-      recomputeAlongParameterPath(
+  recomputeAlongParameterPath(
     String id,
     double from,
     double to, {
@@ -256,7 +257,6 @@ class Construction {
         final s = Complex.one - t;
         object.tracedPosition = evaluate(s.scale(from) + t.scale(to));
       },
-      orientation: detourOrientation1D(from, to),
       stepBudget: stepBudget,
       seedMemory: seedMemory,
       onStep: onStep,
@@ -279,30 +279,30 @@ class Construction {
         final anchor = form.pointOnLine;
         final direction = form.direction;
         return (p) => ProjPoint(
-              Complex(anchor.x) + p.scale(direction.x),
-              Complex(anchor.y) + p.scale(direction.y),
-              Complex.one,
-            );
+          Complex(anchor.x) + p.scale(direction.x),
+          Complex(anchor.y) + p.scale(direction.y),
+          Complex.one,
+        );
       case GeoCircle(circle: final form?):
         final center = form.center;
         final radius = form.radius;
         return (p) => ProjPoint(
-              Complex(center.x) + p.cos.scale(radius),
-              Complex(center.y) + p.sin.scale(radius),
-              Complex.one,
-            );
+          Complex(center.x) + p.cos.scale(radius),
+          Complex(center.y) + p.sin.scale(radius),
+          Complex.one,
+        );
       default:
         return (_) => throw StateError(
-              'No chart to continue: the carrier of ${object.id} is undefined',
-            );
+          'No chart to continue: the carrier of ${object.id} is undefined',
+        );
     }
   }
 
   /// The shared tracing walk (Phases 114–116) behind [recomputeAlongPath]
   /// and [recomputeAlongParameterPath]: [driveReal] puts the dragged
   /// object at real path parameter `t` (including its own recompute, if
-  /// it needs one), [driveComplex] at a complex `t` during a detour arc;
-  /// [orientation] is the drive's odd detour orientation. See
+  /// it needs one), [driveComplex] at a complex `t` during a detour arc.
+  /// Detours take the constant [dragDetourOrientation]. See
   /// [recomputeAlongPath] for the full contract.
   /// [seedMemory], when provided, is *gesture-scoped* continuation state
   /// (Phase 116b): a pass whose start state leaves an intersection
@@ -322,7 +322,6 @@ class Construction {
     required String id,
     required void Function(double t) driveReal,
     required void Function(Complex t) driveComplex,
-    required double orientation,
     required int stepBudget,
     Map<String, ProjPoint>? seedMemory,
     void Function(double t)? onStep,
@@ -345,9 +344,8 @@ class Construction {
       for (final o in _objects.values)
         if (o is Locus && affected.contains(o.id)) o,
     ];
-    final affectedCore = {
-      ...affected,
-    }..removeAll([for (final l in affectedLoci) l.id]);
+    final affectedCore = {...affected}
+      ..removeAll([for (final l in affectedLoci) l.id]);
     final excluded = <GeoObject>{};
     for (final o in _objects.values) {
       if (o is Locus) {
@@ -399,8 +397,10 @@ class Construction {
         onStep?.call(1);
         return (acceptedSteps: 1, rejectedSteps: 0, detours: 0);
       }
-      final checkpoints =
-          List<TracedBranchCheckpoint?>.filled(seeded.length, null);
+      final checkpoints = List<TracedBranchCheckpoint?>.filled(
+        seeded.length,
+        null,
+      );
       void snapshot() {
         for (var i = 0; i < seeded.length; i++) {
           checkpoints[i] = seeded[i].tracedBranch.checkpoint();
@@ -447,7 +447,8 @@ class Construction {
           while (theta > 0) {
             TraceDiagnostics.checkpoint(
               'drag detour arc',
-              detail: () => 'theta=${theta.toStringAsFixed(6)} '
+              detail: () =>
+                  'theta=${theta.toStringAsFixed(6)} '
                   'dTheta=${dTheta.toStringAsExponential(2)} '
                   'trials=${accepted + rejected}/$stepBudget',
             );
@@ -474,7 +475,10 @@ class Construction {
               accepted++;
               TraceDiagnostics.count(TraceCounter.dragAccepted);
               theta = trialTheta;
-              dTheta = math.min(dTheta * 2 < theta ? dTheta * 2 : theta, maxDetourArcStep);
+              dTheta = math.min(
+                dTheta * 2 < theta ? dTheta * 2 : theta,
+                maxDetourArcStep,
+              );
               snapshot();
             } else {
               rejected++;
@@ -493,7 +497,8 @@ class Construction {
       while (t < 1) {
         TraceDiagnostics.checkpoint(
           'drag walk',
-          detail: () => 't=${t.toStringAsFixed(9)} '
+          detail: () =>
+              't=${t.toStringAsFixed(9)} '
               'step=${step.toStringAsExponential(2)} '
               'sep=${sepCurr.toStringAsExponential(2)} '
               'trials=${accepted + rejected}/$stepBudget',
@@ -516,7 +521,8 @@ class Construction {
         if (!overStepLimit) {
           driveReal(trialT);
           _recomputeAffected(affectedCore);
-          accept = trialAccepted(seeded, checkpoints, trialT - t) &&
+          accept =
+              trialAccepted(seeded, checkpoints, trialT - t) &&
               collisionFree(checkPairs);
         }
         if (accept) {
@@ -581,7 +587,7 @@ class Construction {
                 : DetourArc.plan(
                     entry: t,
                     tStar: tStar,
-                    orientation: orientation,
+                    orientation: dragDetourOrientation,
                   );
             if (arc != null) {
               traceArc(arc);
@@ -610,14 +616,43 @@ class Construction {
       // No adoption when the step coasted (matchedIndex −1: nothing
       // was matched), on a double root (separation within
       // doubleRootEpsilon: the tie broke arbitrarily and canonical
-      // order says nothing), or outside the 0/1 range branchIndex
-      // addresses (future four-candidate conic∩conic carriers).
+      // order says nothing), or outside the range branchIndex
+      // addresses.
+      //
+      // That range is [maxBranchCount], and it must stay in step with
+      // it: capping adoption below what `branchIndex` can hold makes
+      // adoption *asymmetric*, which is worse than not adopting at
+      // all. A root landing at an addressable index writes back while
+      // one landing past the cap silently does not, so two branches
+      // converge onto the same stored index and the next static
+      // recompute puts both points on the same root. The cap sat at 1
+      // from Phase 116, when two candidates was the most any carrier
+      // pair could produce; Phase 120's conics made four reachable and
+      // four intersection points collapsed to one within two drag
+      // frames (Phase 120c).
+      //
+      // **Adoption is atomic per curve pair** (Phase 120c). The guards
+      // above are *per point*, so a pass can adopt for some points on a
+      // pair and not others — a coasting slot keeps a stale index while
+      // its neighbours take new ones — and a stale index can collide
+      // with a freshly adopted one. Two points on the same ordered pair
+      // sharing a `branchIndex` are the *same intersection* by
+      // construction: they resolve to the same candidate for ever after,
+      // no later pass can separate them, and the user sees two points
+      // stacked on one crossing with another crossing empty. Collision
+      // refusal makes that unreachable *within* a pass, so this is the
+      // belt to its braces — but the failure is permanent and silent, so
+      // it is worth paying for. A pair that would end up with a
+      // duplicate keeps every one of its pre-pass indices instead;
+      // identity then rests on canonical addressing, which is exactly
+      // where a pass that adopts nothing leaves it.
+      final proposed = <IntersectionPoint, int>{};
       for (final o in seeded) {
         final branch = o.tracedBranch;
         if (branch.matchedIndex >= 0 &&
-            branch.matchedIndex <= 1 &&
+            branch.matchedIndex < IntersectionPoint.maxBranchCount &&
             branch.separation > doubleRootEpsilon) {
-          o.branchIndex = branch.matchedIndex;
+          proposed[o] = branch.matchedIndex;
         }
         // Refresh the gesture's seed memory with the root the completed
         // pass leaves behind — a coasting slot retains its last followed
@@ -625,7 +660,26 @@ class Construction {
         // when the intersection is undefined at its start.
         seedMemory?[o.id] = branch.root;
       }
-      return (acceptedSteps: accepted, rejectedSteps: rejected, detours: detours);
+      final byPair = <String, List<IntersectionPoint>>{};
+      for (final o in seeded) {
+        byPair.putIfAbsent('${o.curve1.id} ${o.curve2.id}', () => []).add(o);
+      }
+      for (final group in byPair.values) {
+        final after = {for (final o in group) proposed[o] ?? o.branchIndex};
+        if (after.length != group.length) {
+          TraceDiagnostics.count(TraceCounter.dragRejected);
+          continue;
+        }
+        for (final o in group) {
+          final index = proposed[o];
+          if (index != null) o.branchIndex = index;
+        }
+      }
+      return (
+        acceptedSteps: accepted,
+        rejectedSteps: rejected,
+        detours: detours,
+      );
     } finally {
       for (final o in seeded) {
         o.tracedBranch.clear();
@@ -691,14 +745,27 @@ class Construction {
   /// root), and the gesture's one command must replay that re-pointing
   /// in both directions for undo/redo to be exact. Throws
   /// [ArgumentError] when [id] is not an [IntersectionPoint] or
-  /// [branchIndex] is out of range.
+  /// [branchIndex] is outside `0..maxBranchCount − 1` — the same range
+  /// the constructor accepts, and it must stay that way: this is the one
+  /// path a *committed* re-pointing takes, so a narrower bound here
+  /// rejects adoptions the trace legitimately made and throws out of the
+  /// gesture's command (Phase 120c — it was `> 1` while conic∩conic
+  /// carriers were producing 2 and 3, which is what made the four
+  /// crossings of two ellipses keep merging after the engine itself
+  /// stopped merging them).
   void setIntersectionBranch(String id, int branchIndex) {
     final object = _objects[id];
     if (object is! IntersectionPoint) {
-      throw ArgumentError('$id is not an IntersectionPoint in this construction');
+      throw ArgumentError(
+        '$id is not an IntersectionPoint in this construction',
+      );
     }
-    if (branchIndex < 0 || branchIndex > 1) {
-      throw ArgumentError.value(branchIndex, 'branchIndex', 'must be 0 or 1');
+    if (branchIndex < 0 || branchIndex >= IntersectionPoint.maxBranchCount) {
+      throw ArgumentError.value(
+        branchIndex,
+        'branchIndex',
+        'must be 0..${IntersectionPoint.maxBranchCount - 1}',
+      );
     }
     object.branchIndex = branchIndex;
     object.recompute();
@@ -818,8 +885,7 @@ class Construction {
 
   void addListener(void Function() listener) => _listeners.add(listener);
 
-  void removeListener(void Function() listener) =>
-      _listeners.remove(listener);
+  void removeListener(void Function() listener) => _listeners.remove(listener);
 
   void _recomputeDependentsOf(String id) {
     final affected = transitiveDependentsOf(id);

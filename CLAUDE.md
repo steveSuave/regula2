@@ -56,6 +56,7 @@ CI gate: `flutter analyze && flutter test`.
 - Tests mirror source layout under `test/`. Test file: `<source>_test.dart`.
 - Property-based tests via `glados`; golden tests via bare `matchesGoldenFile` (tagged `golden`, excluded in CI, regenerate on macOS).
 - Riverpod: prefer `@riverpod`-annotated providers (code-gen) for type safety.
+- Formatting: `dart format lib test benchmark` is the norm — the tree was migrated to the tall style in Phase 120c. Earlier sessions banned it because the pending migration made every diff unreadable; that reason is gone. Keep formatting in its own commit when it would otherwise mix with a behaviour change. Generated `*.g.dart` needs none (build_runner already emits tall style).
 
 ## What goes where
 

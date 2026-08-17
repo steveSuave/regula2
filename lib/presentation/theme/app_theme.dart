@@ -41,29 +41,21 @@ abstract final class AppTheme {
   static const Color _darkCanvas = Color(0xFF14181D);
 
   static ThemeData light() => ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: _seed).copyWith(
-          primary: _lightPrimary,
-          tertiary: _lightTertiary,
-        ),
-        scaffoldBackgroundColor: _lightCanvas,
-        extensions: const [
-          CanvasColors(axis: _lightAxis, grid: _lightGrid),
-        ],
-      );
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: _seed,
+    ).copyWith(primary: _lightPrimary, tertiary: _lightTertiary),
+    scaffoldBackgroundColor: _lightCanvas,
+    extensions: const [CanvasColors(axis: _lightAxis, grid: _lightGrid)],
+  );
 
   static ThemeData dark() => ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: _seed,
-          brightness: Brightness.dark,
-        ).copyWith(
-          primary: _darkPrimary,
-          tertiary: _darkTertiary,
-        ),
-        scaffoldBackgroundColor: _darkCanvas,
-        extensions: const [
-          CanvasColors(axis: _darkAxis, grid: _darkGrid),
-        ],
-      );
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: _seed,
+      brightness: Brightness.dark,
+    ).copyWith(primary: _darkPrimary, tertiary: _darkTertiary),
+    scaffoldBackgroundColor: _darkCanvas,
+    extensions: const [CanvasColors(axis: _darkAxis, grid: _darkGrid)],
+  );
 }
 
 /// Canvas chrome colors the [ColorScheme] has no honest slot for — the

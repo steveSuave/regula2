@@ -4,12 +4,13 @@ import 'multi_point_tool.dart';
 
 /// Signature shared by the triangle-circle constructors — pass a tear-off
 /// (`NinePointCircle.new`, `InscribedCircle.new`) to [TriangleCircleTool].
-typedef TriangleCircleBuilder = TriangleCircle Function({
-  required String id,
-  required GeoPoint vertex1,
-  required GeoPoint vertex2,
-  required GeoPoint vertex3,
-});
+typedef TriangleCircleBuilder =
+    TriangleCircle Function({
+      required String id,
+      required GeoPoint vertex1,
+      required GeoPoint vertex2,
+      required GeoPoint vertex3,
+    });
 
 /// Collects three vertices, then emits one triangle circle. Input
 /// handling (existing points vs new free points, single undo unit,

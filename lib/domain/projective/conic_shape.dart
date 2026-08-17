@@ -127,10 +127,7 @@ class ConicShape {
   /// a pencil), and only the answers are carried back. Everything this shape
   /// then computes — [pointAt], [polylines] — runs on the caller's own
   /// matrix, so nothing but the classification pays for the change of frame.
-  factory ConicShape.of(
-    ConicMatrix conic, [
-    double eps = projectiveEpsilon,
-  ]) {
+  factory ConicShape.of(ConicMatrix conic, [double eps = projectiveEpsilon]) {
     if (conic.isZero || !conic.isReal(eps)) {
       return ConicShape._(ConicClass.none, conic, const [], null, 0, 1, eps);
     }
@@ -540,9 +537,27 @@ class ConicShape {
   ///
   /// [flatness] is a world-space distance; pass the world size of about half
   /// a pixel. It defaults to 1/2000 of the box diagonal, which is that on a
-  /// canvas around a thousand pixels wide. [maxDepth] bounds the bisection
-  /// and [maxSamples] the total point count, so a pathological conic costs a
-  /// bounded amount of work rather than the frame.
+  /// canvas around a thousand pixels wide.
+  ///
+  /// **[maxSamples] is the cost cap, not [maxDepth]** — the two bounds are
+  /// not interchangeable and the distinction is what makes the walk meet
+  /// its tolerance. [maxSamples] limits total work; [maxDepth] limits how
+  /// far the walk may bisect *one* interval, and spending it emits the
+  /// chord regardless of how far the curve strays from it. So a depth cap
+  /// tight enough to bind is a silent accuracy failure, while a sample cap
+  /// that binds merely coarsens a pathological conic.
+  ///
+  /// The sweep parameter is a pencil angle, not arc length, and the map
+  /// between them is wildly non-uniform: `|dX/dφ|` spreads by a factor of
+  /// 1e6–1e7 on ordinary figures (a conic written a couple of thousand
+  /// world units from the origin, or a hyperbola arc approaching
+  /// infinity), so covering it takes ~20–25 bisections. Absorbing that
+  /// spread is exactly the adaptive walk's job; the depth cap only has to
+  /// stop infinite recursion. At 12 it was instead the binding constraint
+  /// and the renderer drew visible facets — 10 px of sagitta against a
+  /// half-pixel tolerance on a saved ellipse, 172 px on a saved hyperbola
+  /// branch (Phase 120c). Neither reached [maxSamples], at 4000 or at
+  /// 200000.
   ///
   /// Degenerate conics draw as their real line components, each clipped to
   /// the box; [ConicClass.none], [ConicClass.empty] and
@@ -551,7 +566,7 @@ class ConicShape {
     required Vec2 min,
     required Vec2 max,
     double? flatness,
-    int maxDepth = 12,
+    int maxDepth = 32,
     int maxSamples = 4000,
   }) {
     if (!(min.x <= max.x && min.y <= max.y)) return const [];
@@ -603,9 +618,7 @@ class ConicShape {
     }
     if (arcs.isEmpty) return const [];
 
-    final inside = [
-      for (final arc in arcs) visible(0.5 * (arc.from + arc.to)),
-    ];
+    final inside = [for (final arc in arcs) visible(0.5 * (arc.from + arc.to))];
     if (!inside.contains(false)) {
       return [
         ConicPolyline(
@@ -772,8 +785,11 @@ class ConicShape {
     );
   }
 
-  static Complex _componentOf(ProjPoint p, int axis) =>
-      switch (axis) { 0 => p.x, 1 => p.y, _ => p.w };
+  static Complex _componentOf(ProjPoint p, int axis) => switch (axis) {
+    0 => p.x,
+    1 => p.y,
+    _ => p.w,
+  };
 
   @override
   String toString() => 'ConicShape($kind)';

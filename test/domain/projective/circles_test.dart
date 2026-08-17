@@ -471,10 +471,7 @@ void main() {
         expect(projected!.closeTo(v1), isTrue, reason: '$projected vs $v1');
         // The raw representative carries V1's orientation (its direction
         // is (b, −a)) — on unit lifts the coefficients match exactly.
-        expect(
-          Vec2(axis.b.re, -axis.a.re).dot(v1.direction),
-          greaterThan(0),
-        );
+        expect(Vec2(axis.b.re, -axis.a.re).dot(v1.direction), greaterThan(0));
       },
     );
 
@@ -516,21 +513,22 @@ void main() {
       },
     );
 
-    test('concentric circles give ℓ∞, coincident matrices the zero triple',
-        () {
+    test('concentric circles give ℓ∞, coincident matrices the zero triple', () {
       final a = ConicMatrix.lift(CircleEq(const Vec2(1, 2), 1));
       final b = ConicMatrix.lift(CircleEq(const Vec2(1, 2), 2));
       expect(radicalAxisOf(a, b).closeTo(ProjLine.infinity), isTrue);
       expect(radicalAxisOf(a, a.scaledBy(const Complex(2, 1))).isZero, isTrue);
     });
 
-    test('a degenerate line-conic input degenerates the axis onto its line',
-        () {
-      final line = ProjLine.real(3, -1, 2);
-      final flattened = ConicMatrix.linePair(line, ProjLine.infinity);
-      final k = ConicMatrix.lift(CircleEq(const Vec2(1, -2), 2));
-      expect(radicalAxisOf(flattened, k).closeTo(line), isTrue);
-      expect(radicalAxisOf(k, flattened).closeTo(line), isTrue);
-    });
+    test(
+      'a degenerate line-conic input degenerates the axis onto its line',
+      () {
+        final line = ProjLine.real(3, -1, 2);
+        final flattened = ConicMatrix.linePair(line, ProjLine.infinity);
+        final k = ConicMatrix.lift(CircleEq(const Vec2(1, -2), 2));
+        expect(radicalAxisOf(flattened, k).closeTo(line), isTrue);
+        expect(radicalAxisOf(k, flattened).closeTo(line), isTrue);
+      },
+    );
   });
 }

@@ -21,14 +21,13 @@ class AngleBisectorTool extends TwoLineOrThreePointTool {
     GeoLine line2,
     Vec2 tap1,
     Vec2 tap2,
-  ) =>
-      TwoLineBisectorLine.near(
-        id: id,
-        line1: line1,
-        line2: line2,
-        tap1: tap1,
-        tap2: tap2,
-      );
+  ) => TwoLineBisectorLine.near(
+    id: id,
+    line1: line1,
+    line2: line2,
+    tap1: tap1,
+    tap2: tap2,
+  );
 
   @override
   GeoObject buildFromPoints(
@@ -36,6 +35,5 @@ class AngleBisectorTool extends TwoLineOrThreePointTool {
     GeoPoint arm1,
     GeoPoint vertex,
     GeoPoint arm2,
-  ) =>
-      AngleBisectorLine(id: id, arm1: arm1, vertex: vertex, arm2: arm2);
+  ) => AngleBisectorLine(id: id, arm1: arm1, vertex: vertex, arm2: arm2);
 }

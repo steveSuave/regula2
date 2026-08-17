@@ -89,27 +89,27 @@ enum ObjectTransform {
 /// collected state.
 class TransformObjectTool implements ToolInputPreview {
   TransformObjectTool.reflectAboutLine({required this.newId})
-      : transform = ObjectTransform.reflectAboutLine,
-        angle = null,
-        ratio = null;
+    : transform = ObjectTransform.reflectAboutLine,
+      angle = null,
+      ratio = null;
 
   TransformObjectTool.reflectAboutPoint({required this.newId})
-      : transform = ObjectTransform.reflectAboutPoint,
-        angle = null,
-        ratio = null;
+    : transform = ObjectTransform.reflectAboutPoint,
+      angle = null,
+      ratio = null;
 
   TransformObjectTool.rotate({required this.newId, required double this.angle})
-      : transform = ObjectTransform.rotate,
-        ratio = null;
+    : transform = ObjectTransform.rotate,
+      ratio = null;
 
   TransformObjectTool.translate({required this.newId})
-      : transform = ObjectTransform.translate,
-        angle = null,
-        ratio = null;
+    : transform = ObjectTransform.translate,
+      angle = null,
+      ratio = null;
 
   TransformObjectTool.dilate({required this.newId, required double this.ratio})
-      : transform = ObjectTransform.dilate,
-        angle = null {
+    : transform = ObjectTransform.dilate,
+      angle = null {
     if (!ratio!.isFinite) {
       throw ArgumentError.value(ratio, 'ratio', 'must be finite');
     }
@@ -149,13 +149,12 @@ class TransformObjectTool implements ToolInputPreview {
   final List<({GeoPoint point, bool isNew})> _params = [];
 
   int get _paramCount => switch (transform) {
-        ObjectTransform.reflectAboutLine => 0,
-        ObjectTransform.reflectAboutPoint ||
-        ObjectTransform.rotate ||
-        ObjectTransform.dilate =>
-          1,
-        ObjectTransform.translate => 2,
-      };
+    ObjectTransform.reflectAboutLine => 0,
+    ObjectTransform.reflectAboutPoint ||
+    ObjectTransform.rotate ||
+    ObjectTransform.dilate => 1,
+    ObjectTransform.translate => 2,
+  };
 
   /// The line a point-mode commit would reflect across: a mirror-first
   /// line, or a line collected as [_source] awaiting the either-order
@@ -175,23 +174,26 @@ class TransformObjectTool implements ToolInputPreview {
   /// consumed existing object is haloed via [previewObjectIds].
   @override
   bool get hasPartialInput =>
-      _point != null || _source != null || _mirror != null || _params.isNotEmpty;
+      _point != null ||
+      _source != null ||
+      _mirror != null ||
+      _params.isNotEmpty;
 
   @override
   List<Vec2> get previewPositions => [
-        if (_pointIsNew) ?_point?.position,
-        for (final p in _params)
-          if (p.isNew) ?p.point.position,
-      ];
+    if (_pointIsNew) ?_point?.position,
+    for (final p in _params)
+      if (p.isNew) ?p.point.position,
+  ];
 
   @override
   List<String> get previewObjectIds => [
-        if (!_pointIsNew) ?_point?.id,
-        ?_source?.id,
-        ?_mirror?.id,
-        for (final p in _params)
-          if (!p.isNew) p.point.id,
-      ];
+    if (!_pointIsNew) ?_point?.id,
+    ?_source?.id,
+    ?_mirror?.id,
+    for (final p in _params)
+      if (!p.isNew) p.point.id,
+  ];
 
   @override
   ToolResult onInput(ToolInput input) {
@@ -224,8 +226,7 @@ class TransformObjectTool implements ToolInputPreview {
         _source = object;
         return const ToolAccepted();
       }
-      if (transform == ObjectTransform.reflectAboutLine &&
-          object is GeoLine) {
+      if (transform == ObjectTransform.reflectAboutLine && object is GeoLine) {
         _mirror = object;
         return const ToolAccepted();
       }
@@ -237,24 +238,23 @@ class TransformObjectTool implements ToolInputPreview {
   }
 
   bool _isSupportedSource(GeoObject object) => switch (object) {
-        Segment() ||
-        Ray() ||
-        LineThroughTwoPoints() ||
-        CircleCenterPoint() ||
-        DiameterCircle() ||
-        CompassCircle() ||
-        ThreePointCircle() ||
-        NinePointCircle() ||
-        InscribedCircle() ||
-        ApolloniusCircle() ||
-        FivePointConic() ||
-        BifocalConic() ||
-        Arc() ||
-        VertexAngle() =>
-          true,
-        Sector() => transform != ObjectTransform.reflectAboutLine,
-        _ => false,
-      };
+    Segment() ||
+    Ray() ||
+    LineThroughTwoPoints() ||
+    CircleCenterPoint() ||
+    DiameterCircle() ||
+    CompassCircle() ||
+    ThreePointCircle() ||
+    NinePointCircle() ||
+    InscribedCircle() ||
+    ApolloniusCircle() ||
+    FivePointConic() ||
+    BifocalConic() ||
+    Arc() ||
+    VertexAngle() => true,
+    Sector() => transform != ObjectTransform.reflectAboutLine,
+    _ => false,
+  };
 
   /// Reflect's slot 2, preserving `PointAndLineTool`'s behavior exactly:
   /// with the point slot filled only a line commits; with a line pending,
@@ -289,8 +289,12 @@ class TransformObjectTool implements ToolInputPreview {
           return _commitSource(input.objects, mirror: hit);
         }
         return const ToolIgnored();
-      case GeoCircle() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
-            GeoLocus() || GeoText():
+      case GeoCircle() ||
+          GeoAngle() ||
+          GeoPolygon() ||
+          GeoMeasurement() ||
+          GeoLocus() ||
+          GeoText():
         return const ToolIgnored();
       case null:
         final mirror = _pendingMirror;
@@ -332,32 +336,35 @@ class TransformObjectTool implements ToolInputPreview {
   /// The transform-point image of [point]; reads [_params] (and reflect's
   /// [mirror]), so it must run before [reset].
   GeoPoint _imageOf(GeoPoint point, {GeoLine? mirror}) => switch (transform) {
-        ObjectTransform.reflectAboutLine =>
-          ReflectedPoint(id: newId(), point: point, mirror: mirror!),
-        ObjectTransform.reflectAboutPoint => CentralReflectionPoint(
-            id: newId(),
-            point: point,
-            center: _params[0].point,
-          ),
-        ObjectTransform.rotate => RotatedPoint(
-            id: newId(),
-            point: point,
-            center: _params[0].point,
-            angle: angle!,
-          ),
-        ObjectTransform.translate => TranslatedPoint(
-            id: newId(),
-            point: point,
-            vectorFrom: _params[0].point,
-            vectorTo: _params[1].point,
-          ),
-        ObjectTransform.dilate => HomotheticPoint(
-            id: newId(),
-            point: point,
-            center: _params[0].point,
-            ratio: ratio!,
-          ),
-      };
+    ObjectTransform.reflectAboutLine => ReflectedPoint(
+      id: newId(),
+      point: point,
+      mirror: mirror!,
+    ),
+    ObjectTransform.reflectAboutPoint => CentralReflectionPoint(
+      id: newId(),
+      point: point,
+      center: _params[0].point,
+    ),
+    ObjectTransform.rotate => RotatedPoint(
+      id: newId(),
+      point: point,
+      center: _params[0].point,
+      angle: angle!,
+    ),
+    ObjectTransform.translate => TranslatedPoint(
+      id: newId(),
+      point: point,
+      vectorFrom: _params[0].point,
+      vectorTo: _params[1].point,
+    ),
+    ObjectTransform.dilate => HomotheticPoint(
+      id: newId(),
+      point: point,
+      center: _params[0].point,
+      ratio: ratio!,
+    ),
+  };
 
   /// Point-mode commit: new points in tap order, then the image — a bare
   /// `AddObjectCommand` when every input was an existing object, matching
@@ -403,14 +410,13 @@ class TransformObjectTool implements ToolInputPreview {
     final images = <GeoPoint, GeoPoint>{};
     final newImages = <GeoPoint>[];
     GeoPoint img(GeoPoint parent) => images.putIfAbsent(parent, () {
-          final candidate = _imageOf(parent, mirror: mirror);
-          if (equivalentExisting(objects, candidate)
-              case final GeoPoint existing) {
-            return existing;
-          }
-          newImages.add(candidate);
-          return candidate;
-        });
+      final candidate = _imageOf(parent, mirror: mirror);
+      if (equivalentExisting(objects, candidate) case final GeoPoint existing) {
+        return existing;
+      }
+      newImages.add(candidate);
+      return candidate;
+    });
     final rebuilt = _rebuild(source, img);
     if (equivalentExisting(objects, rebuilt) != null) {
       return const ToolIgnored();
@@ -435,83 +441,93 @@ class TransformObjectTool implements ToolInputPreview {
   GeoObject _rebuild(GeoObject source, GeoPoint Function(GeoPoint) img) {
     final swapArms = transform == ObjectTransform.reflectAboutLine;
     return switch (source) {
-      final Segment s =>
-        Segment(id: newId(), point1: img(s.point1), point2: img(s.point2)),
-      final Ray r =>
-        Ray(id: newId(), origin: img(r.origin), through: img(r.through)),
+      final Segment s => Segment(
+        id: newId(),
+        point1: img(s.point1),
+        point2: img(s.point2),
+      ),
+      final Ray r => Ray(
+        id: newId(),
+        origin: img(r.origin),
+        through: img(r.through),
+      ),
       final LineThroughTwoPoints l => LineThroughTwoPoints(
-          id: newId(),
-          point1: img(l.point1),
-          point2: img(l.point2),
-        ),
+        id: newId(),
+        point1: img(l.point1),
+        point2: img(l.point2),
+      ),
       final CircleCenterPoint c => CircleCenterPoint(
-          id: newId(),
-          center: img(c.center),
-          onCircle: img(c.onCircle),
-        ),
+        id: newId(),
+        center: img(c.center),
+        onCircle: img(c.onCircle),
+      ),
       final DiameterCircle c => DiameterCircle(
-          id: newId(),
-          point1: img(c.point1),
-          point2: img(c.point2),
-        ),
+        id: newId(),
+        point1: img(c.point1),
+        point2: img(c.point2),
+      ),
       final CompassCircle c => CompassCircle(
-          id: newId(),
-          radiusPoint1: img(c.radiusPoint1),
-          radiusPoint2: img(c.radiusPoint2),
-          center: img(c.center),
-        ),
+        id: newId(),
+        radiusPoint1: img(c.radiusPoint1),
+        radiusPoint2: img(c.radiusPoint2),
+        center: img(c.center),
+      ),
       final ThreePointCircle c => ThreePointCircle(
-          id: newId(),
-          point1: img(c.point1),
-          point2: img(c.point2),
-          point3: img(c.point3),
-        ),
+        id: newId(),
+        point1: img(c.point1),
+        point2: img(c.point2),
+        point3: img(c.point3),
+      ),
       final NinePointCircle c => NinePointCircle(
-          id: newId(),
-          vertex1: img(c.vertex1),
-          vertex2: img(c.vertex2),
-          vertex3: img(c.vertex3),
-        ),
+        id: newId(),
+        vertex1: img(c.vertex1),
+        vertex2: img(c.vertex2),
+        vertex3: img(c.vertex3),
+      ),
       final ApolloniusCircle c => ApolloniusCircle(
-          id: newId(),
-          point1: img(c.point1),
-          point2: img(c.point2),
-          point3: img(c.point3),
-        ),
+        id: newId(),
+        point1: img(c.point1),
+        point2: img(c.point2),
+        point3: img(c.point3),
+      ),
       final InscribedCircle c => InscribedCircle(
-          id: newId(),
-          vertex1: img(c.vertex1),
-          vertex2: img(c.vertex2),
-          vertex3: img(c.vertex3),
-        ),
+        id: newId(),
+        vertex1: img(c.vertex1),
+        vertex2: img(c.vertex2),
+        vertex3: img(c.vertex3),
+      ),
       final FivePointConic c => FivePointConic(
-          id: newId(),
-          points: [for (final p in c.points) img(p)],
-        ),
+        id: newId(),
+        points: [for (final p in c.points) img(p)],
+      ),
       final BifocalConic c => BifocalConic(
-          id: newId(),
-          focus1: img(c.focus1),
-          focus2: img(c.focus2),
-          point: img(c.point),
-          difference: c.difference,
-        ),
-      final Arc a =>
-        Arc(id: newId(), start: img(a.start), via: img(a.via), end: img(a.end)),
+        id: newId(),
+        focus1: img(c.focus1),
+        focus2: img(c.focus2),
+        point: img(c.point),
+        difference: c.difference,
+      ),
+      final Arc a => Arc(
+        id: newId(),
+        start: img(a.start),
+        via: img(a.via),
+        end: img(a.end),
+      ),
       final Sector s => Sector(
-          id: newId(),
-          center: img(s.center),
-          start: img(s.start),
-          end: img(s.end),
-        ),
+        id: newId(),
+        center: img(s.center),
+        start: img(s.start),
+        end: img(s.end),
+      ),
       final VertexAngle v => VertexAngle(
-          id: newId(),
-          arm1: img(swapArms ? v.arm2 : v.arm1),
-          vertex: img(v.vertex),
-          arm2: img(swapArms ? v.arm1 : v.arm2),
-        ),
+        id: newId(),
+        arm1: img(swapArms ? v.arm2 : v.arm1),
+        vertex: img(v.vertex),
+        arm2: img(swapArms ? v.arm1 : v.arm2),
+      ),
       _ => throw StateError(
-          'unsupported transform source: ${source.runtimeType}',
-        ),
+        'unsupported transform source: ${source.runtimeType}',
+      ),
     };
   }
 

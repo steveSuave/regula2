@@ -69,11 +69,7 @@ class TrapeziumMacroTool extends MultiPointTool {
     );
     final cornerD = parallel.line == null
         ? PointOnObject(id: newId(), curve: parallel, parameter: 0)
-        : PointOnObject.near(
-            id: newId(),
-            curve: parallel,
-            position: _dTarget!,
-          );
+        : PointOnObject.near(id: newId(), curve: parallel, position: _dTarget!);
 
     return [
       sideAB,

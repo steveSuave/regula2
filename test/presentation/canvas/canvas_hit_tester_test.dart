@@ -1101,15 +1101,12 @@ void main() {
       // √(a²cos² + b²sin²) = √(2 + 4.5) = √6.5 either way.
       const half = math.sqrt2 / 2;
       final reach = math.sqrt(6.5);
-      List<GeoObject> inBand(double slack) => tester.objectsContainedIn(
-        construction.objects,
-        (p) {
-          final u = (p.x + p.y) * half;
-          final v = (p.y - p.x) * half;
-          return u.abs() <= reach + slack && v.abs() <= reach + slack;
-        },
-        cardinalAngle: math.pi / 4,
-      );
+      List<GeoObject> inBand(double slack) =>
+          tester.objectsContainedIn(construction.objects, (p) {
+            final u = (p.x + p.y) * half;
+            final v = (p.y - p.x) * half;
+            return u.abs() <= reach + slack && v.abs() <= reach + slack;
+          }, cardinalAngle: math.pi / 4);
       expect(inBand(1e-6).map((o) => o.id), ['k']);
       expect(inBand(-1e-3), isEmpty);
     });

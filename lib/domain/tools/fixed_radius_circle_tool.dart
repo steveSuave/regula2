@@ -12,10 +12,10 @@ import 'multi_point_tool.dart';
 /// closure capturing the radius would defeat.
 class FixedRadiusCircleTool extends MultiPointTool {
   FixedRadiusCircleTool({required super.newId, required this.radius})
-      : assert(
-          radius.isFinite && radius > 0,
-          'the dialog admits only finite positive radii',
-        );
+    : assert(
+        radius.isFinite && radius > 0,
+        'the dialog admits only finite positive radii',
+      );
 
   /// Radius in world units, fixed for the tool's lifetime.
   final double radius;
@@ -24,6 +24,7 @@ class FixedRadiusCircleTool extends MultiPointTool {
   int get pointCount => 1;
 
   @override
-  List<GeoObject> buildObjects(List<GeoPoint> points) =>
-      [FixedRadiusCircle(id: newId(), center: points[0], radius: radius)];
+  List<GeoObject> buildObjects(List<GeoPoint> points) => [
+    FixedRadiusCircle(id: newId(), center: points[0], radius: radius),
+  ];
 }

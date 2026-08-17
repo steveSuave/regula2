@@ -947,8 +947,9 @@ void main() {
     );
   });
 
-  testWidgets('G B, G ⇧E and G ⇧H reach the conic constructors',
-      (tester) async {
+  testWidgets('G B, G ⇧E and G ⇧H reach the conic constructors', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
@@ -978,8 +979,9 @@ void main() {
     expect((tool! as BifocalConicTool).difference, isTrue, reason: 'hyperbola');
   });
 
-  testWidgets('G ⇧C asks for an eccentricity, then arms the focal conic',
-      (tester) async {
+  testWidgets('G ⇧C asks for an eccentricity, then arms the focal conic', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);

@@ -9,9 +9,7 @@ double gridStep(double scale, {double minPx = 48}) {
   final minWorld = minPx / scale;
   // The smallest power of ten ≥ minWorld. The while-loops correct the
   // occasional one-off from floating-point log10 at exact powers.
-  var step = math
-      .pow(10.0, (math.log(minWorld) / math.ln10).ceil())
-      .toDouble();
+  var step = math.pow(10.0, (math.log(minWorld) / math.ln10).ceil()).toDouble();
   while (step < minWorld) {
     step *= 10;
   }

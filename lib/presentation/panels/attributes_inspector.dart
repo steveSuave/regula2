@@ -100,7 +100,9 @@ class AttributesInspector extends ConsumerWidget {
       for (final object in objects)
         if (object is GeoAngle ||
             object is GeoPolygon ||
-            (object is GeoCircle && object is! Arc && object is! FivePointConic))
+            (object is GeoCircle &&
+                object is! Arc &&
+                object is! FivePointConic))
           object,
     ];
     // The kinds with a measurable value (Phase 35): segment lengths and
@@ -155,9 +157,9 @@ class AttributesInspector extends ConsumerWidget {
                 Text(
                   single != null
                       ? (single.attributes.name.isEmpty
-                          ? objectKindLabel(single)
-                          : '${single.attributes.name} — '
-                              '${objectKindLabel(single)}')
+                            ? objectKindLabel(single)
+                            : '${single.attributes.name} — '
+                                  '${objectKindLabel(single)}')
                       : '${objects.length} selected',
                   style: theme.textTheme.titleMedium,
                 ),
@@ -194,8 +196,7 @@ class AttributesInspector extends ConsumerWidget {
                     onChanged: (value) => _setForAll(
                       ref,
                       labelables,
-                      (attributes) =>
-                          attributes.copyWith(labelVisible: value),
+                      (attributes) => attributes.copyWith(labelVisible: value),
                     ),
                   ),
                 if (measurables.isNotEmpty)
@@ -425,16 +426,17 @@ class AttributesInspector extends ConsumerWidget {
     final updates = {id: object.attributes.copyWith(name: name)};
     if (name.isNotEmpty) {
       final holder = construction.objects.cast<GeoObject?>().firstWhere(
-            (other) => other!.id != id && other.attributes.name == name,
-            orElse: () => null,
-          );
+        (other) => other!.id != id && other.attributes.name == name,
+        orElse: () => null,
+      );
       if (holder != null) {
         final used = {
           for (final other in construction.objects)
             if (other.attributes.name.isNotEmpty) other.attributes.name,
         };
-        updates[holder.id] =
-            holder.attributes.copyWith(name: evictedName(used, name));
+        updates[holder.id] = holder.attributes.copyWith(
+          name: evictedName(used, name),
+        );
       }
     }
     ref
@@ -615,10 +617,7 @@ class _WidthSelector extends StatelessWidget {
         SegmentedButton<double>(
           segments: [
             for (final option in options)
-              ButtonSegment(
-                value: option,
-                label: Text('${option.round()}'),
-              ),
+              ButtonSegment(value: option, label: Text('${option.round()}')),
           ],
           selected: selected,
           // Allowing empty lets `selected` model the mixed state; a tap
@@ -626,9 +625,7 @@ class _WidthSelector extends StatelessWidget {
           // which is a no-op rather than a "no width".
           emptySelectionAllowed: true,
           showSelectedIcon: false,
-          style: const ButtonStyle(
-            visualDensity: VisualDensity.compact,
-          ),
+          style: const ButtonStyle(visualDensity: VisualDensity.compact),
           onSelectionChanged: (selection) {
             if (selection.isNotEmpty) {
               onChanged(selection.first);
@@ -740,11 +737,7 @@ class _PresetSelector extends StatelessWidget {
         SegmentedButton<double>(
           segments: [
             for (final (short, word, value) in presets)
-              ButtonSegment(
-                value: value,
-                label: Text(short),
-                tooltip: word,
-              ),
+              ButtonSegment(value: value, label: Text(short), tooltip: word),
           ],
           selected: selected,
           // Same empty-selection idiom as _WidthSelector: a tap on the

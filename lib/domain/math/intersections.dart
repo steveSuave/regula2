@@ -37,10 +37,7 @@ List<Vec2> intersectLineLine(
     return const [];
   }
   return [
-    Vec2(
-      (l1.b * l2.c - l2.b * l1.c) / det,
-      (l2.a * l1.c - l1.a * l2.c) / det,
-    ),
+    Vec2((l1.b * l2.c - l2.b * l1.c) / det, (l2.a * l1.c - l1.a * l2.c) / det),
   ];
 }
 

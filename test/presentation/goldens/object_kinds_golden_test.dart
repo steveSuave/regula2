@@ -738,7 +738,6 @@ void main() {
     return construction;
   }
 
-
   /// Every conic class the painter can draw, one per region of the frame:
   /// an ellipse, a parabola, a hyperbola (two arms), a crossing line pair,
   /// a double line, and — the regression that matters — a conic whose
@@ -767,10 +766,7 @@ void main() {
       StubProjectiveConic(
         ConicMatrix.coefficients(1, 0, -1, 0, -4, -8),
         id: 'hyp',
-      )..attributes = const ObjectAttributes(
-        name: 'H',
-        colorArgb: 0xFFD32F2F,
-      ),
+      )..attributes = const ObjectAttributes(name: 'H', colorArgb: 0xFFD32F2F),
     )
     // (x−10)² − (y−8)² = 0: two lines crossing at (10, 8)
     ..add(
@@ -811,14 +807,13 @@ void main() {
     for (final point in points) {
       construction.add(point);
     }
-    return construction
-      ..add(
-        FivePointConic(
-          id: 'conic',
-          points: points,
-          attributes: const ObjectAttributes(name: 'K', strokeWidth: 2),
-        ),
-      );
+    return construction..add(
+      FivePointConic(
+        id: 'conic',
+        points: points,
+        attributes: const ObjectAttributes(name: 'K', strokeWidth: 2),
+      ),
+    );
   }
 
   /// The metric conic constructors (Phase 120b), each drawn by its real

@@ -47,14 +47,13 @@ class CanvasHitTester {
     double threshold, {
     double worldPerPx = 0,
     bool includeHidden = false,
-  }) =>
-      hitTestAll(
-        objects,
-        point,
-        threshold,
-        worldPerPx: worldPerPx,
-        includeHidden: includeHidden,
-      ).firstOrNull;
+  }) => hitTestAll(
+    objects,
+    point,
+    threshold,
+    worldPerPx: worldPerPx,
+    includeHidden: includeHidden,
+  ).firstOrNull;
 
   /// Every visible, defined object within [threshold] world units of
   /// [point], best first — the same (priority, distance) order as
@@ -76,8 +75,7 @@ class CanvasHitTester {
     var index = 0;
     for (final object in objects) {
       index++;
-      if ((!object.attributes.visible && !includeHidden) ||
-          !object.isDefined) {
+      if ((!object.attributes.visible && !includeHidden) || !object.isDefined) {
         continue;
       }
       final distance = _distanceTo(objects, object, point, worldPerPx);
@@ -147,54 +145,50 @@ class CanvasHitTester {
     Iterable<GeoObject> objects,
     bool Function(Vec2) within, {
     double cardinalAngle = 0,
-  }) =>
-      [
-        for (final object in objects)
-          if (object.attributes.visible &&
-              object.isDefined &&
-              _containedIn(object, within, cardinalAngle))
-            object,
-      ];
+  }) => [
+    for (final object in objects)
+      if (object.attributes.visible &&
+          object.isDefined &&
+          _containedIn(object, within, cardinalAngle))
+        object,
+  ];
 
   bool _containedIn(
     GeoObject object,
     bool Function(Vec2) within,
     double cardinalAngle,
-  ) =>
-      switch (object) {
-        GeoPoint() => within(object.position!),
-        Segment() => within(object.start!) && within(object.end!),
-        Arc() => _branchExtremes(
-            object.circle!,
-            object.containsAngle,
-            [object.startPosition!, object.endPosition!],
-            cardinalAngle,
-          ).every(within),
-        Sector() => _branchExtremes(
-            object.circle!,
-            object.containsAngle,
-            [object.circle!.center, object.startRim!, object.endRim!],
-            cardinalAngle,
-          ).every(within),
-        GeoCircle() => object.circle == null
-            ? _conicContained(object.conic!, within, cardinalAngle)
-            : _branchExtremes(
-                object.circle!,
-                (_) => true,
-                const [],
-                cardinalAngle,
-              ).every(within),
-        GeoLine() => false, // infinite (rays included): never contained
-        GeoAngle() => within(object.angle!.vertex),
-        GeoPolygon() => object.polygonVertices!.every(within),
-        // A measurement is its text, which is screen-sized like an angle
-        // marker; the anchor stands in for it (cf. GeoAngle above).
-        GeoMeasurement() => within(object.anchor!),
-        GeoText() => within(object.anchor),
-        // Every recorded sample must be inside; an all-gap locus (no
-        // drawn ink) can never be band-selected.
-        GeoLocus() => _locusContained(object, within),
-      };
+  ) => switch (object) {
+    GeoPoint() => within(object.position!),
+    Segment() => within(object.start!) && within(object.end!),
+    Arc() => _branchExtremes(object.circle!, object.containsAngle, [
+      object.startPosition!,
+      object.endPosition!,
+    ], cardinalAngle).every(within),
+    Sector() => _branchExtremes(object.circle!, object.containsAngle, [
+      object.circle!.center,
+      object.startRim!,
+      object.endRim!,
+    ], cardinalAngle).every(within),
+    GeoCircle() =>
+      object.circle == null
+          ? _conicContained(object.conic!, within, cardinalAngle)
+          : _branchExtremes(
+              object.circle!,
+              (_) => true,
+              const [],
+              cardinalAngle,
+            ).every(within),
+    GeoLine() => false, // infinite (rays included): never contained
+    GeoAngle() => within(object.angle!.vertex),
+    GeoPolygon() => object.polygonVertices!.every(within),
+    // A measurement is its text, which is screen-sized like an angle
+    // marker; the anchor stands in for it (cf. GeoAngle above).
+    GeoMeasurement() => within(object.anchor!),
+    GeoText() => within(object.anchor),
+    // Every recorded sample must be inside; an all-gap locus (no
+    // drawn ink) can never be band-selected.
+    GeoLocus() => _locusContained(object, within),
+  };
 
   /// Whether a conic without a centre and radius is wholly inside the
   /// region. Only an ellipse can be: every other drawable class runs off
@@ -256,53 +250,57 @@ class CanvasHitTester {
     GeoObject object,
     Vec2 point,
     double worldPerPx,
-  ) =>
-      switch (object) {
-        GeoPoint() => object.position!.distanceTo(point),
-        // An arc measures to its branch of the carrier: on the far branch
-        // the nearest visible geometry is an endpoint (cf. segment/ray).
-        Arc() => _arcDistance(object, point),
-        // A sector's visible geometry is its wedge outline: the arc branch
-        // plus the two straight radius edges.
-        Sector() => _sectorDistance(object, point),
-        // A conic with no centre and radius measures to its curve — the
-        // closest-point search in `ConicShape` (see there for why it is a
-        // bracketed search and not a Newton step).
-        GeoCircle() => object.circle?.distanceTo(point) ??
-            ConicShape.of(object.conic!).distanceTo(point),
-        // Segments and rays measure to their extent, not the infinite
-        // carrier: t clamps to [0, 1] and [0, ∞) respectively.
-        Segment() => _clampedDistance(object.start!, object.end!, point, 1),
-        Ray() => _lineClippedDistance(
-            objects,
-            object,
-            point,
-            orElse: () => _clampedDistance(object.start!,
-                object.throughPosition!, point, double.infinity),
-          ),
-        GeoLine() => _lineClippedDistance(
-            objects,
-            object,
-            point,
-            orElse: () => object.line!.distanceTo(point),
-          ),
-        // An angle is picked on its marker wedge (see _angleDistance) —
-        // low priority, so anything else there wins.
-        GeoAngle() => _angleDistance(object, point, worldPerPx),
-        // A polygon's interior hits at distance 0 (but lowest priority —
-        // an empty interior tap selects the region, anything drawn inside
-        // still wins); outside, the nearest edge decides.
-        GeoPolygon() => _polygonDistance(object, point),
-        // A measurement's geometry is its text anchor; the canvas tap
-        // handler additionally checks the text's labelScreenRect first,
-        // so text dragged far from the anchor stays tappable.
-        GeoMeasurement() => object.anchor!.distanceTo(point),
-        GeoText() => object.anchor.distanceTo(point),
-        // A locus is its drawn polyline: the nearest of the consecutive
-        // sample segments (gaps break the chain; isolated samples and an
-        // all-gap locus are unreachable, matching the painter's ink).
-        GeoLocus() => _locusDistance(object, point),
-      };
+  ) => switch (object) {
+    GeoPoint() => object.position!.distanceTo(point),
+    // An arc measures to its branch of the carrier: on the far branch
+    // the nearest visible geometry is an endpoint (cf. segment/ray).
+    Arc() => _arcDistance(object, point),
+    // A sector's visible geometry is its wedge outline: the arc branch
+    // plus the two straight radius edges.
+    Sector() => _sectorDistance(object, point),
+    // A conic with no centre and radius measures to its curve — the
+    // closest-point search in `ConicShape` (see there for why it is a
+    // bracketed search and not a Newton step).
+    GeoCircle() =>
+      object.circle?.distanceTo(point) ??
+          ConicShape.of(object.conic!).distanceTo(point),
+    // Segments and rays measure to their extent, not the infinite
+    // carrier: t clamps to [0, 1] and [0, ∞) respectively.
+    Segment() => _clampedDistance(object.start!, object.end!, point, 1),
+    Ray() => _lineClippedDistance(
+      objects,
+      object,
+      point,
+      orElse: () => _clampedDistance(
+        object.start!,
+        object.throughPosition!,
+        point,
+        double.infinity,
+      ),
+    ),
+    GeoLine() => _lineClippedDistance(
+      objects,
+      object,
+      point,
+      orElse: () => object.line!.distanceTo(point),
+    ),
+    // An angle is picked on its marker wedge (see _angleDistance) —
+    // low priority, so anything else there wins.
+    GeoAngle() => _angleDistance(object, point, worldPerPx),
+    // A polygon's interior hits at distance 0 (but lowest priority —
+    // an empty interior tap selects the region, anything drawn inside
+    // still wins); outside, the nearest edge decides.
+    GeoPolygon() => _polygonDistance(object, point),
+    // A measurement's geometry is its text anchor; the canvas tap
+    // handler additionally checks the text's labelScreenRect first,
+    // so text dragged far from the anchor stays tappable.
+    GeoMeasurement() => object.anchor!.distanceTo(point),
+    GeoText() => object.anchor.distanceTo(point),
+    // A locus is its drawn polyline: the nearest of the consecutive
+    // sample segments (gaps break the chain; isolated samples and an
+    // all-gap locus are unreachable, matching the painter's ink).
+    GeoLocus() => _locusDistance(object, point),
+  };
 
   double _locusDistance(GeoLocus locus, Vec2 p) {
     final samples = locus.samples!;
@@ -337,10 +335,18 @@ class CanvasHitTester {
         ? (rel.norm - radius).abs()
         : double.infinity;
     final d2 = d1.rotated(angle.sweep);
-    final edge1 =
-        _clampedDistance(angle.vertex, angle.vertex + d1 * radius, p, 1);
-    final edge2 =
-        _clampedDistance(angle.vertex, angle.vertex + d2 * radius, p, 1);
+    final edge1 = _clampedDistance(
+      angle.vertex,
+      angle.vertex + d1 * radius,
+      p,
+      1,
+    );
+    final edge2 = _clampedDistance(
+      angle.vertex,
+      angle.vertex + d2 * radius,
+      p,
+      1,
+    );
     return math.min(arc, math.min(edge1, edge2));
   }
 
@@ -354,7 +360,11 @@ class CanvasHitTester {
       best = math.min(
         best,
         _clampedDistance(
-            vertices[i], vertices[(i + 1) % vertices.length], p, 1),
+          vertices[i],
+          vertices[(i + 1) % vertices.length],
+          p,
+          1,
+        ),
       );
     }
     return best;

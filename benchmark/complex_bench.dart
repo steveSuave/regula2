@@ -331,8 +331,10 @@ double _bench(String name, int n, double Function(int) body) {
     if (us < bestUs) bestUs = us;
   }
   final nsPerOp = bestUs * 1000 / n;
-  print('${name.padRight(18)} ${nsPerOp.toStringAsFixed(1).padLeft(8)} ns/solve'
-      '   (checksum ${checksum.toStringAsFixed(6)})');
+  print(
+    '${name.padRight(18)} ${nsPerOp.toStringAsFixed(1).padLeft(8)} ns/solve'
+    '   (checksum ${checksum.toStringAsFixed(6)})',
+  );
   _results[name] = checksum;
   return nsPerOp;
 }
@@ -361,7 +363,9 @@ void main(List<String> args) {
   final cSoa = _bench('  soa', cn, cubicSoa);
   _crossCheck('  boxed', '  soa');
 
-  print('speedups vs boxed: quad records ${(qBoxed / qRecords).toStringAsFixed(2)}x,'
-      ' quad soa ${(qBoxed / qSoa).toStringAsFixed(2)}x,'
-      ' cubic soa ${(cBoxed / cSoa).toStringAsFixed(2)}x');
+  print(
+    'speedups vs boxed: quad records ${(qBoxed / qRecords).toStringAsFixed(2)}x,'
+    ' quad soa ${(qBoxed / qSoa).toStringAsFixed(2)}x,'
+    ' cubic soa ${(cBoxed / cSoa).toStringAsFixed(2)}x',
+  );
 }

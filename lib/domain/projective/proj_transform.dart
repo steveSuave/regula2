@@ -56,17 +56,17 @@ class ProjTransform {
 
   /// The translation by the affine vector `(dx, dy)`.
   ProjTransform.translation(double dx, double dy)
-      : this(
-          Complex.one,
-          Complex.zero,
-          Complex(dx),
-          Complex.zero,
-          Complex.one,
-          Complex(dy),
-          Complex.zero,
-          Complex.zero,
-          Complex.one,
-        );
+    : this(
+        Complex.one,
+        Complex.zero,
+        Complex(dx),
+        Complex.zero,
+        Complex.one,
+        Complex(dy),
+        Complex.zero,
+        Complex.zero,
+        Complex.one,
+      );
 
   /// The translation taking [from] to [to] — the affine `to − from`
   /// cleared of denominators, so it is polynomial (bilinear) in both
@@ -74,17 +74,17 @@ class ProjTransform {
   /// that sends every finite point to the translation direction's point at
   /// infinity (the affine limit of an ever-longer translation).
   ProjTransform.translationTaking(ProjPoint from, ProjPoint to)
-      : this(
-          from.w * to.w,
-          Complex.zero,
-          to.x * from.w - from.x * to.w,
-          Complex.zero,
-          from.w * to.w,
-          to.y * from.w - from.y * to.w,
-          Complex.zero,
-          Complex.zero,
-          from.w * to.w,
-        );
+    : this(
+        from.w * to.w,
+        Complex.zero,
+        to.x * from.w - from.x * to.w,
+        Complex.zero,
+        from.w * to.w,
+        to.y * from.w - from.y * to.w,
+        Complex.zero,
+        Complex.zero,
+        from.w * to.w,
+      );
 
   /// The rotation by [angle] radians (counterclockwise) about [center].
   ///
@@ -167,8 +167,7 @@ class ProjTransform {
   final Complex m21;
   final Complex m22;
 
-  List<Complex> get _entries =>
-      [m00, m01, m02, m10, m11, m12, m20, m21, m22];
+  List<Complex> get _entries => [m00, m01, m02, m10, m11, m12, m20, m21, m22];
 
   /// Squared Frobenius norm of the matrix. Representation-level, not
   /// projective — use it to build relative tolerances.
@@ -189,16 +188,16 @@ class ProjTransform {
   /// The same map with every entry multiplied by [k] — the projective
   /// identity when `k ≠ 0`.
   ProjTransform scaledBy(Complex k) => ProjTransform(
-        m00 * k,
-        m01 * k,
-        m02 * k,
-        m10 * k,
-        m11 * k,
-        m12 * k,
-        m20 * k,
-        m21 * k,
-        m22 * k,
-      );
+    m00 * k,
+    m01 * k,
+    m02 * k,
+    m10 * k,
+    m11 * k,
+    m12 * k,
+    m20 * k,
+    m21 * k,
+    m22 * k,
+  );
 
   /// Chart normalization: divides by the largest-magnitude entry, so that
   /// entry becomes exactly 1 and the others have magnitude ≤ 1. Removes
@@ -234,40 +233,40 @@ class ProjTransform {
   /// no division. The adjugate of a singular map is singular (rank ≤ 1);
   /// of the zero matrix, zero.
   ProjTransform get adjugate => ProjTransform(
-        m11 * m22 - m12 * m21,
-        m02 * m21 - m01 * m22,
-        m01 * m12 - m02 * m11,
-        m12 * m20 - m10 * m22,
-        m00 * m22 - m02 * m20,
-        m02 * m10 - m00 * m12,
-        m10 * m21 - m11 * m20,
-        m01 * m20 - m00 * m21,
-        m00 * m11 - m01 * m10,
-      );
+    m11 * m22 - m12 * m21,
+    m02 * m21 - m01 * m22,
+    m01 * m12 - m02 * m11,
+    m12 * m20 - m10 * m22,
+    m00 * m22 - m02 * m20,
+    m02 * m10 - m00 * m12,
+    m10 * m21 - m11 * m20,
+    m01 * m20 - m00 * m21,
+    m00 * m11 - m01 * m10,
+  );
 
   /// The matrix product `this · other` — the composite map that applies
   /// [other] first, then this one: `(this.compose(other)).apply(p) =
   /// this.apply(other.apply(p))`.
   ProjTransform compose(ProjTransform other) => ProjTransform(
-        m00 * other.m00 + m01 * other.m10 + m02 * other.m20,
-        m00 * other.m01 + m01 * other.m11 + m02 * other.m21,
-        m00 * other.m02 + m01 * other.m12 + m02 * other.m22,
-        m10 * other.m00 + m11 * other.m10 + m12 * other.m20,
-        m10 * other.m01 + m11 * other.m11 + m12 * other.m21,
-        m10 * other.m02 + m11 * other.m12 + m12 * other.m22,
-        m20 * other.m00 + m21 * other.m10 + m22 * other.m20,
-        m20 * other.m01 + m21 * other.m11 + m22 * other.m21,
-        m20 * other.m02 + m21 * other.m12 + m22 * other.m22,
-      );
+    m00 * other.m00 + m01 * other.m10 + m02 * other.m20,
+    m00 * other.m01 + m01 * other.m11 + m02 * other.m21,
+    m00 * other.m02 + m01 * other.m12 + m02 * other.m22,
+    m10 * other.m00 + m11 * other.m10 + m12 * other.m20,
+    m10 * other.m01 + m11 * other.m11 + m12 * other.m21,
+    m10 * other.m02 + m11 * other.m12 + m12 * other.m22,
+    m20 * other.m00 + m21 * other.m10 + m22 * other.m20,
+    m20 * other.m01 + m21 * other.m11 + m22 * other.m21,
+    m20 * other.m02 + m21 * other.m12 + m22 * other.m22,
+  );
 
   /// The image `M·p` of the point [p]. The zero triple when [p] is zero, or
   /// when a singular map collapses [p] (e.g. the homothety of ratio 0
   /// applied to its own center's antipode at infinity).
   ProjPoint apply(ProjPoint p) => ProjPoint(
-        m00 * p.x + m01 * p.y + m02 * p.w,
-        m10 * p.x + m11 * p.y + m12 * p.w,
-        m20 * p.x + m21 * p.y + m22 * p.w,
-      );
+    m00 * p.x + m01 * p.y + m02 * p.w,
+    m10 * p.x + m11 * p.y + m12 * p.w,
+    m20 * p.x + m21 * p.y + m22 * p.w,
+  );
 
   /// The image `adj(M)ᵀ·l` of the line [l] — the line through the images of
   /// [l]'s points: `⟨M·p, adj(M)ᵀ·l⟩ = det(M)·⟨p, l⟩`.
@@ -352,11 +351,11 @@ class ProjTransform {
       other.m22 == m22;
 
   @override
-  int get hashCode =>
-      Object.hash(m00, m01, m02, m10, m11, m12, m20, m21, m22);
+  int get hashCode => Object.hash(m00, m01, m02, m10, m11, m12, m20, m21, m22);
 
   @override
-  String toString() => 'ProjTransform('
+  String toString() =>
+      'ProjTransform('
       '[$m00, $m01, $m02], '
       '[$m10, $m11, $m12], '
       '[$m20, $m21, $m22])';

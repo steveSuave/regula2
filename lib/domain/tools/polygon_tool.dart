@@ -47,12 +47,12 @@ class PolygonTool extends MultiPointTool {
 
   @override
   List<GeoObject> buildObjects(List<GeoPoint> points) => [
-        Polygon(
-          id: newId(),
-          vertices: points,
-          attributes: const ObjectAttributes(fillAlpha: defaultFillAlpha),
-        ),
-      ];
+    Polygon(
+      id: newId(),
+      vertices: points,
+      attributes: const ObjectAttributes(fillAlpha: defaultFillAlpha),
+    ),
+  ];
 
   /// The index of the already-collected vertex [input] lands on, or null.
   /// Existing points match by hit identity; new private points by

@@ -20,8 +20,7 @@ import 'package:regula/domain/projective/tracing/traced_branch.dart';
 
 void main() {
   group('minSeparation', () {
-    test('is the tightest slot separation, infinity when unconstrained',
-        () {
+    test('is the tightest slot separation, infinity when unconstrained', () {
       final (_, _, c1, c2) = _rig();
       final ip = IntersectionPoint(
         id: 'i',
@@ -29,8 +28,11 @@ void main() {
         curve2: c2,
         branchIndex: 0,
       );
-      expect(minSeparation([ip]), double.infinity,
-          reason: 'inactive/unseeded slot imposes nothing');
+      expect(
+        minSeparation([ip]),
+        double.infinity,
+        reason: 'inactive/unseeded slot imposes nothing',
+      );
       final candidates = intersectionCandidates(c1, c2);
       ip.tracedBranch.seed(ip.projPoint!, candidates: candidates);
       expect(
@@ -42,8 +44,7 @@ void main() {
   });
 
   group('trialAccepted', () {
-    test('accepts small motion, refuses motion over half the separation',
-        () {
+    test('accepts small motion, refuses motion over half the separation', () {
       final (_, b, c1, c2) = _rig();
       final ip = IntersectionPoint(
         id: 'i',
@@ -52,10 +53,7 @@ void main() {
         branchIndex: 0,
       );
       final branch = ip.tracedBranch;
-      branch.seed(
-        ip.projPoint!,
-        candidates: intersectionCandidates(c1, c2),
-      );
+      branch.seed(ip.projPoint!, candidates: intersectionCandidates(c1, c2));
       final checkpoints = [branch.checkpoint()];
 
       // Tiny move of B: the tracked root barely moves — accepted.
@@ -76,8 +74,7 @@ void main() {
       branch.clear();
     });
 
-    test('coast entry is refused on a wide trial, allowed on a tiny one',
-        () {
+    test('coast entry is refused on a wide trial, allowed on a tiny one', () {
       final (_, b, c1, c2) = _rig();
       final ip = IntersectionPoint(
         id: 'i',
@@ -86,10 +83,7 @@ void main() {
         branchIndex: 0,
       );
       final branch = ip.tracedBranch;
-      branch.seed(
-        ip.projPoint!,
-        candidates: intersectionCandidates(c1, c2),
-      );
+      branch.seed(ip.projPoint!, candidates: intersectionCandidates(c1, c2));
       final checkpoints = [branch.checkpoint()];
 
       // Collapse the circles onto each other: coincident carriers have
@@ -99,10 +93,16 @@ void main() {
       c2.recompute();
       ip.recompute();
       expect(branch.hasCandidates, isFalse);
-      expect(trialAccepted([ip], checkpoints, 0.5), isFalse,
-          reason: 'match→coast on a wide trial hides a degeneracy');
-      expect(trialAccepted([ip], checkpoints, maxCoastEntrySpan), isTrue,
-          reason: 'a localized degeneracy may be coasted into');
+      expect(
+        trialAccepted([ip], checkpoints, 0.5),
+        isFalse,
+        reason: 'match→coast on a wide trial hides a degeneracy',
+      );
+      expect(
+        trialAccepted([ip], checkpoints, maxCoastEntrySpan),
+        isTrue,
+        reason: 'a localized degeneracy may be coasted into',
+      );
 
       // Coast→coast stays permissive at any span.
       final coasting = [branch.checkpoint()];

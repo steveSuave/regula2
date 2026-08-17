@@ -91,7 +91,10 @@ void main() {
         t.onInput(ToolInput(const Vec2(-3.9, 0), hit: horizontal)),
       );
 
-      expect(point.parents, [circle, horizontal]);
+      // The pair is stored in canonical order ('c…' before 'h'), not tap
+      // order — two points on one pair must share one branch numbering
+      // (Phase 120c). Which crossing the tap lands on is unaffected.
+      expect(point.parents, unorderedEquals([circle, horizontal]));
       expect(point.position!.closeTo(const Vec2(-4, 0)), isTrue);
     });
 
@@ -298,6 +301,89 @@ void main() {
             ),
       );
       expect(other.position!.closeTo(const Vec2(-4, 0)), isTrue);
+    });
+
+    test('an occupied branch is refused even while it has no position '
+        '(Phase 120c)', () {
+      // Proximity can only speak for a point that has one. Pull the
+      // circle clear of the line so the crossings are complex: the
+      // existing branch-0 point goes undefined, and before the
+      // structural test every further tap on the pair looked unoccupied
+      // and stacked another object on it. Six of them piled up on one
+      // conic pair in the reported document.
+      final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
+      final far = FreePoint(id: 'f', position: const Vec2(0, 100));
+      final circle = CircleCenterPoint(id: 'k', center: far, onCircle: y);
+      var objects = <GeoObject>[o, x, y, far, horizontal, circle];
+      final existing = IntersectionPoint(
+        id: 'e',
+        curve1: horizontal,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      objects = [...objects, existing];
+      expect(existing.position, isNull, reason: 'the crossings are complex');
+
+      expect(
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
+            ))
+            .onInput(
+              ToolInput(const Vec2(0, 99), hit: circle, objects: objects),
+            ),
+        isA<ToolIgnored>(),
+        reason: 'branch 0 of this pair is already built',
+      );
+    });
+
+    test('the reversed parent order dedups too, defined or not '
+        '(Phase 120c)', () {
+      // `branchIndex` addresses the canonical order of
+      // `intersectionCandidates(curve1, curve2)`, which is not the order
+      // of the reversed pair — so the same crossing carries a different
+      // index depending on which curve the user tapped first. Proximity
+      // covered that while the crossing was real; with it complex, the
+      // reversed tap built a fresh duplicate. That is how the reported
+      // document came to hold points on *both* orderings, two of them
+      // exact duplicates of points it already had.
+      final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
+      final circle = circleAtOrigin();
+      var objects = <GeoObject>[o, x, horizontal, circle];
+      final existing = committedPoint(
+        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal))).onInput(
+          ToolInput(const Vec2(3.9, 0.1), hit: circle),
+        ),
+      );
+      objects = [...objects, existing];
+
+      expect(
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: circle, objects: objects),
+            ))
+            .onInput(
+              ToolInput(
+                const Vec2(3.9, 0.1),
+                hit: horizontal,
+                objects: objects,
+              ),
+            ),
+        isA<ToolIgnored>(),
+        reason: 'the same crossing, collected the other way round',
+      );
+      // The *other* crossing is still free in either order.
+      expect(
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: circle, objects: objects),
+            ))
+            .onInput(
+              ToolInput(
+                const Vec2(-3.9, 0.1),
+                hit: horizontal,
+                objects: objects,
+              ),
+            ),
+        isA<ToolCommitted>(),
+      );
     });
 
     test('two lines sharing a defining point reuse that point', () {

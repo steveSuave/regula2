@@ -32,8 +32,7 @@ void main() {
   group('ConicTool', () {
     test('five existing points commit just the conic, in tap order', () {
       final points = [
-        for (final (i, p) in ellipse.indexed)
-          FreePoint(id: 'p$i', position: p),
+        for (final (i, p) in ellipse.indexed) FreePoint(id: 'p$i', position: p),
       ];
       final tool = conicTool();
 

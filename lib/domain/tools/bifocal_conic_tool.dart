@@ -32,12 +32,12 @@ class BifocalConicTool extends MultiPointTool {
 
   @override
   List<GeoObject> buildObjects(List<GeoPoint> points) => [
-        BifocalConic(
-          id: newId(),
-          focus1: points[0],
-          focus2: points[1],
-          point: points[2],
-          difference: difference,
-        ),
-      ];
+    BifocalConic(
+      id: newId(),
+      focus1: points[0],
+      focus2: points[1],
+      point: points[2],
+      difference: difference,
+    ),
+  ];
 }

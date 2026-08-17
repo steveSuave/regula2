@@ -41,9 +41,9 @@ class PolarLineTool implements ToolInputPreview {
 
   @override
   List<String> get previewObjectIds => [
-        if (!_pointIsNew) ?_point?.id,
-        ?_circle?.id,
-      ];
+    if (!_pointIsNew) ?_point?.id,
+    ?_circle?.id,
+  ];
 
   @override
   ToolResult onInput(ToolInput input) {
@@ -94,11 +94,11 @@ class PolarLineTool implements ToolInputPreview {
     GeoPoint point,
     GeoCircle circle,
   ) => objects.any(
-        (object) =>
-            object is PolarLine &&
-            identical(object.point, point) &&
-            identical(object.circle, circle),
-      );
+    (object) =>
+        object is PolarLine &&
+        identical(object.point, point) &&
+        identical(object.circle, circle),
+  );
 
   @override
   void reset() {
