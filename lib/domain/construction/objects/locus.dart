@@ -162,8 +162,19 @@ class Locus extends GeoLocus {
   double _lastSweepMs = 0;
   final Stopwatch _sinceSweep = Stopwatch();
 
+  /// The absolute the current sweep is running in.
+  ///
+  /// A field rather than a parameter because the walk's helpers are deep
+  /// and numerous, and every one of them that asks for intersection
+  /// candidates must filter identically — `branchIndex` addresses the
+  /// filtered order, so a helper left on the default would put its points
+  /// in a different address space from the rest of the pass. Set once at
+  /// the top of [recompute], which is the only entry.
+  Absolute _absolute = Absolute.euclidean;
+
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    _absolute = absolute;
     // While a gesture is previewing, a sweep that costs more than its
     // share of the frame is skipped and this locus keeps the samples it
     // has (Phase 117d — see [LocusRefresh]). Safe because a locus is a
@@ -232,7 +243,7 @@ class Locus extends GeoLocus {
   }
 
   (List<Vec2?>, List<Vec2>) _sweep(_SweepDomain domain) {
-    final walker = _TracedSweep(_chain, domain, traced);
+    final walker = _TracedSweep(_chain, domain, traced, _absolute);
     // A full-line domain is RP¹ — cyclic only for chains that stay
     // defined at the driver's point at infinity; otherwise the wrap
     // splits into two open edges (the pre-117 grid-edge behaviour,
@@ -664,12 +675,17 @@ class _AdvanceEnd {
 /// checkpoints — the locus-side counterpart of `Construction`'s drag
 /// walk, sharing its acceptance rules verbatim.
 class _TracedSweep {
-  _TracedSweep(this.chain, this.domain, this.traced)
+  _TracedSweep(this.chain, this.domain, this.traced, this._absolute)
     : assert(chain.first is PointOnObject, 'the chain starts at the driver');
 
   final List<GeoObject> chain;
   final _SweepDomain domain;
   final GeoPoint traced;
+
+  /// The absolute this sweep runs in. Every candidate list the walk asks
+  /// for is filtered against it, and they must all agree — `branchIndex`
+  /// addresses the filtered order.
+  final Absolute _absolute;
 
   final List<IntersectionPoint> seeded = [];
 
@@ -715,7 +731,11 @@ class _TracedSweep {
       if (o is IntersectionPoint) {
         final p = o.projPoint;
         if (p != null && !p.isZero) {
-          final candidates = intersectionCandidates(o.curve1, o.curve2);
+          final candidates = intersectionCandidates(
+            o.curve1,
+            o.curve2,
+            absolute: _absolute,
+          );
           // Structurally degenerate slots never seed (Phase 117b): with
           // the candidates coincident by construction — a point built as
           // `TangentLine ∩ the circle it touches` — there is no second
@@ -868,7 +888,11 @@ class _TracedSweep {
             driveReal(x);
             var swapped = true;
             for (final o in end.culprits) {
-              final candidates = intersectionCandidates(o.curve1, o.curve2);
+              final candidates = intersectionCandidates(
+                o.curve1,
+                o.curve2,
+                absolute: _absolute,
+              );
               final matched = o.tracedBranch.matchedIndex;
               if (candidates.length != 2 || matched < 0 || matched > 1) {
                 swapped = false;
@@ -1026,7 +1050,11 @@ class _TracedSweep {
     driveReal(x);
     final oldCandidates = <int, List<ProjPoint>>{
       for (final i in flips)
-        i: intersectionCandidates(seeded[i].curve1, seeded[i].curve2),
+        i: intersectionCandidates(
+          seeded[i].curve1,
+          seeded[i].curve2,
+          absolute: _absolute,
+        ),
     };
     driveReal(trialX);
     for (final i in flips) {
@@ -1035,7 +1063,11 @@ class _TracedSweep {
       final cap = allowed < maxAcceptedMotion ? allowed : maxAcceptedMotion;
       if (!relabelIsBenign(
         before: oldCandidates[i]!,
-        after: intersectionCandidates(seeded[i].curve1, seeded[i].curve2),
+        after: intersectionCandidates(
+          seeded[i].curve1,
+          seeded[i].curve2,
+          absolute: _absolute,
+        ),
         matchedBefore: _prevMatched[i],
         matchedAfter: branch.matchedIndex,
         cap: cap,
@@ -1318,7 +1350,7 @@ class _TracedSweep {
         var min = double.infinity;
         for (final o in culprits) {
           final sep = TracedBranch.candidateSeparation(
-            intersectionCandidates(o.curve1, o.curve2),
+            intersectionCandidates(o.curve1, o.curve2, absolute: _absolute),
           );
           if (sep < min) min = sep;
         }

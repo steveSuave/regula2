@@ -4,6 +4,7 @@ import '../construction/objects/intersection_point.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/grid_snap.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 import 'tool.dart';
 
 /// The point a tool should use for one tap: an existing point to reuse
@@ -110,12 +111,21 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
 /// `IntersectionPoint.branchIndex` addresses — and only real finite
 /// candidates take part. A tie (tangency doubles its point) resolves to
 /// the lower index.
+///
+/// [absolute] must be the *document's*, because the candidate list it
+/// indexes into is filtered against it (Phase 125): a caller left on the
+/// default would index a different list from the one the construction
+/// stores. Its callers in `lib/domain/tools/` have no construction to
+/// read it from yet and so take the default, which is correct only while
+/// the codec refuses non-Euclidean documents — **Phase 126 has to carry
+/// the kernel into the tool layer before it lifts that refusal.**
 ({int index, double distance})? nearestIntersectionBranch(
   GeoObject curve1,
   GeoObject curve2,
-  Vec2 tap,
-) {
-  final candidates = intersectionCandidates(curve1, curve2);
+  Vec2 tap, {
+  Absolute absolute = Absolute.euclidean,
+}) {
+  final candidates = intersectionCandidates(curve1, curve2, absolute: absolute);
   int? bestIndex;
   var bestDistance = double.infinity;
   for (var i = 0; i < candidates.length; i++) {

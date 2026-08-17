@@ -285,7 +285,11 @@ List<String> _separateDuplicateBranches(Construction construction) {
     final key = '${object.curve1.id} ${object.curve2.id}';
     final candidates = candidatesOf.putIfAbsent(
       key,
-      () => intersectionCandidates(object.curve1, object.curve2),
+      () => intersectionCandidates(
+        object.curve1,
+        object.curve2,
+        absolute: construction.kernel.absolute,
+      ),
     );
     if (object.branchIndex >= candidates.length) {
       continue;
