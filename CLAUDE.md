@@ -33,8 +33,9 @@ V2 of regula: a cross-platform (web / Android / iOS) dynamic geometry app writte
 
 - **Projective is canonical; affine is a view.** Migrated objects store homogeneous state; `position`/`line`/`circle` are projections; `isDefined` means "real and finite after projection".
 - **New domain code reads projective accessors only** (`projPoint` / `projLine` / `conic`). The affine getters exist for the painter, hit-tester, codec, and unmigrated objects.
-- **No new consumers of `lib/domain/math/intersections.dart`.** It is legacy, deleted in Phase 121.
-- **Branch orderings are load-bearing.** New intersection functions must agree with the old orderings on real transverse cases (canonical order, circular points I/J filtered) until tracing deliberately replaces per-frame ordering with continuation in Phases 116–117. Don't "fix" branch-ordering tests before then.
+- **The old affine kernel is gone from `lib/` (Phase 121).** `intersections.dart`, `angle_bisector.dart`, `circle_relations.dart`, `harmonic.dart` and `tangents.dart` now live in `test/v1_oracle/`, where nothing shippable *can* import them. They are kept as the agreement oracle the projective kernels are specified against — don't extend them, don't "fix" them toward the new kernel, and don't move anything else in there just because it looks old: the test is "no `lib/` consumer *and* something in `test/` compares against it".
+- **`Vec2`, `LineEq` and `CircleEq` are view structs, permanently.** They are what projective state *projects to* for the painter, hit-tester, codec and the chart reads of PLAN §Parameterization — not types anything computes geometry in. Reach them through `toVec2` / `toLineEq` / `toCircleEq`, which answer null where there is no real finite value. `LineEq`/`CircleEq` still throw on degenerate arguments; that is a programmer-error contract, so never construct one in a recompute without a guard.
+- **Branch orderings are load-bearing.** New intersection functions must agree with the old orderings on real transverse cases (canonical order, circular points I/J filtered) — `test/v1_oracle/` is what that agreement is checked against, and it is permanent because v1 documents are. Tracing deliberately replaced per-frame *ordering* with continuation in Phases 116–117; the static canonical order it re-derives at each pass end did not change.
 
 ## Commands
 
@@ -63,7 +64,8 @@ CI gate: `flutter analyze && flutter test`.
 | Concern | Location |
 |---|---|
 | Projective kernel (Complex, ProjPoint, ConicMatrix, tracing) | `lib/domain/projective/` |
-| Legacy affine math (frozen; shrinking) | `lib/domain/math/` |
+| Affine chart types (`Vec2`/`LineEq`/`CircleEq`) + metric helpers | `lib/domain/math/` |
+| V1's affine kernel, frozen as the agreement oracle | `test/v1_oracle/` |
 | Construction graph & objects | `lib/domain/construction/` |
 | Tool state machines | `lib/domain/tools/` |
 | Reversible commands | `lib/domain/commands/` |
