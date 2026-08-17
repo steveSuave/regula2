@@ -1,4 +1,5 @@
 import '../../domain/construction/construction.dart';
+import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
@@ -56,7 +57,6 @@ import '../../domain/projective/complex.dart';
 import '../../domain/projective/proj_point.dart';
 import '../providers/document_settings_provider.dart';
 import '../providers/viewport_provider.dart';
-import 'document_kernel.dart';
 
 /// The newest schema this build writes and reads. Bump on any breaking
 /// schema change and add a migration in [decodeDocument].
@@ -110,8 +110,13 @@ Map<String, dynamic> encodeDocument(
   Construction construction, {
   required ViewportState viewport,
   DocumentSettings settings = const DocumentSettings(),
-  DocumentKernel kernel = const DocumentKernel(),
 }) {
+  // The kernel is read off the construction rather than passed in: it is
+  // an input to every metric recompute, so a caller able to encode a
+  // document under a different absolute from the one its objects were
+  // computed in could write a file that no longer describes its own
+  // geometry.
+  final kernel = construction.kernel;
   final document = <String, dynamic>{
     // Overwritten below, once the objects are in and the version can be
     // worked out. Written first so it keeps its place at the head of the
@@ -204,7 +209,7 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
   if (objectsJson is! List) {
     throw const FormatException('Missing or invalid "objects" list');
   }
-  final construction = Construction();
+  final construction = Construction(kernel: kernel);
   for (final entry in objectsJson) {
     if (entry is! Map<String, dynamic>) {
       throw const FormatException('Every object must be a JSON object');
