@@ -1,0 +1,287 @@
+test/domain/construction/objects/point_on_object_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 300-304,313-317,327,404,420
+lib/application/providers/viewport_provider.dart
+  s_17fa7314429764::t_a9a83178d3c561 20-24,58-61,65-68
+test/domain/construction/objects/radical_axis_line_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 97,121
+lib/domain/tools/two_point_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 14-15,31-33
+test/domain/projective/tracing/tracing_properties_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 27-30,95,119-122,170
+test/domain/construction/objects/focal_conic_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 42-57
+lib/presentation/panels/object_tree_panel.dart
+  s_17fa7314429764::t_a9a83178d3c561 97-105,160-164,173,177-178,181-184,187,191,244,326-328,330
+lib/domain/projective/tracing/traced_branch.dart
+  s_17fa7314429764::t_a9a83178d3c561 65-68,114-118,208-213,230,252
+lib/application/providers/document_settings_provider.dart
+  s_17fa7314429764::t_a9a83178d3c561 40-41
+lib/presentation/canvas/canvas_viewport.dart
+  s_17fa7314429764::t_a9a83178d3c561 41-43,60-66,86,111,135,139,149
+test/domain/projective/tracing/singularity_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 8-23,115,147-157,169-176,182-185,266,280,300,452
+lib/presentation/canvas/canvas_hit_tester.dart
+  s_17fa7314429764::t_a9a83178d3c561 50-56,78,148-154,160-191,253-303,338-349,363-367
+lib/presentation/canvas/label_layout.dart
+  s_17fa7314429764::t_a9a83178d3c561 35-38,76-77,80-81,117-118
+lib/domain/projective/proj_transform.dart
+  s_17fa7314429764::t_a9a83178d3c561 59-69,77-87,170,191-200,236-245,251-260,266-269,354,357-358
+lib/domain/tools/fixed_radius_circle_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 15-18,27-29
+test/domain/tools/transform_object_tool_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 389
+lib/application/providers/theme_provider.dart
+  s_17fa7314429764::t_a9a83178d3c561 43-44
+test/domain/tools/conic_constructor_tools_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 55,83,116-118
+test/presentation/panels/attributes_inspector_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 760-762,786-788
+lib/domain/tools/random_shape_stamp_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 30-33,44-47
+test/domain/projective/tracing/traced_branch_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 45-48,91-93,170-173,187-190,338
+lib/domain/projective/tracing/trace_diagnostics.dart
+  s_17fa7314429764::t_a9a83178d3c561 287-289
+test/domain/construction/objects/length_measurement_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 135,148-152
+lib/domain/construction/objects/locus.dart
+  s_17fa7314429764::t_a9a83178d3c561 278,332,543-546,556,586-587,616,667,845-846,870,1091-1092,1106-1108,1110-1115,1135-1136,1290-1292,1375-1376,1398-1401
+lib/presentation/shortcuts/shortcut_table.dart
+  s_17fa7314429764::t_a9a83178d3c561 822,909-910,969-970,1011-1012,1023-1024
+lib/domain/projective/complex.dart
+  s_17fa7314429764::t_a9a83178d3c561 41-42,138
+lib/domain/tools/fixed_length_segment_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 26-29
+test/domain/projective/complex_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 262-270,272-274
+lib/presentation/canvas/region_pick_overlay.dart
+  s_17fa7314429764::t_a9a83178d3c561 33-35,38-40,106-108
+lib/domain/tools/multi_point_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 85-88,91-94
+test/domain/construction/text_evaluator_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 212
+lib/domain/tools/point_and_line_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 13-18,47,51-53,65-70
+test/domain/construction/trace_acceptance_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 23,31-35,47,56,77,86,96-105
+test/presentation/canvas/canvas_hit_tester_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 1104-1109
+lib/domain/construction/text_evaluator.dart
+  s_17fa7314429764::t_a9a83178d3c561 48-49,69-73,89-92,101-103,106-108
+lib/domain/projective/proj_point.dart
+  s_17fa7314429764::t_a9a83178d3c561 32,67-70
+lib/presentation/canvas/geometry_canvas.dart
+  s_17fa7314429764::t_a9a83178d3c561 109-110,200-202,215-216,218-219,242,250,261-263,268-269,297-299,363,388-390,395-396,434-436,525,540-542,580-582,688-697,711-713,732
+lib/presentation/canvas/trace_stats_overlay.dart
+  s_17fa7314429764::t_a9a83178d3c561 56
+lib/application/providers/preferences_provider.dart
+  s_17fa7314429764::t_a9a83178d3c561 15-17
+lib/domain/tools/focal_conic_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 18-30
+lib/domain/projective/euclidean.dart
+  s_17fa7314429764::t_a9a83178d3c561 51-54,151-154
+lib/presentation/panels/toolbar.dart
+  s_17fa7314429764::t_a9a83178d3c561 111,113-118,129-134,194-195,329-333,344-345,374-377,415-416,471-472,681-682,727,874-877,921-926,934-938,944-947,973-977,1006-1007,1058-1059,1223-1224,1270-1272,1289-1290
+test/domain/projective/conic_intersection_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 485-500
+test/domain/projective/conic_matrix_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 92-95
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 182-199,201-220,222-236,238-247,324-330,352,397,414-418,425-444,465,618,677,807,1065-1069,1322-1324,1327,1364-1365,1376,1404-1405,1428-1429
+lib/domain/projective/conic_shape.dart
+  s_17fa7314429764::t_a9a83178d3c561 130,621,788-792
+lib/domain/tools/bifocal_conic_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 35-42
+lib/domain/construction/geo_object.dart
+  s_17fa7314429764::t_a9a83178d3c561 32,72-74,99-101,151-153,291-293
+lib/domain/construction/incidence.dart
+  s_17fa7314429764::t_a9a83178d3c561 38,41-44,59-78,97-102
+lib/domain/projective/cubic.dart
+  s_17fa7314429764::t_a9a83178d3c561 23,88-93
+lib/domain/tools/trapezium_macro_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 72
+lib/domain/tools/transform_object_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 92-94,97-99,102-103,106-108,111-112,152-157,177-180,184-187,191-196,229,241-257,292-297,339-367,413-419,444-453,455-458,460-463,465-468,470-474,476-480,482-486,488-492,494-498,500-502,504-515,517-521,523-527,529-530
+lib/domain/tools/polar_line_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 44-46,97-101
+lib/presentation/theme/app_theme.dart
+  s_17fa7314429764::t_a9a83178d3c561 44-49,52-58
+test/application/persistence/construction_codec_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 260,284,624-701
+benchmark/locus_docs_bench.dart
+  s_17fa7314429764::t_a9a83178d3c561 20-21,23-24,29-35
+test/application/persistence/v1_migration_corpus_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 36-37,83-107,131-135,152-158
+test/domain/commands/move_free_point_command_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 87-92
+test/domain/construction/objects/intersection_pair_order_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 80-84,147-148,281
+test/domain/tools/intersection_tool_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 364-368
+lib/domain/tools/name_points_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 29-30,33-38,125-127
+test/domain/projective/conic_shape_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 15-16,100-102,137-142,251-259,331-332,350-353,372-375,464,531-536,883-884
+lib/domain/math/line_eq.dart
+  s_17fa7314429764::t_a9a83178d3c561 98
+lib/presentation/canvas/geometry_painter.dart
+  s_17fa7314429764::t_a9a83178d3c561 159-161,318-319,376,583-584,807,1006
+test/domain/construction/objects/polar_line_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 111
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 769,810-816
+lib/domain/tools/two_line_or_three_point_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 56-58,62-65
+lib/domain/tools/midpoint_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 46-50
+lib/domain/tools/triangle_circle_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 7-13
+lib/domain/tools/polygon_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 50-55
+lib/domain/construction/object_naming.dart
+  s_17fa7314429764::t_a9a83178d3c561 21-26,29,50-55,57,77
+lib/domain/tools/three_point_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 7-13,32-34
+test/domain/construction/objects/tangent_line_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 185,204-205
+lib/presentation/panels/attributes_inspector.dart
+  s_17fa7314429764::t_a9a83178d3c561 103-105,160-162,199,429-431,437-439,620,628,740
+test/domain/tools/drag_session_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 695,704,732-733
+benchmark/complex_bench.dart
+  s_17fa7314429764::t_a9a83178d3c561 334-337,366-370
+lib/domain/tools/angle_bisector_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 24-30,38
+test/application/persistence/locus_fixture_regression_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 206
+lib/application/providers/tool_provider.dart
+  s_17fa7314429764::t_a9a83178d3c561 215-216
+lib/presentation/canvas/grid_layout.dart
+  s_17fa7314429764::t_a9a83178d3c561 12
+lib/domain/math/angle_bisector.dart
+  s_17fa7314429764::t_a9a83178d3c561 23-25
+lib/domain/math/expression.dart
+  s_17fa7314429764::t_a9a83178d3c561 114,315-317
+test/domain/construction/objects/area_measurement_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 169
+lib/application/export/png_exporter.dart
+  s_17fa7314429764::t_a9a83178d3c561 23
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 950-952,982-984
+lib/domain/projective/tracing/drag_path.dart
+  s_17fa7314429764::t_a9a83178d3c561 27-28
+lib/domain/construction/objects/intersection_point.dart
+  s_17fa7314429764::t_a9a83178d3c561 129-131,262-263
+lib/domain/projective/tracing/singularity.dart
+  s_17fa7314429764::t_a9a83178d3c561 419-421,451-452
+benchmark/pencil_stress.dart
+  s_17fa7314429764::t_a9a83178d3c561 48-53,67-71,89-93,105-114,128-132,147-151,160-163
+lib/application/providers/construction_provider.dart
+  s_17fa7314429764::t_a9a83178d3c561 48
+lib/domain/commands/translate_objects_command.dart
+  s_17fa7314429764::t_a9a83178d3c561 37-38
+lib/domain/tools/conic_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 26-28
+lib/presentation/canvas/label_declutter.dart
+  s_17fa7314429764::t_a9a83178d3c561 137-140,199-200,205-206,210-211,260-261
+lib/domain/tools/point_coincidence.dart
+  s_17fa7314429764::t_a9a83178d3c561 92-93,118
+test/domain/construction/objects/five_point_conic_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 46,348-394
+lib/domain/tools/radical_axis_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 63-67
+lib/presentation/canvas/label_obstacles.dart
+  s_17fa7314429764::t_a9a83178d3c561 83,86,99,136,207
+test/domain/construction/objects/intersection_point_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 201-226,481-500,503,543-573,585,715-719,724
+lib/domain/tools/drag_session.dart
+  s_17fa7314429764::t_a9a83178d3c561 171-175,187-191,372-377
+test/domain/construction/objects/locus_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 677-679
+lib/application/persistence/construction_codec.dart
+  s_17fa7314429764::t_a9a83178d3c561 365-367,371-373,382-384,405-407,427-429,431-433,436-438,447-449,454-456,461-463,467-468,497-499,509-512,514-515,517-521,523-528,530-534,536-541,543-547,549-553,555-560,562-567,569-573,575-580,582-587,589-594,596-601,603-608,610-615,617-620,622-626,628-632,634-638,640-644,646-650,652-657,659-663,665-670,672-677,679-683,685-689,691-695,697-701,703-708,710-715,717-722,724-729,733-738,740-746,748-751,753-758,760-764,766-771,773-778,783-786,791-799,801-805,810-813,817-820,824-827,833-840,842-847,849-855,940
+lib/application/providers/selection_provider.dart
+  s_17fa7314429764::t_a9a83178d3c561 47-49
+test/domain/construction/objects/vertex_angle_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 115
+test/domain/tools/conic_tool_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 35
+test/domain/tools/intersection_tool_conics_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 96-99,111-119,121-122,159-167,178
+lib/main.dart
+  s_17fa7314429764::t_a9a83178d3c561 144-145,344-346,360-367,379,444,474-476,479-482,675-677,892,904-906,908-910,1090-1092,1127-1129,1133,1183-1185,1260-1261,1324,1332
+lib/domain/math/intersections.dart
+  s_17fa7314429764::t_a9a83178d3c561 40
+lib/domain/tools/angle_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 25-31,39
+lib/domain/construction/line_clip.dart
+  s_17fa7314429764::t_a9a83178d3c561 81-86
+test/domain/commands/set_point_on_object_parameter_command_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 90-95
+lib/domain/tools/distance_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 28
+test/application/persistence/codec_v2_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 25-33,60,93,143,160-177,179-183,220-224,233,236-238,282-284
+lib/domain/tools/tangent_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 43-45,49
+lib/domain/construction/text_template.dart
+  s_17fa7314429764::t_a9a83178d3c561 135-139,162-165,179-184
+test/domain/construction/objects/bifocal_conic_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 18-25,97
+test/domain/projective/conics_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 18,41,57-61
+lib/domain/tools/regular_polygon_macro_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 21
+lib/domain/tools/triangle_center_tool.dart
+  s_17fa7314429764::t_a9a83178d3c561 8-14
+test/kitchen_sink.dart
+  s_17fa7314429764::t_a9a83178d3c561 315-322
+test/domain/projective/tracing/drag_path_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 23,49
+lib/domain/projective/conic_intersection.dart
+  s_17fa7314429764::t_a9a83178d3c561 170-176
+lib/domain/tools/point_resolution.dart
+  s_17fa7314429764::t_a9a83178d3c561 54-58
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 214
+lib/domain/projective/tracing/trace_step_budget_exception.dart
+  s_17fa7314429764::t_a9a83178d3c561 22-25
+lib/domain/tools/transform_equivalence.dart
+  s_17fa7314429764::t_a9a83178d3c561 50-71
+test/domain/projective/circles_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 474,516,523-532
+lib/presentation/panels/object_kind_label.dart
+  s_17fa7314429764::t_a9a83178d3c561 49-98
+lib/domain/projective/proj_line.dart
+  s_17fa7314429764::t_a9a83178d3c561 22,28-32,64-67
+test/domain/construction/objects/line_angle_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 309
+lib/domain/math/triangle_centers.dart
+  s_17fa7314429764::t_a9a83178d3c561 64-69
+test/presentation/canvas/geometry_canvas_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 790,971
+lib/presentation/canvas/fit_viewport.dart
+  s_17fa7314429764::t_a9a83178d3c561 123-128
+test/domain/construction/construction_test.dart
+  s_17fa7314429764::t_a9a83178d3c561 159-164,188,196-201
+lib/presentation/canvas/label_anchor.dart
+  s_17fa7314429764::t_a9a83178d3c561 30-56
+lib/domain/construction/construction.dart
+  s_17fa7314429764::t_e559da11ac611f 235,282-285,290-293,296-297,347-348,400-403,450-451,478-481,500-501,524-525,665,668,678-682,759-761,763,888
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b9c570ee34781eb6cafb0973368c0baec5490c66",
+  "prompts": {},
+  "sessions": {
+    "s_17fa7314429764": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "547c8021-d6cb-4838-8d42-3db8e1c0c4a4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
