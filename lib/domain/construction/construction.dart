@@ -662,7 +662,9 @@ class Construction {
       }
       final byPair = <String, List<IntersectionPoint>>{};
       for (final o in seeded) {
-        byPair.putIfAbsent('${o.curve1.id} ${o.curve2.id}', () => []).add(o);
+        byPair
+            .putIfAbsent('${o.curve1.id}\u0000${o.curve2.id}', () => [])
+            .add(o);
       }
       for (final group in byPair.values) {
         final after = {for (final o in group) proposed[o] ?? o.branchIndex};
