@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
@@ -1144,6 +1145,102 @@ void main() {
       expect(p0.projPoint, isNull);
       expect(p0.branchIndex, 0);
       expect(p1.branchIndex, 1);
+    });
+
+    // Phase 120c, from `ellipse-intersection-issue.rgl`: two ellipses
+    // crossing four times, dragged until the crossings vanish and come
+    // back. The user's saved file had six intersection points on the
+    // pair, four of them stored at branchIndex 1.
+    //
+    // Adoption was capped at matchedIndex <= 1 — right while two
+    // candidates was all any carrier pair could produce, and left behind
+    // when Phase 120's conics made four reachable. The cap does not
+    // merely skip adoption: it makes it *asymmetric*. A root landing at
+    // index 0 or 1 writes back while one landing at 2 or 3 does not, so
+    // two branches converge onto the same stored index and the next
+    // static recompute puts both points on the same root.
+    (Construction, List<IntersectionPoint>) fourWayRig() {
+      final construction = Construction();
+      final foci = [
+        fp('a1', 276.28515625, -549.99609375),
+        fp('a2', 852.93359375, -511.88671875),
+        fp('a3', 527.05859375, -349.2734375),
+        fp('b1', 558.8051299943472, -469.1066983991435),
+        fp('b2', 550.9898345406327, -561.0437497250491),
+        fp('b3', 343.23828125, -549.99609375),
+      ];
+      for (final p in foci) {
+        construction.add(p);
+      }
+      final e1 = BifocalConic(
+        id: 'e1',
+        focus1: foci[0],
+        focus2: foci[1],
+        point: foci[2],
+        difference: false,
+      );
+      final e2 = BifocalConic(
+        id: 'e2',
+        focus1: foci[3],
+        focus2: foci[4],
+        point: foci[5],
+        difference: false,
+      );
+      construction..add(e1)..add(e2);
+      final points = [
+        for (var i = 0; i < 4; i++)
+          IntersectionPoint(
+            id: 'i$i',
+            curve1: e1,
+            curve2: e2,
+            branchIndex: i,
+          ),
+      ];
+      for (final p in points) {
+        construction.add(p);
+      }
+      return (construction, points);
+    }
+
+    test('four conic∩conic branches keep four distinct canonical addresses '
+        'across a drag (Phase 120c)', () {
+      final (construction, points) = fourWayRig();
+      expect(
+        intersectionCandidates(
+          points.first.curve1,
+          points.first.curve2,
+        ).length,
+        4,
+      );
+      expect(points.map((p) => p.branchIndex).toSet(), {0, 1, 2, 3});
+      expect(points.every((p) => p.position != null), isTrue);
+
+      // Drag the third free point so the crossings go complex and return.
+      var from = const Vec2(527.05859375, -349.2734375);
+      for (final to in const [
+        Vec2(527, -300),
+        Vec2(527, -250),
+        Vec2(527, -300),
+        Vec2(527.05859375, -349.2734375),
+      ]) {
+        try {
+          construction.recomputeAlongPath('a3', DragPath(from, to));
+        } on TraceStepBudgetException {
+          // A starving frame bails to the static solve, exactly as the
+          // drag session's preview does; identity is what is under test.
+          construction.moveFreePoint('a3', to);
+        }
+        from = to;
+        // The invariant: distinct branches address distinct roots. A
+        // collision here is the double point the user saw, and the tool
+        // then stacks a fresh object on the crossing left unoccupied.
+        expect(
+          points.map((p) => p.branchIndex).toSet(),
+          hasLength(4),
+          reason: 'branches collapsed after dragging to $to: '
+              '${points.map((p) => '${p.id}#${p.branchIndex}').join(' ')}',
+        );
+      }
     });
   });
 

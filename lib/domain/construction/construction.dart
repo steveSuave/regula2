@@ -610,12 +610,24 @@ class Construction {
       // No adoption when the step coasted (matchedIndex −1: nothing
       // was matched), on a double root (separation within
       // doubleRootEpsilon: the tie broke arbitrarily and canonical
-      // order says nothing), or outside the 0/1 range branchIndex
-      // addresses (future four-candidate conic∩conic carriers).
+      // order says nothing), or outside the range branchIndex
+      // addresses.
+      //
+      // That range is [maxBranchCount], and it must stay in step with
+      // it: capping adoption below what `branchIndex` can hold makes
+      // adoption *asymmetric*, which is worse than not adopting at
+      // all. A root landing at an addressable index writes back while
+      // one landing past the cap silently does not, so two branches
+      // converge onto the same stored index and the next static
+      // recompute puts both points on the same root. The cap sat at 1
+      // from Phase 116, when two candidates was the most any carrier
+      // pair could produce; Phase 120's conics made four reachable and
+      // four intersection points collapsed to one within two drag
+      // frames (Phase 120c).
       for (final o in seeded) {
         final branch = o.tracedBranch;
         if (branch.matchedIndex >= 0 &&
-            branch.matchedIndex <= 1 &&
+            branch.matchedIndex < IntersectionPoint.maxBranchCount &&
             branch.separation > doubleRootEpsilon) {
           o.branchIndex = branch.matchedIndex;
         }

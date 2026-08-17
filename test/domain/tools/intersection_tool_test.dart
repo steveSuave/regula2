@@ -300,6 +300,39 @@ void main() {
       expect(other.position!.closeTo(const Vec2(-4, 0)), isTrue);
     });
 
+    test('an occupied branch is refused even while it has no position '
+        '(Phase 120c)', () {
+      // Proximity can only speak for a point that has one. Pull the
+      // circle clear of the line so the crossings are complex: the
+      // existing branch-0 point goes undefined, and before the
+      // structural test every further tap on the pair looked unoccupied
+      // and stacked another object on it. Six of them piled up on one
+      // conic pair in the reported document.
+      final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
+      final far = FreePoint(id: 'f', position: const Vec2(0, 100));
+      final circle = CircleCenterPoint(id: 'k', center: far, onCircle: y);
+      var objects = <GeoObject>[o, x, y, far, horizontal, circle];
+      final existing = IntersectionPoint(
+        id: 'e',
+        curve1: horizontal,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      objects = [...objects, existing];
+      expect(existing.position, isNull, reason: 'the crossings are complex');
+
+      expect(
+        (tool()..onInput(
+              ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
+            ))
+            .onInput(
+              ToolInput(const Vec2(0, 99), hit: circle, objects: objects),
+            ),
+        isA<ToolIgnored>(),
+        reason: 'branch 0 of this pair is already built',
+      );
+    });
+
     test('two lines sharing a defining point reuse that point', () {
       final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
       final vertical = LineThroughTwoPoints(id: 'v', point1: o, point2: y);

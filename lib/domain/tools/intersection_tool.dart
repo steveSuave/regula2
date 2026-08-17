@@ -16,14 +16,17 @@ import 'tool.dart';
 /// point starts undefined and appears when the curves are dragged
 /// together, like every other derived object.
 ///
-/// A visible existing point [structurallyIncident] on *both* curves at
-/// the chosen branch already is their intersection — the crossing point
-/// of two segments when one curve is their angle bisector, a shared
-/// endpoint, the same pair intersected twice — so the tap is refused
-/// instead of stacking a duplicate on it, like the transform tool's
-/// duplicate image (Phase 40); the collected curve stays armed. A
-/// two-branch pair dedups per branch: an existing point on the other
-/// branch doesn't block this one. A point occupying the crossing by
+/// A visible existing point on *both* curves at the chosen branch
+/// already is their intersection — the crossing point of two segments
+/// when one curve is their angle bisector, a shared endpoint, the same
+/// pair intersected twice — so the tap is refused instead of stacking a
+/// duplicate on it, like the transform tool's duplicate image (Phase
+/// 40); the collected curve stays armed. "Already on this branch" is an
+/// [IntersectionPoint] built on the same ordered pair at the same index,
+/// or any point [structurallyIncident] on both curves whose position
+/// classifies to it. A multi-branch pair dedups per branch: an existing
+/// point on another branch doesn't block this one. A point occupying the
+/// crossing by
 /// *theorem* rather than by incident parents (a centroid at the third
 /// median's crossing) is caught by the numeric identity probe
 /// ([coincidentExistingPoint]) and refused the same way.
@@ -88,12 +91,24 @@ class IntersectionTool implements ToolInputPreview {
     return ToolCommitted(AddObjectCommand(candidate));
   }
 
-  /// Whether a visible, defined point in [objects] already occupies
-  /// branch [index] of `curve1 ∩ curve2` (see the class doc). Incidence
-  /// on both curves proves the point sits on *a* crossing; which branch
-  /// is classified by proximity, the same probe the tap itself uses —
-  /// exact-position comparison would be an epsilon test against the same
-  /// value computed along a different construction route.
+  /// Whether a visible point in [objects] already occupies branch [index]
+  /// of `curve1 ∩ curve2` (see the class doc).
+  ///
+  /// Two tests, because they cover different points. The **structural**
+  /// one recognizes an [IntersectionPoint] already built on this ordered
+  /// pair at this branch: that *is* the same object by construction, so
+  /// it dedups whether or not it currently has a position. The
+  /// **positional** one classifies any other incident point by
+  /// proximity, the same probe the tap itself uses — exact-position
+  /// comparison would be an epsilon test against the same value computed
+  /// along a different construction route.
+  ///
+  /// The structural test is what stops accumulation across a degeneracy
+  /// (Phase 120c). Proximity can only speak for a point that has a
+  /// position, so while the crossings are complex — mid-drag, or with
+  /// the curves pulled apart — every tap on the pair used to look
+  /// unoccupied and stacked another point. The user's file had six on
+  /// one conic pair, four of them at the same branch.
   bool _existingIntersection(
     Iterable<GeoObject> objects,
     GeoObject curve1,
@@ -101,9 +116,16 @@ class IntersectionTool implements ToolInputPreview {
     int index,
   ) {
     for (final object in objects) {
-      if (object is GeoPoint &&
-          object.attributes.visible &&
-          object.position != null &&
+      if (object is! GeoPoint || !object.attributes.visible) {
+        continue;
+      }
+      if (object is IntersectionPoint &&
+          identical(object.curve1, curve1) &&
+          identical(object.curve2, curve2) &&
+          object.branchIndex == index) {
+        return true;
+      }
+      if (object.position != null &&
           structurallyIncident(curve1, object) &&
           structurallyIncident(curve2, object) &&
           nearestIntersectionBranch(curve1, curve2, object.position!)?.index ==
