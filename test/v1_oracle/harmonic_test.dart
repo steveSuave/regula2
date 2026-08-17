@@ -1,9 +1,9 @@
 import 'package:glados/glados.dart';
-import 'package:regula/domain/math/harmonic.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
 
-import 'generators.dart';
+import '../domain/math/generators.dart';
+import 'harmonic.dart';
 
 void main() {
   group('harmonicConjugate on canonical configurations', () {

@@ -6,7 +6,6 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polar_line.dart';
 import 'package:regula/domain/math/circle_eq.dart';
-import 'package:regula/domain/math/circle_relations.dart' as v1;
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
@@ -15,6 +14,7 @@ import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 
 import '../../../projective_stubs.dart';
+import '../../../v1_oracle/circle_relations.dart' as v1;
 import '../../math/generators.dart';
 
 void main() {

@@ -2,13 +2,13 @@ import 'dart:math' as math;
 
 import 'package:glados/glados.dart';
 import 'package:regula/domain/math/circle_eq.dart';
-import 'package:regula/domain/math/circle_relations.dart';
-import 'package:regula/domain/math/intersections.dart';
 import 'package:regula/domain/math/line_eq.dart';
-import 'package:regula/domain/math/tangents.dart';
 import 'package:regula/domain/math/vec2.dart';
 
-import 'generators.dart';
+import '../domain/math/generators.dart';
+import 'circle_relations.dart';
+import 'intersections.dart';
+import 'tangents.dart';
 
 /// The power of [p] with respect to [c]: `|p − center|² − radius²`.
 double power(CircleEq c, Vec2 p) =>

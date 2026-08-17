@@ -1,6 +1,23 @@
+/// **V1's affine bisector routines, frozen as a test oracle.**
+///
+/// Superseded in Phase 110 by `lib/domain/projective/euclidean.dart`
+/// (`angleBisectorOf` / `twoLineBisectorOf`) and left with no `lib/`
+/// consumer; moved here in Phase 121.
+///
+/// Kept for the same reason as `intersections.dart` in this directory —
+/// see its header for the argument in full: the projective kernels are
+/// specified as *agreeing with V1* on real transverse cases, and that
+/// agreement is a permanent contract (v1 documents are permanent), so
+/// the build being agreed with has to stay around to be compared against.
+/// Nothing under `lib/` may import this, which living in `test/` enforces
+/// structurally. Do not extend it and do not "fix" it toward the new
+/// kernel: its whole value is being unchanged.
+library;
+
+import 'package:regula/domain/math/line_eq.dart';
+import 'package:regula/domain/math/vec2.dart';
+
 import 'intersections.dart';
-import 'line_eq.dart';
-import 'vec2.dart';
 
 /// The internal bisector of the angle at [vertex] between the rays toward
 /// [arm1] and [arm2], or null when either arm point (nearly) coincides

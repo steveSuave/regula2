@@ -2,13 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
-import 'package:regula/domain/math/angle_bisector.dart' as v1;
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 
 import '../../../projective_stubs.dart';
+import '../../../v1_oracle/angle_bisector.dart' as v1;
 
 void main() {
   late FreePoint o;
