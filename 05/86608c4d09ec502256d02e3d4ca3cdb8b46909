@@ -1,0 +1,42 @@
+lib/main.dart
+  s_864df67dc11e5d::t_d8fcc0684826f5 89,1066
+  s_864df67dc11e5d::t_ef71f67ebb4ff2 386
+test/domain/construction/ck_angle_sum_test.dart
+  s_864df67dc11e5d::t_6f54edd6f2afd1 1-121
+test/presentation/panels/geometry_menu_test.dart
+  s_864df67dc11e5d::t_0a4fde246092b2 1-59,63-140
+  s_864df67dc11e5d::t_5c494a738bf4e7 60-62
+test/presentation/canvas/geometry_painter_test.dart
+  s_864df67dc11e5d::t_d9cb463f426ca2 5
+  s_864df67dc11e5d::t_a5a73143c1deb5 872,961-968
+  s_864df67dc11e5d::t_ddd710971bd7c6 868-871,873-960,969-970,1020-1028,1031
+  s_864df67dc11e5d::t_5fb503aa54033d 1029-1030,1032-1033
+lib/presentation/panels/geometry_menu.dart
+  s_864df67dc11e5d::t_6c3a829858b8c1 1-70,72-248
+  s_864df67dc11e5d::t_db15a81dbe41cf 71
+lib/presentation/theme/app_theme.dart
+  s_864df67dc11e5d::t_2e351180136742 26-33,56-62,71-73,83-87,95-98,100-105,115
+lib/application/export/png_exporter.dart
+  s_864df67dc11e5d::t_f035e837f2a1ea 76,112,145,158
+lib/presentation/canvas/geometry_canvas.dart
+  s_864df67dc11e5d::t_ef71f67ebb4ff2 221-223
+lib/presentation/canvas/geometry_painter.dart
+  s_864df67dc11e5d::t_f6699233c9c2c6 16,83,170-179,189,261,264-268,271-276,279-285,1137-1138
+  s_864df67dc11e5d::t_d1111655c9caa5 25-59,258-260,262-263,269-270,277-278
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0586608c4d09ec502256d02e3d4ca3cdb8b46909",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
