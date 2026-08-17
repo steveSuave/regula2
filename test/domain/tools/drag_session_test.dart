@@ -6,10 +6,12 @@ import 'package:regula/domain/commands/move_text_anchor_command.dart';
 import 'package:regula/domain/commands/set_point_on_object_parameter_command.dart';
 import 'package:regula/domain/commands/translate_objects_command.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
@@ -649,6 +651,121 @@ void main() {
       construction.removeWithDependents('p');
       session.cancel(); // must not throw
       expect(construction.contains('p'), isFalse);
+    });
+  });
+
+  group('conic∩conic drags commit through the session (Phase 120c)', () {
+    /// Two ellipses crossing four times, with all four crossings built —
+    /// `ellipse-intersection-issue.rgl`. The dragged point is a focus of
+    /// the first, so shrinking it takes the crossings complex.
+    (Construction, FreePoint, List<IntersectionPoint>) fourWay() {
+      final c = Construction();
+      FreePoint fp(String id, double x, double y) =>
+          FreePoint(id: id, position: Vec2(x, y));
+      final free = [
+        fp('a1', 276.28515625, -549.99609375),
+        fp('a2', 852.93359375, -511.88671875),
+        fp('a3', 527.05859375, -349.2734375),
+        fp('b1', 558.8051299943472, -469.1066983991435),
+        fp('b2', 550.9898345406327, -561.0437497250491),
+        fp('b3', 343.23828125, -549.99609375),
+      ];
+      for (final p in free) {
+        c.add(p);
+      }
+      final e1 = BifocalConic(
+        id: 'e1',
+        focus1: free[0],
+        focus2: free[1],
+        point: free[2],
+        difference: false,
+      );
+      final e2 = BifocalConic(
+        id: 'e2',
+        focus1: free[3],
+        focus2: free[4],
+        point: free[5],
+        difference: false,
+      );
+      c
+        ..add(e1)
+        ..add(e2);
+      final points = [
+        for (var i = 0; i < 4; i++)
+          IntersectionPoint(
+            id: 'i$i',
+            curve1: e1,
+            curve2: e2,
+            branchIndex: i,
+          ),
+      ];
+      for (final p in points) {
+        c.add(p);
+      }
+      return (c, free[2], points);
+    }
+
+    /// One gesture: grab [point], run the waypoints, release, commit.
+    void gesture(
+      Construction c,
+      FreePoint point,
+      List<Vec2> waypoints,
+    ) {
+      final session = DragSession.start(c, c.byId(point.id)!, point.position)!;
+      for (final w in waypoints) {
+        session.update(w);
+      }
+      session.end()?.apply(c);
+    }
+
+    test('a drag that takes four crossings complex and back keeps four '
+        'distinct branches — and its command does not throw', () {
+      // The engine stopped merging these in Phase 120c, but the gesture's
+      // *command* still refused every adoption to index 2 or 3
+      // (`setIntersectionBranch` carried its own 0..1 bound), so the
+      // re-pointing was thrown away and the app went on merging them.
+      // This is the level that catches that: session, end(), apply().
+      final (c, dragged, points) = fourWay();
+      expect(points.map((p) => p.branchIndex).toSet(), {0, 1, 2, 3});
+
+      gesture(c, dragged, [
+        for (var i = 1; i <= 12; i++) Vec2(527, -349.27 + 149.27 * i / 12),
+      ]);
+      gesture(c, dragged, [
+        for (var i = 1; i <= 12; i++) Vec2(527, -200 - 149.27 * i / 12),
+      ]);
+
+      expect(
+        points.map((p) => p.branchIndex).toSet(),
+        hasLength(4),
+        reason: 'branches collapsed: '
+            '${points.map((p) => '${p.id}#${p.branchIndex}').join(' ')}',
+      );
+      // Distinct addresses must mean distinct roots.
+      final places = points.map((p) => p.position).toList();
+      expect(places, everyElement(isNotNull));
+      for (var i = 0; i < places.length; i++) {
+        for (var j = i + 1; j < places.length; j++) {
+          expect(
+            places[i]!.distanceTo(places[j]!),
+            greaterThan(1),
+            reason: 'i$i and i$j landed on the same root',
+          );
+        }
+      }
+    });
+
+    test('undo puts the pre-drag branches back', () {
+      final (c, dragged, points) = fourWay();
+      final before = [for (final p in points) p.branchIndex];
+      final session = DragSession.start(c, c.byId('a3')!, dragged.position)!;
+      for (var i = 1; i <= 12; i++) {
+        session.update(Vec2(527, -349.27 + 149.27 * i / 12));
+      }
+      final command = session.end()!;
+      command.apply(c);
+      command.undo(c);
+      expect([for (final p in points) p.branchIndex], before);
     });
   });
 }

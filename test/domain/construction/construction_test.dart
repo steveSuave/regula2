@@ -201,9 +201,21 @@ void main() {
       expect(() => c.setIntersectionBranch('nope', 0), throwsArgumentError);
       expect(() => c.setIntersectionBranch('a', 0), throwsArgumentError);
       expect(() => c.setIntersectionBranch('l', 0), throwsArgumentError);
-      expect(() => c.setIntersectionBranch('p', 2), throwsArgumentError);
       expect(() => c.setIntersectionBranch('p', -1), throwsArgumentError);
+      expect(
+        () => c.setIntersectionBranch('p', IntersectionPoint.maxBranchCount),
+        throwsArgumentError,
+      );
       expect(p.branchIndex, 0);
+      // The bound is the *addressing space*, not the current candidate
+      // count — which varies as the parents move, and which `recompute`
+      // clamps to. It must match the constructor's, or a traced drag on
+      // a conic pair adopts an index its own command then refuses: this
+      // asserted `2` throws until Phase 120c, and that is what kept the
+      // four crossings of two ellipses merging in the app after the
+      // engine had stopped merging them.
+      c.setIntersectionBranch('p', 2);
+      expect(p.branchIndex, 2);
     });
   });
 

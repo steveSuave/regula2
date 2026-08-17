@@ -21,9 +21,15 @@ import '../geo_object.dart';
 /// undefined. Through a real miss both branches go complex (conjugate
 /// mates) and each returns on its own side when the curves touch again.
 ///
-/// [branchIndex] (0 or 1) addresses the canonical order, which agrees
-/// with the old deterministic orderings on real transverse cases (PLAN
-/// §Migration):
+/// [branchIndex] (`0..maxBranchCount − 1`) addresses the canonical order,
+/// which agrees with the old deterministic orderings on real transverse
+/// cases (PLAN §Migration). **Every bound on it belongs to
+/// [maxBranchCount]**: the constructor's, `Construction`'s adoption
+/// step and `Construction.setIntersectionBranch`. Three separate `0..1`
+/// literals survived into the conic era and each broke something
+/// different — the constructor threw on the third crossing (120b),
+/// adoption silently collapsed branches onto one index, and the commit
+/// primitive threw out of the drag's command (both 120c).
 ///
 /// - line ∩ line: one point, the index clamps to it.
 /// - line ∩ circle: ordered along the line's direction. The line parent's

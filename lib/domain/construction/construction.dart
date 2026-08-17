@@ -769,14 +769,26 @@ class Construction {
   /// root), and the gesture's one command must replay that re-pointing
   /// in both directions for undo/redo to be exact. Throws
   /// [ArgumentError] when [id] is not an [IntersectionPoint] or
-  /// [branchIndex] is out of range.
+  /// [branchIndex] is outside `0..maxBranchCount − 1` — the same range
+  /// the constructor accepts, and it must stay that way: this is the one
+  /// path a *committed* re-pointing takes, so a narrower bound here
+  /// rejects adoptions the trace legitimately made and throws out of the
+  /// gesture's command (Phase 120c — it was `> 1` while conic∩conic
+  /// carriers were producing 2 and 3, which is what made the four
+  /// crossings of two ellipses keep merging after the engine itself
+  /// stopped merging them).
   void setIntersectionBranch(String id, int branchIndex) {
     final object = _objects[id];
     if (object is! IntersectionPoint) {
       throw ArgumentError('$id is not an IntersectionPoint in this construction');
     }
-    if (branchIndex < 0 || branchIndex > 1) {
-      throw ArgumentError.value(branchIndex, 'branchIndex', 'must be 0 or 1');
+    if (branchIndex < 0 ||
+        branchIndex >= IntersectionPoint.maxBranchCount) {
+      throw ArgumentError.value(
+        branchIndex,
+        'branchIndex',
+        'must be 0..${IntersectionPoint.maxBranchCount - 1}',
+      );
     }
     object.branchIndex = branchIndex;
     object.recompute();
