@@ -195,13 +195,54 @@ Full checklists live in `docs/TODO.md`. The arc, with the three de-risking spike
 | 119–120 | Conic rendering + hit-testing · five-point conic object + tool (the payoff demo) · **120b** the conics group: focal and bifocal constructors |
 | 121–122 | Old kernel deletion + degeneracy-convention unification · performance hardening + compile-target finalization |
 
+## M-CK — Cayley–Klein non-Euclidean geometries (opened at Phase 123)
+
+The fundamental conic — *the absolute* — becomes a per-construction setting: Euclidean = the degenerate conic {I, J}; hyperbolic = the unit circle (Beltrami–Klein); elliptic = the imaginary unit conic. Incidence is projective and does not move: joins, meets, intersections, poles, polars, tangents and the five-point conic need **zero changes**, which is the dividend Phases 103–110 were bought for. *Measurement* is where geometry lives — distance and angle become cross-ratio logarithms against the absolute — and perpendicularity is conjugacy with respect to it, which is Phase 107's I,J formulation with the absolute substituted. UI is a construction-level mode with disc-boundary rendering for hyperbolic; the setting persists through the Phase 118 codec hook, which has reserved the three names and *refused* the two unimplemented ones since that phase. Scope guard: **no Poincaré model-switching in v1 of this milestone.**
+
+### The absolute is carried as its dual (pinned in Phase 123)
+
+The obvious carrier is the conic itself, and for two of the three geometries that works. It does not work for the one every existing document is in: the Euclidean absolute {I, J} is a **degenerate, rank-2 point conic**, so it cannot be inverted and the dual cannot be recovered from it. The dual can be written down directly — `diag(1, 1, 0)` — and it is well-behaved.
+
+- **The code already reads the dual, everywhere it reads the metric at all.** Perpendicularity of two lines is conjugacy in the dual, `ℓ₁ᵀC*ℓ₂ = 0`, which for `diag(1,1,0)` is `a₁a₂ + b₁b₂ = 0` — the familiar test, and exactly what `euclidean.dart`'s `normalDirectionOf` encodes. Phase 120b found the same thing from the other end: the whole of the Euclidean structure in `focalConicOf` is the single coefficient `a² + b²`, which is `ℓ` evaluated against `diag(1,1,0)`. Two independent arrivals at the dual is the argument for making it the primary field.
+- So an `Absolute` value carries **both matrices, with the dual primary**, and the three named instances supply both explicitly rather than deriving one from the other. Deriving is what fails on the Euclidean case, and the Euclidean case is the default.
+- Points and lines therefore switch geometry by *substitution*, not by branching: the metric kernels take an `Absolute` and the Euclidean instance reproduces today's arithmetic bit-for-bit. **That bitwise property is the phase's gate** — the entire suite must stay green with the absolute threaded through, before any second geometry exists to compare against.
+
+### Four tiers of kind, not two, and the affine one is the finding (pinned in Phase 123)
+
+The outline said measurement switches and incidence does not. Between them sit the *affine* kinds, and they are the milestone's real cost. Measured by import census over the 52 object files: 12 import `euclidean.dart`, 14 import `circles.dart` / `angle_geometry.dart` / `triangle_centers.dart`, one overlaps — **25 of 52 kinds are geometry-dependent**, and they do not all switch the same way.
+
+1. **Incidence** — joins, meets, `IntersectionPoint`, `PolarLine`, `TangentLine`, `FivePointConic`, `HarmonicConjugatePoint`. Projective, untouched, and the reason the kernel track was worth doing.
+2. **Affine (ℓ∞-founded)** — `Midpoint`, `Centroid`, `ParallelLine`, `TranslatedPoint`, `SegmentRatioPoint`, `HomotheticPoint`, `CentralReflectionPoint`. These read the *line* at infinity rather than the two points on it, and ℓ∞ is distinguished **only because the Euclidean absolute is degenerate and ℓ∞ is the line carrying it**. With a proper absolute conic there is no distinguished line, so nothing here is automatic. They split by whether the construction is secretly harmonic:
+   - `Midpoint` generalizes **verbatim in form**. The affine midpoint of `A`, `B` is the harmonic conjugate of `AB ∩ ℓ∞` with respect to `A` and `B`; the CK midpoint is the harmonic conjugate with respect to the absolute's two points on that line, and Euclidean is the degenerate limit where those two coincide. Same construction, absolute substituted — the same shape as perpendicularity. (With a proper absolute there are *two* such points, internal and external, so it acquires a branch, like the bisector pair.)
+   - `ParallelLine` does **not** generalize. "The parallel through `P`" is a uniqueness that hyperbolic geometry exists to deny. It is **refused** in non-Euclidean modes, not approximated — the same rule the codec already applies to an unimplemented metric, for the same reason: drawing the wrong geometry silently is the one outcome worth refusing a document over.
+   Which side each of the seven falls on is audit work, not prose work.
+3. **Metric (I,J-founded)** — the perpendiculars and bisectors, every circle kind, `ReflectedPoint`, `RotatedPoint`, `ProjectionPoint`, the triangle centres, `FocalConic`, `BifocalConic`. These substitute the absolute and are the bulk of the milestone. A circle is a conic through I and J; under a proper absolute it is a conic **bitangent to the absolute**, which is a different shape, so the notion generalizes but its coefficient test does not.
+4. **Chart-metric (the measurements)** — `DistanceMeasurement`, `LengthMeasurement`, `AreaMeasurement`, `VertexAngle`, `LineAngle`, `SlopeMeasurement`. Phase 112 already named this boundary and said M-CK re-founds measurement exactly here; that is now literal. These become cross-ratio logarithms against the absolute. `SlopeMeasurement` is Euclidean by definition and is refused.
+
+**Phase 122's circle fast path is Euclidean-specific and is safe anyway** — worth recording, because it looks like a correctness dependency hiding inside a performance optimization and is not one. `intersectionCandidates` short-circuits two circles on the exact test `xy = 0, xx = yy`, which is the *Euclidean* circle shape. Under another absolute a "circle" is bitangent to it and does not have that shape, so the test simply does not fire and the general pencil route runs — correct, only slower. The dispatch being exact rather than tolerant is what makes this automatic; a tolerance would have had to be re-derived per geometry.
+
+### How the absolute reaches a recompute is decided by the audit, not before it (pinned in Phase 123)
+
+`GeoObject.recompute()` takes no arguments and objects hold no back-reference to their `Construction`, so there is today no route by which an ambient setting could reach a kind. The candidates each have a real cost — threading it as a parameter churns a signature the reuse contract protects across all 52 kinds; a back-reference puts a `Construction` into every stub test and a cycle into the model; a scoped ambient value keeps the signature but reintroduces exactly the hidden global state the pure-domain rule exists to prevent.
+
+**This is deliberately left open until the audit closes.** The lesson of Phase 122 is that the representation question should be answered after measuring which code actually holds the problem, and the same applies here: if the 25 geometry-dependent kinds all reach the metric through three kernel modules, then threading the absolute into *those* and giving their callers one route to it is the whole change, and the right route is obvious once the caller list is exact rather than estimated. Choosing now would be guessing at a number Phase 123 is going to produce.
+
+### The phase decomposition
+
+- **Phase 123 — the absolute, and the audit that scopes the milestone.** The `Absolute` type (dual primary) with the three instances; `DocumentKernel` carried from the codec into `Construction` and the providers so the setting exists end to end and round-trips; hyperbolic and elliptic still refused at load. The per-kind audit across all 52 files, classifying each into the four tiers above and naming the refusals. **Zero Euclidean behaviour change** is the safety property that makes everything after it incremental — the suite, the goldens and the tracing checksums must all be untouched.
+- **Phase 124 — measurement on cross-ratio.** The tier-4 kinds re-founded, with Euclidean as the degenerate case that reproduces today's numbers.
+- **Phase 125 — perpendicularity, circles and the tier-2/3 substitutions**, plus the refusals made real in the tools and the inspector.
+- **Phase 126 — the mode as a UI**, disc-boundary rendering for hyperbolic, and the codec's refusal turned into support.
+
+Numbering after 123 is provisional and will move as the audit lands.
+
 ## Milestone outlines
 
 Opened as numbered phases when started; each then gets its own PLAN section. Key decisions are recorded now so they don't get re-litigated.
 
-### M-CK — Cayley–Klein non-Euclidean geometries (optional; unlocked after Phase 121)
+### M-CK — Cayley–Klein non-Euclidean geometries
 
-The fundamental conic becomes a per-construction setting: Euclidean = the degenerate conic {I, J}; hyperbolic = unit circle (Beltrami–Klein); elliptic = imaginary unit conic. *Measurement* is where geometry lives — distance and angle become cross-ratio logarithms against the fundamental conic, so measurements and angle objects switch on the ambient setting while incidence objects need **zero changes** (the payoff of Phases 103–110). Perpendicularity = conjugacy w.r.t. the fundamental conic — Phase 107's I,J formulation generalizes verbatim. UI is a construction-level mode with disc-boundary rendering for hyperbolic; persisted via the Phase 118 codec hook. Scope guard: no Poincaré model-switching in v1 of this milestone.
+**Opened at Phase 123 — see §"M-CK — Cayley–Klein" below for the milestone's own section.** The outline that stood here is folded into it.
 
 ### M-P — Deductive-database prover
 
