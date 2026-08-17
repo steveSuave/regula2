@@ -1,0 +1,31 @@
+lib/domain/construction/objects/inscribed_circle.dart
+  s_cfee4ea9eee223::t_00b4762198495e 34-35,38-43
+test/domain/layer_rule_test.dart
+  s_cfee4ea9eee223::t_5e6363a7395567 74-84,90-102
+  s_cfee4ea9eee223::t_b527d6b1e7f41d 85-89
+lib/domain/math/line_eq.dart
+  s_cfee4ea9eee223::t_356d6a5c5247a9 8-17
+lib/domain/math/circle_eq.dart
+  s_cfee4ea9eee223::t_f7a97e40cc090c 7-14
+CLAUDE.md
+  s_cfee4ea9eee223::t_21b98f824aecc4 67-68
+  s_cfee4ea9eee223::t_3779ded037935f 36-38
+docs/TODO.md
+  s_cfee4ea9eee223::t_494f006d7623d7 150-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b3e80fda58b0110268b624f53a849b33d5aae96c",
+  "prompts": {},
+  "sessions": {
+    "s_cfee4ea9eee223": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b4ca906-2c3f-4d82-ab85-f72027c94e9f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
