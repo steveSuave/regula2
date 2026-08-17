@@ -103,6 +103,7 @@ class LineAngle extends GeoAngle {
 
   AngleGeometry? _angle;
   double? _measure;
+  bool _euclidean = true;
 
   @override
   AngleGeometry? get angle => _angle;
@@ -112,7 +113,7 @@ class LineAngle extends GeoAngle {
   /// one, so Euclidean keeps its exact chart answer; a proper absolute
   /// measures between the carriers projectively.
   @override
-  double? get measure => _measure ?? _angle?.measure;
+  double? get measure => _euclidean ? _angle?.measure : _measure;
 
   @override
   List<GeoObject> get parents => [line1, line2];
@@ -126,6 +127,7 @@ class LineAngle extends GeoAngle {
     if (l1 == null || l2 == null || p1 == null || p2 == null) {
       _angle = null;
       _measure = null;
+      _euclidean = absolute.isEuclidean;
       return;
     }
     // Parallel carriers meet at infinity, coincident ones on the zero
@@ -134,10 +136,12 @@ class LineAngle extends GeoAngle {
     if (vertex == null) {
       _angle = null;
       _measure = null;
+      _euclidean = absolute.isEuclidean;
       return;
     }
     final s1 = sign1;
     final s2 = sign2;
+    _euclidean = absolute.isEuclidean;
     _measure = absolute.isEuclidean
         ? null
         : angleBetweenLines(absolute, p1, p2);

@@ -22,5 +22,13 @@ class Centroid extends TriangleCenterPoint {
     ProjPoint b,
     ProjPoint c,
     Absolute absolute,
-  ) => centroidOf(a, b, c);
+  ) => absolute.isEuclidean
+      ? centroidOf(a, b, c)
+      // The medians' common point. Under the Euclidean absolute that is
+      // what `centroidOf`'s affine average computes; under a proper one
+      // the medians run to the *CK* midpoints, and the construction is
+      // otherwise the same — so this generalizes rather than refuses.
+      : a
+            .join(midpointOf(b, c, absolute))
+            .meet(b.join(midpointOf(a, c, absolute)));
 }

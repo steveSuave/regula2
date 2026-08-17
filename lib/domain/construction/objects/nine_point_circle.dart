@@ -1,4 +1,6 @@
+import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
+import '../../projective/ck_circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
@@ -23,6 +25,17 @@ class NinePointCircle extends TriangleCircle {
   });
 
   @override
-  ConicMatrix? computeConic(ProjPoint a, ProjPoint b, ProjPoint c) =>
-      circumcircleOf(midpointOf(a, b), midpointOf(b, c), midpointOf(c, a));
+  ConicMatrix? computeConic(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  ) => absolute.isEuclidean
+      ? circumcircleOf(midpointOf(a, b), midpointOf(b, c), midpointOf(c, a))
+      : ckCircumcircleOf(
+          absolute,
+          midpointOf(a, b, absolute),
+          midpointOf(b, c, absolute),
+          midpointOf(c, a, absolute),
+        );
 }

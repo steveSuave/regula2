@@ -1,6 +1,7 @@
 import '../../math/circle_eq.dart';
 import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
+import '../../projective/ck_circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
@@ -49,7 +50,13 @@ class CircleCenterPoint extends GeoCircle {
       _circle = null;
       return;
     }
-    final k = circleThrough(c, p);
+    // A circle is a level set of distance, so it splits where distance
+    // does: Euclidean circles are the conics through I and J, CK circles
+    // the conics bitangent to the absolute. Two families, no unifying
+    // form — see `ck_circles.dart`.
+    final k = absolute.isEuclidean
+        ? circleThrough(c, p)
+        : ckCircleThrough(absolute, c, p);
     _conic = k.isZero ? null : k;
     _circle = _conic?.toCircleEq();
   }

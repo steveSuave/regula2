@@ -37,6 +37,7 @@ import 'dart:math' as math;
 import 'absolute.dart';
 import 'complex.dart';
 import 'conic_matrix.dart';
+import 'metric.dart';
 import 'proj_point.dart';
 
 /// The circle centred at [center] through [rim], with respect to
@@ -116,6 +117,30 @@ ConicMatrix ckCircleWithRadius(
   }
   final cc = absolute.evaluatePoint(center);
   return _levelSet(absolute, center, Complex.one, cc.scale(k));
+}
+
+/// The circle through [a], [b] and [c] with respect to [absolute].
+///
+/// Built as the circle centred on the meet of two perpendicular bisectors
+/// — which is the *definition* of a circumcentre rather than a Euclidean
+/// shortcut, and which works here because both halves already generalized:
+/// `perpendicularBisectorOf` in the metric kernel, and [ckCircleThrough].
+/// Collinear points give the zero matrix through the vanishing meet.
+ConicMatrix ckCircumcircleOf(
+  Absolute absolute,
+  ProjPoint a,
+  ProjPoint b,
+  ProjPoint c,
+) {
+  if (absolute.isEuclidean) {
+    return _zero;
+  }
+  final centre = perpendicularBisectorOf(
+    a,
+    b,
+    absolute,
+  ).meet(perpendicularBisectorOf(a, c, absolute));
+  return centre.isZero ? _zero : ckCircleThrough(absolute, centre, a);
 }
 
 /// `numerator·(ΩC)(ΩC)ᵀ − level·Ω`, the shared shape of every circle

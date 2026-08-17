@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'absolute.dart';
 import 'complex.dart';
 import 'conic_matrix.dart';
 import 'proj_line.dart';
@@ -115,7 +116,13 @@ class ProjTransform {
   /// a line through a circular point — including the line at infinity)
   /// yields a singular map: Euclidean reflection genuinely degenerates
   /// there.
-  factory ProjTransform.reflection(ProjLine axis) {
+  factory ProjTransform.reflection(
+    ProjLine axis, [
+    Absolute absolute = Absolute.euclidean,
+  ]) {
+    if (!absolute.isEuclidean) {
+      return ProjTransform.harmonicHomology(absolute.poleOf(axis), axis);
+    }
     final a = axis.a;
     final b = axis.b;
     final c = axis.c;
@@ -132,6 +139,39 @@ class ProjTransform {
       Complex.zero,
       Complex.zero,
       aa + bb,
+    );
+  }
+
+  /// The harmonic homology with centre [c] and axis [l] —
+  /// `(ℓᵀc)·I − 2·c·ℓᵀ`, the involution fixing [c] and every point of [l].
+  ///
+  /// **Reflection and point reflection are both this**, and that is the
+  /// audit's structural result made concrete (PLAN §"The audit"):
+  ///
+  /// - reflection across `ℓ` is the homology about `(poleOf(ℓ), ℓ)`, and
+  ///   expanding it under the Euclidean absolute reproduces
+  ///   [ProjTransform.reflection]'s coefficients **entry for entry** —
+  ///   `m₂₂ = a² + b²` included, which is the dual absolute evaluated at
+  ///   the axis;
+  /// - point reflection through `C` is the homology about
+  ///   `(C, polarOf(C))`, and under the Euclidean absolute that polar is
+  ///   ℓ∞, which is exactly why it currently reads as an affine homothety
+  ///   of ratio −1.
+  ///
+  /// Polynomial in both arguments, so degenerate input propagates: a
+  /// centre *on* the axis gives the zero map.
+  factory ProjTransform.harmonicHomology(ProjPoint c, ProjLine l) {
+    final lc = l.a * c.x + l.b * c.y + l.c * c.w;
+    return ProjTransform(
+      lc - (c.x * l.a).scale(2),
+      -(c.x * l.b).scale(2),
+      -(c.x * l.c).scale(2),
+      -(c.y * l.a).scale(2),
+      lc - (c.y * l.b).scale(2),
+      -(c.y * l.c).scale(2),
+      -(c.w * l.a).scale(2),
+      -(c.w * l.b).scale(2),
+      lc - (c.w * l.c).scale(2),
     );
   }
 
@@ -154,8 +194,12 @@ class ProjTransform {
 
   /// The point reflection (half-turn) through [center] — the homothety with
   /// ratio −1.
-  factory ProjTransform.pointReflection(ProjPoint center) =>
-      ProjTransform.homothety(center, -1);
+  factory ProjTransform.pointReflection(
+    ProjPoint center, [
+    Absolute absolute = Absolute.euclidean,
+  ]) => absolute.isEuclidean
+      ? ProjTransform.homothety(center, -1)
+      : ProjTransform.harmonicHomology(center, absolute.polarOf(center));
 
   final Complex m00;
   final Complex m01;

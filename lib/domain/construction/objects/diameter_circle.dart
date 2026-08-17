@@ -1,7 +1,9 @@
 import '../../math/circle_eq.dart';
 import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
+import '../../projective/ck_circles.dart';
 import '../../projective/conic_matrix.dart';
+import '../../projective/metric.dart';
 import '../geo_object.dart';
 
 /// The circle with the span from [point1] to [point2] as a diameter:
@@ -51,7 +53,12 @@ class DiameterCircle extends GeoCircle {
       _circle = null;
       return;
     }
-    final k = diameterCircleOf(a, b);
+    // Centre at the midpoint, through an end — which is what the
+    // Euclidean bilinear form computes too, and which generalizes because
+    // both halves already do.
+    final k = absolute.isEuclidean
+        ? diameterCircleOf(a, b)
+        : ckCircleThrough(absolute, midpointOf(a, b, absolute), a);
     _conic = k.isZero ? null : k;
     _circle = _conic?.toCircleEq();
   }

@@ -96,6 +96,14 @@ class Sector extends GeoCircle {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). As Arc: the carrier generalizes, the angular extent does not.
+    if (!absolute.isEuclidean) {
+      _conic = null;
+      _circle = null;
+      _startAngle = null;
+      _sweep = null;
+      return;
+    }
     final c = center.projPoint;
     final s = start.projPoint;
     final e = end.projPoint;

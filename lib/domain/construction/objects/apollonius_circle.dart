@@ -48,6 +48,13 @@ class ApolloniusCircle extends GeoCircle {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). The Apollonius locus is |PA|/|PB| = k, a ratio of *distances*,
+    // and CK distances are logarithms -- the locus is not a conic.
+    if (!absolute.isEuclidean) {
+      _conic = null;
+      _circle = null;
+      return;
+    }
     final a = point1.projPoint;
     final b = point2.projPoint;
     final c = point3.projPoint;

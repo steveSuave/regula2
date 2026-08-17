@@ -1,6 +1,7 @@
 import '../../math/circle_eq.dart';
 import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
+import '../../projective/ck_circles.dart';
 import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
@@ -53,7 +54,9 @@ class CompassCircle extends GeoCircle {
       _circle = null;
       return;
     }
-    final k = compassCircleOf(c, r1, r2);
+    final k = absolute.isEuclidean
+        ? compassCircleOf(c, r1, r2)
+        : ckCompassCircleOf(absolute, c, r1, r2);
     _conic = k.isZero ? null : k;
     _circle = _conic?.toCircleEq();
   }

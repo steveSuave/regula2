@@ -74,6 +74,16 @@ class BifocalConic extends GeoCircle {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    // Euclidean only (Phase 125). The bifocal conic already reads the
+    // chart (PLAN, the conic constructors) because |PF1| +- |PF2| is not
+    // polynomial in the homogeneous data. Under a CK absolute those are
+    // logarithms of cross-ratios and the locus is not a conic at all.
+    if (!absolute.isEuclidean) {
+      _conic = null;
+      _circle = null;
+      _drawable = false;
+      return;
+    }
     final f1 = focus1.projPoint;
     final f2 = focus2.projPoint;
     final p = point.projPoint;

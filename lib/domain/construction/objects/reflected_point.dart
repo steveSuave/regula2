@@ -47,7 +47,7 @@ class ReflectedPoint extends GeoPoint {
       _point = null;
       return;
     }
-    final image = ProjTransform.reflection(axis).apply(p);
+    final image = ProjTransform.reflection(axis, absolute).apply(p);
     _point = image.isZero ? null : image;
   }
 }

@@ -197,6 +197,34 @@ void main() {
       );
     });
 
+    test('a non-right line angle responds to the geometry', () {
+      // The companion to the coverage test's one named exception: a right
+      // angle is invariant because conjugacy is perpendicularity in every
+      // geometry, so the responsive case has to be checked on a wedge
+      // that is not right.
+      final o = p('o', 0.05, 0.02);
+      final a = p('a', 0.6, 0.1);
+      final b = p('b', 0.2, 0.55);
+      final l1 = LineThroughTwoPoints(id: 'l1', point1: o, point2: a);
+      final l2 = LineThroughTwoPoints(id: 'l2', point1: o, point2: b);
+      final angle = LineAngle(id: 'la', line1: l1, line2: l2);
+
+      angle.recompute(Absolute.euclidean);
+      final euclidean = angle.measure!;
+      expect(euclidean, isNot(closeTo(math.pi / 2, 1e-3)));
+
+      for (final absolute in [Absolute.hyperbolic, Absolute.elliptic]) {
+        angle.recompute(absolute);
+        expect(
+          angle.measure,
+          isNot(closeTo(euclidean, 1e-9)),
+          reason: absolute.metric.name,
+        );
+        // ...and the marker is still the chart wedge.
+        expect(angle.angle!.sweep, closeTo(euclidean, 1e-12));
+      }
+    });
+
     test('a parallel line goes undefined where parallels do not exist', () {
       final a = p('a', 0, 0);
       final b = p('b', 0.5, 0.5);

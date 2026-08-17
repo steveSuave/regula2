@@ -45,7 +45,12 @@ abstract class TriangleCircle extends GeoCircle {
 
   /// The conic derived from triangle `abc` (pairwise-distinct projective
   /// points), or null when the subclass's formula degenerates.
-  ConicMatrix? computeConic(ProjPoint a, ProjPoint b, ProjPoint c);
+  ConicMatrix? computeConic(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  );
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
@@ -62,7 +67,7 @@ abstract class TriangleCircle extends GeoCircle {
       _circle = null;
       return;
     }
-    final k = computeConic(a, b, c);
+    final k = computeConic(a, b, c, absolute);
     _conic = (k == null || k.isZero) ? null : k;
     _circle = _conic?.toCircleEq();
   }

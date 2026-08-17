@@ -5,6 +5,7 @@ import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/metric.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
+import 'package:regula/domain/projective/proj_transform.dart';
 
 /// Phase 125: the metric kernel against a substituted absolute.
 ///
@@ -180,6 +181,82 @@ void main() {
           isTrue,
           reason: absolute.metric.name,
         );
+      }
+    });
+  });
+
+  group('reflection is a harmonic homology, and always was', () {
+    test(
+      'the Euclidean reflection matrix is the homology, entry for entry',
+      () {
+        // The audit claimed reflection across ℓ is the harmonic homology
+        // about (poleOf(ℓ), ℓ). If so, the general construction must
+        // reproduce the hand-written Euclidean coefficients exactly — not
+        // approximately, since both are polynomial in the same inputs.
+        for (final l in [
+          line(3, -4, 5),
+          line(1, 0, 0),
+          line(0, 1, -7),
+          line(2, 3, 0),
+        ]) {
+          final direct = ProjTransform.reflection(l);
+          final viaHomology = ProjTransform.harmonicHomology(
+            Absolute.euclidean.poleOf(l),
+            l,
+          );
+          for (final p in [point(1, 2), point(-3, 0.5), point(1, 1, 0)]) {
+            expect(
+              direct.apply(p).closeTo(viaHomology.apply(p)),
+              isTrue,
+              reason: '$l on $p',
+            );
+          }
+        }
+      },
+    );
+
+    test('point reflection is the homology about the centre and its polar', () {
+      // Under the Euclidean absolute that polar is ℓ∞, which is why the
+      // shipped implementation is an affine homothety of ratio −1.
+      for (final c in [point(0, 0), point(2, -3), point(0.4, 0.1)]) {
+        final direct = ProjTransform.pointReflection(c);
+        final viaHomology = ProjTransform.harmonicHomology(
+          c,
+          Absolute.euclidean.polarOf(c),
+        );
+        for (final p in [point(1, 2), point(-3, 0.5)]) {
+          expect(direct.apply(p).closeTo(viaHomology.apply(p)), isTrue);
+        }
+      }
+    });
+
+    test('a CK reflection is an isometry — it preserves distance', () {
+      // The property that makes it a reflection rather than just an
+      // involution, checked against the independent measure.
+      for (final absolute in [Absolute.hyperbolic, Absolute.elliptic]) {
+        final axis = line(1, 0.3, 0);
+        final reflect = ProjTransform.reflection(axis, absolute);
+        final p = point(0.2, -0.35);
+        final q = point(-0.1, 0.4);
+        final before = distanceBetween(absolute, p, q);
+        final after = distanceBetween(
+          absolute,
+          reflect.apply(p),
+          reflect.apply(q),
+        );
+        expect(before, isNotNull, reason: absolute.metric.name);
+        expect(after, closeTo(before!, 1e-9), reason: absolute.metric.name);
+      }
+    });
+
+    test('a CK reflection fixes its axis and is an involution', () {
+      for (final absolute in [Absolute.hyperbolic, Absolute.elliptic]) {
+        final axis = line(1, 0.3, 0);
+        final reflect = ProjTransform.reflection(axis, absolute);
+        final onAxis = axis.meet(line(0, 1, 0));
+        expect(reflect.apply(onAxis).closeTo(onAxis), isTrue);
+        final p = point(0.2, -0.35);
+        expect(reflect.apply(reflect.apply(p)).closeTo(p), isTrue);
       }
     });
   });

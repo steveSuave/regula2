@@ -1,6 +1,9 @@
 import '../../math/circle_eq.dart';
 import '../../math/triangle_centers.dart';
+import '../../projective/absolute.dart';
+import '../../projective/ck_circles.dart';
 import '../../projective/conic_matrix.dart';
+import '../../projective/metric.dart';
 import '../../projective/proj_point.dart';
 import 'triangle_circle.dart';
 
@@ -23,7 +26,29 @@ class InscribedCircle extends TriangleCircle {
   });
 
   @override
-  ConicMatrix? computeConic(ProjPoint a, ProjPoint b, ProjPoint c) {
+  ConicMatrix? computeConic(
+    ProjPoint a,
+    ProjPoint b,
+    ProjPoint c,
+    Absolute absolute,
+  ) {
+    if (!absolute.isEuclidean) {
+      // Centred on the incentre, through the foot of the perpendicular to
+      // a side — which is what "tangent to the sides" means, and which
+      // generalizes because every piece of it now does.
+      final centre = angleBisectorOf(
+        b,
+        a,
+        c,
+        absolute,
+      ).meet(angleBisectorOf(a, b, c, absolute));
+      if (centre.isZero) {
+        return null;
+      }
+      final side = a.join(b);
+      final foot = perpendicularThrough(centre, side, absolute).meet(side);
+      return foot.isZero ? null : ckCircleThrough(absolute, centre, foot);
+    }
     final va = a.toVec2();
     final vb = b.toVec2();
     final vc = c.toVec2();
