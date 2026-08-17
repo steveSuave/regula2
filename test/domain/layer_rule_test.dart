@@ -71,4 +71,33 @@ void main() {
           '(see CLAUDE.md / this test)',
     );
   });
+
+  test('no shipped file reaches into test/ (Phase 121: the V1 oracle)', () {
+    // V1's affine kernel lives in `test/v1_oracle/` precisely so that
+    // nothing shippable can depend on it: the rule stopped being a grep
+    // gate and became the directory layout. The domain rule above
+    // already catches the domain layer; this covers presentation and
+    // application, where the escape would be a relative `../../test/...`
+    // (a `package:` URI cannot name `test/` at all).
+    final libDir = Directory('lib');
+    final libPrefix = libDir.absolute.uri.toFilePath();
+    final offenders = <String>[];
+    for (final file
+        in libDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.dart'))) {
+      for (final match in directive.allMatches(file.readAsStringSync())) {
+        final uri = match.group(1)!;
+        if (uri.startsWith('dart:') || uri.startsWith('package:')) {
+          continue;
+        }
+        final resolved = file.absolute.uri.resolve(uri).toFilePath();
+        if (!resolved.startsWith(libPrefix)) {
+          offenders.add('${file.path} -> $uri');
+        }
+      }
+    }
+    expect(offenders, isEmpty, reason: 'lib/ must not import outside lib/');
+  });
 }

@@ -1,6 +1,5 @@
 import 'package:glados/glados.dart';
 import 'package:regula/domain/math/circle_eq.dart';
-import 'package:regula/domain/math/circle_relations.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/triangle_centers.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -11,6 +10,7 @@ import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 
+import '../../v1_oracle/circle_relations.dart';
 import 'generators.dart';
 
 void main() {

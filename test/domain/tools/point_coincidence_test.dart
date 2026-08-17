@@ -253,6 +253,44 @@ void main() {
       );
     });
 
+    test('two points at the same point at infinity are not merged '
+        '(Phase 121)', () {
+      // The meet of two parallels is a genuine projective point, and two
+      // pairs of parallels in the same direction meet at the *same* one —
+      // so a projective-aware dedup would have to call these coincident.
+      // This one deliberately does not: it screens on the chart position,
+      // an off-chart point has none, and every uncertain outcome here
+      // resolves to keeping the new point.
+      final a = FreePoint(id: newId(), position: const Vec2(0, 0));
+      final b = FreePoint(id: newId(), position: const Vec2(1, 0));
+      final c = FreePoint(id: newId(), position: const Vec2(0, 3));
+      final d = FreePoint(id: newId(), position: const Vec2(0, 7));
+      final base = LineThroughTwoPoints(id: newId(), point1: a, point2: b);
+      final par1 = ParallelLine(id: newId(), through: c, reference: base);
+      final par2 = ParallelLine(id: newId(), through: d, reference: base);
+      final atInfinity = IntersectionPoint(
+        id: newId(),
+        curve1: base,
+        curve2: par1,
+        branchIndex: 0,
+      );
+      final construction = Construction();
+      for (final object in [a, b, c, d, base, par1, par2, atInfinity]) {
+        construction.add(object);
+      }
+      expect(atInfinity.projPoint, isNotNull);
+      expect(atInfinity.position, isNull, reason: 'off the affine chart');
+
+      final twin = IntersectionPoint(
+        id: newId(),
+        curve1: base,
+        curve2: par2,
+        branchIndex: 0,
+      );
+      expect(twin.projPoint, isNotNull);
+      expect(coincidentExistingPoint(construction.objects, twin), isNull);
+    });
+
     test('returns null immediately when nothing is close', () {
       final quad = varignonQuad();
       final far = FreePoint(id: newId(), position: const Vec2(100, 100));

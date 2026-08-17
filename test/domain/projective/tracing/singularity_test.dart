@@ -213,24 +213,17 @@ void main() {
     });
   });
 
-  group('detour orientation (Phase 120c convention)', () {
-    test('drags take a constant half-plane', () {
+  group('detour orientation (Phase 120c convention, Phase 121 unified)', () {
+    test('every pass takes the one constant half-plane', () {
       // Constant is the design, not an implementation detail: it reads
       // nothing about the gesture, so pointer noise has no seam to land
       // on, and it makes a round trip close a loop around the branch
       // point — which is the honest monodromy of the root split. The
       // reversal-identity rule it replaced (`detourOrientation`, odd in
-      // the drag direction) is gone; see singularity.dart.
-      expect(dragDetourOrientation.abs(), 1.0);
-    });
-
-    test('the 1D rule stays for locus runs, and is odd', () {
-      expect(detourOrientation1D(5, 0), 1);
-      expect(detourOrientation1D(0, 5), -1);
-      expect(detourOrientation1D(-2, -7), 1);
-      for (final (from, to) in const [(0.0, 5.0), (3.0, -4.0), (1.5, 1.6)]) {
-        expect(detourOrientation1D(from, to), -detourOrientation1D(to, from));
-      }
+      // the drag direction) is gone, and so is the locus sweeps' own
+      // odd rule (`detourOrientation1D`, unified in Phase 121); see
+      // singularity.dart.
+      expect(detourHalfPlane.abs(), 1.0);
     });
   });
 

@@ -165,4 +165,116 @@ void main() {
       ip2.tracedBranch.clear();
     });
   });
+
+  group('relabelIsBenign (Phase 121: any candidate count)', () {
+    // Real finite points, spaced so the chordal metric is well behaved.
+    ProjPoint p(double x, double y) => ProjPoint.real(x, y);
+
+    test('two candidates: a pure renumbering passes, a swap does not', () {
+      // The pair barely moves and the canonical order flips. This is the
+      // shape the guard was written for, and the general form must agree
+      // with the old `1 - index` arithmetic on it exactly.
+      final before = [p(1, 3), p(1, -3)];
+      final after = [p(1.001, -3), p(1.001, 3)];
+      expect(
+        relabelIsBenign(
+          before: before,
+          after: after,
+          matchedBefore: 0,
+          matchedAfter: 1,
+          cap: 0.1,
+        ),
+        isTrue,
+      );
+      // Same flip, and the tracked root still barely moves — but the
+      // branch it abandoned is nowhere near where it was. The set did
+      // not merely renumber, so the flip is not a relabel.
+      expect(
+        relabelIsBenign(
+          before: before,
+          after: [p(9, 9), p(1.001, 3)],
+          matchedBefore: 0,
+          matchedAfter: 1,
+          cap: 0.1,
+        ),
+        isFalse,
+      );
+    });
+
+    test('four candidates: the case that used to skip the check', () {
+      // Before Phase 121 anything but a two-candidate pair returned
+      // early, so a conic∩conic member of a locus chain kept no guard at
+      // all. Here the set is stationary and the labels rotate by one —
+      // benign — and then one root is moved away, which is not.
+      final before = [p(4, 0), p(0, 4), p(-4, 0), p(0, -4)];
+      final rotated = [p(0, 4.001), p(-4, 0.001), p(0.001, -4), p(4.001, 0)];
+      expect(
+        relabelIsBenign(
+          before: before,
+          after: rotated,
+          matchedBefore: 0,
+          matchedAfter: 3,
+          cap: 0.1,
+        ),
+        isTrue,
+      );
+      final broken = [...rotated]..[1] = p(-40, 7);
+      expect(
+        relabelIsBenign(
+          before: before,
+          after: broken,
+          matchedBefore: 0,
+          matchedAfter: 3,
+          cap: 0.1,
+        ),
+        isFalse,
+        reason: 'the root that was at (0, 4) has no partner within the cap',
+      );
+    });
+
+    test('the pairing must be a bijection — two roots may not share one', () {
+      // Two candidates collapsing onto a third is not a relabel, however
+      // close each of them lands to it.
+      final before = [p(4, 0), p(0, 4), p(-4, 0), p(0, -4)];
+      final collapsed = [p(4, 0), p(-4, 0.001), p(-4, 0.002), p(0, -4)];
+      expect(
+        relabelIsBenign(
+          before: before,
+          after: collapsed,
+          matchedBefore: 0,
+          matchedAfter: 0,
+          cap: 0.1,
+        ),
+        isFalse,
+      );
+    });
+
+    test('unequal candidate counts impose nothing', () {
+      // A root has entered or left the real set, so there is no
+      // correspondence to check and the walk's other rules own the case.
+      expect(
+        relabelIsBenign(
+          before: [p(1, 3), p(1, -3)],
+          after: [p(1, 3), p(1, -3), p(5, 0), p(-5, 0)],
+          matchedBefore: 0,
+          matchedAfter: 1,
+          cap: 1e-9,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a NaN distance refuses, like trialAccepted', () {
+      expect(
+        relabelIsBenign(
+          before: [p(1, 3), p(1, -3)],
+          after: [p(1, 3), ProjPoint.real(0, 0, 0)],
+          matchedBefore: 0,
+          matchedAfter: 0,
+          cap: 0.1,
+        ),
+        isFalse,
+      );
+    });
+  });
 }

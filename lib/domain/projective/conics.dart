@@ -72,7 +72,7 @@ ConicMatrix focalConicOf(ProjPoint f, ProjLine l, Complex eccentricity) {
 /// **Chart points, deliberately.** The semi-axis `a` is a sum of square
 /// roots of distances and has no polynomial form in homogeneous
 /// coordinates, so this constructor sits at the metric boundary of PLAN
-/// §Migration strategy alongside the measurement kinds: callers project
+/// §Architecture alongside the measurement kinds: callers project
 /// the parents themselves and pass the affine points, and everything
 /// downstream of the returned matrix is projective again.
 ///

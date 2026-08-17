@@ -27,6 +27,30 @@ import 'object_attributes.dart';
 /// circles that stopped intersecting mid-drag. Undefined objects stay in
 /// the graph and come back to life when the degeneracy passes; consumers
 /// (painter, hit tester) must skip them while undefined.
+///
+/// **The one degeneracy convention (Phase 121): the projective value is
+/// total, the projection is nullable.** A degeneracy is a *value*, not an
+/// absence — two coincident points join to the zero triple, three
+/// collinear points circumscribe the line pair of their line with the
+/// line at infinity, two parallels meet at a point at infinity. So a
+/// kind's [GeoPoint.projPoint] / [GeoLine.projLine] / [GeoCircle.conic]
+/// answers null in exactly two situations and no others: a parent's own
+/// projective value is null, or the computed homogeneous value is the
+/// **zero triple**, which is not a projective object at all. Everything
+/// else — "is it real", "is it finite", "is it a circle rather than some
+/// other conic" — is the *projection's* question, which is why
+/// [isDefined] means "real and finite after projection" and nothing
+/// weaker. The epsilon bands V1 used to null things out with (a tangency
+/// window, a parallel gate, a concentricity guard) are gone: near-degenerate
+/// input now yields genuine faraway geometry, and only exact degeneracy
+/// degenerates.
+///
+/// Three sanctioned exceptions, each argued where it lives rather than
+/// here: `IntersectionPoint`'s realness gate (a *complex* carrier yields
+/// no candidates rather than a mined real point — Phase 110),
+/// `PointOnObject` on a carrier with no chart (§Parameterization keeps
+/// carrier parameters real), and the Phase 112 consumer kinds, whose
+/// outputs are chart quantities by definition.
 sealed class GeoObject {
   GeoObject({required this.id, ObjectAttributes? attributes})
     : attributes = attributes ?? const ObjectAttributes();
@@ -51,54 +75,49 @@ sealed class GeoObject {
   void recompute();
 }
 
-/// A point-valued object. [position] is null while undefined — for a
-/// migrated kind that means "not real and finite": the projective value
-/// exists, but projects outside the affine chart (see [projPoint]).
+/// A point-valued object. [position] is null while undefined, which
+/// means "not real and finite": the projective value exists, but
+/// projects outside the affine chart (see [projPoint]).
 abstract class GeoPoint extends GeoObject {
   GeoPoint({required super.id, super.attributes});
 
   Vec2? get position;
 
   /// The point in homogeneous coordinates — the canonical V2 view (PLAN
-  /// §Migration strategy). New domain code reads this, never [position].
+  /// §Architecture). New domain code reads this, never [position].
   ///
-  /// This default lifts the affine [position] to `[x, y, 1]`, null while
-  /// undefined — correct for unmigrated kinds, whose affine kernel only
-  /// produces real finite values. A migrated kind stores homogeneous
-  /// state, overrides this getter to return it, and reimplements
-  /// [position] as its projection ([ProjPoint.toVec2]), so [isDefined]
-  /// becomes the rendering question "real and finite?".
-  ProjPoint? get projPoint => switch (position) {
-    null => null,
-    final p => ProjPoint.lift(p),
-  };
+  /// Abstract since Phase 121. Through the migration this carried a
+  /// default that lifted [position] to `[x, y, 1]`, which was right for a
+  /// kind whose affine kernel could only produce real finite values —
+  /// and is now a trap: every kind stores homogeneous state, so a new
+  /// one that forgot to would silently inherit a fallback instead of
+  /// failing to compile. A kind implements this and reimplements
+  /// [position] as its projection ([ProjPoint.toVec2]), which is what
+  /// makes [isDefined] the rendering question "real and finite?".
+  ProjPoint? get projPoint;
 
   @override
   bool get isDefined => position != null;
 }
 
 /// A line-valued object (infinite lines, rays, segments share the carrier
-/// [line] for intersection math). [line] is null while undefined — for a
-/// migrated kind that means "not real, or the line at infinity": the
-/// projective carrier exists but has no affine implicit form (see
-/// [projLine]).
+/// [line] for intersection math). [line] is null while undefined, which
+/// means "not real, or the line at infinity": the projective carrier
+/// exists but has no affine implicit form (see [projLine]).
 abstract class GeoLine extends GeoObject {
   GeoLine({required super.id, super.attributes});
 
   LineEq? get line;
 
   /// The carrier in homogeneous coefficients — the canonical V2 view
-  /// (PLAN §Migration strategy). New domain code reads this, never [line].
+  /// (PLAN §Architecture). New domain code reads this, never [line].
   ///
-  /// This default lifts the affine [line] coefficient-wise, null while
-  /// undefined — correct for unmigrated kinds. A migrated kind stores
-  /// homogeneous state, overrides this getter, and reimplements [line] as
-  /// its projection ([ProjLine.toLineEq]); real-extent metadata
-  /// ([parameterExtent]) stays affine either way.
-  ProjLine? get projLine => switch (line) {
-    null => null,
-    final l => ProjLine.lift(l),
-  };
+  /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
+  /// lift-from-affine default went. A kind stores homogeneous state,
+  /// implements this, and reimplements [line] as its projection
+  /// ([ProjLine.toLineEq]); real-extent metadata ([parameterExtent])
+  /// stays affine either way.
+  ProjLine? get projLine;
 
   /// The parameter span of the carrier this object actually occupies, in
   /// the carrier's arc-length parameterization (`LineEq.parameterAt`), as
@@ -131,26 +150,23 @@ abstract class GeoLine extends GeoObject {
   bool get isDefined => line != null;
 }
 
-/// A circle-valued object. [circle] is null while undefined — for a
-/// migrated kind that means "not a real circle": the conic exists but does
-/// not project to a center-and-radius form (see [conic]).
+/// A circle-valued object. [circle] is null while undefined, which means
+/// "not a real circle": the conic exists but does not project to a
+/// center-and-radius form (see [conic]).
 abstract class GeoCircle extends GeoObject {
   GeoCircle({required super.id, super.attributes});
 
   CircleEq? get circle;
 
   /// The carrier as a projective conic — the canonical V2 view (PLAN
-  /// §Migration strategy). New domain code reads this, never [circle].
+  /// §Architecture). New domain code reads this, never [circle].
   ///
-  /// This default lifts the affine [circle] ([ConicMatrix.lift]), null
-  /// while undefined — correct for unmigrated kinds. A migrated kind
-  /// stores a [ConicMatrix], overrides this getter, and reimplements
-  /// [circle] as its projection ([ConicMatrix.toCircleEq]); angular-extent
-  /// metadata ([angularExtent]) stays affine either way.
-  ConicMatrix? get conic => switch (circle) {
-    null => null,
-    final c => ConicMatrix.lift(c),
-  };
+  /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
+  /// lift-from-affine default went. A kind stores a [ConicMatrix],
+  /// implements this, and reimplements [circle] as its projection
+  /// ([ConicMatrix.toCircleEq]); angular-extent metadata
+  /// ([angularExtent]) stays affine either way.
+  ConicMatrix? get conic;
 
   /// The angular span of the carrier this object actually occupies, as
   /// `(start, sweep)` with a counter-clockwise sweep in [0, 2π) — or null

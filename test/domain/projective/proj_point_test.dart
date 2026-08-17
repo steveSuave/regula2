@@ -1,9 +1,9 @@
 import 'package:glados/glados.dart';
-import 'package:regula/domain/math/harmonic.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 
+import '../../v1_oracle/harmonic.dart';
 import 'generators.dart';
 
 /// Relative tolerance for single-operation projective predicates.

@@ -1,6 +1,23 @@
-import 'circle_eq.dart';
-import 'line_eq.dart';
-import 'vec2.dart';
+/// **V1's affine circle relations, frozen as a test oracle.**
+///
+/// Superseded in Phase 110 by `lib/domain/projective/circles.dart`
+/// (`radicalAxisOf`), `ConicMatrix`'s polar (`A·p`) and
+/// `apolloniusCircleOf`, and left with no `lib/` consumer; moved here in
+/// Phase 121.
+///
+/// Kept for the same reason as `intersections.dart` in this directory —
+/// see its header for the argument in full: the projective kernels are
+/// specified as *agreeing with V1* on real transverse cases, and that
+/// agreement is a permanent contract (v1 documents are permanent), so
+/// the build being agreed with has to stay around to be compared against.
+/// Nothing under `lib/` may import this, which living in `test/` enforces
+/// structurally. Do not extend it and do not "fix" it toward the new
+/// kernel: its whole value is being unchanged.
+library;
+
+import 'package:regula/domain/math/circle_eq.dart';
+import 'package:regula/domain/math/line_eq.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 /// The radical axis of [c1] and [c2] — the line of points with equal
 /// *power* (`|P − center|² − radius²`) with respect to both circles — or

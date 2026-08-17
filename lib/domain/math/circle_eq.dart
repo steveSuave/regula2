@@ -4,6 +4,14 @@ import 'vec2.dart';
 
 /// A circle as center + radius.
 ///
+/// **A view struct, not a kernel type (Phase 121)** — the circle twin of
+/// [LineEq], and the same rules apply. Circles are computed as
+/// `ConicMatrix`; this is what one *projects to*, through
+/// `ConicMatrix.toCircleEq`, which answers null for anything that is not
+/// a real circle (a general conic included — a conic-valued kind
+/// overrides `isDefined` rather than pretending). Nothing constructs it
+/// outside `lib/domain/`, and inside it only behind a guard.
+///
 /// A zero radius is allowed (degenerate point-circle) so constructions
 /// don't blow up mid-drag when defining points coincide; a negative or
 /// non-finite radius is rejected.

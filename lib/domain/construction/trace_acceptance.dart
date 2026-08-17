@@ -9,6 +9,7 @@
 /// code under public names.
 library;
 
+import '../projective/proj_point.dart';
 import '../projective/tolerances.dart';
 import '../projective/tracing/singularity.dart';
 import '../projective/tracing/traced_branch.dart';
@@ -84,6 +85,69 @@ bool trialAccepted(
     if (!(branch.motion < cap)) {
       return false;
     }
+  }
+  return true;
+}
+
+/// Whether a matched-index change from [matchedBefore] to [matchedAfter]
+/// is a benign *canonical relabel* rather than a silent branch swap.
+///
+/// The tracked root's own motion is the acceptance rule's business
+/// ([trialAccepted]); this asks the complementary question about the
+/// roots it did *not* follow. A relabel is benign exactly when the whole
+/// candidate set stayed put and only its numbering permuted, so every
+/// other root of [before] must pair with a distinct other root of
+/// [after] within [cap] — the same allowance the tracked root was held
+/// to. A swap leaves the abandoned true branch somewhere else, and no
+/// such pairing exists.
+///
+/// Nearest-match is exact here rather than merely greedy, because [cap]
+/// is at most half the set's minimum pairwise separation: a root's true
+/// partner sits within `cap` and every other candidate strictly beyond
+/// it, so the assignment can never be ambiguous. Unequal candidate
+/// counts return true — a root has entered or left the real set, there
+/// is no correspondence to check, and the walk's other rules own that
+/// case.
+///
+/// **Phase 121 widened this from two candidates to any number.** It was
+/// written when every pair produced two, read the other root as
+/// `1 - index`, and *skipped the check entirely* when it saw anything
+/// else — so a conic∩conic member of a locus chain, four candidates
+/// since Phase 120, silently lost the guard rather than crashing on it.
+/// At two candidates the general form reduces to the old one exactly:
+/// one root remains on each side and the only bijection is forced.
+bool relabelIsBenign({
+  required List<ProjPoint> before,
+  required List<ProjPoint> after,
+  required int matchedBefore,
+  required int matchedAfter,
+  required double cap,
+}) {
+  if (before.length != after.length) {
+    return true;
+  }
+  final claimed = List<bool>.filled(after.length, false);
+  for (var j = 0; j < before.length; j++) {
+    if (j == matchedBefore) {
+      continue;
+    }
+    var best = -1;
+    var bestDistance = double.infinity;
+    for (var k = 0; k < after.length; k++) {
+      if (k == matchedAfter || claimed[k]) {
+        continue;
+      }
+      final d = TracedBranch.chordalDistance(before[j], after[k]);
+      if (d < bestDistance) {
+        best = k;
+        bestDistance = d;
+      }
+    }
+    // Written so a NaN distance refuses, like [trialAccepted].
+    if (best < 0 || !(bestDistance < cap)) {
+      return false;
+    }
+    claimed[best] = true;
   }
   return true;
 }

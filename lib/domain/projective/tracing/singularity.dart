@@ -15,8 +15,10 @@ import '../tolerances.dart';
 /// bounded number of trials and lands on the far side with branch identity
 /// decided by continuity, not by a matching tie.
 ///
-/// **Detour orientation is recorded here, and drags take a constant one**
-/// ([dragDetourOrientation], Phase 120c).
+/// **Detour orientation is recorded here, and it is one constant for
+/// every pass** ([detourHalfPlane]) — a drag, a parameter slide and a
+/// locus run all detour through the upper half of the pass's own path
+/// parameter (Phase 120c for drags, Phase 121 for loci).
 ///
 /// A return pass parameterizes the reverse path, so its `Im s > 0` is the
 /// outward pass's `Im t < 0`. A *constant* half-plane therefore sends the
@@ -43,11 +45,29 @@ import '../tolerances.dart';
 /// on the far side about a third of the time. A constant needs no
 /// direction and so has no seam.
 ///
-/// [detourOrientation1D] stays for
-/// the **locus** sweeps, which are a different problem: a one-directional
-/// deterministic scan with no round trip to be consistent about, and
-/// whose sheet choices at crossings are pinned by the Phase 117b
-/// fixtures. Unifying the two is a Phase 121 item, not a free change.
+/// **Locus runs took a different rule until Phase 121**, odd in the drive
+/// direction (`detourOrientation1D`, since deleted) so that a run and its
+/// reverse detoured through the same *physical* half-plane. It was held
+/// back from 120c's unification because a locus is a different problem —
+/// a deterministic scan with no round trip to be honest about — and the
+/// sheet a run continues onto past a crossing is pinned by the Phase 117b
+/// fixtures.
+///
+/// Unifying turned out to change nothing observable, and the reason is
+/// worth keeping, because it says when the half-plane *can* matter. An
+/// arc is planned to enclose one estimated singularity, and it encircles
+/// it by a half-turn whichever side it passes; for a simple branch point
+/// a half-turn in either sense exchanges the same two sheets. So the
+/// orientation is only ever load-bearing when an arc encloses **more than
+/// one** collision, or one of higher order — and there the arc is
+/// mis-planned and neither rule has a claim to the right answer. What a
+/// locus needed was not its own half-plane but a well-planned arc.
+///
+/// Measured before the switch: of the corpus documents only
+/// `apatitos-topos.rgl` detours at all (twice, both on *forward* legs —
+/// which is exactly where the two rules disagreed, the odd rule and the
+/// constant agreeing on a reversed leg), and its sample list is bitwise
+/// identical under the odd rule, under `+1` and under `−1`.
 
 /// Trial-step size below which the controller is considered starving and
 /// a detour is attempted (a fraction of the unit path parameter). Steps
@@ -361,8 +381,9 @@ const double _minimumResolution = 1e-15;
 /// figure costs chain solves on every frame and buys nothing.
 const double _collisionResolution = 1e-4;
 
-/// The half-plane every **drag** detour walks: `+1` is the upper half of
-/// the path parameter (`Im t > 0`).
+/// The half-plane every detour walks — a drag, a parameter slide, a locus
+/// run alike: `+1` is the upper half of the pass's own path parameter
+/// (`Im t > 0`), which for a locus leg is its distance travelled.
 ///
 /// Constant, and that is the whole design (see the library doc). It reads
 /// nothing about the gesture, so it has no seam for pointer noise to land
@@ -370,26 +391,14 @@ const double _collisionResolution = 1e-4;
 /// so dragging two curves apart through a tangency and back trades the
 /// two crossings, and doing it again trades them back. Which value the
 /// constant takes is arbitrary; that it is constant is not.
-const double dragDetourOrientation = 1;
-
-/// The detour orientation for a **locus** run driven from [from] to [to]:
-/// decreasing drives detour upper. Odd in the drive direction, so a run
-/// and its reverse take the same physical side.
-///
-/// Deliberately *not* [dragDetourOrientation]. A locus sweep is a
-/// one-directional deterministic scan — there is no round trip for a
-/// constant to be honest about — and which sheet a run continues onto
-/// past a crossing is pinned by the Phase 117b fixtures. Unifying the two
-/// conventions is a Phase 121 item.
-double detourOrientation1D(double from, double to) => to - from < 0 ? 1 : -1;
+const double detourHalfPlane = 1;
 
 /// A semicircular detour in complex path parameter: the arc
 /// `t(θ) = center + radius·(cos θ + i·orientation·sin θ)`, walked from
 /// `θ = π` (the real [entry], where the starving pass sits) down to
 /// `θ = 0` (the real [exit], past the singularity), keeping
-/// `orientation·Im t ≥ 0` throughout — one half-plane per arc:
-/// [dragDetourOrientation] for a drag, [detourOrientation1D] for a locus
-/// run (see the library doc for why they differ).
+/// `orientation·Im t ≥ 0` throughout — one half-plane per arc, and since
+/// Phase 121 the same one for every kind of pass ([detourHalfPlane]).
 class DetourArc {
   const DetourArc._(this.entry, this.radius, this.orientation);
 
@@ -401,7 +410,7 @@ class DetourArc {
   final double radius;
 
   /// `+1` for the upper half-plane, `−1` for the lower (see
-  /// [dragDetourOrientation]).
+  /// [detourHalfPlane]).
   final double orientation;
 
   /// The arc's center on the real axis, at or past the estimated

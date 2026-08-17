@@ -1,10 +1,10 @@
 import 'package:glados/glados.dart';
-import 'package:regula/domain/math/angle_bisector.dart';
-import 'package:regula/domain/math/intersections.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
 
-import 'generators.dart';
+import '../domain/math/generators.dart';
+import 'angle_bisector.dart';
+import 'intersections.dart';
 
 void main() {
   group('angleBisector', () {

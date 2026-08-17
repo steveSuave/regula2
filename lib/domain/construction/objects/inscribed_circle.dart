@@ -31,9 +31,15 @@ class InscribedCircle extends TriangleCircle {
       return null;
     }
     final center = incenter(va, vb, vc);
-    if (center == null) {
+    final radius = inradius(va, vb, vc);
+    if (center == null || radius == null) {
       return null;
     }
-    return ConicMatrix.lift(CircleEq(center, inradius(va, vb, vc)!));
+    // `CircleEq` still throws on a bad radius, so the check is the
+    // guard, not a formality: the two helpers share a collinearity test
+    // and so agree today, but a recompute path may not depend on two
+    // separate functions staying in step (Phase 121 — no throwing
+    // construction inside a domain flow).
+    return ConicMatrix.lift(CircleEq(center, radius));
   }
 }

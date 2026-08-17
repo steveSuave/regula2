@@ -5,6 +5,16 @@ import 'vec2.dart';
 /// An infinite line in normalized implicit form `a·x + b·y + c = 0`,
 /// where `(a, b)` is a unit normal.
 ///
+/// **A view struct, not a kernel type (Phase 121).** Lines are computed
+/// as `ProjLine`; this is what one *projects to* for the painter, the
+/// hit-tester, the codec and the chart reads of PLAN §Parameterization,
+/// and it is reached through `ProjLine.toLineEq`, which answers null
+/// where there is no real finite line. Nothing constructs it directly
+/// outside `lib/domain/`, and inside it only through a guard — so the
+/// throwing factories below are a programmer-error contract, never a
+/// path a recompute can fall down. Permanent in that role, like [Vec2];
+/// don't add geometry to it.
+///
 /// Because the normal is unit length, `a·x + b·y + c` is the *signed
 /// distance* of `(x, y)` from the line — that makes distance queries and
 /// projections one-liners. Note that `(a, b, c)` and `(-a, -b, -c)` describe

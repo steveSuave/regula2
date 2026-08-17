@@ -2,13 +2,14 @@ import 'dart:math' as math;
 
 import 'package:glados/glados.dart';
 import 'package:regula/domain/math/circle_eq.dart';
-import 'package:regula/domain/math/intersections.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_intersection.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
+
+import '../../v1_oracle/intersections.dart';
 
 import '../math/generators.dart';
 import 'generators.dart';

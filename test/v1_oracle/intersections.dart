@@ -1,8 +1,25 @@
-/// Intersection routines for the analytic primitives.
+/// **V1's affine intersection kernel, frozen as a test oracle.**
+///
+/// This was `lib/domain/math/intersections.dart` until Phase 121, when
+/// the last of it left the shipped code (no file under `lib/` has
+/// imported it since Phase 112). It is kept, here and only here, because
+/// the projective kernel's *canonical order* is **defined** as the order
+/// this file produces on real transverse cases — that is the contract
+/// `branchIndex` addresses, and every v1 document ever saved carries one
+/// (PLAN §"The version field is a requirement, not a build number": v1 is
+/// permanent, so the evidence that v2 still numbers its branches the same
+/// way has to be permanent too). Deleting the agreement tests would have
+/// deleted that evidence, not just this module.
+///
+/// So: nothing under `lib/` may import this, which its living in `test/`
+/// now enforces structurally rather than by grep gate. Do not extend it,
+/// do not "fix" it to match the new kernel — its whole value is being the
+/// build that shipped, unchanged. `intersections_test.dart` beside it
+/// pins its behaviour so the oracle itself cannot rot.
 ///
 /// Every function returns 0, 1 or 2 points. When two points are returned
-/// their order is *deterministic* for a given argument order — Phase 2's
-/// `IntersectionPoint` relies on this so the branch a user picked stays
+/// their order is *deterministic* for a given argument order — V1's
+/// `IntersectionPoint` relied on this so the branch a user picked stayed
 /// stable while dragging:
 ///
 /// - [intersectLineCircle]: ordered by increasing parameter along the
@@ -18,9 +35,9 @@ library;
 
 import 'dart:math' as math;
 
-import 'circle_eq.dart';
-import 'line_eq.dart';
-import 'vec2.dart';
+import 'package:regula/domain/math/circle_eq.dart';
+import 'package:regula/domain/math/line_eq.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 /// Intersection of two lines.
 ///
