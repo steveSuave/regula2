@@ -776,13 +776,13 @@ final List<ShortcutBinding> shortcutTable = [
   _g(
     LogicalKeyboardKey.keyN,
     AppAction.tangentTool,
-    'Tangents from point to circle',
+    'Tangents from point to conic',
     'G N',
   ),
   _g(
     LogicalKeyboardKey.keyP,
     AppAction.polarLineTool,
-    'Polar line of a point and circle',
+    'Polar line of a point and conic',
     'G ⇧ P',
     shift: true,
   ),

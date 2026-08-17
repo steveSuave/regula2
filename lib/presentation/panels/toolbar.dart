@@ -374,12 +374,12 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.perpendicularBisectorTool,
             ),
             (
-              'Tangents from point (point and circle)',
+              'Tangents from point (point and conic)',
               _pick(() => TangentTool(newId: newObjectId)),
               AppAction.tangentTool,
             ),
             (
-              'Polar line (point and circle)',
+              'Polar line (point and conic)',
               _pick(() => PolarLineTool(newId: newObjectId)),
               AppAction.polarLineTool,
             ),
