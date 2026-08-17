@@ -9,12 +9,17 @@
 //   traced frame    recomputeAlongPath under the Phase 114 adaptive step
 //                   controller (whole-path first trial, halve on refusal)
 //
-// The gate is ≤ 8 ms kernel time per drag frame (PLAN, Phase 116). This
-// harness runs the *boxed* engine — the SoA `Float64List` rewrite of the
-// hot loop is Phase 122's tick — so these numbers are the ceiling the SoA
-// pass later has to beat. On smooth frames the controller accepts the
-// whole path in one trial, so the expected shape is a small multiple of
-// the static solve (seeding + one matched recompute), not 16×.
+// The gate is ≤ 8 ms kernel time per drag frame (PLAN, Phase 116), and
+// since Phase 122 it is mechanical: exceeding it throws, so a CI job can
+// enforce it without reading the text. On smooth frames the controller
+// accepts the whole path in one trial, so the expected shape is a small
+// multiple of the static solve (seeding + one matched recompute), not 16×.
+//
+// Note what this harness does *not* measure: it accepts every trial, so
+// the walk's inner loop barely runs (1.00 trials/frame, 0.00 rejected).
+// For where a solve's time actually goes, see `chain_solve_bench.dart`;
+// for a walk that starves, measures collisions and detours, see
+// `locus_docs_bench.dart`.
 //
 // Run on VM (`dart run`), AOT, dart2js and dart2wasm via
 // `benchmark/run_tracing.sh`. Keep this file Flutter-free (domain imports
@@ -35,6 +40,11 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/tracing/drag_path.dart';
 
 const framesPerRun = 50;
+
+/// The Phase 116 performance gate: kernel time per drag frame on the
+/// stress construction below. Named here because the exit code at the
+/// bottom is what makes it a gate rather than a printed opinion.
+const dragFrameBudgetMs = 8;
 
 /// 100 objects, everything downstream of the dragged point 'd': baseline
 /// y = 0 through a/b, then 24 layers of midpoint → circle → two
@@ -226,8 +236,9 @@ void main(List<String> args) {
     'traced/static ${(tracedMs / staticMs).toStringAsFixed(2)}x'
     '   ${trialsPerFrame.toStringAsFixed(2)} trials/frame'
     ' (${(_rejectedTotal / n).toStringAsFixed(2)} rejected)'
-    '   8 ms budget: ${tracedMs <= 8 ? 'PASS' : 'FAIL'}'
-    ' (${(tracedMs / 8 * 100).toStringAsFixed(0)}% used)',
+    '   $dragFrameBudgetMs ms budget: '
+    '${tracedMs <= dragFrameBudgetMs ? 'PASS' : 'FAIL'}'
+    ' (${(tracedMs / dragFrameBudgetMs * 100).toStringAsFixed(0)}% used)',
   );
 
   print('');
@@ -239,7 +250,22 @@ void main(List<String> args) {
     'traced/static ${(tracedLocusMs / staticLocusMs).toStringAsFixed(2)}x'
     '   ${locusTrialsPerFrame.toStringAsFixed(2)} trials/frame'
     ' (${(_rejectedTotal / n).toStringAsFixed(2)} rejected)'
-    '   8 ms budget: ${tracedLocusMs <= 8 ? 'PASS' : 'FAIL'}'
-    ' (${(tracedLocusMs / 8 * 100).toStringAsFixed(0)}% used)',
+    '   $dragFrameBudgetMs ms budget: '
+    '${tracedLocusMs <= dragFrameBudgetMs ? 'PASS' : 'FAIL'}'
+    ' (${(tracedLocusMs / dragFrameBudgetMs * 100).toStringAsFixed(0)}% used)',
   );
+
+  // The gate is mechanical, so that a CI job *can* enforce it (Phase 122)
+  // without parsing the text above. Whether it does is the job's choice —
+  // `benchmark/run_ci.sh` runs informationally, because a shared runner's
+  // timings are not the number this budget is about. Thrown rather than
+  // `exit`ed: `dart:io` would cost this file its js and wasm targets, and
+  // an uncaught error is a non-zero exit on all four.
+  if (tracedMs > dragFrameBudgetMs || tracedLocusMs > dragFrameBudgetMs) {
+    throw StateError(
+      'FAIL: ${dragFrameBudgetMs}ms drag-frame budget exceeded '
+      '(${tracedMs.toStringAsFixed(3)} plain, '
+      '${tracedLocusMs.toStringAsFixed(3)} with a locus)',
+    );
+  }
 }

@@ -33,8 +33,15 @@ jobs:
         run: flutter pub get
 
       - name: Build Web App
+        # --wasm since Phase 122 (PLAN §"The hot loop was not where the
+        # phase said it was"). It emits *both* main.dart.wasm and the
+        # dart2js main.dart.js: a WasmGC browser fetches the 2.4 MB wasm,
+        # anything older falls back to the 2.8 MB js it would have got
+        # anyway. So modern browsers download less and run the kernel
+        # faster, and no browser is dropped. The cost is ~2.4 MB more in
+        # the Pages artifact, which nobody downloads twice.
         # Replace YOUR_REPOS_NAME with your repository name!
-        run: flutter build web --release --base-href "/regula/"
+        run: flutter build web --wasm --release --base-href "/regula/"
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

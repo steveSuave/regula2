@@ -1,0 +1,28 @@
+name: Benchmarks
+
+# Informational only — never gates a merge. A shared runner's absolute
+# timings are not what the 8 ms drag budget is about (PLAN §"The engine
+# says what it costs"); this exists so an order-of-magnitude regression
+# shows up in the log of every push to main, and so the numbers are one
+# click away rather than a local setup away.
+#
+# The decisions — the drag gate, the dart2js-vs-dart2wasm call — are taken
+# locally with benchmark/run_tracing.sh, run_chain_solve.sh, run_all.sh and
+# run_locus_docs.sh, which cover all four compile targets.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: bash benchmark/run_ci.sh
