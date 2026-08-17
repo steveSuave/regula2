@@ -1,0 +1,23 @@
+test/domain/tools/intersection_tool_test.dart
+  s_17fa7314429764::t_89bbf3e18e8789 336-381
+lib/domain/tools/intersection_tool.dart
+  s_17fa7314429764::t_7a2d23efa4fba8 112-127,134,139-165
+  s_17fa7314429764::t_0ea9c04d89be31 6-7
+  s_17fa7314429764::t_89bbf3e18e8789 27-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0d6b127b4338ab71c8674ba4ae293fe21333dc93",
+  "prompts": {},
+  "sessions": {
+    "s_17fa7314429764": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "547c8021-d6cb-4838-8d42-3db8e1c0c4a4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
