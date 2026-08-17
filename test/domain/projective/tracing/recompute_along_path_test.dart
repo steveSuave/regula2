@@ -1325,6 +1325,42 @@ void main() {
       return (construction, points);
     }
 
+    test('adoption is atomic per curve pair: many random drags never leave '
+        'two branches on one address (Phase 120c)', () {
+      // The guards on adoption are *per point*, so a pass could adopt for
+      // some points on a pair and not others — and a stale index can
+      // collide with a freshly adopted one. Two points on the same
+      // ordered pair sharing a branchIndex are the same intersection by
+      // construction: they resolve to the same candidate for ever, no
+      // later pass separates them, and the user sees two points stacked
+      // on one crossing with another empty. Collision refusal makes that
+      // unreachable within a pass; adoption now refuses to *write* it
+      // too, per pair, all-or-nothing.
+      final random = math.Random(20250817);
+      for (var trial = 0; trial < 60; trial++) {
+        final (construction, points) = fourWayRig();
+        var from = const Vec2(527.05859375, -349.2734375);
+        for (var move = 0; move < 4; move++) {
+          final to = Vec2(
+            420 + random.nextDouble() * 220,
+            -560 + random.nextDouble() * 420,
+          );
+          try {
+            construction.recomputeAlongPath('a3', DragPath(from, to));
+          } on TraceStepBudgetException {
+            construction.moveFreePoint('a3', to);
+          }
+          from = to;
+          expect(
+            points.map((p) => p.branchIndex).toSet(),
+            hasLength(4),
+            reason: 'trial $trial move $move collapsed: '
+                '${points.map((p) => p.branchIndex).toList()}',
+          );
+        }
+      }
+    });
+
     test('four conic∩conic branches keep four distinct canonical addresses '
         'across a drag (Phase 120c)', () {
       final (construction, points) = fourWayRig();

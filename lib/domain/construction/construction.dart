@@ -623,18 +623,53 @@ class Construction {
       // pair could produce; Phase 120's conics made four reachable and
       // four intersection points collapsed to one within two drag
       // frames (Phase 120c).
+      //
+      // **Adoption is atomic per curve pair** (Phase 120c). The guards
+      // above are *per point*, so a pass can adopt for some points on a
+      // pair and not others — a coasting slot keeps a stale index while
+      // its neighbours take new ones — and a stale index can collide
+      // with a freshly adopted one. Two points on the same ordered pair
+      // sharing a `branchIndex` are the *same intersection* by
+      // construction: they resolve to the same candidate for ever after,
+      // no later pass can separate them, and the user sees two points
+      // stacked on one crossing with another crossing empty. Collision
+      // refusal makes that unreachable *within* a pass, so this is the
+      // belt to its braces — but the failure is permanent and silent, so
+      // it is worth paying for. A pair that would end up with a
+      // duplicate keeps every one of its pre-pass indices instead;
+      // identity then rests on canonical addressing, which is exactly
+      // where a pass that adopts nothing leaves it.
+      final proposed = <IntersectionPoint, int>{};
       for (final o in seeded) {
         final branch = o.tracedBranch;
         if (branch.matchedIndex >= 0 &&
             branch.matchedIndex < IntersectionPoint.maxBranchCount &&
             branch.separation > doubleRootEpsilon) {
-          o.branchIndex = branch.matchedIndex;
+          proposed[o] = branch.matchedIndex;
         }
         // Refresh the gesture's seed memory with the root the completed
         // pass leaves behind — a coasting slot retains its last followed
         // root, which is exactly what the next pass must resume from
         // when the intersection is undefined at its start.
         seedMemory?[o.id] = branch.root;
+      }
+      final byPair = <String, List<IntersectionPoint>>{};
+      for (final o in seeded) {
+        byPair.putIfAbsent('${o.curve1.id} ${o.curve2.id}', () => [])
+            .add(o);
+      }
+      for (final group in byPair.values) {
+        final after = {
+          for (final o in group) proposed[o] ?? o.branchIndex,
+        };
+        if (after.length != group.length) {
+          TraceDiagnostics.count(TraceCounter.dragRejected);
+          continue;
+        }
+        for (final o in group) {
+          final index = proposed[o];
+          if (index != null) o.branchIndex = index;
+        }
       }
       return (acceptedSteps: accepted, rejectedSteps: rejected, detours: detours);
     } finally {

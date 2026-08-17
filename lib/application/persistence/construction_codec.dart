@@ -53,6 +53,8 @@ import '../../domain/construction/objects/two_line_bisector_line.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/projective/complex.dart';
+import '../../domain/projective/proj_point.dart';
+import '../../domain/projective/tracing/traced_branch.dart';
 import '../providers/document_settings_provider.dart';
 import '../providers/viewport_provider.dart';
 import 'document_kernel.dart';
@@ -77,12 +79,20 @@ class DecodedDocument {
     required this.viewport,
     this.settings = const DocumentSettings(),
     this.kernel = const DocumentKernel(),
+    this.repairedIntersections = const [],
   });
 
   final Construction construction;
   final ViewportState viewport;
   final DocumentSettings settings;
   final DocumentKernel kernel;
+
+  /// Ids of [IntersectionPoint]s the reader had to re-point because the
+  /// document gave two of them the same ordered curve pair *and*
+  /// `branchIndex` — see `_separateDuplicateBranches`. Empty for every
+  /// well-formed document; non-empty means the file was written by a
+  /// build that could collapse branches, and has now been healed.
+  final List<String> repairedIntersections;
 }
 
 /// Encodes [construction] and the current [viewport] into a JSON-encodable
@@ -208,12 +218,126 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
       throw FormatException('Object "${entry['id']}": ${error.message}');
     }
   }
+  final repaired = _separateDuplicateBranches(construction);
   return DecodedDocument(
     construction: construction,
     viewport: viewport,
     settings: settings,
     kernel: kernel,
+    repairedIntersections: repaired,
   );
+}
+
+/// Re-points any [IntersectionPoint]s that arrive sharing an ordered
+/// curve pair *and* a `branchIndex`, returning their ids. Empty for every
+/// well-formed document, which is all of `test/fixtures/`.
+///
+/// Two such points are the **same intersection by construction**: they
+/// resolve to the same candidate on every recompute, for ever, and no
+/// drag can separate them. What the user sees is two points stacked on
+/// one crossing while another crossing sits empty — and tapping the empty
+/// one builds yet another point, so they accumulate. A pre-Phase-120c
+/// build could write this (adoption collapsed indices, and the tool
+/// deduped only within one parent order), and once written it is
+/// permanent: the corruption is in the data, not in the engine that
+/// reads it.
+///
+/// So the reader heals it. Each duplicate after the first takes the
+/// lowest crossing of that pair nobody holds, which restores the user's
+/// evident intent — one object per crossing, which is what they tapped.
+/// When the pair has no free crossing left the extra point keeps its
+/// index and stays a duplicate: a document holding *more* intersection
+/// points than the two curves have crossings cannot be repaired by
+/// re-pointing at all, only by deleting the surplus, and dropping an
+/// object the user made is not the decoder's call.
+///
+/// **This is a repair, not a migration.** It is not a format change and
+/// carries no version implications — a v1 reader and a v2 reader disagree
+/// about nothing here, they simply both read a document that should never
+/// have been written. Re-encoding after a repair writes the separated
+/// indices, so opening and saving fixes the file for good.
+/// Occupancy is judged on the **unordered** pair. `branchIndex` addresses
+/// the canonical order of `intersectionCandidates(curve1, curve2)`, which
+/// is not the reversed pair's order, so two points built by tapping the
+/// same two curves in opposite orders carry different indices for the
+/// same crossing — and the reported document holds points on both
+/// orderings for exactly that reason. Each point's crossing is therefore
+/// identified in one *reference* ordering per unordered pair, by nearest
+/// chordal match, the same way `IntersectionTool` dedups.
+List<String> _separateDuplicateBranches(Construction construction) {
+  final reference = <String, (GeoObject, GeoObject, List<ProjPoint>)>{};
+  final taken = <String, Set<int>>{};
+  final repaired = <String>[];
+
+  /// The index in [candidates] nearest [target], chordally.
+  int nearest(List<ProjPoint> candidates, ProjPoint target) {
+    var best = 0;
+    var bestDistance = double.infinity;
+    for (var i = 0; i < candidates.length; i++) {
+      final d = TracedBranch.chordalDistance(target, candidates[i]);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  // Pass 1: which crossing each point claims, and who claimed it first.
+  // Two passes, because a one-pass repair can re-point a duplicate onto a
+  // crossing that a *later* point legitimately holds — which is not a
+  // repair, just a different collision.
+  final claims = <IntersectionPoint, (String, List<ProjPoint>, int)>{};
+  for (final object in construction.objects) {
+    if (object is! IntersectionPoint) {
+      continue;
+    }
+    final key = ([object.curve1.id, object.curve2.id]..sort()).join(' ');
+    final ref = reference.putIfAbsent(
+      key,
+      () => (
+        object.curve1,
+        object.curve2,
+        intersectionCandidates(object.curve1, object.curve2),
+      ),
+    );
+    final refCandidates = ref.$3;
+    final mine = identical(object.curve1, ref.$1)
+        ? refCandidates
+        : intersectionCandidates(object.curve1, object.curve2);
+    if (refCandidates.isEmpty || object.branchIndex >= mine.length) {
+      continue;
+    }
+    final crossing = nearest(refCandidates, mine[object.branchIndex]);
+    claims[object] = (key, mine, crossing);
+    taken.putIfAbsent(key, () => <int>{}).add(crossing);
+  }
+
+  // Pass 2: the first claimant of each crossing keeps it; every later one
+  // moves to a crossing of that pair nobody claimed at all.
+  final settled = <String, Set<int>>{};
+  for (final entry in claims.entries) {
+    final object = entry.key;
+    final (key, mine, crossing) = entry.value;
+    final held = settled.putIfAbsent(key, () => <int>{});
+    if (held.add(crossing)) {
+      continue;
+    }
+    final ref = reference[key]!;
+    final refCandidates = ref.$3;
+    for (var i = 0; i < refCandidates.length; i++) {
+      if (taken[key]!.contains(i) || !held.add(i)) {
+        continue;
+      }
+      construction.setIntersectionBranch(
+        object.id,
+        identical(object.curve1, ref.$1) ? i : nearest(mine, refCandidates[i]),
+      );
+      repaired.add(object.id);
+      break;
+    }
+  }
+  return repaired;
 }
 
 /// The document's kernel block (v2 hook, PLAN §M-CK): absent → Euclidean,
