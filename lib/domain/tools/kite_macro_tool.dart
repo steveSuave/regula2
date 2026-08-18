@@ -12,6 +12,13 @@ import 'multi_point_tool.dart';
 /// under every drag, and B crossing the line AC flips the kite
 /// continuously through its flat state.
 ///
+/// **The figure survives a change of absolute unchanged** (Phase 129): a
+/// kite is defined by a reflection symmetry, and reflection is metric —
+/// so |AD| = |AB| and |CD| = |CB| hold in the hyperbolic and elliptic
+/// planes exactly as they do here. [mirrorPointAcross] is what had to
+/// change, its affine `2·foot − point` giving way to the harmonic
+/// homology; this tool only passes the absolute along.
+///
 /// Coincident apexes leave the diagonal's carrier undefined and D with
 /// it; both recover when they separate. B on the line AC is simply the
 /// flat kite (D ≡ B), not an error.
@@ -40,6 +47,7 @@ class KiteMacroTool extends MultiPointTool {
       point: b,
       axis: diagonalAC,
       newId: newId,
+      absolute: absolute,
     );
     final corner = dedupedDerivedPoint(cornerD);
 

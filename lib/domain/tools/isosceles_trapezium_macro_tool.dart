@@ -14,6 +14,15 @@ import 'multi_point_tool.dart';
 /// DC ∥ AB in one stroke — the shape stays an isosceles trapezium under
 /// every drag, and C crossing the axis just swaps which base is longer.
 ///
+/// **Under a proper absolute it keeps its equal legs and loses the word
+/// "trapezium"** (Phase 129). The reflection is metric, so |AD| = |BC|
+/// holds in every geometry; DC ∥ AB does not, because AB and DC are two
+/// lines perpendicular to a common axis and a Cayley–Klein plane has no
+/// unique parallel — in the hyperbolic plane they are *ultraparallel*
+/// (they never meet, and the figure is a Saccheri quadrilateral), in the
+/// elliptic plane they meet at the axis's pole. The construction is
+/// unchanged and correct; it is the name that is Euclidean.
+///
 /// Coincident A, B leave the axis undefined and D with it; both recover
 /// when the corners separate. A C tapped on A's side of the axis mirrors
 /// D onto B's side and the quad folds over itself — tap order, like the
@@ -49,6 +58,7 @@ class IsoscelesTrapeziumMacroTool extends MultiPointTool {
       point: c,
       axis: axis,
       newId: newId,
+      absolute: absolute,
     );
     final corner = dedupedDerivedPoint(cornerD);
 
