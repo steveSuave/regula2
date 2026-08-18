@@ -41,7 +41,7 @@ jobs:
         # faster, and no browser is dropped. The cost is ~2.4 MB more in
         # the Pages artifact, which nobody downloads twice.
         # Replace YOUR_REPOS_NAME with your repository name!
-        run: flutter build web --wasm --release --base-href "/regula/"
+        run: flutter build web --wasm --release --base-href "/regula2/"
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
