@@ -1,0 +1,19 @@
+test/domain/construction/ck_angle_sum_test.dart
+  s_60105cb0c68d9b::t_0db900aeef6708 27,37,106-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "29c3b977feba6a704b63a46850bf80d0f5d862ee",
+  "prompts": {},
+  "sessions": {
+    "s_60105cb0c68d9b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f050fbd-18ae-4ef1-a9f7-ca354c23eadc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
