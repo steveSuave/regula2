@@ -41,6 +41,16 @@ String? geometryChangeMessage(
     if (change.unmatched.isNotEmpty)
       '${change.unmatched.length} had no crossing to match on and may now '
           'sit on a different branch',
+    // Different news from the other two, and worse: those points are
+    // still there and merely re-addressed, while these objects have gone
+    // blank. Nothing can repair them — the constructions are correct and
+    // this geometry has no answer for them — so the message says what to
+    // do, which is to switch back.
+    if (change.undefined case final gone when gone.isNotEmpty)
+      '${gone.length} ${_objects(gone.length)} '
+          '${gone.length == 1 ? 'has' : 'have'} no value here and '
+          '${gone.length == 1 ? 'is' : 'are'} no longer drawn — switch '
+          'back to restore ${gone.length == 1 ? 'it' : 'them'}',
   ];
   return '$geometry geometry: ${parts.join('; ')}.';
 }
@@ -83,3 +93,5 @@ void showIntersectionReport(BuildContext context, String message) {
 }
 
 String _points(int n) => n == 1 ? 'point' : 'points';
+
+String _objects(int n) => n == 1 ? 'object' : 'objects';

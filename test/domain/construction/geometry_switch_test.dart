@@ -8,6 +8,9 @@ import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/parallel_line.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 /// Phase 126: switching a document's geometry is a re-addressing event.
@@ -197,6 +200,69 @@ void main() {
       expect(change.unmatched, isEmpty);
       expect(crossing.position!.distanceTo(before), lessThan(1e-12));
     });
+  });
+
+  group('what the new geometry has no value for is reported too', () {
+    test('an affine kind goes blank, and the switch says which', () {
+      // A `SegmentRatioPoint` divides in an affine ratio and a
+      // `ParallelLine` names a uniqueness, so neither has a value in a
+      // Cayley–Klein plane. Everything downstream stops with them, which
+      // is the whole of what "a switch reinterprets a construction, it
+      // does not re-author one" costs the user.
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(0.5, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0.1, 0.4));
+      final base = Segment(id: 'ab', point1: a, point2: b);
+      final ratio = SegmentRatioPoint(id: 'r', point1: a, point2: b, ratio: 2);
+      final parallel = ParallelLine(id: 'p', through: c, reference: base);
+      final leg = Segment(id: 'ar', point1: a, point2: ratio);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(base)
+        ..add(ratio)
+        ..add(parallel)
+        ..add(leg);
+      for (final object in construction.objects) {
+        expect(object.isDefined, isTrue, reason: object.id);
+      }
+
+      final change = construction.switchKernel(hyperbolic);
+
+      expect(
+        change.undefined,
+        ['r', 'p', 'ar'],
+        reason:
+            'the ratio point, the parallel, and the segment that stood on '
+            'the ratio point — in construction order',
+      );
+      expect(change.hasReport, isTrue);
+      expect(
+        construction.switchKernel(euclidean).undefined,
+        isEmpty,
+        reason: 'switching back restores them, which needs no announcement',
+      );
+    });
+
+    test(
+      'a degeneracy the document already had is not the switch\'s doing',
+      () {
+        // Only a value that was there before and is not after counts. Two
+        // coincident points leave their line undefined in every geometry,
+        // and a switch that changes nothing about it must say nothing.
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: const Vec2(0.2, 0.2));
+        final b = FreePoint(id: 'b', position: const Vec2(0.2, 0.2));
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b));
+
+        expect(construction.switchKernel(hyperbolic).undefined, isEmpty);
+      },
+    );
   });
 
   group('what cannot be matched is reported, not hidden', () {

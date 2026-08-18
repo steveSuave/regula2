@@ -131,7 +131,17 @@ Future<void> showGeometryGuide(BuildContext context) => showDialog<void>(
               'outwards: the figure is ordinary in the middle and gets '
               'strange near the edge, which is where hyperbolic space '
               'differs most from flat space. Points outside the circle are '
-              'not in the plane at all.',
+              'not in the plane at all.\n\n'
+              'Switching re-reads a construction; it does not rebuild one. '
+              'A figure whose definition has no meaning here — anything '
+              'built on a parallel, or on a ratio along a segment — simply '
+              'stops, and you are told how many objects went. A figure '
+              'that still computes may no longer be the shape it was '
+              'named after: a square drawn in the Euclidean plane keeps '
+              'its right angles and equal sides and is not a square here, '
+              'because no such plane has a quadrilateral with four right '
+              'angles. Stamp the shape macros *after* switching, not '
+              'before.',
             ),
             SizedBox(height: 16),
             _Experiment(

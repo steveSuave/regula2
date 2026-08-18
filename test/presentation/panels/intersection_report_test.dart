@@ -82,6 +82,39 @@ void main() {
         'now sit on a different branch.',
       );
     });
+
+    test('an object that has no value in the new geometry names the fix', () {
+      // Different news from the other two, and worse: those points are
+      // still there under a new number, while these have gone blank and
+      // no repair exists — a switch reinterprets a construction, it does
+      // not re-author one.
+      expect(
+        geometryChangeMessage(
+          const GeometryChange(
+            from: euclidean,
+            to: hyperbolic,
+            undefined: ['p'],
+          ),
+          geometry: 'Hyperbolic',
+        ),
+        'Hyperbolic geometry: 1 object has no value here and is no longer '
+        'drawn — switch back to restore it.',
+      );
+      expect(
+        geometryChangeMessage(
+          const GeometryChange(
+            from: euclidean,
+            to: hyperbolic,
+            readdressed: [(id: 'x', from: 0, to: 1)],
+            undefined: ['p', 'q', 'r'],
+          ),
+          geometry: 'Hyperbolic',
+        ),
+        'Hyperbolic geometry: 1 intersection point kept its crossing under '
+        'a new branch number; 3 objects have no value here and are no '
+        'longer drawn — switch back to restore them.',
+      );
+    });
   });
 
   group('the decoder repair', () {

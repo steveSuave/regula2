@@ -33,6 +33,7 @@ class GeometryChange {
     required this.to,
     this.readdressed = const [],
     this.unmatched = const [],
+    this.undefined = const [],
   });
 
   final DocumentKernel from;
@@ -40,11 +41,32 @@ class GeometryChange {
   final List<Readdressing> readdressed;
   final List<String> unmatched;
 
+  /// Objects that were drawable before the switch and are not after it
+  /// (Phase 129), by id, in construction order.
+  ///
+  /// **A switch reinterprets a construction; it does not re-author one**,
+  /// and this is the visible half of that. A `SegmentRatioPoint` divides
+  /// in an affine ratio and a `ParallelLine` names a uniqueness, so
+  /// neither has a value in a Cayley–Klein plane — a figure built on
+  /// either simply stops, and every part of it downstream stops with it.
+  /// Nothing can be repaired here: the constructions are correct and the
+  /// geometry has no answer for them, so the honest move is to say which
+  /// ones went, exactly as `unmatched` does.
+  ///
+  /// Not symmetric, deliberately: switching *back* restores them, which
+  /// needs no announcement.
+  final List<String> undefined;
+
   /// Whether the switch was a no-op — the same geometry, nothing to say.
-  bool get isEmpty => from == to && readdressed.isEmpty && unmatched.isEmpty;
+  bool get isEmpty =>
+      from == to &&
+      readdressed.isEmpty &&
+      unmatched.isEmpty &&
+      undefined.isEmpty;
 
   /// Whether anything happened that the user should be told about.
-  bool get hasReport => readdressed.isNotEmpty || unmatched.isNotEmpty;
+  bool get hasReport =>
+      readdressed.isNotEmpty || unmatched.isNotEmpty || undefined.isNotEmpty;
 
   /// The addresses this change *arrived* at, by id — what a redo must
   /// restore verbatim rather than re-derive.
@@ -63,5 +85,6 @@ class GeometryChange {
   @override
   String toString() =>
       'GeometryChange(${from.metric.name} → ${to.metric.name}, '
-      'readdressed: ${readdressed.length}, unmatched: ${unmatched.length})';
+      'readdressed: ${readdressed.length}, unmatched: ${unmatched.length}, '
+      'undefined: ${undefined.length})';
 }

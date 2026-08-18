@@ -841,7 +841,16 @@ class Construction {
     // before anything is touched: this is the only evidence of which
     // crossing the user meant, and the switch destroys it.
     final was = <String, ProjPoint>{};
+    // And which objects were drawable at all, for the same reason: an
+    // affine ratio and a unique parallel have no value in a Cayley–Klein
+    // plane, so a figure standing on either stops here, and only the
+    // reading taken *before* the switch can tell that from a degeneracy
+    // the document already had (Phase 129).
+    final drawable = <String>{};
     for (final object in _objects.values) {
+      if (object.isDefined) {
+        drawable.add(object.id);
+      }
       if (object is IntersectionPoint) {
         final p = object.projPoint;
         if (p != null && !p.isZero) {
@@ -887,12 +896,20 @@ class Construction {
         object.recompute(kernel.absolute);
       }
     }
+    // After the whole pass, not inside it: a re-addressed point recomputes
+    // a second time, and this is a question about where the document
+    // settled.
+    final undefined = [
+      for (final object in _objects.values)
+        if (drawable.contains(object.id) && !object.isDefined) object.id,
+    ];
     _notify();
     return GeometryChange(
       from: from,
       to: kernel,
       readdressed: readdressed,
       unmatched: unmatched,
+      undefined: undefined,
     );
   }
 
