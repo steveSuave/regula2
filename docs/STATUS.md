@@ -8,6 +8,33 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 136 (V2 Session 38) — 2026-08-18
+
+**Done — Phase 128: the macro tools, measured and then re-expressed.** On `phase-128-ck-macro-tools`, five commits. Phase 127's last open box, carried as "unmeasured either way"; measured, both tools were wrong. Suite **2575** green (from 2557), analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **The claim the box carried was false.** "An equilateral triangle by three CK rotations is genuinely equilateral" had been written down in TODO and never checked. `ckRotation` is an isometry and delivers the angle it is asked for *exactly* in every geometry — which is the defect, not a symptom of one. The apex sits at exactly 60° from A under every absolute, so the legs stay equal and the base does not: long hyperbolic, short elliptic, by 1.2 % at a chart side of 0.3 and **23 %** at 0.9. The polygon chains a fixed Euclidean interior angle and the ring never closes — a hyperbolic octagon at a chart side of 0.6 closes with a segment **3.8×** its other sides, which is a visibly broken figure and not a rounding complaint.
+- **The measurement landed as its own commit, before any fix.** It also pinned the constructive half: a regular n-gon of CK side `s` turns by θ where `cos(π/n) = σ(s/2)·sin(θ/2)`, σ = cosh / cos / ≡ 1, and that turn closes the ring exactly for every n, side and proper absolute — *and* moves with `s`, while `RotatedPoint.angle` is fixed for the object's lifetime. So the fix could not be a better constant, and that is a construction-graph fact rather than an arithmetic one.
+- **The rule extracted, and it is the useful part.** A constant angle survives a change of absolute only when it is an angle at the **centre of the symmetry that generates the figure**, never when it is an angle *of* the figure. The triangle becomes Euclid I.1 (a crossing of the two compass circles — metric-neutral, exactly equilateral in all three geometries at every side); the polygon becomes an orbit under the cyclic rotation group about its centre, where `2πk/n` is a genuine constant everywhere. Both keep their Euclidean routes, per the Phase 122/124 rule.
+- **A defect underneath, and it belongs to the tool layer rather than to this phase.** `coincidentExistingPoint` screened on `candidate.position` before recomputing anything, and a candidate arrives from a constructor, which settles on the Euclidean default because it has no document to ask. So in a non-Euclidean document *every* derived point a macro offered for reuse was compared at a place the figure does not have, and nothing deduplicated at all. Found only because the new triangle's dedup test failed; fixed where it belongs, which moved one existing test's ground and gained a regression test.
+- **The branch is picked by side, not taken as index 0.** The conic∩conic candidate order follows the solver and reverses with the tap order, while "left of A→B" is the tool's documented promise. The two real crossings are mirror images across AB under any absolute, so nearest-to-the-Euclidean-apex is the left one.
+- **And the toolbar row's subtitle flips with the kernel** — "two corners" / "centre, then a corner" — because it is the only place in the app that says what a macro's taps mean, and the tool now reads them differently. Watched through `select` so the toolbar does not rebuild on every drag frame.
+
+**Next**
+- Merge `phase-128-ck-macro-tools` — which is a **deploy**, so check `gh run list` after.
+- **The other macro tools have not been looked at at all.** Square, rectangle, rhombus, kite, both trapezia: all Euclidean-shape constructions on perpendiculars and parallels, and a rectangle does not exist in a CK plane. Refuse, re-express, or leave them as figures that are not what they are named — unexamined, and the most concrete piece of work outstanding.
+- `visibleWorldBounds` contributes nothing for a CK circle, so fit-to-construction under-frames a hyperbolic document; a conic bounding box would fix it.
+- **The absolute's radius is fixed at 1 world unit** — the schema decision, still written down rather than built.
+- Phase 125's remaining debt: per-kind CK correctness beyond angle, rotation and the handful pinned. The refusals stand and are documented at their sites.
+- Environment carry-overs, untouched: the Android emulator AVD and the iOS simulator smoke.
+
+**Gotchas**
+- **A note that says a thing is fine is a claim, and this is the second phase running where the inherited note was wrong.** Phase 127 found the *deferral's* stated reason false; this one found the reassurance the same phase wrote in its place false. Both had been carried forward unexamined. The pattern is that a sentence about geometry written while doing something else gets no test, and nothing re-reads it.
+- **The dedup defect had been shipping since Phase 126 and no test could see it**, because dedup only ever fires on a *re-stamp* and nothing re-stamped in a non-Euclidean document. It surfaced as a failing assertion in a test I wrote for something else. Worth grepping for other places that read a freshly constructed object's value before anything recomputes it under the document's absolute — the constructor's Euclidean default is a live trap wherever a value is *read* rather than merely stored.
+- **The magnitude is what makes this a defect rather than a curiosity.** At the small figures every existing test draws, the error is a fraction of a percent and invisible; it only becomes obvious across most of the disc. A CK bug that vanishes in the small limit will never be caught by a test written at Euclidean scale.
+- **The polygon tool's two taps now mean different things in different documents.** That is a genuine wart, chosen over refusing the tool, and it lives in exactly one user-visible string. If the label ever drifts from the tool, nothing else in the app says what the taps do.
+
+---
+
 ## Session 135 (V2 Session 37) — 2026-08-18
 
 **Done — a dependency refresh on `main`, no phase attached.** `flutter pub outdated` had twelve packages locked below their own constraints and two below a resolvable version (`5a58259`), plus the geometry menu's guide item renamed "What can I do with this?…" -> "Help…" (`163a93c`) — the subtitle already said what the guide holds.
