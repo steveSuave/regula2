@@ -40,6 +40,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [x] **Drag budget re-measured and recorded as the standing gate.** `tracing_bench.dart` now *throws* when a frame exceeds `dragFrameBudgetMs`, so a job can enforce it without parsing text (thrown, not `exit`ed: `dart:io` would cost the file its js and wasm targets, and an uncaught error is a non-zero exit on all four). Standing measurement across VM/AOT/dart2js/dart2wasm: **1–2%** of the 8 ms budget plain, **7–11%** carrying the 128-sample locus, checksums identical
 - [x] Browser smoke of the wasm build, with the first deploy — **green 2026-08-18**. The remote exists, all three workflows run on every push to `main`, and the Pages deploy at `https://stevesuave.github.io/regula2/` boots and draws. Phase 122 is now fully closed
 
+## Phase 129 — the macro triage
+
+Phase 128's second open box: the other nine macro tools, none of which had been looked at in a CK plane. They specify their figures by *metric primitives* rather than by a constant angle, so the question is whether the figure survives, not whether the primitive does. See PLAN §"The macro triage".
+
+- [ ] **Already right** — isosceles triangle (perpendicular bisector) and right triangle (perpendicular). The right angle is π/2 under every absolute; the angle sum is not π. Pinned rather than assumed
+- [ ] **`mirrorPointAcross` was affine** — the perpendicular foot plus a `SegmentRatioPoint` at ratio 2, which Phase 125 refuses. So the kite and the isosceles trapezium each had two defined sides and two undefined ones. The metric reflection is `ReflectedPoint`, a harmonic homology, single-valued and branch-free, so the CK route needs *no* scaffolding at all
+- [ ] **The isosceles trapezium keeps its equal legs and loses the word "trapezium"** — its base sides are perpendicular to a common axis and so ultraparallel, which is a Saccheri quadrilateral. Said at the site rather than silently claimed
+- [ ] **The square builds a Saccheri quadrilateral** — three equal sides and two right base angles, summit longer than base in hyperbolic and shorter in elliptic. A square is the regular 4-gon, so under a proper absolute it takes the Phase 128 orbit, shared with `RegularPolygonMacroTool`
+- [ ] **The rhombus is re-expressible and the other three are not.** An equilateral quadrilateral exists in every geometry — the fourth corner is a crossing of two compass circles, Euclid I.1 again. The rectangle, trapezium and right trapezium all need *the* parallel through a point, which is the uniqueness a CK plane denies (and a rectangle needs four right angles, which no CK plane has)
+- [ ] **The refusal has to be visible.** Those three committed the tapped free points plus a chain of permanently undefined objects and said nothing — four taps, two dots and half a figure, uncompletable by any drag. They refuse their input now, and the toolbar disables the rows with the reason in the subtitle, the two checked against each other by a test
+- [ ] The square's two taps change meaning under a proper absolute exactly as the polygon's did, so its toolbar subtitle flips too
+
 ## Phase 128 — the macro tools, measured and re-expressed
 
 Phase 127's last open box, and it was a defect rather than a gap. Both macro tools built on `RotatedPoint` name a *shape* and realise it with a constant angle baked in at build time — which names a shape only where similar figures exist. See PLAN §"A shape is not an angle".
