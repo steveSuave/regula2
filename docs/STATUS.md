@@ -8,6 +8,35 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 137 (V2 Session 39) — 2026-08-18
+
+**Done — Phase 129: the macro triage, and Phase 128's two open boxes closed.** Still on `phase-128-ck-macro-tools`; six more commits. The eleven remaining macro tools sorted by what happens to their *figure* under a proper absolute. Suite **2594** green (from 2575), analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **The question is different from Phase 128's, and that is the finding.** These tools specify their shapes with metric primitives — perpendicular, compass circle, midpoint, reflection, parallel — every one of which Phase 125 already substituted. So the primitives all generalize and the *figures* still split four ways.
+- **Already right**: the isosceles triangle and the right triangle. π/2 is π/2 in every geometry; what moves is the angle sum, which is the milestone rather than a defect. Pinned rather than assumed.
+- **`mirrorPointAcross` was affine**, and the kite and isosceles trapezium fell over on it — perpendicular foot plus a `SegmentRatioPoint` at ratio 2, which is `2·foot − point`. Both figures came out with two defined sides and two undefined ones. The metric reflection is the harmonic homology and already ships as `ReflectedPoint`, so the CK route now carries **less** machinery than the Euclidean one. Both figures then survive unchanged, because both are defined by a *symmetry* rather than by a measurement. The trapezium keeps its equal legs and loses the word: its base sides are perpendicular to a common axis, so ultraparallel in the hyperbolic plane and concurrent at the pole in the elliptic one.
+- **The square was building a Saccheri quadrilateral** — three equal sides, two right base angles, summit longer than base in hyperbolic and shorter in elliptic, and no plane with four right angles for it to be a square in. A square is the regular 4-gon, so it takes Phase 128's orbit; the orbit moved to `regular_polygon_orbit.dart` and the two tools now agree corner for corner.
+- **Five refuse: parallelogram, rectangle, trapezium, right trapezium — and the rhombus, for a different reason.** The first four need *the* parallel through a point, which `parallelThrough` has refused since Phase 125 with nothing downstream noticing; the rectangle needs four right angles besides. The rhombus's figure is not impossible — its fourth corner is Euclid I.1 again — but its *third* corner is a `PointOnObject` glued to a compass circle, and `PointOnObject` parameterizes a circle by its polar angle in the chart, which a bitangent conic has not got. A gap, and it gets its own line.
+- **What they did instead was worse than a wrong figure**: commit the tapped free points and a chain of permanently undefined derived objects, silently, in a document no drag can complete. Four taps, two dots, half a figure. `MultiPointTool.availableUnder` refuses in `collectVertex` — not `onInput`, because the position-only-last-tap tools override that and all of them still route their *first* tap through the collector — and the toolbar disables the rows with the reason where the explanation goes.
+- **Both of Phase 128's open boxes closed too.** A switch reinterprets a construction and does not re-author one; the computable half of that is now `GeometryChange.undefined`, the objects that were drawable before the pass and are not after, reported beside `readdressed` and `unmatched`. It is asymmetric on purpose (switching back restores them) and counts only a value that *was* there, so a pre-existing degeneracy is not blamed on the switch. The half that is not computable went into the guide, with the advice that follows: stamp the shape macros *after* switching.
+
+**Next**
+- Merge `phase-128-ck-macro-tools`, which carries Phases 128 and 129 — and that is a **deploy**, so check `gh run list` after.
+- **Gluing a point to a general conic.** The rhombus is waiting on it, and so is every CK circle in the app: they are curves nothing can be attached to, because `PointOnObject` reads a polar angle in the chart. The most concrete piece of work outstanding, and it is a kernel phase rather than a tool one.
+- `visibleWorldBounds` contributes nothing for a CK circle, so fit-to-construction under-frames a hyperbolic document — the same missing conic parameterization, seen from the viewport.
+- **The absolute's radius is fixed at 1 world unit** — the schema decision, still written down rather than built.
+- Phase 125's remaining debt: per-kind CK correctness beyond the handful pinned.
+- Environment carry-overs, untouched: the Android emulator AVD and the iOS simulator smoke.
+
+**Gotchas**
+- **A refusal already written in the kernel is not a refusal the user sees.** `parallelThrough` has answered the zero triple since Phase 125, with a docstring explaining exactly why — and four tools went on committing constructions built out of it for four phases. Grep for the *consumers* of a refusal, the same lesson Phase 126e drew about a diagnostic that was computed and discarded.
+- **The parallelogram was missed in the scoping commit** and only turned up when the toolbar's macro group was enumerated for the disabled rows. The triage was written from a probe of nine tools, and the toolbar knows about eleven. Enumerate from the UI, not from memory.
+- **Two of the four buckets are indistinguishable from the outside.** A tool that builds the wrong figure and a tool whose figure has no analogue both look like "it did something odd", and only the second can be refused. Deciding which bucket a tool is in took a measurement per tool; none of it was deducible from the code.
+- **`PointOnObject` on a CK circle is a hole with a long shadow.** It stopped the rhombus here, it is why `visibleWorldBounds` under-frames, and it means the app can draw a hyperbolic circle it cannot put a point on. It looked like one tool's problem and is not.
+- The undefined-report counts objects, not figures, so a five-object macro that stops reads as "5 objects". That is honest and unhelpfully granular; if anyone finds it noisy, the object tree flagging them is the better answer — the same note the unrepairable-duplicate snack bar carries.
+
+---
+
 ## Session 136 (V2 Session 38) — 2026-08-18
 
 **Done — Phase 128: the macro tools, measured and then re-expressed.** On `phase-128-ck-macro-tools`, five commits. Phase 127's last open box, carried as "unmeasured either way"; measured, both tools were wrong. Suite **2575** green (from 2557), analyze clean, 32 goldens byte-identical, browser gate green.
