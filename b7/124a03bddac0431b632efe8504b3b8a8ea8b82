@@ -1,0 +1,33 @@
+.github/workflows/ci.yml
+  s_864df67dc11e5d::t_e4304bbd38b7f4 20,24-28
+  s_864df67dc11e5d::t_791aecc29459d0 21-23
+test/presentation/canvas/ck_presentation_test.dart
+  s_864df67dc11e5d::t_673ffc3502d6f3 1-2,17,222-267
+  s_864df67dc11e5d::t_444b074697370a 268-269
+test/presentation/canvas/geometry_painter_test.dart
+  s_864df67dc11e5d::t_b55869bc3dfcf5 957-962,968,972
+lib/presentation/canvas/geometry_painter.dart
+  s_864df67dc11e5d::t_1bd34acf9706ef 25-48,294-296
+lib/presentation/canvas/region_pick_overlay.dart
+  s_864df67dc11e5d::t_1bd34acf9706ef 142-147,149-152
+CLAUDE.md
+  s_864df67dc11e5d::t_cd5c77e6de5ff0 52-54
+test/web/web_renderer_test.dart
+  s_864df67dc11e5d::t_82d5a5da495ab5 1-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b7124a03bddac0431b632efe8504b3b8a8ea8b82",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
