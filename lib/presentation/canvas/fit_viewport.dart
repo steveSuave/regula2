@@ -5,6 +5,8 @@ import '../../application/providers/viewport_provider.dart';
 import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/projective/conic_matrix.dart';
+import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
 
 /// Screen pixels kept free around a fitted construction.
@@ -79,11 +81,22 @@ const double fitMarginPx = 48;
       case GeoLine():
         break;
       // A Cayley–Klein circle is a conic bitangent to the absolute, so
-      // it projects to no centre and radius and contributes nothing here
-      // (Phase 126). It is *defined* and drawn — the case below is no
-      // longer merely an exhaustiveness formality for `GeoCircle`. A
-      // hyperbolic document is framed by `fittedToAbsolute` instead,
-      // which frames the plane rather than the figure.
+      // it projects to no centre and radius (Phase 126) and is framed by
+      // its conic's own support intervals instead (Phase 130): the box
+      // in the *view* frame is the extent between the tangent lines
+      // normal to each view axis, which is one call per axis with the
+      // axis as the normal — no rotating of the conic, and exact.
+      //
+      // Null for anything unbounded, which is the same answer this
+      // function already gives a line: a hyperbola has two real tangents
+      // normal to a direction and runs out between them, so a box built
+      // on them would frame a curve that is not there.
+      case GeoCircle(:final conic?):
+        final box = _conicViewBox(conic, cos, sin);
+        if (box != null) {
+          extend(box.min.x, box.min.y);
+          extend(box.max.x, box.max.y);
+        }
       case GeoCircle():
       // isDefined held above, so the remaining null-payload cases are
       // unreachable; Dart's exhaustiveness checker still wants them.
@@ -100,6 +113,27 @@ const double fitMarginPx = 48;
     return null;
   }
   return (min: Vec2(left, minY!), max: Vec2(maxX!, maxY!));
+}
+
+/// [conic]'s bounding box in the view frame — the frame rotated so that
+/// `(cos, sin)` is its x axis — or null when the conic has no bounded ink
+/// to frame.
+///
+/// One [ConicShape.extentAlong] per view axis, with the axis as the
+/// line's normal, so the rotation costs a different argument rather than
+/// a transformed conic.
+({Vec2 min, Vec2 max})? _conicViewBox(
+  ConicMatrix conic,
+  double cos,
+  double sin,
+) {
+  final shape = ConicShape.of(conic);
+  final across = shape.extentAlong(cos, sin);
+  final along = shape.extentAlong(-sin, cos);
+  if (across == null || along == null) {
+    return null;
+  }
+  return (min: Vec2(across.min, along.min), max: Vec2(across.max, along.max));
 }
 
 /// The viewport framing the Cayley–Klein absolute — the unit disc — in

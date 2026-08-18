@@ -351,6 +351,34 @@ class ConicShape {
       kind == ConicClass.linePair ||
       kind == ConicClass.doubleLine;
 
+  /// The conic's **support interval** in the chart direction `(u, v)`:
+  /// the least and greatest values of `u·x + v·y` over its curve. Null
+  /// when this conic has none to give (Phase 130).
+  ///
+  /// Null for every class but [ConicClass.ellipse], and that gate is the
+  /// point rather than a limitation: an ellipse is the only conic with a
+  /// **bounded** curve. [extremesAlong] answers a hyperbola perfectly
+  /// well — the tangents normal to a direction are real there too — but
+  /// the curve runs out between them, so a caller framing a view would
+  /// box a curve that is not inside it. Such a caller wants a box or
+  /// nothing, exactly as it wants nothing from a line.
+  ///
+  /// `(u, v)` need not be a unit vector; the interval scales with it.
+  /// Taking a direction rather than an axis is what lets a rotated view
+  /// frame be a different argument rather than a transformed conic.
+  ({double min, double max})? extentAlong(double u, double v) {
+    if (kind != ConicClass.ellipse) {
+      return null;
+    }
+    final extremes = extremesAlong(math.atan2(v, u));
+    if (extremes.length != 2) {
+      return null;
+    }
+    final one = extremes[0].x * u + extremes[0].y * v;
+    final other = extremes[1].x * u + extremes[1].y * v;
+    return (min: math.min(one, other), max: math.max(one, other));
+  }
+
   /// A finite real chart point of the conic's ink — where a label hangs
   /// from, or where a coarse search seeds. Null when there is none.
   ///

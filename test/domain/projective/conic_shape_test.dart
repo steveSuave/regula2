@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:glados/glados.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/circles.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/conic_shape.dart';
@@ -922,6 +923,87 @@ void main() {
     test('a conic with no curve has no extremes', () {
       expect(ConicShape.of(crossingLines).extremesAlong(0), isEmpty);
       expect(ConicShape.of(imaginaryEllipse).extremesAlong(0), isEmpty);
+    });
+  });
+
+  group('extentAlong', () {
+    /// `x²/9 + y²/4 = 1` shifted to (3, −1): a circle-free ellipse with
+    /// known extremes, so the numbers are checkable by hand.
+    ConicMatrix ellipseAt(Vec2 centre, double a, double b) => ConicMatrix(
+      Complex(1 / (a * a)),
+      Complex.zero,
+      Complex(1 / (b * b)),
+      Complex(-centre.x / (a * a)),
+      Complex(-centre.y / (b * b)),
+      Complex(
+        centre.x * centre.x / (a * a) + centre.y * centre.y / (b * b) - 1,
+      ),
+    );
+
+    test('a lifted circle gives centre ± radius, in any direction', () {
+      final shape = ConicShape.of(
+        circleWithRadius(ProjPoint.lift(const Vec2(3, -1)), 2),
+      );
+      expect(shape.kind, ConicClass.ellipse);
+      expect(shape.extentAlong(1, 0)!.min, closeTo(1, 1e-9));
+      expect(shape.extentAlong(1, 0)!.max, closeTo(5, 1e-9));
+      expect(shape.extentAlong(0, 1)!.min, closeTo(-3, 1e-9));
+      expect(shape.extentAlong(0, 1)!.max, closeTo(1, 1e-9));
+      // Along the diagonal the centre projects to (3 − 1)/√2 = √2, and a
+      // disc's support is that ± the radius whatever the direction.
+      final d = 1 / math.sqrt(2);
+      expect(shape.extentAlong(d, d)!.min, closeTo(math.sqrt2 - 2, 1e-9));
+      expect(shape.extentAlong(d, d)!.max, closeTo(math.sqrt2 + 2, 1e-9));
+    });
+
+    test('an ellipse is not a disc: the support turns with the direction', () {
+      final shape = ConicShape.of(ellipseAt(const Vec2(3, -1), 3, 2));
+      expect(shape.extentAlong(1, 0), (min: 0.0, max: 6.0));
+      expect(shape.extentAlong(0, 1)!.min, closeTo(-3, 1e-9));
+      expect(shape.extentAlong(0, 1)!.max, closeTo(1, 1e-9));
+      // Semi-diameter along a unit direction u is √(a²u_x² + b²u_y²), so
+      // at 45° it is √((9 + 4)/2) rather than either semi-axis.
+      final d = 1 / math.sqrt(2);
+      final centre = 3 * d - 1 * d;
+      final half = math.sqrt((9 + 4) / 2);
+      expect(shape.extentAlong(d, d)!.min, closeTo(centre - half, 1e-9));
+      expect(shape.extentAlong(d, d)!.max, closeTo(centre + half, 1e-9));
+    });
+
+    test('the interval scales with a non-unit direction', () {
+      final shape = ConicShape.of(
+        circleWithRadius(ProjPoint.lift(const Vec2(3, -1)), 2),
+      );
+      expect(shape.extentAlong(2, 0)!.min, closeTo(2, 1e-9));
+      expect(shape.extentAlong(2, 0)!.max, closeTo(10, 1e-9));
+    });
+
+    test('only the ellipse answers — the unbounded classes give null', () {
+      // `extremesAlong` finds real tangent points on a hyperbola too, and
+      // that is exactly why the class gate is here rather than the
+      // arithmetic deciding: the curve runs out between them.
+      final hyperbola = ConicMatrix(
+        Complex.one,
+        Complex.zero,
+        Complex(-1),
+        Complex.zero,
+        Complex.zero,
+        Complex(-1),
+      );
+      expect(ConicShape.of(hyperbola).kind, ConicClass.hyperbola);
+      expect(ConicShape.of(hyperbola).extremesAlong(0), isNotEmpty);
+      expect(ConicShape.of(hyperbola).extentAlong(1, 0), isNull);
+
+      final parabola = ConicMatrix(
+        Complex.one,
+        Complex.zero,
+        Complex.zero,
+        Complex.zero,
+        Complex(-0.5),
+        Complex.zero,
+      );
+      expect(ConicShape.of(parabola).kind, ConicClass.parabola);
+      expect(ConicShape.of(parabola).extentAlong(1, 0), isNull);
     });
   });
 }
