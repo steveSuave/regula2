@@ -13,6 +13,8 @@ import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
+import 'package:regula/presentation/canvas/geometry_painter.dart';
+import 'package:regula/presentation/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../wide_window.dart';
@@ -126,6 +128,31 @@ void main() {
     // view exactly where the user put it.
     await choose(tester, 'Elliptic');
     expect(container.read(viewportProvider).scale, scale);
+  });
+
+  testWidgets('the live canvas gets the theme wash, not the fallback', (
+    tester,
+  ) async {
+    // The gap the contrast test could not see: it hands
+    // `absoluteOutsideColor` to the renderer itself, so it proves the
+    // colour separates inside from outside and proves nothing about the
+    // app ever using that colour. This walks the real widget tree and
+    // reads what the painter was actually built with.
+    await pumpEditor(tester);
+    await choose(tester, 'Hyperbolic');
+
+    final painter = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((w) => w.painter)
+        .whereType<GeometryPainter>()
+        .single;
+    final expected = AppTheme.light().extension<CanvasColors>()!;
+    expect(painter.absoluteOutsideColor, expected.absoluteOutside);
+    expect(painter.absoluteColor, expected.absolute);
+    expect(painter.construction.kernel.metric, FundamentalConic.hyperbolic);
+    // And it is not the constructor fallback that happens to be the same
+    // literal — the theme is what supplied it.
+    expect(painter.absoluteOutsideColor.a, greaterThan(0.2));
   });
 
   testWidgets('the current geometry is ticked', (tester) async {
