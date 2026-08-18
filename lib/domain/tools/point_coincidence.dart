@@ -78,11 +78,23 @@ GeoPoint? coincidentExistingPoint(
   math.Random? random,
   Absolute absolute = Absolute.euclidean,
 }) {
+  final all = List.of(objects);
+  final privateChain = _privateAncestorChain(all, candidate);
+  // The candidate and its scaffolding come from constructors, and a
+  // constructor recomputes on the Euclidean default — it has no document
+  // to ask. So in a non-Euclidean document the position screened below
+  // would be the one the figure does not have, and every derived point a
+  // macro offers for reuse would fall outside [_tolerance] of the very
+  // point it duplicates. The probe loop already recomputes this chain
+  // under [absolute]; doing it once up front is what makes the *initial*
+  // screen ask the same question the probes do.
+  for (final object in privateChain) {
+    object.recompute(absolute);
+  }
   final position = candidate.position;
   if (position == null) {
     return null;
   }
-  final all = List.of(objects);
   var matches = <GeoPoint>[
     for (final object in all)
       if (object is GeoPoint &&
@@ -96,7 +108,6 @@ GeoPoint? coincidentExistingPoint(
     return null;
   }
 
-  final privateChain = _privateAncestorChain(all, candidate);
   final freeRoots = <FreePoint>{};
   final parameterRoots = <PointOnObject>{};
   _collectMutableRoots([candidate, ...matches], freeRoots, parameterRoots);

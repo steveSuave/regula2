@@ -116,13 +116,20 @@ void main() {
     });
 
     test('and is left in the wrong one when the absolute is defaulted', () {
-      // Not a hypothetical: this is what the tool layer did until this
-      // phase. The probe answers a Euclidean question and then leaves the
+      // Not a hypothetical: this is what the tool layer did until Phase
+      // 126. The probe answers a Euclidean question and then leaves the
       // whole document computed Euclidean, silently, until the next
       // mutation happens to recompute it.
+      //
+      // The Euclidean midpoint is in the document as a visible point so
+      // that the defaulted screen has something to probe against: since
+      // Phase 128 the candidate is recomputed under the absolute *before*
+      // the screen, so a defaulted call now asks its wrong question one
+      // step earlier as well.
       final construction = hyperbolicMidpoint();
       final a = construction.byId('a')! as GeoPoint;
       final b = construction.byId('b')! as GeoPoint;
+      construction.add(FreePoint(id: 'e', position: const Vec2(0.4, 0)));
       final probe = Midpoint(id: 'probe', point1: a, point2: b)
         ..recompute(hyperbolic);
 
@@ -130,6 +137,35 @@ void main() {
 
       final m = construction.byId('m')! as GeoPoint;
       expect(m.position!.x, closeTo(0.4, 1e-12));
+    });
+
+    test('the screen reads the candidate in the document geometry, not '
+        "the constructor's (Phase 128)", () {
+      // A candidate arrives from a constructor, and a constructor
+      // recomputes on the Euclidean default — it has no document to ask.
+      // The screen used to read that position, so in a non-Euclidean
+      // document every derived point a macro offered for reuse was
+      // compared at a place the figure does not have, and nothing
+      // deduplicated at all.
+      final construction = hyperbolicMidpoint();
+      final a = construction.byId('a')! as GeoPoint;
+      final b = construction.byId('b')! as GeoPoint;
+      final probe = Midpoint(id: 'probe', point1: a, point2: b);
+
+      expect(
+        probe.position!.x,
+        closeTo(0.4, 1e-12),
+        reason: 'the constructor settled it Euclidean',
+      );
+      expect(
+        coincidentExistingPoint(
+          construction.objects,
+          probe,
+          absolute: hyperbolic,
+        )?.id,
+        'm',
+        reason: 'and the hyperbolic midpoint is what it duplicates',
+      );
     });
   });
 
