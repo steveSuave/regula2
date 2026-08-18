@@ -1,0 +1,46 @@
+lib/domain/tools/rhombus_macro_tool.dart
+  s_f868d4518223d5::t_d6bdfdc1c0729a 35-46
+  s_f868d4518223d5::t_8424f3b5501bf3 9
+lib/domain/tools/parallelogram_macro_tool.dart
+  s_f868d4518223d5::t_6aaecbb699a864 6,32-39
+  s_f868d4518223d5::t_5cd84c25323f08 40
+lib/presentation/panels/toolbar.dart
+  s_f868d4518223d5::t_6aaecbb699a864 170
+  s_f868d4518223d5::t_bf0bbacf6a89d6 159-169,171-181,745,759-762,783-798
+  s_f868d4518223d5::t_dcb8e8dea66e51 599,637-639
+lib/domain/tools/multi_point_tool.dart
+  s_f868d4518223d5::t_d6bdfdc1c0729a 46-62,137-138,146-148
+lib/domain/tools/rectangle_macro_tool.dart
+  s_f868d4518223d5::t_d6bdfdc1c0729a 35-42
+  s_f868d4518223d5::t_8424f3b5501bf3 9
+test/domain/tools/ck_macro_triage_test.dart
+  s_f868d4518223d5::t_df8cd5f9ab9ede 18,23,25,27-28,32,168-279
+  s_f868d4518223d5::t_aa7842c058c36d 280-281
+test/presentation/panels/toolbar_test.dart
+  s_f868d4518223d5::t_c52885e6b061e6 13,27,29,41,45,544-636
+  s_f868d4518223d5::t_a335c2e6b0f9b9 51
+  s_f868d4518223d5::t_a2c77f9fa84367 637
+lib/domain/tools/trapezium_macro_tool.dart
+  s_f868d4518223d5::t_8424f3b5501bf3 7
+  s_f868d4518223d5::t_d6bdfdc1c0729a 31-39
+lib/domain/tools/right_trapezium_macro_tool.dart
+  s_f868d4518223d5::t_d6bdfdc1c0729a 25-29
+  s_f868d4518223d5::t_8424f3b5501bf3 7
+  s_f868d4518223d5::t_c7901f50b2afa6 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d748bb594560d6e9388673b04f6633c16229c179",
+  "prompts": {},
+  "sessions": {
+    "s_f868d4518223d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c57b6d26-f912-457c-8856-76743b807fe7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
