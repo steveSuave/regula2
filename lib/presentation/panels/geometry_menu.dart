@@ -5,7 +5,7 @@ import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../domain/commands/set_geometry_command.dart';
 import '../../domain/construction/document_kernel.dart';
-import '../../domain/construction/geometry_change.dart';
+import 'intersection_report.dart';
 
 /// The document's geometry, as a menu (Phase 126).
 ///
@@ -85,42 +85,23 @@ class GeometryMenu extends ConsumerWidget {
     // Framing before the report, so the snack bar lands over a view that
     // already shows the plane it is talking about.
     onFrameAbsolute?.call();
+    // Tells the user what the switch had to do to their intersection
+    // points, because it is not visible and it is not nothing: a crossing
+    // that keeps its position has quietly changed address, and one that
+    // could not be matched may now name a different crossing entirely.
+    // The decoder's repair report goes to the same place (Phase 126e).
     final change = command.change;
-    if (change != null && change.hasReport && context.mounted) {
-      _report(context, change);
+    if (change == null || !context.mounted) {
+      return;
+    }
+    final message = geometryChangeMessage(
+      change,
+      geometry: _labels[change.to.metric]!.$1,
+    );
+    if (message != null) {
+      showIntersectionReport(context, message);
     }
   }
-
-  /// Tells the user what the switch had to do to their intersection
-  /// points, because it is not visible and it is not nothing: a crossing
-  /// that keeps its position has quietly changed address, and one that
-  /// could not be matched may now name a different crossing entirely.
-  ///
-  /// The same obligation the decoder's `repairedIntersections` carries and
-  /// still has not discharged — a silent repair is how the Phase 120c
-  /// document accumulated points nobody could account for.
-  void _report(BuildContext context, GeometryChange change) {
-    final parts = <String>[
-      if (change.readdressed.isNotEmpty)
-        '${change.readdressed.length} intersection '
-            '${_plural(change.readdressed.length)} kept '
-            '${change.readdressed.length == 1 ? 'its' : 'their'} crossing '
-            'under a new branch number',
-      if (change.unmatched.isNotEmpty)
-        '${change.unmatched.length} had no crossing to match on and may now '
-            'sit on a different branch',
-    ];
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${_labels[change.to.metric]!.$1} geometry: ${parts.join('; ')}.',
-        ),
-        duration: const Duration(seconds: 6),
-      ),
-    );
-  }
-
-  static String _plural(int n) => n == 1 ? 'point' : 'points';
 }
 
 /// The mini-tutorial: what to *build* to see that the geometry changed.

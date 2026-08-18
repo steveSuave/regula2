@@ -620,7 +620,12 @@ void main() {
   group('duplicate intersection branches are healed on load (Phase 120c)', () {
     /// A document with two intersection points on the same ordered pair
     /// at the same branch — which is what a pre-120c build could write.
-    Map<String, dynamic> documentWithDuplicate(int secondBranch) => {
+    /// [extraBranches] appends further points on that same pair, for the
+    /// case where the repair runs out of crossings to hand out.
+    Map<String, dynamic> documentWithDuplicate(
+      int secondBranch, {
+      List<int> extraBranches = const [],
+    }) => {
       'version': 1,
       'viewport': {
         'pan': [0, 0],
@@ -670,6 +675,13 @@ void main() {
           'parents': ['l', 'k'],
           'params': {'branchIndex': secondBranch},
         },
+        for (var i = 0; i < extraBranches.length; i++)
+          {
+            'id': 'p${i + 3}',
+            'type': 'IntersectionPoint',
+            'parents': ['l', 'k'],
+            'params': {'branchIndex': extraBranches[i]},
+          },
       ],
     };
 
@@ -703,10 +715,36 @@ void main() {
     test('a well-formed document is untouched', () {
       final doc = decodeDocument(documentWithDuplicate(0));
       expect(doc.repairedIntersections, isEmpty);
+      expect(doc.unrepairedIntersections, isEmpty);
+      expect(doc.hasIntersectionReport, isFalse);
       final points = doc.construction.objects
           .whereType<IntersectionPoint>()
           .toList();
       expect(points.map((p) => p.branchIndex).toList(), [1, 0]);
+    });
+
+    test('a surplus point has no crossing to move to, and is reported', () {
+      // A line and a circle have two crossings; this document holds
+      // three points on them. Re-pointing cannot fix that — there is
+      // nowhere for the third to go — and deleting an object the user
+      // made is not the decoder's call. So the third stays stacked and
+      // is *said out loud* (Phase 126e), because a defect the reader
+      // cannot repair is the one the user most needs to hear about.
+      final doc = decodeDocument(documentWithDuplicate(1, extraBranches: [1]));
+      expect(doc.repairedIntersections, ['p2']);
+      expect(doc.unrepairedIntersections, ['p3']);
+      expect(doc.hasIntersectionReport, isTrue);
+
+      final points = doc.construction.objects
+          .whereType<IntersectionPoint>()
+          .toList();
+      expect(points.map((p) => p.branchIndex).toList(), [1, 0, 1]);
+      // And it is still a genuine duplicate afterwards — the report is
+      // the whole of the fix, not a note attached to a silent one.
+      expect(
+        points[2].position!.distanceTo(points[0].position!),
+        lessThan(1e-9),
+      );
     });
   });
 }

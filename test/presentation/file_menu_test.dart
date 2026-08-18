@@ -167,6 +167,34 @@ void main() {
     expect(container.read(viewportProvider), incomingViewport);
     expect(container.read(documentSettingsProvider), incomingSettings);
     expect(container.read(commandStackProvider).canUndo, isFalse);
+    // A well-formed document says nothing. The report exists so the one
+    // that needed repairing is not silent; an unconditional notice on
+    // every open would train the user to dismiss it (Phase 126e).
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets('Open reports what the reader had to repair', (tester) async {
+    // The decoder has computed this list since Phase 120c and nothing
+    // has ever displayed it — a silent repair is how the reported
+    // document accumulated points nobody could account for in the first
+    // place. Two points share a crossing here, and a third has nowhere
+    // left to go: a line and a circle have exactly two.
+    await pumpEditor(tester);
+    picker.openResult = _fileWithBytes(
+      utf8.encode(jsonEncode(_documentWithThreeStackedPoints)),
+    );
+
+    await tapFileMenu(tester, 'Open…');
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(
+      find.textContaining('was stacked on a crossing another point'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('deleting the surplus point is the only fix'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('a cancelled Open changes nothing', (tester) async {
@@ -272,3 +300,65 @@ void main() {
     expect(container.read(constructionProvider).construction.isEmpty, isTrue);
   });
 }
+
+/// A pre-120c document: a line and a circle, and *three* intersection
+/// points all claiming branch 1. The reader moves one to the free
+/// crossing and has nowhere to put the third.
+const Map<String, dynamic> _documentWithThreeStackedPoints = {
+  'version': 1,
+  'viewport': {
+    'pan': [0, 0],
+    'scale': 1,
+    'rotation': 0,
+  },
+  'objects': [
+    {
+      'id': 'o',
+      'type': 'FreePoint',
+      'parents': <String>[],
+      'params': {'x': 0, 'y': 0},
+    },
+    {
+      'id': 'x',
+      'type': 'FreePoint',
+      'parents': <String>[],
+      'params': {'x': 4, 'y': 0},
+    },
+    {
+      'id': 'y',
+      'type': 'FreePoint',
+      'parents': <String>[],
+      'params': {'x': 0, 'y': 4},
+    },
+    {
+      'id': 'l',
+      'type': 'LineThroughTwoPoints',
+      'parents': ['o', 'x'],
+      'params': <String, dynamic>{},
+    },
+    {
+      'id': 'k',
+      'type': 'CircleCenterPoint',
+      'parents': ['o', 'y'],
+      'params': <String, dynamic>{},
+    },
+    {
+      'id': 'p1',
+      'type': 'IntersectionPoint',
+      'parents': ['l', 'k'],
+      'params': {'branchIndex': 1},
+    },
+    {
+      'id': 'p2',
+      'type': 'IntersectionPoint',
+      'parents': ['l', 'k'],
+      'params': {'branchIndex': 1},
+    },
+    {
+      'id': 'p3',
+      'type': 'IntersectionPoint',
+      'parents': ['l', 'k'],
+      'params': {'branchIndex': 1},
+    },
+  ],
+};

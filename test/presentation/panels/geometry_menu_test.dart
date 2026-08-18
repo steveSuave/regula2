@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,9 +8,12 @@ import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/preferences_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
@@ -153,6 +158,75 @@ void main() {
     // And it is not the constructor fallback that happens to be the same
     // literal — the theme is what supplied it.
     expect(painter.absoluteOutsideColor.a, greaterThan(0.2));
+  });
+
+  /// Two Euclidean-concyclic conics that *miss*, plus a point on their
+  /// first crossing — the `geometry_switch_test` witness. Both conics are
+  /// tier 1, so nothing moves when the geometry changes; only the
+  /// numbering does, which is precisely the change a user cannot see and
+  /// therefore has to be told about.
+  void buildReaddressingPair() {
+    final construction = Construction();
+    FivePointConic concyclic(String id, Vec2 centre, double radius) {
+      final points = [
+        for (var i = 0; i < 5; i++)
+          FreePoint(
+            id: '$id$i',
+            position:
+                centre +
+                Vec2(radius * math.cos(i * 1.1), radius * math.sin(i * 1.1)),
+          ),
+      ];
+      for (final p in points) {
+        construction.add(p);
+      }
+      final conic = FivePointConic(id: id, points: points);
+      construction.add(conic);
+      return conic;
+    }
+
+    final outer = concyclic('a', const Vec2(0, 0), 0.5);
+    final inner = concyclic('b', const Vec2(0, 0.02), 0.2);
+    construction.add(
+      IntersectionPoint(id: 'x', curve1: outer, curve2: inner, branchIndex: 0),
+    );
+    container.read(constructionProvider.notifier).replace(construction);
+  }
+
+  testWidgets('a re-addressing switch tells the user', (tester) async {
+    // The switch has reported since Phase 126 and the decoder's identical
+    // report has been computed and discarded since Phase 120c; Phase 126e
+    // is both of them arriving in the same place. Without this the
+    // re-addressing is exactly the kind of correct-value-nobody-sees that
+    // Phase 126b-d was four defects of.
+    await pumpEditor(tester);
+    buildReaddressingPair();
+    await tester.pump();
+
+    await choose(tester, 'Hyperbolic');
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(
+      find.text(
+        'Hyperbolic geometry: 1 intersection point kept its crossing '
+        'under a new branch number.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('an ordinary switch says nothing', (tester) async {
+    // Most of a document keeps its addresses in every geometry, so the
+    // usual report is no report. An unconditional notice would be noise
+    // and would train the user to dismiss the one that matters.
+    await pumpEditor(tester);
+    buildMidpoint();
+    await tester.pump();
+
+    await choose(tester, 'Hyperbolic');
+
+    expect(metric(), FundamentalConic.hyperbolic);
+    expect(find.byType(SnackBar), findsNothing);
   });
 
   testWidgets('the current geometry is ticked', (tester) async {

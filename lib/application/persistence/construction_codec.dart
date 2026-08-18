@@ -79,6 +79,7 @@ class DecodedDocument {
     this.settings = const DocumentSettings(),
     this.kernel = const DocumentKernel(),
     this.repairedIntersections = const [],
+    this.unrepairedIntersections = const [],
   });
 
   final Construction construction;
@@ -92,6 +93,22 @@ class DecodedDocument {
   /// well-formed document; non-empty means the file was written by a
   /// build that could collapse branches, and has now been healed.
   final List<String> repairedIntersections;
+
+  /// Ids of duplicates the reader could *not* heal: the curve pair has
+  /// no crossing left for them, so they arrive stacked on one and stay
+  /// there. Re-pointing cannot fix a document holding more intersection
+  /// points than its curves have crossings — only deleting the surplus
+  /// can, and that is the user's call, not the decoder's.
+  ///
+  /// This is the honest remainder of [repairedIntersections], and it is
+  /// the half that matters more: a repair the user need not know about
+  /// against a defect they have to act on. Same shape as
+  /// `GeometryChange.unmatched`, for the same reason.
+  final List<String> unrepairedIntersections;
+
+  /// Whether the open left anything the user should be told about.
+  bool get hasIntersectionReport =>
+      repairedIntersections.isNotEmpty || unrepairedIntersections.isNotEmpty;
 }
 
 /// Encodes [construction] and the current [viewport] into a JSON-encodable
@@ -222,19 +239,21 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
       throw FormatException('Object "${entry['id']}": ${error.message}');
     }
   }
-  final repaired = _separateDuplicateBranches(construction);
+  final separated = _separateDuplicateBranches(construction);
   return DecodedDocument(
     construction: construction,
     viewport: viewport,
     settings: settings,
     kernel: kernel,
-    repairedIntersections: repaired,
+    repairedIntersections: separated.repaired,
+    unrepairedIntersections: separated.unrepaired,
   );
 }
 
 /// Re-points any [IntersectionPoint]s that arrive sharing an ordered
-/// curve pair *and* a `branchIndex`, returning their ids. Empty for every
-/// well-formed document, which is all of `test/fixtures/`.
+/// curve pair *and* a `branchIndex`, returning the ids it moved and the
+/// ids it could not. Both empty for every well-formed document, which is
+/// all of `test/fixtures/`.
 ///
 /// Two such points are the **same intersection by construction**: they
 /// resolve to the same candidate on every recompute, for ever, and no
@@ -268,10 +287,13 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
 /// reconciled before this runs. Canonicalizing an old file's reversed pair
 /// can itself land two points on one crossing, which is the case this
 /// repair then separates.
-List<String> _separateDuplicateBranches(Construction construction) {
+({List<String> repaired, List<String> unrepaired}) _separateDuplicateBranches(
+  Construction construction,
+) {
   final candidatesOf = <String, List<ProjPoint>>{};
   final taken = <String, Set<int>>{};
   final repaired = <String>[];
+  final unrepaired = <String>[];
 
   // Pass 1: which crossing each point claims, and who claimed it first.
   // Two passes, because a one-pass repair can re-point a duplicate onto a
@@ -308,16 +330,25 @@ List<String> _separateDuplicateBranches(Construction construction) {
     if (held.add(object.branchIndex)) {
       continue;
     }
+    var moved = false;
     for (var i = 0; i < candidatesOf[key]!.length; i++) {
       if (taken[key]!.contains(i) || !held.add(i)) {
         continue;
       }
       construction.setIntersectionBranch(object.id, i);
       repaired.add(object.id);
+      moved = true;
       break;
     }
+    // No free crossing on this pair. The point stays where the file put
+    // it — stacked on a crossing another point already holds, which no
+    // drag can separate — and is reported rather than hidden, because
+    // the only remaining fix is one the user has to choose.
+    if (!moved) {
+      unrepaired.add(object.id);
+    }
   }
-  return repaired;
+  return (repaired: repaired, unrepaired: unrepaired);
 }
 
 /// The document's kernel block (PLAN §M-CK): absent → Euclidean, which is

@@ -87,6 +87,7 @@ import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/delete_selection.dart';
 import 'presentation/panels/export_dialog.dart';
 import 'presentation/panels/geometry_menu.dart';
+import 'presentation/panels/intersection_report.dart';
 import 'presentation/panels/object_tree_panel.dart';
 import 'presentation/panels/toolbar.dart';
 import 'presentation/shortcuts/app_shortcuts.dart';
@@ -282,6 +283,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       ref.read(constructionProvider.notifier).replace(decoded.construction);
       ref.read(viewportProvider.notifier).set(decoded.viewport);
       ref.read(documentSettingsProvider.notifier).set(decoded.settings);
+      // The reader may have moved intersection points the file had
+      // stacked on one crossing, and may have found some it could not
+      // move. Both are invisible on the canvas — a re-pointed crossing
+      // looks exactly like the one the user tapped — so they are said
+      // out loud, in the same place a geometry switch says its own
+      // re-addressing (Phase 126e). The kernel needs no separate apply:
+      // it rides on `decoded.construction`, which the codec built with
+      // it, and reading `decoded.kernel` here would be a second source.
+      final repair = decodeRepairMessage(decoded);
+      if (repair != null && mounted) {
+        showIntersectionReport(context, repair);
+      }
     } on FormatException catch (error) {
       if (!mounted) {
         return;
