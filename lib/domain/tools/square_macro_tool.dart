@@ -5,6 +5,7 @@ import '../construction/objects/intersection_point.dart';
 import '../construction/objects/perpendicular_line.dart';
 import '../construction/objects/segment.dart';
 import 'multi_point_tool.dart';
+import 'regular_polygon_orbit.dart';
 
 /// Two taps make a square: the tapped points are adjacent corners A and
 /// B, the other two corners are *derived*, so dragging A or B keeps the
@@ -31,6 +32,21 @@ import 'multi_point_tool.dart';
 /// existing point identically coincident with it (stamping the square
 /// over the same two corners again) is reused, and that corner's hidden
 /// scaffolding is not added.
+///
+/// **Under a proper absolute that composition builds a Saccheri
+/// quadrilateral rather than a square** (Phase 129, PLAN §"The macro
+/// triage"). Every step of it generalizes — the perpendicular and the
+/// compass circle are both metric — and the figure still comes out with
+/// three equal sides and two right base angles, which in a Cayley–Klein
+/// plane is a *different quadrilateral*: its summit measures longer than
+/// its base in the hyperbolic plane and shorter in the elliptic one, and
+/// its summit angles are not right, because no such plane has a
+/// quadrilateral with four of them.
+///
+/// A square is the regular 4-gon, so the CK route is
+/// [regularPolygonOrbit] with n = 4 — the same construction
+/// `RegularPolygonMacroTool` takes, and the taps mean what they mean
+/// there: the first is the *centre* and the second one corner.
 class SquareMacroTool extends MultiPointTool {
   SquareMacroTool({required super.newId});
 
@@ -39,6 +55,24 @@ class SquareMacroTool extends MultiPointTool {
 
   @override
   List<GeoObject> buildObjects(List<GeoPoint> points) {
+    if (!absolute.isEuclidean) {
+      final orbit = regularPolygonOrbit(
+        centre: points[0],
+        vertex: points[1],
+        sideCount: 4,
+        newId: newId,
+        dedupe: dedupedDerivedPoint,
+      );
+      return [
+        ...orbit.created,
+        for (var k = 0; k < 4; k++)
+          Segment(
+            id: newId(),
+            point1: orbit.vertices[k],
+            point2: orbit.vertices[(k + 1) % 4],
+          ),
+      ];
+    }
     final a = points[0];
     final b = points[1];
     const hidden = ObjectAttributes(visible: false);

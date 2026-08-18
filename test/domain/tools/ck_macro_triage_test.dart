@@ -4,7 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
+import 'package:regula/domain/construction/objects/rotated_point.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
@@ -13,7 +19,10 @@ import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/kite_macro_tool.dart';
 import 'package:regula/domain/tools/multi_point_tool.dart';
+import 'package:regula/domain/tools/point_resolution.dart';
+import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/square_macro_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 
 /// The nine macro tools that survived Phase 128, sorted by what happens
@@ -30,6 +39,8 @@ import 'package:regula/domain/tools/tool.dart';
 int _id = 0;
 
 void main() {
+  const proper = [FundamentalConic.hyperbolic, FundamentalConic.elliptic];
+
   /// Feeds [taps] to [tool] in a document of [absolute]'s geometry until
   /// it commits, and applies the command.
   Construction stamped(
@@ -145,6 +156,169 @@ void main() {
       expect(sum(FundamentalConic.euclidean), closeTo(math.pi, 1e-12));
       expect(sum(FundamentalConic.hyperbolic), lessThan(math.pi - 0.05));
       expect(sum(FundamentalConic.elliptic), greaterThan(math.pi + 0.04));
+    });
+  });
+
+  group('a defined figure that is not the one it is named after', () {
+    /// The square tool's Euclidean composition, built by hand because the
+    /// tool no longer takes it under a proper absolute: the perpendicular
+    /// at each end of AB met with the compass circle of radius |AB| about
+    /// that end, both crossings taken on the same side.
+    List<GeoPoint> saccheri(FundamentalConic metric) {
+      final absolute = Absolute.of(metric);
+      final construction = Construction(kernel: DocumentKernel(metric: metric));
+      final a = FreePoint(id: 'A', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'B', position: const Vec2(0.4, 0));
+      final base = Segment(id: 'AB', point1: a, point2: b);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(base);
+      final summit = <GeoPoint>[];
+      for (final (i, end) in [b, a].indexed) {
+        final perpendicular = PerpendicularLine(
+          id: 'p$i',
+          through: end,
+          reference: base,
+        );
+        final compass = CompassCircle(
+          id: 'c$i',
+          center: end,
+          radiusPoint1: a,
+          radiusPoint2: b,
+        );
+        construction
+          ..add(perpendicular)
+          ..add(compass);
+        // The branch above the base, whichever index that is under this
+        // absolute — the candidate order is the conic solver's.
+        final above = nearestIntersectionBranch(
+          perpendicular,
+          compass,
+          const Vec2(0, 10),
+          absolute: absolute,
+        )!.index;
+        final corner = IntersectionPoint(
+          id: 'v$i',
+          curve1: perpendicular,
+          curve2: compass,
+          branchIndex: above,
+          absolute: absolute,
+        );
+        construction.add(corner);
+        summit.add(corner);
+      }
+      return [a, b, summit[0], summit[1]];
+    }
+
+    test('the square composition builds a Saccheri quadrilateral', () {
+      for (final metric in proper) {
+        final absolute = Absolute.of(metric);
+        final v = saccheri(metric);
+        final (a, b, c, d) = (v[0], v[1], v[2], v[3]);
+        final base = span(absolute, a, b);
+        expect(
+          span(absolute, b, c),
+          closeTo(base, 1e-9),
+          reason: '$metric: the legs are compass images of the base',
+        );
+        expect(span(absolute, d, a), closeTo(base, 1e-9));
+        expect(
+          angleAt(absolute, a, b, d),
+          closeTo(math.pi / 2, 1e-12),
+          reason: '$metric: and the base angles are right by construction',
+        );
+        expect(angleAt(absolute, b, a, c), closeTo(math.pi / 2, 1e-12));
+        expect(
+          span(absolute, c, d),
+          isNot(closeTo(base, 1e-6)),
+          reason:
+              '$metric: but the summit is not the base, so three sides '
+              'equal and one not — a Saccheri quadrilateral, not a square',
+        );
+        expect(
+          angleAt(absolute, c, b, d),
+          isNot(closeTo(math.pi / 2, 1e-6)),
+          reason:
+              '$metric: and no Cayley–Klein plane has a quadrilateral with '
+              'four right angles',
+        );
+      }
+    });
+
+    test('the summit runs long in hyperbolic and short in elliptic', () {
+      double ratio(FundamentalConic metric) {
+        final absolute = Absolute.of(metric);
+        final v = saccheri(metric);
+        return span(absolute, v[2], v[3]) / span(absolute, v[0], v[1]);
+      }
+
+      expect(ratio(FundamentalConic.hyperbolic), greaterThan(1.05));
+      expect(ratio(FundamentalConic.elliptic), lessThan(0.95));
+    });
+
+    test('so the square tool takes the orbit, and is the 4-gon', () {
+      for (final metric in proper) {
+        final absolute = Absolute.of(metric);
+        final taps = const [Vec2(0, 0), Vec2(0.35, 0)];
+        final square = corners(
+          stamped(SquareMacroTool(newId: () => 'n${_id++}'), absolute, taps),
+        );
+        expect(
+          square,
+          hasLength(5),
+          reason: 'the centre is a visible point but not a corner',
+        );
+        final ring = square.sublist(1);
+        final side = span(absolute, ring[0], ring[1]);
+        for (var k = 1; k < 4; k++) {
+          expect(
+            span(absolute, ring[k], ring[(k + 1) % 4]),
+            closeTo(side, 1e-9),
+            reason: '$metric: side $k',
+          );
+        }
+        for (var k = 0; k < 4; k++) {
+          expect(
+            angleAt(absolute, ring[k], ring[(k + 3) % 4], ring[(k + 1) % 4]),
+            closeTo(angleAt(absolute, ring[0], ring[3], ring[1]), 1e-9),
+            reason: '$metric: equal angles too — it is regular, corner $k',
+          );
+        }
+
+        final polygon = corners(
+          stamped(
+            RegularPolygonMacroTool(newId: () => 'n${_id++}', sideCount: 4),
+            absolute,
+            taps,
+          ),
+        );
+        expect(
+          [for (final p in square) p.position],
+          [for (final p in polygon) p.position],
+          reason: '$metric: a square is the regular 4-gon, built the once',
+        );
+      }
+    });
+
+    test('the Euclidean square keeps its compass-and-straightedge route', () {
+      final c = stamped(
+        SquareMacroTool(newId: () => 'n${_id++}'),
+        Absolute.euclidean,
+        const [Vec2(0, 0), Vec2(2, 0)],
+      );
+      final v = corners(c);
+      expect(v, hasLength(4), reason: 'two taps are two adjacent corners');
+      expect(c.objects.whereType<CompassCircle>(), hasLength(2));
+      expect(c.objects.whereType<PerpendicularLine>(), hasLength(2));
+      expect(c.objects.whereType<RotatedPoint>(), isEmpty);
+      for (var k = 0; k < 4; k++) {
+        expect(
+          v[k].position!.distanceTo(v[(k + 1) % 4].position!),
+          closeTo(2, 1e-12),
+          reason: 'side $k',
+        );
+      }
     });
   });
 

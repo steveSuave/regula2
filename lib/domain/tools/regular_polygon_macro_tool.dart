@@ -4,6 +4,7 @@ import '../construction/geo_object.dart';
 import '../construction/objects/rotated_point.dart';
 import '../construction/objects/segment.dart';
 import 'multi_point_tool.dart';
+import 'regular_polygon_orbit.dart';
 
 /// Two taps make a regular polygon of [sideCount] sides, and **what the
 /// two taps mean depends on the document's geometry** (Phase 128, PLAN
@@ -89,23 +90,17 @@ class RegularPolygonMacroTool extends MultiPointTool {
   }
 
   /// A centre and one vertex; the rest are that vertex's orbit under the
-  /// cyclic rotation group of order [sideCount] fixing the centre.
+  /// cyclic rotation group of order [sideCount] fixing the centre. Shared
+  /// with the square, which is this with n = 4.
   List<GeoPoint> _orbit(List<GeoPoint> points, List<GeoPoint> created) {
-    final centre = points[0];
-    final vertices = <GeoPoint>[points[1]];
-    for (var k = 1; k < sideCount; k++) {
-      final candidate = RotatedPoint(
-        id: newId(),
-        point: points[1],
-        center: centre,
-        angle: 2 * math.pi * k / sideCount,
-      );
-      final vertex = dedupedDerivedPoint(candidate);
-      if (identical(vertex, candidate)) {
-        created.add(candidate);
-      }
-      vertices.add(vertex);
-    }
-    return vertices;
+    final orbit = regularPolygonOrbit(
+      centre: points[0],
+      vertex: points[1],
+      sideCount: sideCount,
+      newId: newId,
+      dedupe: dedupedDerivedPoint,
+    );
+    created.addAll(orbit.created);
+    return orbit.vertices;
   }
 }
