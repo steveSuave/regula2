@@ -1,0 +1,30 @@
+lib/application/export/png_exporter.dart
+  s_864df67dc11e5d::t_2c48a9d74b76b6 77,114,148,162
+lib/presentation/canvas/geometry_canvas.dart
+  s_864df67dc11e5d::t_2c48a9d74b76b6 224-226
+lib/main.dart
+  s_864df67dc11e5d::t_2c48a9d74b76b6 387-388
+test/presentation/canvas/ck_presentation_test.dart
+  s_864df67dc11e5d::t_6d65ef2c3c3a96 1,3,16,25-26,218-294
+  s_864df67dc11e5d::t_55b45e742b2bc7 295
+lib/presentation/theme/app_theme.dart
+  s_864df67dc11e5d::t_e8a48ab6807a2e 34-47,75,87-92,107,116,119-122,124-134,145
+lib/presentation/canvas/geometry_painter.dart
+  s_864df67dc11e5d::t_2c48a9d74b76b6 84,171,174-180,276,1139-1140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "4a302528460e09adb73bff8f89701a887a7b16ba",
+  "prompts": {},
+  "sessions": {
+    "s_864df67dc11e5d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e05f95ba-3b30-45c5-a600-d211daa43220",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
