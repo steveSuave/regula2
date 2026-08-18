@@ -8,6 +8,34 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 133 (V2 Session 35) — 2026-08-18
+
+**Done — Phase 127: `RotatedPoint`, and the deferral re-examined.** On `phase-127-ck-rotation`, one commit. The last piece of Phase 125's per-kind debt that was a **gap** rather than a refusal, and it closed by finding that the thing the deferral asked for was never needed. Suite **2557** green (from 2532), analyze clean, 32 goldens byte-identical.
+
+- **The deferral said two things and only one of them was true.** It said a CK rotation about a general centre needs an orthonormal frame in the pencil through it, and that the sign of the dual form varies across that pencil so the angle is not uniformly circular. No frame is needed. The other half is true — and it is about the **centre**, not the pencil.
+- **No frame, because the isometries are a Lie group.** The maps preserving the absolute have Lie algebra `{Ω⁻¹K : K antisymmetric}`, and every 3×3 antisymmetric matrix is a cross-product `[C]ₓ` whose kernel is `C` — so the one-parameter group fixing `C` is `exp(t·Ω*[C]ₓ)`, with no basis chosen anywhere. The generator satisfies `N³ = −λ²N`, which closes the exponential into **Rodrigues' formula**: two matrix products and no series.
+- **One formula for all three geometries.** Expanded under the Euclidean dual `diag(1,1,0)` it reproduces the shipped `ProjTransform.rotation` **entry for entry**, `λ = 1` and all — the same relationship `harmonicHomology` has to `reflection`, and the third time in this milestone that a Euclidean formula turned out to be a general construction with the absolute substituted. The Euclidean route is kept anyway, exact and cheaper, per the Phase 122/124 rule.
+- **`sign(λ²)` is the classical trichotomy of hyperbolic isometries arriving as a sign test.** `λ²` is the absolute's quadratic form at the centre up to sign and scale, so its sign is *where the centre sits*. Positive: inside, and the pencil through an interior point misses the dual conic entirely, so its angle measure is elliptic and the rotation is as circular as a Euclidean one — the case Phase 125 believed did not exist. Zero: on the absolute, a parabolic horolation with no angle at all. Negative: outside, a **boost** along the centre's polar, whose parameter is a rapidity. The last two refuse with the zero map, because `cos`/`sin` there would answer with a *different* isometry rather than an approximate one.
+- **Two conventions pinned rather than inherited.** The sign of `λ` is free and the hyperbolic dual is stored as the adjugate, which is `−Ω⁻¹`, so a generator taken at face value turns clockwise in one geometry and counter-clockwise in another — handedness is anchored explicitly. And the centre is **dephased first**: `λ²` scales as `k²`, so an `i`-scaled representative of an ordinary interior centre would fail the realness test and be refused as a boost. `ProjPoint.dephased` is `ck_measure.dart`'s private canonicalization promoted, with its Phase 125 exactness note intact.
+- **Also merged this session**: Phase 126e to `main` (`ee6b7fc`).
+
+**Next**
+- Merge `phase-127-ck-rotation`.
+- **The macro tools that stand on `RotatedPoint`** — equilateral triangle, regular polygon — now have a CK rotation under them and have not been looked at in a CK plane. An equilateral triangle by three CK rotations is genuinely equilateral; the regular-polygon tool's angle arithmetic is unmeasured either way.
+- The **wasm browser smoke** is still one manual step: open the deployed URL, confirm the build boots and a construction can be drawn.
+- `visibleWorldBounds` contributes nothing for a CK circle, so fit-to-construction under-frames a hyperbolic document.
+- **The absolute's radius is fixed at 1 world unit** — still written down rather than built.
+- Phase 125's remaining debt is now per-kind correctness beyond angle, rotation and the handful already pinned. The refusals stand and are documented at their sites.
+
+**Gotchas**
+- **A deferral's stated reason is a claim, and this one had been carried forward unexamined through three phases.** It was in the kind's `recompute`, in PLAN, and in three STATUS entries, each time as "the one honest gap". Re-deriving it from scratch took less time than the citations had. When a note explains why something cannot be done, the note is evidence about what its author knew, not about the mathematics.
+- **`λ²` is not the thing to compute in closed form.** It equals `det(Ω)·⟨C,C⟩` for the two *proper* absolutes and nothing like it for the Euclidean one, whose dual is supplied independently of its rank-1 point conic. Reading it off the largest entry of `N³/N` is uniform across all three, needs no determinant, and assumes nothing about how the stored dual is normalized — which matters, because the hyperbolic dual is stored as the adjugate and therefore carries a sign the elliptic one does not.
+- **The orientation bug this would have shipped is invisible at the disc centre**, where both proper absolutes agree with the Euclidean matrix. The counter-clockwise test uses an off-centre centre for that reason; a test at the origin passes under either sign.
+- **A CK construction can fail rescaling invariance in a way a Euclidean one cannot**, and the square root is where. Any quantity that scales as `k²` and is then tested for realness will refuse a legitimate complex representative of a real object. `dephased` before the test, not after.
+- The macro tools were not touched and their behaviour under a proper absolute is now *different* rather than *absent* — they used to inherit a null apex and now inherit a real one. Nothing tests what they build there.
+
+---
+
 ## Session 132 (V2 Session 34) — 2026-08-18
 
 **Done — Phase 126e: the two silent re-addressings, said out loud.** On `phase-126e-load-report`, two commits. The checklist line was "wire the decoder's `repairedIntersections` report into the place the geometry switch already reports"; it turned out to be two reports rather than one, and one of them did not exist yet. Suite **2532** green (from 2520), analyze clean, 32 goldens byte-identical, browser gate green.
