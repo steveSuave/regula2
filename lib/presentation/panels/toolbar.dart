@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/object_ids.dart';
+import '../../application/providers/construction_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/apollonius_circle.dart';
@@ -161,6 +162,16 @@ class GeometryToolbar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tool = ref.watch(toolProvider).tool;
+    // The regular-polygon tool's two taps mean two adjacent corners in a
+    // Euclidean document and centre-then-corner in a proper one (Phase
+    // 128), so the label has to say which. Narrowed with `select` because
+    // the toolbar must not rebuild on every construction change: the
+    // metric changes only through the geometry menu.
+    final euclidean = ref.watch(
+      constructionProvider.select(
+        (state) => state.construction.kernel.isDefault,
+      ),
+    );
 
     // Points is the catch-all for TwoPointTools whose builder isn't
     // claimed by Lines, Circles, Transform or Measure: that covers
@@ -639,7 +650,9 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.kiteMacroTool,
             ),
             (
-              'Regular polygon (two corners)…',
+              euclidean
+                  ? 'Regular polygon (two corners)…'
+                  : 'Regular polygon (centre, then a corner)…',
               regularPolygonPick,
               AppAction.regularPolygonMacroTool,
             ),

@@ -4,7 +4,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/domain/commands/set_geometry_command.dart';
+import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/nine_point_circle.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
@@ -529,6 +532,50 @@ void main() {
       otherRowBetween,
       isFalse,
       reason: 'nothing else sits between Point and Midpoint',
+    );
+  });
+
+  testWidgets('the regular-polygon item says what its two taps mean, and '
+      "the document's geometry decides", (tester) async {
+    await pumpEditor(tester);
+
+    Future<String> subtitle() async {
+      await tester.tap(find.byIcon(Icons.crop_square));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Regular polygon…'),
+        50,
+        scrollable: find.byType(Scrollable).last,
+      );
+      final row = tester.widget<ToolMenuRow>(
+        find.ancestor(
+          of: find.text('Regular polygon…'),
+          matching: find.byType(ToolMenuRow),
+        ),
+      );
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+      return row.label;
+    }
+
+    expect(await subtitle(), contains('two corners'));
+
+    container
+        .read(commandStackProvider.notifier)
+        .execute(
+          SetGeometryCommand(
+            const DocumentKernel(metric: FundamentalConic.hyperbolic),
+          ),
+        );
+    await tester.pumpAndSettle();
+
+    expect(
+      await subtitle(),
+      contains('centre, then a corner'),
+      reason:
+          'the same gesture builds an orbit rather than a chain in a '
+          'proper geometry (Phase 128), and the label is the only place '
+          'that says so',
     );
   });
 
