@@ -22,6 +22,30 @@ import 'grid_layout.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
 
+/// The canvas rect minus the disc — the region that is not part of the
+/// plane, as one even-odd path.
+///
+/// **Even-odd rather than `Path.combine(PathOperation.difference, …)`,
+/// and that is a bug fix rather than a simplification (Phase 126d).** The
+/// boolean difference produced the whole rect — no hole at all — on the
+/// web renderer whenever the disc lay *entirely inside* the canvas, and
+/// the correct annulus as soon as any part of it hung over an edge. Every
+/// test stayed green because the VM harness has a different path-ops
+/// implementation from CanvasKit, so the defect was only ever visible in
+/// a browser: a hyperbolic document showed a uniformly washed canvas with
+/// the rim floating on it, and looked correct the moment the user zoomed
+/// far enough to push the boundary off screen.
+///
+/// The even-odd rule needs no boolean op to express the same region. A
+/// point inside both the rect and the disc has crossing number two, which
+/// is even, so it is not filled; a point in the rect alone has one. That
+/// is exact, portable and cheaper, and it is the shape to reach for
+/// whenever a fill needs a hole in it.
+Path outsideDiscPath(Size size, Offset centre, double radius) => Path()
+  ..fillType = PathFillType.evenOdd
+  ..addRect(Offset.zero & size)
+  ..addOval(Rect.fromCircle(center: centre, radius: radius));
+
 /// Where the document's fundamental conic is on screen, or null when its
 /// geometry has no real absolute to draw (Phase 126).
 ///
@@ -267,13 +291,10 @@ class GeometryPainter extends CustomPainter {
     if (disc == null) {
       return;
     }
-    final outside = Path.combine(
-      PathOperation.difference,
-      Path()..addRect(Offset.zero & size),
-      Path()
-        ..addOval(Rect.fromCircle(center: disc.centre, radius: disc.radius)),
+    canvas.drawPath(
+      outsideDiscPath(size, disc.centre, disc.radius),
+      Paint()..color = absoluteOutsideColor,
     );
-    canvas.drawPath(outside, Paint()..color = absoluteOutsideColor);
     canvas.drawCircle(
       disc.centre,
       disc.radius,

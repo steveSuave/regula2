@@ -49,7 +49,9 @@ flutter run -d chrome                                       # web smoke
 flutter run -d <device-id>                                  # mobile smoke
 ```
 
-CI gate: `flutter analyze && flutter test`.
+CI gate: `flutter analyze && flutter test && flutter test --platform chrome test/web`.
+
+**`test/web/` is the browser gate, and it exists because a green suite is not evidence about the renderer.** Web is the compile target (Phase 122), and the VM test harness uses a different `dart:ui` implementation. Phase 126d shipped a defect a user found in a browser with every test passing: `Path.combine(PathOperation.difference, rect, oval)` returns the rect *unbroken* on the web renderer when the oval is entirely contained, and the correct annulus on the VM. Anything whose correctness rests on the rasterizer rather than on our own arithmetic — path booleans, fill rules, blend modes, text metrics — belongs in `test/web/` behind `@TestOn('browser')`, which a plain `flutter test` skips. Prefer a formulation with no platform-dependent step at all (an even-odd fill needs no boolean op) and pin *that* on both.
 
 ## Conventions
 

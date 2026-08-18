@@ -139,12 +139,17 @@ class _RegionMarqueePainter extends CustomPainter {
       canvas.drawRect(Offset.zero & size, scrim);
       return;
     }
+    // Even-odd rather than a boolean difference, for the reason recorded
+    // at `outsideDiscPath` (Phase 126d): on the web renderer the
+    // difference op returns the whole outer rect — an unbroken scrim over
+    // the picked region — whenever the inner shape is entirely contained,
+    // which is exactly the case here. Not reported against this overlay,
+    // but it is the same defect and it was one grep away.
     canvas.drawPath(
-      Path.combine(
-        PathOperation.difference,
-        Path()..addRect(Offset.zero & size),
-        Path()..addRect(rect),
-      ),
+      Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(Offset.zero & size)
+        ..addRect(rect),
       scrim,
     );
     canvas.drawRect(

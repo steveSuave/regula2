@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/export/png_exporter.dart';
@@ -12,6 +14,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/fit_viewport.dart';
+import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/canvas/label_layout.dart';
 import 'package:regula/presentation/theme/app_theme.dart';
 
@@ -214,6 +217,54 @@ void main() {
         closeTo(viewport.worldToScreenLength(1), 1e-9),
       );
     });
+  });
+
+  group('the wash is a hole, at every containment', () {
+    // The reported bug, and the sharpest one in the milestone: with the
+    // disc entirely inside the canvas the *whole* surface was washed and
+    // only the rim showed; push any part of the boundary off an edge and
+    // it rendered correctly. `Path.combine(PathOperation.difference, …)`
+    // returns the outer rect unbroken on the web renderer when the inner
+    // shape is fully contained. The VM harness has a different path-ops
+    // implementation, so no test here could see it — and the shape test
+    // that existed happened to be written at a zoom where the disc *did*
+    // overhang, which is the only reason it was ever green for the right
+    // reason.
+    //
+    // What is pinned instead is the technique that makes the question
+    // moot: an even-odd fill expresses the same region with no boolean
+    // op, so there is no implementation left to differ.
+    const size = Size(400, 300);
+
+    test('it is even-odd, which is what makes it portable', () {
+      final path = outsideDiscPath(size, const Offset(200, 150), 80);
+      expect(path.fillType, PathFillType.evenOdd);
+    });
+
+    for (final (name, centre, radius) in [
+      ('fully contained', Offset(200, 150), 80.0),
+      ('overhanging one edge', Offset(200, 150), 170.0),
+      ('larger than the canvas', Offset(200, 150), 600.0),
+      ('entirely off canvas', Offset(-900, 150), 80.0),
+    ]) {
+      test('a $name disc leaves a hole exactly where it is', () {
+        final path = outsideDiscPath(size, centre, radius);
+        // A ring of samples just inside the rim is never washed...
+        for (var i = 0; i < 16; i++) {
+          final t = i * math.pi / 8;
+          final p = centre + Offset(math.cos(t), math.sin(t)) * (radius * 0.92);
+          if (!(Offset.zero & size).contains(p)) continue;
+          expect(path.contains(p), isFalse, reason: '$name inside at \$t');
+        }
+        // ...and one just outside it always is.
+        for (var i = 0; i < 16; i++) {
+          final t = i * math.pi / 8;
+          final p = centre + Offset(math.cos(t), math.sin(t)) * (radius * 1.08);
+          if (!(Offset.zero & size).contains(p)) continue;
+          expect(path.contains(p), isTrue, reason: '$name outside at \$t');
+        }
+      });
+    }
   });
 
   group('the region outside the plane is visibly outside', () {

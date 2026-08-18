@@ -17,3 +17,12 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test --exclude-tags golden
+      # Web is the primary target and the VM harness is not it. Phase 126d
+      # shipped a defect a user found in a browser through a fully green
+      # suite: `Path.combine(PathOperation.difference, ...)` leaves no hole
+      # for a fully contained shape on the web renderer, and does on the
+      # VM. `test/web/` holds what has to be checked on the real
+      # rasterizer; scoped to that directory because `--platform chrome`
+      # compiles every file it is given to JS, and the whole suite would
+      # cost minutes to say nothing new.
+      - run: flutter test --platform chrome test/web

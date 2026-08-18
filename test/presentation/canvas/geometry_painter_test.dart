@@ -954,16 +954,22 @@ void main() {
       // And the wash: the region outside the disc, so a point well beyond
       // the boundary is inside the painted path and one inside the disc
       // is not. That is the whole message — out there is not the plane.
+      //
+      // Both samples are kept off the world axes deliberately. This
+      // viewport puts the disc's centre at the canvas *corner*, so a
+      // point with `y = 0` lands exactly on the rect's top edge, where
+      // `Path.contains` is entitled to answer either way — which it duly
+      // started doing when the path became even-odd (Phase 126d).
       final paths = _PathRecordingCanvas();
       painterFor(construction, viewport: viewport).paint(paths, size);
       expect(paths.paths, hasLength(1));
       final outside = paths.paths.single;
       expect(
-        outside.contains(viewport.worldToScreen(const Vec2(2.5, 0))),
+        outside.contains(viewport.worldToScreen(const Vec2(2.5, -0.3))),
         isTrue,
       );
       expect(
-        outside.contains(viewport.worldToScreen(const Vec2(0.3, 0))),
+        outside.contains(viewport.worldToScreen(const Vec2(0.3, -0.3))),
         isFalse,
       );
     });
