@@ -67,7 +67,7 @@ class GeometryMenu extends ConsumerWidget {
         PopupMenuItem(
           value: () => showGeometryGuide(context),
           child: const _GeometryRow(
-            title: 'What can I do with this?…',
+            title: 'Help…',
             subtitle: 'Four things to build that look different in each.',
           ),
         ),

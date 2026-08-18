@@ -251,7 +251,7 @@ void main() {
       find.byTooltip('Geometry: Euclidean, hyperbolic or elliptic'),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('What can I do with this?…'));
+    await tester.tap(find.text('Help…'));
     await tester.pumpAndSettle();
     expect(find.text('Trying the other geometries'), findsOneWidget);
     expect(find.text('Triangle angle sum'), findsOneWidget);
