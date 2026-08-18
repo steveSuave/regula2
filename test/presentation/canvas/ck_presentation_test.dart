@@ -1,6 +1,6 @@
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/export/png_exporter.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
@@ -13,6 +13,7 @@ import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/fit_viewport.dart';
 import 'package:regula/presentation/canvas/label_layout.dart';
+import 'package:regula/presentation/theme/app_theme.dart';
 
 /// Phase 126b: the three things a Cayley–Klein document needs from the
 /// *presentation* layer, each of which was wrong on first release.
@@ -21,6 +22,8 @@ import 'package:regula/presentation/canvas/label_layout.dart';
 /// asks whether a kind's value responds to the absolute; every one of
 /// these bugs was a correct value that never reached the screen.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   const hyperbolic = DocumentKernel(metric: FundamentalConic.hyperbolic);
   const elliptic = DocumentKernel(metric: FundamentalConic.elliptic);
 
@@ -209,6 +212,84 @@ void main() {
                 viewport.worldToScreen(Vec2.zero))
             .distance,
         closeTo(viewport.worldToScreenLength(1), 1e-9),
+      );
+    });
+  });
+
+  group('the region outside the plane is visibly outside', () {
+    // Reported after 126b's first pass: "the hyperbolic circle has the
+    // same background colour as the outer space". The wash was being
+    // drawn, in the right shape — it was one alpha of 0.09 applied to the
+    // absolute's colour, which measures a 5 % luminance step over the
+    // light canvas. Correct and invisible are different things.
+    //
+    // The fix is a per-theme colour rather than a bigger shared alpha:
+    // the two canvases start from opposite ends, so the same alpha that
+    // is barely a tint over white is a large lift over near-black.
+    const size = Size(400, 300);
+
+    /// Relative luminance, sRGB-encoded — good enough to compare two
+    /// washes of one hue, which is all this is for.
+    double luminance(Color c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+
+    Future<double> step(Color background, Color wash) async {
+      final construction = Construction(kernel: hyperbolic);
+      construction.add(FreePoint(id: 'a', position: const Vec2(0.1, 0.1)));
+      final state = fittedToAbsolute(FundamentalConic.hyperbolic, size)!;
+      final image = await renderConstructionImage(
+        construction,
+        viewport: state,
+        logicalSize: size,
+        background: background,
+        absoluteOutsideColor: wash,
+        defaultColor: const Color(0xFF000000),
+      );
+      final view = CanvasViewport(state);
+      final centre = view.worldToScreen(Vec2.zero);
+      final radius = view.worldToScreenLength(1);
+      final data = (await image.toByteData())!;
+      Color at(int x, int y) {
+        final o = (y * image.width + x) * 4;
+        return Color.fromARGB(
+          data.getUint8(o + 3),
+          data.getUint8(o),
+          data.getUint8(o + 1),
+          data.getUint8(o + 2),
+        );
+      }
+
+      final inside = at(centre.dx.round(), centre.dy.round());
+      final outside = at((centre.dx + radius * 1.2).round(), centre.dy.round());
+      image.dispose();
+      return (luminance(inside) - luminance(outside)).abs();
+    }
+
+    test('the light canvas separates inside from outside', () async {
+      final theme = AppTheme.light().extension<CanvasColors>()!;
+      expect(
+        await step(const Color(0xFFFFFFFF), theme.absoluteOutside),
+        greaterThan(0.10),
+      );
+    });
+
+    test('and so does the dark one, at its own alpha', () async {
+      final theme = AppTheme.dark().extension<CanvasColors>()!;
+      expect(
+        await step(const Color(0xFF14181D), theme.absoluteOutside),
+        greaterThan(0.06),
+      );
+    });
+
+    test('the old single alpha would not have passed either', () async {
+      // The regression itself, kept as a case: 0.09 of the absolute's
+      // colour is what shipped, and it is what "the same background
+      // colour" looked like.
+      expect(
+        await step(
+          const Color(0xFFFFFFFF),
+          const Color(0xFFB26A00).withValues(alpha: 0.09),
+        ),
+        lessThan(0.06),
       );
     });
   });

@@ -17,8 +17,10 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 - **The plane was two pixels across.** The absolute is the unit circle in *world* units; the default scale is one pixel per world unit. So the entire hyperbolic plane was a dot at the origin while the user's figure sat hundreds of units outside it — outside the plane, where the angles collapse to zero. `fittedToAbsolute` frames the disc on switching.
 - **And that split one constant into two.** Framing needed `maxScale` above 50, which moved six goldens — the useful part of the whole exercise. One number was answering two different questions: how far the *user* may zoom (a hyperbolic document needs a lot) and how far a *fit* may blow a tiny figure up (unchanged). Now `maxScale` = 2000 and `maxFitScale` = 50.
 
+**Then — Phase 126c, reported straight after.** "The hyperbolic circle has the same background colour as the outer space." The wash was drawn and in the right shape; it was one alpha of **0.09** on the absolute's colour, which measures a 5 % luminance step over the light canvas. Replaced by a per-theme colour with its alpha baked in — the two canvases start from opposite ends, so the alpha that is barely a tint over white is a large lift over near-black. Light and dark now measure 0.14 and 0.10. Suite **2514** green.
+
 **Next**
-- Merge `phase-126b-ck-presentation`.
+- Merge `phase-126b-ck-presentation` and `phase-126c-absolute-contrast`.
 - **The absolute's radius is fixed at 1 world unit**, which is canonical and is a usability problem: an existing Euclidean construction is entirely outside the plane the moment it is switched. A per-document radius (`diag(1, 1, −1/R²)`, additive to the kernel block) would make switching an existing figure meaningful. It is a schema decision, so it is written down rather than built.
 - `visibleWorldBounds` contributes nothing for a CK circle, so fit-to-construction under-frames a hyperbolic document.
 - Unchanged: the load-time `repairedIntersections` report; per-kind CK correctness beyond angle; `RotatedPoint`; the wasm browser smoke.
@@ -28,6 +30,8 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 - **`isDefined` is a question about ink, and `circle != null` is a question about Euclid.** Any predicate phrased in terms of the affine view (`circle`, `line`, `position`) is a Euclidean question wearing a general name. The narrow fallback matters: `isParameterized`, not `isDrawable` — the latter admits line pairs and would have started painting degenerate Euclidean circles and moved the goldens.
 - **When a change moves goldens, ask what the goldens knew.** Raising `maxScale` looked like a nuisance and was in fact the discovery that fit and zoom had been sharing a limit that meant two different things.
 - The triangle-angle-sum test written in Phase 126 passed throughout, because it reads `GeoAngle.measure` directly. It was right and it was not enough: nothing tested the string the user actually reads.
+- **"Drawn in the right shape" and "visible" are different tests, and only one of them was written.** The painter test pins that the wash path contains a point outside the disc and excludes one inside; it was green through a wash nobody could see. Anything whose whole job is to be *noticed* needs a test that rasterizes and measures, not one that inspects geometry.
+- **One opacity cannot serve two themes that start from opposite ends.** A tint over white and a lift over near-black are different quantities; deriving both from one alpha guarantees at least one of them is wrong.
 
 ---
 
