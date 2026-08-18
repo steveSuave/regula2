@@ -1,0 +1,31 @@
+lib/domain/construction/construction.dart
+  s_f868d4518223d5::t_0fe9f838ad9b8d 844-849,851-853,899-905,912
+lib/domain/construction/geometry_change.dart
+  s_f868d4518223d5::t_0fe9f838ad9b8d 36,44-59,61-65,68-69,88-89
+lib/presentation/panels/intersection_report.dart
+  s_f868d4518223d5::t_6b0ca712535b9c 44-48,96-97
+  s_f868d4518223d5::t_826ebbeeb54229 49-53
+test/presentation/panels/intersection_report_test.dart
+  s_f868d4518223d5::t_0c9d0a6fa6c4af 85-117
+lib/presentation/panels/geometry_menu.dart
+  s_f868d4518223d5::t_b4b8db53347118 134-144
+test/domain/construction/geometry_switch_test.dart
+  s_f868d4518223d5::t_0c9d0a6fa6c4af 11-13,205-265
+  s_f868d4518223d5::t_3652fa0b9b77c8 266-267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "833aa4faa09b35193a0dedde9a61fcb6d7d299c3",
+  "prompts": {},
+  "sessions": {
+    "s_f868d4518223d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c57b6d26-f912-457c-8856-76743b807fe7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
