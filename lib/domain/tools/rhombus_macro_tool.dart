@@ -6,6 +6,7 @@ import '../construction/objects/parallel_line.dart';
 import '../construction/objects/point_on_object.dart';
 import '../construction/objects/segment.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 import 'multi_point_tool.dart';
 import 'tool.dart';
 
@@ -31,6 +32,18 @@ class RhombusMacroTool extends MultiPointTool {
 
   /// The tapped corner points; the position-only third input is not a
   /// collected vertex.
+  /// **Euclidean only** (Phase 129), and this one is a *gap* rather than
+  /// an impossibility. An equilateral quadrilateral exists in every
+  /// geometry and the parallels are avoidable — the fourth corner is the
+  /// crossing of the compass circles about C and A other than B, Euclid
+  /// I.1 again. What is missing is the third corner: it is a
+  /// `PointOnObject` glued to a compass circle, and `PointOnObject`
+  /// parameterizes a circle by its polar angle in the chart, which a
+  /// conic bitangent to the absolute has not got. Gluing a point to a
+  /// general conic is its own piece of work.
+  @override
+  bool availableUnder(Absolute absolute) => absolute.isEuclidean;
+
   @override
   int get pointCount => 2;
 

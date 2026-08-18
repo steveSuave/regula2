@@ -10,6 +10,7 @@ import 'package:regula/domain/commands/set_geometry_command.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/nine_point_circle.dart';
+import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
 import 'package:regula/domain/tools/bifocal_conic_tool.dart';
@@ -23,7 +24,9 @@ import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/kite_macro_tool.dart';
+import 'package:regula/domain/tools/multi_point_tool.dart';
 import 'package:regula/domain/tools/name_points_tool.dart';
+import 'package:regula/domain/tools/parallelogram_macro_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/polar_line_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
@@ -35,14 +38,17 @@ import 'package:regula/domain/tools/rhombus_macro_tool.dart';
 import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/slope_tool.dart';
+import 'package:regula/domain/tools/square_macro_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/three_point_tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
+import 'package:regula/domain/tools/trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/triangle_circle_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
+import 'package:regula/presentation/shortcuts/shortcut_table.dart';
 import '../../wide_window.dart';
 
 /// Tests for the toolbar's group flyouts: activation, the active-group
@@ -532,6 +538,100 @@ void main() {
       otherRowBetween,
       isFalse,
       reason: 'nothing else sits between Point and Midpoint',
+    );
+  });
+
+  test('every row the toolbar disables is one its tool refuses', () {
+    // One fact written twice — `euclideanOnlyMacros` for the user and
+    // `availableUnder` for the construction — so the two are checked
+    // against each other rather than trusted to stay in step.
+    final macros = <AppAction, MultiPointTool>{
+      AppAction.equilateralTriangleMacroTool: EquilateralTriangleMacroTool(
+        newId: () => 'x',
+      ),
+      AppAction.isoscelesTriangleMacroTool: IsoscelesTriangleMacroTool(
+        newId: () => 'x',
+      ),
+      AppAction.rightTriangleMacroTool: RightTriangleMacroTool(
+        newId: () => 'x',
+      ),
+      AppAction.squareMacroTool: SquareMacroTool(newId: () => 'x'),
+      AppAction.rectangleMacroTool: RectangleMacroTool(newId: () => 'x'),
+      AppAction.parallelogramMacroTool: ParallelogramMacroTool(
+        newId: () => 'x',
+      ),
+      AppAction.rhombusMacroTool: RhombusMacroTool(newId: () => 'x'),
+      AppAction.trapeziumMacroTool: TrapeziumMacroTool(newId: () => 'x'),
+      AppAction.isoscelesTrapeziumMacroTool: IsoscelesTrapeziumMacroTool(
+        newId: () => 'x',
+      ),
+      AppAction.rightTrapeziumMacroTool: RightTrapeziumMacroTool(
+        newId: () => 'x',
+      ),
+      AppAction.kiteMacroTool: KiteMacroTool(newId: () => 'x'),
+      AppAction.regularPolygonMacroTool: RegularPolygonMacroTool(
+        newId: () => 'x',
+        sideCount: 5,
+      ),
+    };
+
+    expect({
+      for (final entry in macros.entries)
+        if (!entry.value.availableUnder(Absolute.hyperbolic)) entry.key,
+    }, euclideanOnlyMacros.keys.toSet());
+  });
+
+  testWidgets('the macros a curved plane has no figure for are disabled, '
+      'with the reason where the explanation was', (tester) async {
+    await pumpEditor(tester);
+
+    Future<Map<String, bool>> macroRows() async {
+      await tester.tap(find.byIcon(Icons.crop_square));
+      await tester.pumpAndSettle();
+      final rows = <String, bool>{};
+      for (final element in find.byType(ToolMenuRow).evaluate()) {
+        final row = element.widget as ToolMenuRow;
+        final item = element
+            .findAncestorWidgetOfExactType<PopupMenuItem<ToolPick>>()!;
+        rows[row.label] = item.enabled;
+      }
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+      return rows;
+    }
+
+    final euclidean = await macroRows();
+    expect(euclidean['Rectangle (two corners, then height)'], isTrue);
+    expect(euclidean.values.every((enabled) => enabled), isTrue);
+
+    container
+        .read(commandStackProvider.notifier)
+        .execute(
+          SetGeometryCommand(
+            const DocumentKernel(metric: FundamentalConic.hyperbolic),
+          ),
+        );
+    await tester.pumpAndSettle();
+
+    final hyperbolic = await macroRows();
+    expect(
+      hyperbolic['Rectangle (no four right angles outside Euclid)'],
+      isFalse,
+      reason: 'the row still names its tool, and says why it is out',
+    );
+    expect(
+      hyperbolic['Rhombus (needs a point on a curved circle — not yet)'],
+      isFalse,
+      reason: 'a gap rather than an impossibility, and it says which',
+    );
+    expect(
+      hyperbolic['Kite (apex, side corner, apex)'],
+      isTrue,
+      reason: 'a kite is a reflection symmetry, which every geometry has',
+    );
+    expect(
+      hyperbolic.entries.where((row) => !row.value).length,
+      euclideanOnlyMacros.length,
     );
   });
 

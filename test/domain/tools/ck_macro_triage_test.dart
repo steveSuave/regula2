@@ -15,15 +15,21 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/ck_measure.dart';
+import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/kite_macro_tool.dart';
 import 'package:regula/domain/tools/multi_point_tool.dart';
+import 'package:regula/domain/tools/parallelogram_macro_tool.dart';
 import 'package:regula/domain/tools/point_resolution.dart';
+import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
+import 'package:regula/domain/tools/rhombus_macro_tool.dart';
+import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
+import 'package:regula/domain/tools/trapezium_macro_tool.dart';
 
 /// The nine macro tools that survived Phase 128, sorted by what happens
 /// to their *figure* under a proper absolute (Phase 129, PLAN §"The macro
@@ -156,6 +162,120 @@ void main() {
       expect(sum(FundamentalConic.euclidean), closeTo(math.pi, 1e-12));
       expect(sum(FundamentalConic.hyperbolic), lessThan(math.pi - 0.05));
       expect(sum(FundamentalConic.elliptic), greaterThan(math.pi + 0.04));
+    });
+  });
+
+  group('refused, because the figure is not there to build', () {
+    /// Every macro tool that takes point inputs, with taps that build a
+    /// non-degenerate figure of its kind.
+    Map<String, (MultiPointTool, List<Vec2>)> macros() => {
+      'equilateralTriangle': (
+        EquilateralTriangleMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0)],
+      ),
+      'isoscelesTriangle': (
+        IsoscelesTriangleMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0), Vec2(0.25, 0.45)],
+      ),
+      'rightTriangle': (
+        RightTriangleMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0), Vec2(0.35, 0.3)],
+      ),
+      'square': (
+        SquareMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.35, 0)],
+      ),
+      'regularPolygon': (
+        RegularPolygonMacroTool(newId: () => 'n${_id++}', sideCount: 5),
+        const [Vec2(0, 0), Vec2(0.35, 0)],
+      ),
+      'kite': (
+        KiteMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0.1, 0.1), Vec2(0.5, 0.15), Vec2(0.35, 0.55)],
+      ),
+      'isoscelesTrapezium': (
+        IsoscelesTrapeziumMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(-0.05, 0.1), Vec2(0.45, 0.15), Vec2(0.4, 0.5)],
+      ),
+      'parallelogram': (
+        ParallelogramMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0), Vec2(0.5, 0.35)],
+      ),
+      'rectangle': (
+        RectangleMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0), Vec2(0.4, 0.35)],
+      ),
+      'rhombus': (
+        RhombusMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0), Vec2(0.55, 0.35)],
+      ),
+      'trapezium': (
+        TrapeziumMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0), Vec2(0.3, 0.35), Vec2(-0.1, 0.3)],
+      ),
+      'rightTrapezium': (
+        RightTrapeziumMacroTool(newId: () => 'n${_id++}'),
+        const [Vec2(0, 0), Vec2(0.4, 0), Vec2(0.3, 0.35), Vec2(-0.1, 0.3)],
+      ),
+    };
+
+    /// The five that stand on something a Cayley–Klein plane has not got.
+    const refusing = {
+      'parallelogram',
+      'rectangle',
+      'rhombus',
+      'trapezium',
+      'rightTrapezium',
+    };
+
+    test('the five refuse their very first tap under a proper absolute', () {
+      for (final metric in proper) {
+        final absolute = Absolute.of(metric);
+        for (final entry in macros().entries) {
+          final (tool, taps) = entry.value;
+          final first = tool.onInput(ToolInput(taps.first, absolute: absolute));
+          expect(
+            first,
+            refusing.contains(entry.key)
+                ? isA<ToolIgnored>()
+                : isA<ToolAccepted>(),
+            reason: '$metric: ${entry.key}',
+          );
+        }
+      }
+    });
+
+    test('and nothing at all is committed — not even the tapped points', () {
+      // What they did instead, until this phase: commit the free points
+      // and a chain of derived objects that no drag in that document can
+      // ever define.
+      for (final metric in proper) {
+        final absolute = Absolute.of(metric);
+        for (final entry in macros().entries) {
+          if (!refusing.contains(entry.key)) {
+            continue;
+          }
+          final (tool, taps) = entry.value;
+          final construction = Construction(
+            kernel: DocumentKernel(metric: metric),
+          );
+          for (final tap in taps) {
+            final result = tool.onInput(ToolInput(tap, absolute: absolute));
+            expect(result, isA<ToolIgnored>(), reason: '$metric ${entry.key}');
+          }
+          expect(construction.isEmpty, isTrue);
+          expect(tool.hasPartialInput, isFalse);
+        }
+      }
+    });
+
+    test('every one of them still builds its figure in a Euclidean one', () {
+      for (final entry in macros().entries) {
+        final (tool, taps) = entry.value;
+        final c = stamped(tool, Absolute.euclidean, taps);
+        expect(corners(c).length, greaterThanOrEqualTo(3), reason: entry.key);
+        expectWholeFigure(c, corners_: corners(c).length);
+      }
     });
   });
 

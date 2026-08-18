@@ -6,6 +6,7 @@ import '../construction/objects/perpendicular_line.dart';
 import '../construction/objects/point_on_object.dart';
 import '../construction/objects/segment.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 import 'multi_point_tool.dart';
 import 'tool.dart';
 
@@ -31,6 +32,14 @@ class RectangleMacroTool extends MultiPointTool {
 
   /// The tapped corner points; the position-only third input is not a
   /// collected vertex.
+  /// **Euclidean only** (Phase 129). A rectangle is a quadrilateral with
+  /// four right angles, and no Cayley–Klein plane has one: the Saccheri
+  /// quadrilateral this construction's Euclidean cousin builds gets three
+  /// and no more. The tool refused nothing before and committed a
+  /// `ParallelLine` that can never be defined.
+  @override
+  bool availableUnder(Absolute absolute) => absolute.isEuclidean;
+
   @override
   int get pointCount => 2;
 

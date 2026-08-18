@@ -4,6 +4,7 @@ import '../construction/objects/intersection_point.dart';
 import '../construction/objects/parallel_line.dart';
 import '../construction/objects/perpendicular_line.dart';
 import '../construction/objects/segment.dart';
+import '../projective/absolute.dart';
 import 'multi_point_tool.dart';
 
 /// Three taps make a right trapezium: the tapped points are the base
@@ -20,6 +21,12 @@ import 'multi_point_tool.dart';
 /// macros' odd tap orders.
 class RightTrapeziumMacroTool extends MultiPointTool {
   RightTrapeziumMacroTool({required super.newId});
+
+  /// **Euclidean only** (Phase 129), for the trapezium's reason: it too
+  /// stands on *the* parallel through a point, which no Cayley–Klein
+  /// plane has.
+  @override
+  bool availableUnder(Absolute absolute) => absolute.isEuclidean;
 
   @override
   int get pointCount => 3;

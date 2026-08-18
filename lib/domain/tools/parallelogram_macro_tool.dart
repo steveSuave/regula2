@@ -3,6 +3,7 @@ import '../construction/object_attributes.dart';
 import '../construction/objects/intersection_point.dart';
 import '../construction/objects/parallel_line.dart';
 import '../construction/objects/segment.dart';
+import '../projective/absolute.dart';
 import 'multi_point_tool.dart';
 
 /// Three taps make a parallelogram: the tapped points are consecutive
@@ -27,6 +28,15 @@ import 'multi_point_tool.dart';
 /// scaffolding is not added at all (see [dedupedDerivedPoint]).
 class ParallelogramMacroTool extends MultiPointTool {
   ParallelogramMacroTool({required super.newId});
+
+  /// **Euclidean only** (Phase 129). A parallelogram is two pairs of
+  /// parallel sides, and both of its parallels are *the* parallel through
+  /// a point — the uniqueness a Cayley–Klein plane denies from below
+  /// (infinitely many non-meeting lines) or from above (none at all). The
+  /// figure has no analogue to build, so the tool refuses rather than
+  /// committing two `ParallelLine`s that can never be defined.
+  @override
+  bool availableUnder(Absolute absolute) => absolute.isEuclidean;
 
   @override
   int get pointCount => 3;

@@ -156,6 +156,29 @@ const _twoPointCircleBuilders = {buildCircle, buildDiameterCircle};
 /// tool is active — Esc, `V` and double-clicking the highlighted group
 /// icon also work, but a one-tap button is the only comfortable path on
 /// touch, where there is no Esc key and a double tap fights the flyout).
+/// The macro tools whose figure a non-Euclidean document has no place
+/// for, and the reason each — shown in the row's subtitle while it is
+/// disabled (Phase 129, PLAN §"The macro triage").
+///
+/// The tools refuse these documents themselves
+/// (`MultiPointTool.availableUnder`); this is the same fact written where
+/// the user can act on it, and `toolbar_test` checks the two against each
+/// other rather than trusting them to stay in step. A disabled row beats
+/// a silent refusal: a tool that ignores taps is indistinguishable from
+/// one the user has mis-aimed.
+const euclideanOnlyMacros = <AppAction, String>{
+  AppAction.parallelogramMacroTool: 'no unique parallel outside Euclid',
+  AppAction.rectangleMacroTool: 'no four right angles outside Euclid',
+  AppAction.rhombusMacroTool: 'needs a point on a curved circle — not yet',
+  AppAction.trapeziumMacroTool: 'no unique parallel outside Euclid',
+  AppAction.rightTrapeziumMacroTool: 'no unique parallel outside Euclid',
+};
+
+/// [label] with its parenthesized explanation replaced by [reason] — the
+/// disabled form of a flyout row, which still has to name its tool.
+String unavailableLabel(String label, String reason) =>
+    '${label.split(' (').first} ($reason)';
+
 class GeometryToolbar extends ConsumerWidget {
   const GeometryToolbar({super.key});
 
@@ -573,6 +596,7 @@ class GeometryToolbar extends ConsumerWidget {
           icon: const Icon(Icons.crop_square),
           tooltip: 'Polygons & shape macros',
           active: macrosActive,
+          unavailable: euclidean ? const {} : euclideanOnlyMacros,
           items: [
             (
               'Equilateral triangle (two corners)',
@@ -610,7 +634,9 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.randomQuadrilateralStamp,
             ),
             (
-              'Square (two adjacent corners)',
+              euclidean
+                  ? 'Square (two adjacent corners)'
+                  : 'Square (centre, then a corner)',
               _pick(() => SquareMacroTool(newId: newObjectId)),
               AppAction.squareMacroTool,
             ),
@@ -716,6 +742,7 @@ class _ToolGroup extends ConsumerWidget {
     required this.tooltip,
     required this.active,
     required this.items,
+    this.unavailable = const {},
   });
 
   /// Any widget, not an `IconData`: the Conics group's glyph is drawn
@@ -728,6 +755,10 @@ class _ToolGroup extends ConsumerWidget {
   final String tooltip;
   final bool active;
   final List<ToolItem> items;
+
+  /// Rows to disable, mapped to the reason shown in place of their
+  /// explanation — see [euclideanOnlyMacros].
+  final Map<AppAction, String> unavailable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -749,13 +780,23 @@ class _ToolGroup extends ConsumerWidget {
       },
       itemBuilder: (context) => [
         for (final (label, pick, action) in items)
-          PopupMenuItem(
-            value: pick,
-            child: ToolMenuRow(
-              label: label,
-              display: action == null ? null : shortcutDisplayFor(action),
+          if (unavailable[action] case final reason?)
+            PopupMenuItem(
+              value: pick,
+              enabled: false,
+              child: ToolMenuRow(
+                label: unavailableLabel(label, reason),
+                display: action == null ? null : shortcutDisplayFor(action),
+              ),
+            )
+          else
+            PopupMenuItem(
+              value: pick,
+              child: ToolMenuRow(
+                label: label,
+                display: action == null ? null : shortcutDisplayFor(action),
+              ),
             ),
-          ),
       ],
     );
     if (!active) {

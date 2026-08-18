@@ -43,6 +43,23 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// How many point inputs [buildObjects] needs.
   int get pointCount;
 
+  /// Whether this tool's figure exists at all in a document whose
+  /// geometry is [absolute] (Phase 129, PLAN §"The macro triage").
+  ///
+  /// False refuses every input outright, which is the honest answer where
+  /// a macro's figure has no analogue: a rectangle needs four right
+  /// angles and no Cayley–Klein plane has a quadrilateral with four of
+  /// them, and both trapezia need *the* parallel through a point, which
+  /// is the uniqueness such a plane exists to deny. The alternative was
+  /// what these tools did until now — commit the tapped free points and a
+  /// chain of permanently undefined derived objects, silently, in a
+  /// document where no drag can complete them.
+  ///
+  /// Checked in [collectVertex] rather than in [onInput], because the
+  /// tools whose last tap is position-only override [onInput] and every
+  /// one of them still routes its *first* tap through the collector.
+  bool availableUnder(Absolute absolute) => true;
+
   /// Builds the derived objects once [pointCount] points are collected,
   /// in tap order. Runs at commit time; use [newId] for the objects' ids.
   ///
@@ -117,7 +134,8 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// Turns [input] into the next collected vertex via [resolvePoint] —
   /// the tapped existing point, or a new private point (free, glued, or
   /// intersection) — and records it. Returns null (recording nothing)
-  /// when the input is unusable: an already-collected point, or a
+  /// when the input is unusable: a document whose geometry this tool has
+  /// no figure for ([availableUnder]), an already-collected point, or a
   /// curve-flavored tap while [allowCurveTaps] is off.
   ///
   /// Subclass hook: [onInput] is collect + commit-when-full; a tool
@@ -125,6 +143,9 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// position-only fourth tap) overrides [onInput] and calls this and
   /// [commitCollected] itself.
   GeoPoint? collectVertex(ToolInput input) {
+    if (!availableUnder(input.absolute)) {
+      return null;
+    }
     if (!allowCurveTaps &&
         input.hit is! GeoPoint &&
         input.hits.any((o) => o is GeoLine || o is GeoCircle)) {

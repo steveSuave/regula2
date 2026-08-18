@@ -4,6 +4,7 @@ import '../construction/objects/parallel_line.dart';
 import '../construction/objects/point_on_object.dart';
 import '../construction/objects/segment.dart';
 import '../math/vec2.dart';
+import '../projective/absolute.dart';
 import 'multi_point_tool.dart';
 import 'tool.dart';
 
@@ -27,6 +28,15 @@ class TrapeziumMacroTool extends MultiPointTool {
 
   /// The tapped corner points; the position-only fourth input is not a
   /// collected vertex.
+  /// **Euclidean only** (Phase 129). The fourth corner is glued to *the*
+  /// parallel to AB through C, and that uniqueness is what a Cayley–Klein
+  /// plane denies — from below in the hyperbolic case, where infinitely
+  /// many lines through C miss AB, and from above in the elliptic one,
+  /// where none do. `parallelThrough` already answered the zero triple;
+  /// nothing downstream had noticed.
+  @override
+  bool availableUnder(Absolute absolute) => absolute.isEuclidean;
+
   @override
   int get pointCount => 3;
 
