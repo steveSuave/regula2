@@ -1,0 +1,21 @@
+test/presentation/panels/geometry_menu_test.dart
+  s_60105cb0c68d9b::t_eb71ed5fdc398c 254
+lib/presentation/panels/geometry_menu.dart
+  s_60105cb0c68d9b::t_eb71ed5fdc398c 70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "163a93c293e7760ad5675ef35a1f6638b566f5e0",
+  "prompts": {},
+  "sessions": {
+    "s_60105cb0c68d9b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f050fbd-18ae-4ef1-a9f7-ca354c23eadc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
