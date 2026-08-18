@@ -1,0 +1,25 @@
+lib/domain/tools/regular_polygon_macro_tool.dart
+  s_f868d4518223d5::t_c85e7b28cd17c6 16-34
+test/domain/tools/ck_macro_tools_test.dart
+  s_f868d4518223d5::t_539e97f6012ff9 26-28,244,258
+  s_f868d4518223d5::t_d634408dd3ddf7 1-25,29-243,245-257,259-305
+lib/domain/tools/equilateral_triangle_macro_tool.dart
+  s_f868d4518223d5::t_efaf7ac4a60e2f 25-26
+  s_f868d4518223d5::t_c85e7b28cd17c6 17-24,27-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "88a3c7a17cde731d06a4b5b66bf874556c329269",
+  "prompts": {},
+  "sessions": {
+    "s_f868d4518223d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c57b6d26-f912-457c-8856-76743b807fe7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
