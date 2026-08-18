@@ -40,6 +40,27 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [x] **Drag budget re-measured and recorded as the standing gate.** `tracing_bench.dart` now *throws* when a frame exceeds `dragFrameBudgetMs`, so a job can enforce it without parsing text (thrown, not `exit`ed: `dart:io` would cost the file its js and wasm targets, and an uncaught error is a non-zero exit on all four). Standing measurement across VM/AOT/dart2js/dart2wasm: **1–2%** of the 8 ms budget plain, **7–11%** carrying the 128-sample locus, checksums identical
 - [x] Browser smoke of the wasm build, with the first deploy — **green 2026-08-18**. The remote exists, all three workflows run on every push to `main`, and the Pages deploy at `https://stevesuave.github.io/regula2/` boots and draws. Phase 122 is now fully closed
 
+## Phase 132 — gluing a point to a general conic (next session)
+
+**Scheduled, not started.** The capability every other CK gap has turned out to want: `PointOnObject` parameterizes a circle by its polar angle in the chart, and a conic bitangent to the absolute has no centre and no polar angle — so a Cayley–Klein circle is a curve nothing can be attached to. See PLAN §Parameterization for the decision this reopens.
+
+- [ ] **The design question is parameter stability, not the parameterization.** `ConicShape.pointAt(φ)` already sweeps any nondegenerate conic exactly, π-periodic and a bijection from `[0, π)`. What it does *not* give is a parameter that survives the conic moving: `φ` is read against a stereographic base point and an axis pair the shape picks per matrix, so a stored `φ` need not name the same point of the curve after a drag. That is the Phase 116–117 continuation problem arriving in a new place, and it is the whole of this phase
+- [ ] Blast radius to respect: `PointOnObject` is read by tracing (`recomputeAlongParameterPath`), by `locus.dart`'s sweeps, by `drag_session`, by the codec (the parameter is persisted), and by the bounded-host clamps (`angularExtent` / `parameterExtent`, which are angle intervals)
+- [ ] What it closes: the rhombus macro (Phase 129), and gluing a point to any conic at all — a five-point conic today has the same hole, in the Euclidean plane, and nobody has asked because no tool offers it
+
+## Phase 130 — a conic frames itself
+
+- [x] `ConicShape.extentAlong(u, v)`: the conic's support interval in a chart direction, on the existing exact `extremesAlong` rather than beside it, gated on `ConicClass.ellipse` because that is the only class with a bounded curve. Taking a *direction* rather than an axis makes the rotated view frame a different argument instead of a transformed conic
+- [x] `visibleWorldBounds` frames a Cayley–Klein circle by it — and every other non-circular conic with it, which contributed nothing to a fit before either
+
+## Phase 131 — the absolute gets a radius
+
+- [x] `DocumentKernel.radius` and `Absolute.scaled`: `x² + y² = R²w²` hyperbolic, `x² + y² + R²w² = 0` elliptic, the dual still the adjugate throughout so `dual = adj(point)` keeps holding literally
+- [x] **The radius is a chart scale, not a geometry**, and that is what makes it safe to put in a document — `x = R·x′` carries `⟨P,Q⟩` to `R²` times the unit form and every measure is a ratio of such forms. Pinned against both proper absolutes, three radii, two point pairs
+- [x] The Euclidean absolute refuses one, which is the same fact as similar triangles existing; `DocumentKernel` guarantees the refusal is never reached
+- [x] Entering a proper geometry sizes the plane to contain the figure (twice the furthest point); moving between the two proper ones keeps the radius, because by then it is the plane the document is drawn in
+- [x] **Schema: `radius ≠ 1` is v3.** A v2 reader skips the key, reads a figure drawn at radius 240 against the unit disc, and draws nothing. Pinned by decoding one both ways. Unit-radius documents are still v2, Euclidean ones still v1, and `test/fixtures/` is still all v1
+
 ## Phase 129 — the macro triage
 
 Phase 128's second open box: the other eleven macro tools, none of which had been looked at in a CK plane. They specify their figures by *metric primitives* rather than by a constant angle, so the question is whether the figure survives, not whether the primitive does. See PLAN §"The macro triage".
