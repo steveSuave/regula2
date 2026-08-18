@@ -8,6 +8,25 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 135 (V2 Session 37) — 2026-08-18
+
+**Done — a dependency refresh, on `main`, no phase attached.** Maintenance rather than kernel work: `flutter pub outdated` had twelve packages locked below their own constraints and two constrained below a resolvable version. Merged as `5a58259`, plus the geometry menu's guide item renamed from "What can I do with this?…" to "Help…" (`163a93c`) — the subtitle already said what the guide holds.
+
+- **`file_picker` 11 → 12 was a real API migration**, not a bump. v12 splits into federated plugins (so `win32` 5.15 → 6.4 came along) and reshapes every call in `file_io.dart`: `saveFile` takes a `mimeType` instead of `type` + `allowedExtensions` and answers a `Uri?`; `pickFiles` → `pickFile`, one `PlatformFile?` with no `FilePickerResult` wrapper; `PlatformFile` is abstract and no longer carries its bytes, so `readAsBytes()` replaces the deprecated `withData: true`. That last one **moves a failure**: an unreadable file used to arrive with null bytes and now throws, so it is caught and rethrown as the same `FormatException` the one error dialog stands on — with a test, because the old null-bytes branch never had one. Both test fakes lost their `implementation_imports` ignore; v12 re-exports `FilePickerPlatform` from the barrel.
+- **Everything still listed as outdated is pinned by the Flutter SDK, not by us.** `riverpod` 3.4.2 and `riverpod_generator` 4.0.6 want Dart >= 3.12.0 against our 3.11.5; `analyzer` >= 10 wants `meta ^1.18` where `flutter from sdk` pins `meta 1.17.0`. Nothing in `pubspec.yaml` can move them.
+- Regenerating under the bumped `build_runner` turned up two **stale generated outputs that predated the branch** (a `valueDecimals` doc comment and `tool_provider`'s hash), committed separately from the dependency work, and one file the Phase 120c tall-style migration missed.
+
+**Next**
+- **The Flutter SDK upgrade — 3.41.9 / Dart 3.11.5 → 3.47.0 / Dart 3.13.0 — is deliberately deferred until after M-P (the deductive-database prover) lands.** Assessed this session, not started: nothing exists on disk. Roughly one focused session, and cheap here for a structural reason — only 31 files in `lib/presentation/` import Flutter at all, so the bulk of the 34.5k lines cannot break on a *Flutter* upgrade, and 2558 tests make the result verifiable rather than hopeful. The four real costs: the strict lint block (`strict-inference` / `strict-raw-types` / `flutter_lints ^6`) surfacing new diagnostics tree-wide under analyzer 9 → 14; `dart_style` 3.1.3 → 3.1.12 likely reformatting everything, which needs its own commit up front or every real diff becomes unreadable (the Phase 120c pain, exactly); the codegen chain moving in lockstep, where `riverpod_analyzer_utils` sitting on a `1.0.0-dev.9` prerelease is the one genuinely unpredictable piece; and the renderer, since web is the deploy target and the single golden test will likely want regenerating. Sequence when it comes: SDK worktree (the install at `~/Code/flutter/flutter-upstream` is a git checkout, so 3.47 can be tested beside it without touching the pinned one) → analyze sweep → format commit → build_runner → tests → goldens → Chrome + wasm smoke.
+- Session 134's **Next** list stands unchanged and is still the real work — the macro tools on `RotatedPoint` in a CK plane first.
+
+**Gotchas**
+- **Dependencies decay on a clock nothing in the repo watches.** No test fails because a package is a year old, and the CI gate is silent about it — this session's twelve-package drift accumulated unnoticed across 36 V2 sessions. Worth a `flutter pub outdated` at the start of any session that is not mid-phase; the cost of doing it is minutes, and the cost of not doing it compounds into exactly the kind of API migration `file_picker` turned out to be. **The SDK upgrade above is the scheduled instance of this, booked for after M-P.**
+- **`main` had been unpushed for four sessions.** `origin/main` was sitting at `890fa45` while phases merged locally, so this session's push shipped **twelve** commits at once — Phase 126e's docs tail, Phase 127 with its docs and merge, the refresh, the rename. All three workflows went green, but a merge is a release now (session 134) and that only holds if the push follows the merge. Check `git log origin/main..main` before pushing, not after.
+- A plugin restructure under a wasm deploy target earns more than `flutter test`: this one was gated on analyze + 2558 tests + `test/web` + an actual `flutter build web --wasm --release`, and the save/open/export dialogs were clicked through in Chrome by the user before the merge. A green suite still says nothing about the renderer (Phase 126d).
+
+---
+
 ## Session 134 (V2 Session 36) — 2026-08-18
 
 **Done — Phase 127 merged, and Phase 122 is closed.** Two merges to `main` (`ee6b7fc` Phase 126e, `2a1fd7d` Phase 127) plus a docs pass, on `main` directly since it is docs only.
