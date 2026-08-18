@@ -32,8 +32,16 @@ String? labelText(GeoObject object) {
   final value = switch (object) {
     Segment(:final start?, :final end?) when attributes.showValue =>
       formatLength(start.distanceTo(end), decimals: decimals),
-    GeoAngle(:final angle?) when attributes.showValue => formatAngle(
-      angle.measure,
+    // `GeoAngle.measure`, **not** `angle.measure`: the first is the
+    // measure, the second is the chart sweep of the drawn marker, and
+    // under a proper absolute they are different numbers (Phase 126).
+    // Reading the marker here reported a Euclidean angle in every
+    // geometry — a triangle in the hyperbolic plane labelled its corners
+    // so they summed to exactly 180°. Same trap `GeoAngle.measure` itself
+    // fell into mid-Phase-125, one layer out, where the domain coverage
+    // gate cannot see it.
+    GeoAngle(:final measure?) when attributes.showValue => formatAngle(
+      measure,
       decimals: decimals,
     ),
     AreaMeasurement(:final value?) => formatArea(value, decimals: decimals),

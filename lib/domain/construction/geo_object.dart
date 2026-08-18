@@ -4,6 +4,7 @@ import '../math/line_eq.dart';
 import '../math/vec2.dart';
 import '../projective/absolute.dart';
 import '../projective/conic_matrix.dart';
+import '../projective/conic_shape.dart';
 import '../projective/proj_line.dart';
 import '../projective/proj_point.dart';
 import 'object_attributes.dart';
@@ -217,8 +218,39 @@ abstract class GeoCircle extends GeoObject {
         : end;
   }
 
+  /// A circle kind is defined when it has real ink to draw.
+  ///
+  /// `circle != null` answers that under the **Euclidean** absolute and
+  /// only there, because only there is a circle a circle. Under a proper
+  /// absolute a Cayley–Klein circle is a conic *bitangent to the
+  /// absolute* (PLAN §"A circle follows its distance measure") — a
+  /// genuine ellipse or hyperbola in the chart — so `toCircleEq` answers
+  /// null and every compass circle, three-point circle and triangle
+  /// circle in a hyperbolic document reported itself undefined and was
+  /// skipped by the painter and the hit tester. Invisible, not wrong: the
+  /// conic was right the whole time (Phase 126).
+  ///
+  /// The second arm asks the conic's own question instead, and asks it
+  /// narrowly: [ConicShape.isParameterized] is a *curve* — ellipse,
+  /// parabola or hyperbola — where [ConicShape.isDrawable] would also
+  /// admit line pairs. That narrowness is deliberate and is what keeps
+  /// Euclidean behaviour bit-identical: a degenerate Euclidean circle
+  /// (coincident defining points) carries the isotropic line pair through
+  /// its centre, which is a `linePair` and stays undefined exactly as it
+  /// was. The first arm short-circuits, so no Euclidean document pays for
+  /// the classification either.
+  ///
+  /// The three genuine conic kinds still override with `isDrawable`:
+  /// a `FivePointConic` through collinear points is a real line pair and
+  /// is meant to draw.
   @override
-  bool get isDefined => circle != null;
+  bool get isDefined {
+    if (circle != null) {
+      return true;
+    }
+    final matrix = conic;
+    return matrix != null && ConicShape.of(matrix).isParameterized;
+  }
 }
 
 /// Orients [projected] — the affine projection of a migrated line's

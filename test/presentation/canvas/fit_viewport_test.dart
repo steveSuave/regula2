@@ -161,7 +161,10 @@ void main() {
         point('a', 0, 0),
         point('b', 1e-9, 0),
       ], canvas)!;
-      expect(microscopic.scale, CanvasViewport.maxScale);
+      // The *fit* ceiling, which stopped being the same number as the
+      // zoom ceiling in Phase 126b: a hyperbolic document needs to zoom
+      // far past what a fit should ever blow a small figure up to.
+      expect(microscopic.scale, CanvasViewport.maxFitScale);
     });
 
     test('a rotated fit keeps the angle and scales to the rotated '

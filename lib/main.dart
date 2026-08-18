@@ -388,6 +388,30 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     await savePngBytes(bytes);
   }
 
+  /// Frames the plane after a geometry switch (Phase 126).
+  ///
+  /// A hyperbolic document lives inside the unit circle, and the default
+  /// scale is one pixel per world unit — so without this the whole plane
+  /// is a two-pixel dot at the origin and the figure sits far outside it,
+  /// which is where the mode looks like it does nothing. Euclidean and
+  /// elliptic have no absolute to frame and leave the view alone: there
+  /// is no privileged region in either, so moving the view would be
+  /// arbitrary.
+  void _frameAbsolute() {
+    final size = _canvasKey.currentContext?.size;
+    if (size == null) {
+      return;
+    }
+    final framed = fittedToAbsolute(
+      ref.read(constructionProvider).construction.kernel.metric,
+      size,
+      rotation: ref.read(viewportProvider).rotation,
+    );
+    if (framed != null) {
+      ref.read(viewportProvider.notifier).set(framed);
+    }
+  }
+
   void _fitConstruction() {
     final size = _canvasKey.currentContext?.size;
     if (size == null) {
@@ -1063,7 +1087,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   onPressed: () => ref.read(viewportProvider.notifier).reset(),
                 ),
                 _gridMenu(),
-                const GeometryMenu(),
+                GeometryMenu(onFrameAbsolute: _frameAbsolute),
                 IconButton(
                   tooltip: 'Keyboard shortcuts (?)',
                   isSelected: _showCheatSheet,

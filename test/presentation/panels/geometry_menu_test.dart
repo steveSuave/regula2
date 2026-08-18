@@ -10,7 +10,9 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/main.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../wide_window.dart';
@@ -104,6 +106,26 @@ void main() {
     await tester.pump();
     expect(metric(), FundamentalConic.elliptic);
     expect(midpointX(), closeTo(elliptic, 1e-12));
+  });
+
+  testWidgets('switching to hyperbolic frames the plane', (tester) async {
+    // Without this the mode is present and invisible: the absolute is the
+    // unit circle in *world* units and the default scale is one pixel per
+    // world unit, so the entire hyperbolic plane was a two-pixel dot at
+    // the origin while the figure sat hundreds of units outside it.
+    await pumpEditor(tester);
+    buildMidpoint();
+    await tester.pump();
+    expect(container.read(viewportProvider).scale, 1);
+
+    await choose(tester, 'Hyperbolic');
+
+    final scale = container.read(viewportProvider).scale;
+    expect(scale, greaterThan(CanvasViewport.maxFitScale));
+    // Euclidean and elliptic have no absolute to frame, so they leave the
+    // view exactly where the user put it.
+    await choose(tester, 'Elliptic');
+    expect(container.read(viewportProvider).scale, scale);
   });
 
   testWidgets('the current geometry is ticked', (tester) async {
