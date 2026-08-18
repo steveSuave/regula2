@@ -60,7 +60,7 @@ import '../providers/viewport_provider.dart';
 
 /// The newest schema this build writes and reads. Bump on any breaking
 /// schema change and add a migration in [decodeDocument].
-const int constructionFormatVersion = 2;
+const int constructionFormatVersion = 3;
 
 /// The oldest schema still decodable.
 ///
@@ -152,7 +152,12 @@ Map<String, dynamic> encodeDocument(
     // v2 hook (M-CK). Omitted while the kernel is the default one, which
     // is what keeps ordinary documents at version 1.
     if (!kernel.isDefault)
-      'kernel': <String, dynamic>{'metric': kernel.metric.name},
+      'kernel': <String, dynamic>{
+        'metric': kernel.metric.name,
+        // v3, and only when it is not the canonical 1 — a unit-radius
+        // hyperbolic document is exactly the v2 file it always was.
+        if (!kernel.isUnitRadius) 'radius': kernel.radius,
+      },
     'objects': [
       for (final object in construction.objects) _encodeObject(object),
     ],
@@ -172,7 +177,20 @@ Map<String, dynamic> encodeDocument(
 /// a v1 reader can *safely* ignore (viewport rotation, the display flags)
 /// are deliberately not on this list — that is the distinction the version
 /// field exists to draw, and why not every schema addition bumps it.
+///
+/// **v3 is the kernel's `radius`** (Phase 131), and it is on the list for
+/// the same reason the block itself is. A v2 reader skips the key and
+/// reads the document at radius 1 — the *geometry* it lands in is right,
+/// since the radius is a chart scale rather than a geometry, but every
+/// point of a figure drawn at radius 200 is then outside the plane and
+/// the whole document computes undefined. A file that draws as nothing is
+/// a misread, not a graceful degradation. A hyperbolic document at the
+/// canonical radius is still exactly the v2 file it always was.
 int requiredFormatVersion(Map<String, dynamic> document) {
+  final kernel = document['kernel'];
+  if (kernel is Map<String, dynamic> && kernel.containsKey('radius')) {
+    return 3;
+  }
   if (document.containsKey('kernel')) {
     return 2;
   }
@@ -211,10 +229,11 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
   if (version < minimumConstructionFormatVersion) {
     throw FormatException('Invalid file format version $version');
   }
-  // v1 → v2 needs no rewriting: v2 only *adds* the kernel block and
-  // homogeneous params, and a v1 file has neither, so the readers below
-  // land on the same defaults a v1 document meant. The migration such as
-  // it is lives in those defaults, and `test/fixtures/` is its corpus.
+  // v1 → v2 → v3 needs no rewriting: each version only *adds* a key — the
+  // kernel block and homogeneous params, then the kernel's radius — and
+  // an older file has none of them, so the readers below land on the same
+  // defaults that file meant. The migration such as it is lives in those
+  // defaults, and `test/fixtures/` is its corpus.
   final viewport = _decodeViewport(json['viewport']);
   final settings = DocumentSettings(
     showAxes: _decodeSettingFlag(json, 'showAxes'),
@@ -385,7 +404,29 @@ DocumentKernel _decodeKernel(Object? json) {
   if (metric == null) {
     throw FormatException('Unknown "kernel" metric "$metricName"');
   }
-  return DocumentKernel(metric: metric);
+  return DocumentKernel(metric: metric, radius: _decodeRadius(json['radius']));
+}
+
+/// The kernel block's `radius` (Phase 131): absent → 1, the canonical
+/// normalization every document before v3 is in.
+///
+/// Refused rather than clamped when it is not a positive finite number,
+/// for `_decodeKernel`'s reason: a document drawn in a plane other than
+/// its own is the failure the version stamp was bought to prevent, and a
+/// silently corrected radius is exactly that failure with a smaller
+/// number attached.
+double _decodeRadius(Object? json) {
+  if (json == null) {
+    return 1;
+  }
+  if (json is! num) {
+    throw const FormatException('Invalid "kernel" radius');
+  }
+  final radius = json.toDouble();
+  if (!radius.isFinite || radius <= 0) {
+    throw FormatException('Invalid "kernel" radius $radius (must be > 0)');
+  }
+  return radius;
 }
 
 /// A document-settings flag that pre-36/45 files legitimately lack: false

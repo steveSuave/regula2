@@ -165,7 +165,10 @@ void main() {
     const size = Size(1000, 700);
 
     test('hyperbolic frames the unit disc', () {
-      final framed = fittedToAbsolute(FundamentalConic.hyperbolic, size)!;
+      final framed = fittedToAbsolute(
+        const DocumentKernel(metric: FundamentalConic.hyperbolic),
+        size,
+      )!;
       final viewport = CanvasViewport(framed);
       final centre = viewport.worldToScreen(Vec2.zero);
       final radius = viewport.worldToScreenLength(1);
@@ -179,8 +182,20 @@ void main() {
       // Neither has a privileged region: elliptic has no real absolute and
       // no boundary, Euclidean's is the line at infinity. There is nothing
       // to frame, so moving the view would be arbitrary.
-      expect(fittedToAbsolute(FundamentalConic.euclidean, size), isNull);
-      expect(fittedToAbsolute(FundamentalConic.elliptic, size), isNull);
+      expect(
+        fittedToAbsolute(
+          const DocumentKernel(metric: FundamentalConic.euclidean),
+          size,
+        ),
+        isNull,
+      );
+      expect(
+        fittedToAbsolute(
+          const DocumentKernel(metric: FundamentalConic.elliptic),
+          size,
+        ),
+        isNull,
+      );
     });
 
     test('the disc may zoom past what a fit is allowed to', () {
@@ -189,21 +204,27 @@ void main() {
       // up to fill the window, but the absolute is not a small figure —
       // it is the whole plane, and at the fit ceiling of 50 it would be
       // 100 pixels across and unusable.
-      final framed = fittedToAbsolute(FundamentalConic.hyperbolic, size)!;
+      final framed = fittedToAbsolute(
+        const DocumentKernel(metric: FundamentalConic.hyperbolic),
+        size,
+      )!;
       expect(framed.scale, greaterThan(CanvasViewport.maxFitScale));
       expect(framed.scale, lessThanOrEqualTo(CanvasViewport.maxScale));
     });
 
     test('a canvas smaller than its own margins frames nothing', () {
       expect(
-        fittedToAbsolute(FundamentalConic.hyperbolic, const Size(40, 40)),
+        fittedToAbsolute(
+          const DocumentKernel(metric: FundamentalConic.hyperbolic),
+          const Size(40, 40),
+        ),
         isNull,
       );
     });
 
     test('framing keeps the view angle, like every other fit', () {
       final framed = fittedToAbsolute(
-        FundamentalConic.hyperbolic,
+        const DocumentKernel(metric: FundamentalConic.hyperbolic),
         size,
         rotation: 0.6,
       )!;
@@ -286,7 +307,10 @@ void main() {
     Future<double> step(Color background, Color wash) async {
       final construction = Construction(kernel: hyperbolic);
       construction.add(FreePoint(id: 'a', position: const Vec2(0.1, 0.1)));
-      final state = fittedToAbsolute(FundamentalConic.hyperbolic, size)!;
+      final state = fittedToAbsolute(
+        const DocumentKernel(metric: FundamentalConic.hyperbolic),
+        size,
+      )!;
       final image = await renderConstructionImage(
         construction,
         viewport: state,

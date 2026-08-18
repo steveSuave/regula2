@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../domain/construction/construction.dart';
+import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/line_clip.dart';
 import '../../domain/construction/objects/arc.dart';
@@ -13,7 +14,6 @@ import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
-import '../../domain/projective/absolute.dart';
 import '../../domain/projective/conic_matrix.dart';
 import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
@@ -66,15 +66,17 @@ Path outsideDiscPath(Size size, Offset centre, double radius) => Path()
 /// Centre and radius come from the viewport rather than from a projection
 /// of the conic, which is exact rather than approximate: the absolute is a
 /// world-space circle about the origin, and a circle stays a circle under
-/// everything the viewport does to it, rotation included.
+/// everything the viewport does to it, rotation included. Its world radius
+/// is the kernel's (Phase 131), which is 1 for every document written
+/// before that and for every one that never asks for another.
 ({Offset centre, double radius})? absoluteDisc(
-  FundamentalConic metric,
+  DocumentKernel kernel,
   CanvasViewport viewport,
 ) {
-  if (metric != FundamentalConic.hyperbolic) {
+  if (kernel.metric != FundamentalConic.hyperbolic) {
     return null;
   }
-  final radius = viewport.worldToScreenLength(1);
+  final radius = viewport.worldToScreenLength(kernel.radius);
   if (!radius.isFinite || radius <= 0) {
     return null;
   }
@@ -287,7 +289,7 @@ class GeometryPainter extends CustomPainter {
   /// not part of the plane (Phase 126). See [absoluteDisc] for which
   /// geometries have anything to draw and why the other two do not.
   void _drawAbsolute(Canvas canvas, Size size) {
-    final disc = absoluteDisc(construction.kernel.metric, viewport);
+    final disc = absoluteDisc(construction.kernel, viewport);
     if (disc == null) {
       return;
     }

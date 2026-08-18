@@ -80,7 +80,22 @@ class GeometryMenu extends ConsumerWidget {
     if (construction.kernel.metric == metric) {
       return;
     }
-    final command = SetGeometryCommand(DocumentKernel(metric: metric));
+    // Entering a proper geometry sizes its absolute to the figure (Phase
+    // 131). Without it the plane is the unit disc, the user's Euclidean
+    // construction is hundreds of units outside it, and the switch is
+    // technically correct and practically meaningless. Moving *between*
+    // the two proper geometries keeps the radius already chosen: it is
+    // the document's plane by then, and re-fitting it to the figure would
+    // move the boundary under a construction the user has been working
+    // in.
+    final radius = construction.kernel.isDefault
+        ? absoluteRadiusContaining(construction.objects)
+        : construction.kernel.radius;
+    final command = SetGeometryCommand(
+      metric == FundamentalConic.euclidean
+          ? const DocumentKernel()
+          : DocumentKernel(metric: metric, radius: radius),
+    );
     ref.read(commandStackProvider.notifier).execute(command);
     // Framing before the report, so the snack bar lands over a view that
     // already shows the plane it is talking about.

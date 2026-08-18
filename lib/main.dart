@@ -418,7 +418,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       return;
     }
     final framed = fittedToAbsolute(
-      ref.read(constructionProvider).construction.kernel.metric,
+      ref.read(constructionProvider).construction.kernel,
       size,
       rotation: ref.read(viewportProvider).rotation,
     );

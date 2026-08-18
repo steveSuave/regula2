@@ -100,8 +100,8 @@ void main() {
   });
 
   group('accepted versions', () {
-    test('v1 and v2 both decode', () {
-      for (final version in [1, 2]) {
+    test('v1, v2 and v3 all decode', () {
+      for (final version in [1, 2, 3]) {
         final json = encode(buildKitchenSink())..['version'] = version;
         expect(
           decodeDocument(json).construction.objects,
@@ -111,15 +111,15 @@ void main() {
       }
     });
 
-    test('v3 is refused, naming the newest version understood', () {
-      final json = encode(Construction())..['version'] = 3;
+    test('v4 is refused, naming the newest version understood', () {
+      final json = encode(Construction())..['version'] = 4;
       expect(
         () => decodeDocument(json),
         throwsA(
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            allOf(contains('version 3'), contains('latest known: 2')),
+            allOf(contains('version 4'), contains('latest known: 3')),
           ),
         ),
       );
@@ -168,6 +168,95 @@ void main() {
       expect(decoded.construction.kernel, decoded.kernel);
       expect(decoded.construction.kernel.absolute, Absolute.euclidean);
       expect(decoded.construction.kernel.absolute.isEuclidean, isTrue);
+    });
+
+    test('the radius round-trips, and only when it is not 1 (Phase 131)', () {
+      final unit = encode(
+        Construction(
+          kernel: const DocumentKernel(metric: FundamentalConic.hyperbolic),
+        ),
+      );
+      expect(
+        unit['kernel'],
+        <String, dynamic>{'metric': 'hyperbolic'},
+        reason: 'a unit-radius document is exactly the v2 file it was',
+      );
+      expect(unit['version'], 2);
+
+      final sized = encode(
+        Construction(
+          kernel: const DocumentKernel(
+            metric: FundamentalConic.hyperbolic,
+            radius: 240,
+          ),
+        ),
+      );
+      expect(sized['kernel'], <String, dynamic>{
+        'metric': 'hyperbolic',
+        'radius': 240.0,
+      });
+      expect(sized['version'], 3);
+      expect(decodeDocument(sized).kernel.radius, 240);
+      expect(decodeDocument(sized).construction.kernel.absolute.radius, 240);
+    });
+
+    test('a Euclidean kernel never writes a radius, having no scale', () {
+      final json = encode(
+        Construction(kernel: const DocumentKernel(radius: 17)),
+      );
+      expect(json.containsKey('kernel'), isFalse);
+      expect(json['version'], 1);
+    });
+
+    test('a malformed radius is refused, not corrected', () {
+      // Same reason an unknown metric is: drawing a document in a plane
+      // other than its own is the failure the version stamp was bought to
+      // prevent, and a silently clamped radius is that failure with a
+      // smaller number on it.
+      for (final bad in <Object>['200', 0, -3, double.nan]) {
+        final json = encode(Construction())
+          ..['kernel'] = <String, dynamic>{
+            'metric': 'hyperbolic',
+            'radius': bad,
+          }
+          ..['version'] = 3;
+        expect(
+          () => decodeDocument(json),
+          throwsA(isA<FormatException>()),
+          reason: 'radius $bad',
+        );
+      }
+    });
+
+    test('a v3 radius is what a v2 reader would misread, hence the bump', () {
+      // The reason this is on the version list at all. A v2 reader skips
+      // the key and lands in the right *geometry* — the radius is a chart
+      // scale — but reads a figure drawn at radius 240 against the unit
+      // disc, where every point of it is outside the plane and the whole
+      // document computes undefined. A file that draws as nothing is a
+      // misread, not a graceful degradation.
+      final construction = Construction(
+        kernel: const DocumentKernel(
+          metric: FundamentalConic.hyperbolic,
+          radius: 240,
+        ),
+      );
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(100, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Midpoint(id: 'm', point1: a, point2: b));
+      expect(construction.byId('m')!.isDefined, isTrue);
+
+      final asRead = decodeDocument(
+        encode(construction)..['kernel'] = {'metric': 'hyperbolic'},
+      );
+      expect(
+        asRead.construction.byId('m')!.isDefined,
+        isFalse,
+        reason: 'which is what dropping the key costs',
+      );
     });
 
     test('a fresh construction is Euclidean', () {

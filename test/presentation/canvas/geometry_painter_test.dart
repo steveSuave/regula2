@@ -878,9 +878,27 @@ void main() {
       // space having no edge; the Euclidean one is the line at infinity,
       // real but in no chart. Drawing something for either of the last
       // two would be inventing an edge that is not in the geometry.
-      expect(absoluteDisc(FundamentalConic.euclidean, viewport), isNull);
-      expect(absoluteDisc(FundamentalConic.elliptic, viewport), isNull);
-      expect(absoluteDisc(FundamentalConic.hyperbolic, viewport), isNotNull);
+      expect(
+        absoluteDisc(
+          const DocumentKernel(metric: FundamentalConic.euclidean),
+          viewport,
+        ),
+        isNull,
+      );
+      expect(
+        absoluteDisc(
+          const DocumentKernel(metric: FundamentalConic.elliptic),
+          viewport,
+        ),
+        isNull,
+      );
+      expect(
+        absoluteDisc(
+          const DocumentKernel(metric: FundamentalConic.hyperbolic),
+          viewport,
+        ),
+        isNotNull,
+      );
     });
 
     test('it is the unit circle, in world units, at any view state', () {
@@ -890,7 +908,10 @@ void main() {
         const ViewportState(scale: 200, rotation: 0.7),
       ]) {
         final view = CanvasViewport(state);
-        final disc = absoluteDisc(FundamentalConic.hyperbolic, view)!;
+        final disc = absoluteDisc(
+          const DocumentKernel(metric: FundamentalConic.hyperbolic),
+          view,
+        )!;
         expect(disc.radius, closeTo(view.worldToScreenLength(1), 1e-9));
         expect(disc.centre, view.worldToScreen(Vec2.zero));
         // A circle stays a circle under rotation, which is why the
@@ -910,7 +931,7 @@ void main() {
     test('a degenerate view draws nothing rather than throwing', () {
       expect(
         absoluteDisc(
-          FundamentalConic.hyperbolic,
+          const DocumentKernel(metric: FundamentalConic.hyperbolic),
           const CanvasViewport(ViewportState(scale: 0)),
         ),
         isNull,
@@ -943,7 +964,10 @@ void main() {
 
       final circles = _CircleRecordingCanvas();
       painterFor(construction, viewport: viewport).paint(circles, size);
-      final disc = absoluteDisc(FundamentalConic.hyperbolic, viewport)!;
+      final disc = absoluteDisc(
+        const DocumentKernel(metric: FundamentalConic.hyperbolic),
+        viewport,
+      )!;
       expect(
         circles.circles.any(
           (c) => c.$1 == disc.centre && (c.$2 - disc.radius).abs() < 1e-9,

@@ -80,7 +80,63 @@ class Absolute {
     required this.metric,
     required this.pointConic,
     required this.dualConic,
+    this.radius = 1,
   });
+
+  /// The proper absolute of [metric] scaled to [radius] — the disc
+  /// `x² + y² = R²w²` for [FundamentalConic.hyperbolic], the imaginary
+  /// conic `x² + y² + R²w² = 0` for [FundamentalConic.elliptic] (Phase
+  /// 131).
+  ///
+  /// **The radius is a chart scale and not a geometry**, and that is what
+  /// makes it safe. Substituting `x = R·x′` carries `⟨P,Q⟩` to `R²` times
+  /// the unit-disc form, and every measure here is a *ratio* of such
+  /// forms, so the `R²` cancels: the plane of radius R is the unit plane
+  /// drawn at R times the size, with identical distances and angles
+  /// between corresponding points. What it buys is that a construction
+  /// already drawn at world coordinates of tens or hundreds is *inside*
+  /// the plane rather than outside it, without moving a single point.
+  ///
+  /// [FundamentalConic.euclidean] refuses a radius, and the refusal is
+  /// the same fact as similar triangles existing: its absolute lies on
+  /// one line and has no scale to set. See [euclidean].
+  factory Absolute.scaled(FundamentalConic metric, double radius) {
+    if (metric == FundamentalConic.euclidean) {
+      throw ArgumentError.value(
+        radius,
+        'radius',
+        'the Euclidean absolute has no scale',
+      );
+    }
+    if (!radius.isFinite || radius <= 0) {
+      throw ArgumentError.value(radius, 'radius', 'must be finite and > 0');
+    }
+    // The dual is the adjugate throughout, so `dual = adj(point)` keeps
+    // holding literally: adj(diag(1, 1, c)) is diag(c, c, 1).
+    final c = metric == FundamentalConic.hyperbolic
+        ? -radius * radius
+        : radius * radius;
+    return Absolute(
+      metric: metric,
+      pointConic: ConicMatrix(
+        Complex.one,
+        Complex.zero,
+        Complex.one,
+        Complex.zero,
+        Complex.zero,
+        Complex(c),
+      ),
+      dualConic: ConicMatrix(
+        Complex(c),
+        Complex.zero,
+        Complex(c),
+        Complex.zero,
+        Complex.zero,
+        Complex.one,
+      ),
+      radius: radius,
+    );
+  }
 
   /// Euclidean geometry: the point conic is the doubled line at infinity
   /// `w² = 0`, and its dual is the circular point pair {I, J}.
@@ -165,12 +221,27 @@ class Absolute {
     ),
   );
 
-  /// The absolute [metric] names.
-  static Absolute of(FundamentalConic metric) => switch (metric) {
-    FundamentalConic.euclidean => euclidean,
-    FundamentalConic.hyperbolic => hyperbolic,
-    FundamentalConic.elliptic => elliptic,
-  };
+  /// The absolute [metric] names, at [radius] — the const unit instance
+  /// when that is 1, which is what every kernel test and every document
+  /// written before Phase 131 asks for.
+  static Absolute of(FundamentalConic metric, {double radius = 1}) {
+    if (radius == 1) {
+      return switch (metric) {
+        FundamentalConic.euclidean => euclidean,
+        FundamentalConic.hyperbolic => hyperbolic,
+        FundamentalConic.elliptic => elliptic,
+      };
+    }
+    return Absolute.scaled(metric, radius);
+  }
+
+  /// The chart radius of the absolute: the disc's radius under
+  /// [FundamentalConic.hyperbolic], the same scale in the imaginary
+  /// conic under [FundamentalConic.elliptic], and always 1 under
+  /// [FundamentalConic.euclidean], whose absolute has no scale. See
+  /// [Absolute.scaled] for why this is a chart quantity and not a
+  /// geometric one.
+  final double radius;
 
   /// Which of the three geometries this is.
   final FundamentalConic metric;

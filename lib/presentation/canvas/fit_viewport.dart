@@ -140,25 +140,23 @@ const double fitMarginPx = 48;
 /// [canvasSize], or null when the document's geometry has no real
 /// absolute to frame (Phase 126).
 ///
-/// A hyperbolic document lives *inside the unit circle*, and the app's
-/// default scale is one pixel per world unit, so on entering hyperbolic
-/// geometry the entire plane is a two-pixel dot at the origin while the
-/// figure sits hundreds of units outside it — outside the plane, where
-/// angles collapse to zero and nothing means what it says. Framing the
-/// disc is how the user is shown where the geometry is; without it the
-/// mode is technically present and practically invisible.
+/// A hyperbolic document lives *inside its absolute*, and the app's
+/// default scale is one pixel per world unit, so at the canonical radius
+/// the entire plane is a two-pixel dot at the origin. Framing the disc is
+/// how the user is shown where the geometry is; without it the mode is
+/// technically present and practically invisible.
 ///
 /// Deliberately frames *only* the absolute, not the union of the absolute
-/// and the construction. A figure built in Euclidean world coordinates is
-/// typically hundreds of units across, and fitting both would put the
-/// plane back in the corner as a dot.
+/// and the construction — which since Phase 131 is no longer a compromise
+/// but the same thing: the switch sizes the absolute to contain the
+/// figure, so framing the plane frames the figure with it.
 ViewportState? fittedToAbsolute(
-  FundamentalConic metric,
+  DocumentKernel kernel,
   Size canvasSize, {
   double marginPx = fitMarginPx,
   double rotation = 0,
 }) {
-  if (metric != FundamentalConic.hyperbolic) {
+  if (kernel.metric != FundamentalConic.hyperbolic) {
     return null;
   }
   final usable = math.min(
@@ -168,14 +166,15 @@ ViewportState? fittedToAbsolute(
   if (usable <= 0) {
     return null;
   }
-  // The absolute is the unit circle about the world origin, so the scale
-  // that fits it is half the usable extent — and the pan has to be
-  // *solved*, like every other fit: `ViewportState.pan` is the world
-  // point at screen (0, 0), not the one at the canvas centre.
+  // The absolute is a circle of the kernel's radius about the world
+  // origin, so the scale that fits it is half the usable extent over that
+  // radius — and the pan has to be *solved*, like every other fit:
+  // `ViewportState.pan` is the world point at screen (0, 0), not the one
+  // at the canvas centre.
   return CanvasViewport.pinning(
     world: Vec2.zero,
     focal: Offset(canvasSize.width / 2, canvasSize.height / 2),
-    scale: usable / 2,
+    scale: usable / (2 * kernel.radius),
     rotation: rotation,
   );
 }

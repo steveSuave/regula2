@@ -46,7 +46,7 @@ void main() {
 
   /// Two free points and their midpoint, added like real edits — the
   /// midpoint is the witness that the geometry actually changed, its CK
-  /// value being 0.5 where the affine one is 0.4.
+  /// value differing from the affine 0.4.
   void buildMidpoint() {
     final stack = container.read(commandStackProvider.notifier);
     final a = FreePoint(id: 'a', position: const Vec2(0, 0));
@@ -64,6 +64,9 @@ void main() {
 
   FundamentalConic metric() =>
       container.read(constructionProvider).construction.kernel.metric;
+
+  double radius() =>
+      container.read(constructionProvider).construction.kernel.radius;
 
   Future<void> choose(WidgetTester tester, String label) async {
     await tester.tap(
@@ -86,7 +89,57 @@ void main() {
     await choose(tester, 'Hyperbolic');
 
     expect(metric(), FundamentalConic.hyperbolic);
-    expect(midpointX(), closeTo(0.5, 1e-12));
+    // The switch sizes the absolute to the figure (Phase 131), so the
+    // plane here is the disc of radius 2 × 0.8, and the hyperbolic
+    // midpoint of 0 and 0.8 in it is R·tanh(½·artanh(0.8/R)). In the unit
+    // disc it would be 0.5 — the figure would be jammed against the
+    // boundary, which is exactly what sizing the plane avoids.
+    expect(radius(), closeTo(1.6, 1e-12));
+    expect(midpointX(), closeTo(1.6 * _tanh(_artanh(0.5) / 2), 1e-12));
+    expect(
+      midpointX(),
+      greaterThan(0.4),
+      reason: 'still not the affine midpoint — the geometry did change',
+    );
+  });
+
+  testWidgets('the plane is sized to the figure, and keeps its size across '
+      'a second switch', (tester) async {
+    // Without this the plane is the unit disc, a construction drawn at
+    // Euclidean world coordinates is entirely outside it, and the switch
+    // is technically correct and practically meaningless — every point
+    // out of the plane, the whole document undefined.
+    await pumpEditor(tester);
+    final stack = container.read(commandStackProvider.notifier);
+    final a = FreePoint(id: 'a', position: const Vec2(-30, 10));
+    final b = FreePoint(id: 'b', position: const Vec2(120, -50));
+    stack
+      ..execute(AddObjectCommand(a))
+      ..execute(AddObjectCommand(b))
+      ..execute(AddObjectCommand(Midpoint(id: 'm', point1: a, point2: b)));
+    await tester.pump();
+
+    await choose(tester, 'Hyperbolic');
+    expect(radius(), closeTo(2 * const Vec2(120, -50).norm, 1e-9));
+    expect(
+      container.read(constructionProvider).construction.byId('m')!.isDefined,
+      isTrue,
+      reason: 'the figure is inside its plane, which is the whole point',
+    );
+
+    final sized = radius();
+    await choose(tester, 'Elliptic');
+    expect(
+      radius(),
+      sized,
+      reason:
+          'moving between the two proper geometries keeps the plane the '
+          'document is already drawn in — re-fitting would move the '
+          'boundary under a construction the user is working in',
+    );
+
+    await choose(tester, 'Euclidean');
+    expect(radius(), 1, reason: 'the Euclidean absolute has no scale to keep');
   });
 
   testWidgets('the switch is an edit — undo puts the geometry back', (
@@ -261,3 +314,7 @@ void main() {
     expect(find.text('Trying the other geometries'), findsNothing);
   });
 }
+
+double _artanh(double x) => 0.5 * math.log((1 + x) / (1 - x));
+
+double _tanh(double x) => (math.exp(2 * x) - 1) / (math.exp(2 * x) + 1);

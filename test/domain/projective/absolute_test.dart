@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/document_kernel.dart';
+import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
+import 'package:regula/domain/projective/ck_measure.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/metric.dart';
@@ -207,6 +210,127 @@ void main() {
               .poleOf(ProjLine(l.a * k, l.b * k, l.c * k))
               .closeTo(absolute.poleOf(l)),
           isTrue,
+        );
+      }
+    });
+  });
+
+  group('a scaled absolute (Phase 131)', () {
+    test('the radius is a chart scale, not a geometry', () {
+      // The claim the whole feature rests on: substituting x = R·x′ takes
+      // ⟨P,Q⟩ to R² times the unit-disc form, and every measure here is a
+      // ratio of such forms, so R cancels. The plane of radius R is the
+      // unit plane drawn R times larger — same distances, same angles,
+      // between corresponding points.
+      for (final metric in [
+        FundamentalConic.hyperbolic,
+        FundamentalConic.elliptic,
+      ]) {
+        final unit = Absolute.of(metric);
+        for (final r in [0.25, 3.0, 200.0]) {
+          final scaled = Absolute.scaled(metric, r);
+          for (final pair in [
+            (const Vec2(0.1, 0), const Vec2(0.4, 0.2)),
+            (const Vec2(-0.35, 0.5), const Vec2(0.2, -0.15)),
+          ]) {
+            final here = distanceBetween(
+              unit,
+              ProjPoint.lift(pair.$1),
+              ProjPoint.lift(pair.$2),
+            );
+            final there = distanceBetween(
+              scaled,
+              ProjPoint.lift(pair.$1 * r),
+              ProjPoint.lift(pair.$2 * r),
+            );
+            expect(there, closeTo(here!, 1e-9), reason: '$metric R=$r');
+          }
+        }
+      }
+    });
+
+    test('and it really does move the boundary', () {
+      // The other half: at the same *coordinates* the geometry differs,
+      // which is what makes a figure drawn at Euclidean scale land inside
+      // a large plane and outside a unit one.
+      final far = ProjPoint.lift(const Vec2(30, 0));
+      expect(
+        distanceBetween(Absolute.hyperbolic, ProjPoint.lift(Vec2.zero), far),
+        isNull,
+        reason: 'outside the unit disc there is no hyperbolic plane',
+      );
+      expect(
+        distanceBetween(
+          Absolute.scaled(FundamentalConic.hyperbolic, 100),
+          ProjPoint.lift(Vec2.zero),
+          far,
+        ),
+        isNotNull,
+      );
+    });
+
+    test('the dual stays the adjugate, as it is everywhere else', () {
+      for (final metric in [
+        FundamentalConic.hyperbolic,
+        FundamentalConic.elliptic,
+      ]) {
+        final scaled = Absolute.scaled(metric, 7);
+        // adj(diag(1, 1, c)) is diag(c, c, 1), so the stored dual has to
+        // be that up to nothing at all — the relation holds literally.
+        final c = metric == FundamentalConic.hyperbolic ? -49.0 : 49.0;
+        expect(scaled.pointConic.ww.re, closeTo(c, 1e-9));
+        expect(scaled.dualConic.xx.re, closeTo(c, 1e-9));
+        expect(scaled.dualConic.yy.re, closeTo(c, 1e-9));
+        expect(scaled.dualConic.ww.re, closeTo(1, 1e-9));
+      }
+    });
+
+    test('radius 1 is the const instance, so nothing else pays for this', () {
+      expect(
+        Absolute.of(FundamentalConic.hyperbolic),
+        same(Absolute.hyperbolic),
+      );
+      expect(
+        Absolute.of(FundamentalConic.hyperbolic, radius: 1),
+        same(Absolute.hyperbolic),
+      );
+      expect(Absolute.hyperbolic.radius, 1);
+      expect(Absolute.euclidean.radius, 1);
+    });
+
+    test('the Euclidean absolute refuses a radius, and that is the same '
+        'fact as similar triangles', () {
+      // Its absolute lies on one line and has no scale — which is why
+      // Euclidean geometry has no absolute unit of length in the first
+      // place. Scaling it would be scaling nothing.
+      expect(
+        () => Absolute.scaled(FundamentalConic.euclidean, 5),
+        throwsArgumentError,
+      );
+      expect(
+        () => Absolute.of(FundamentalConic.euclidean, radius: 5),
+        throwsArgumentError,
+        reason: 'the same refusal through the other door',
+      );
+      expect(
+        const DocumentKernel(
+          metric: FundamentalConic.euclidean,
+          radius: 5,
+        ).absolute,
+        same(Absolute.euclidean),
+        reason:
+            'and DocumentKernel is what makes sure the door is never '
+            'knocked on: a Euclidean kernel with a stray radius is still '
+            'the default one',
+      );
+    });
+
+    test('a radius that is not a positive finite number is refused', () {
+      for (final bad in [0.0, -2.0, double.nan, double.infinity]) {
+        expect(
+          () => Absolute.scaled(FundamentalConic.hyperbolic, bad),
+          throwsArgumentError,
+          reason: '$bad',
         );
       }
     });
