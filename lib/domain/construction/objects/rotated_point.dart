@@ -14,6 +14,18 @@ import '../geo_object.dart';
 /// Migrated (Phase 108): [ProjTransform.rotation] on the parents'
 /// projective views. A point at infinity rotates to the turned direction
 /// at infinity, marked as such: [projPoint] real, [position] null.
+///
+/// **Generalized (Phase 127)**: under a proper absolute this is
+/// [ProjTransform.ckRotation], the exponential of `Ω*·[C]ₓ`, of which the
+/// Euclidean matrix is the special case — kept as the Euclidean route
+/// because it is exact and cheaper, per the Phase 122/124 rule.
+///
+/// Undefined when the *centre* is not inside the absolute, which is the
+/// classical trichotomy rather than a shortcoming: an isometry fixing a
+/// point on the absolute is parabolic and one fixing a point outside it
+/// is a boost along that point's polar, so neither has an angle for
+/// [angle] to be. In elliptic geometry the absolute has no real points
+/// and every real centre rotates. See [ProjTransform.ckRotation].
 class RotatedPoint extends GeoPoint {
   RotatedPoint({
     required super.id,
@@ -44,24 +56,23 @@ class RotatedPoint extends GeoPoint {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
-    // Euclidean only (Phase 125). A CK rotation about a general centre needs an orthonormal frame
-    // in the pencil through it, and the sign of the dual form varies
-    // across that pencil, so the angle parameterization is not uniformly
-    // circular. Deferred rather than approximated. (About the disc centre
-    // it happens to be the Euclidean matrix, both proper absolutes being
-    // rotation-invariant there -- which is why this is a gap, not an
-    // impossibility.)
-    if (!absolute.isEuclidean) {
-      _point = null;
-      return;
-    }
     final p = point.projPoint;
     final c = center.projPoint;
     if (p == null || c == null) {
       _point = null;
       return;
     }
-    final image = ProjTransform.rotation(c, angle).apply(p);
+    // Phase 125 deferred this on the grounds that the pencil through a
+    // general centre is not uniformly circular. That is true, and it is
+    // true of centres *outside* the absolute: the pencil through an
+    // interior point misses the dual conic entirely, so its angle measure
+    // is elliptic and a rotation there is as circular as a Euclidean one.
+    // `ckRotation` answers the zero map for the other two cases, which
+    // lands in the same guard a degenerate Euclidean rotation does.
+    final transform = absolute.isEuclidean
+        ? ProjTransform.rotation(c, angle)
+        : ProjTransform.ckRotation(c, angle, absolute);
+    final image = transform.apply(p);
     _point = image.isZero ? null : image;
   }
 }

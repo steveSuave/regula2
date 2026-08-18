@@ -61,6 +61,29 @@ class ProjPoint {
     return ProjPoint(x / d, y / d, w / d);
   }
 
+  /// The same projective point with any *global phase* removed: divides
+  /// by the unit phase of the largest-magnitude coordinate, leaving scale
+  /// alone. Identity on the zero triple.
+  ///
+  /// Weaker than [normalized] on purpose, and the difference is
+  /// load-bearing (Phase 125): dividing by the unit *phase* is exact for
+  /// every case that matters — a real triple divides by ±1 and an
+  /// i-scaled one by ±i, both bit-exact — where dividing by the component
+  /// itself rescales and rounds. A CK construction takes a square root of
+  /// a form that is negative inside the absolute and hands back real
+  /// elements scaled by `i`, so removing that phase is what makes the
+  /// answer real again; a canonicalization that turned an exact zero into
+  /// 2.7e-17 in the process would lose every right angle it touched.
+  ProjPoint get dephased {
+    var pivot = x;
+    if (y.abs2 > pivot.abs2) pivot = y;
+    if (w.abs2 > pivot.abs2) pivot = w;
+    if (pivot.abs2 == 0) return this;
+    final magnitude = pivot.abs;
+    final phase = Complex(pivot.re / magnitude, pivot.im / magnitude);
+    return ProjPoint(x / phase, y / phase, w / phase);
+  }
+
   /// The line through this point and [other] (cross product of the triples).
   /// The zero line when the points are projectively equal.
   ProjLine join(ProjPoint other) => ProjLine(

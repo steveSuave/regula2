@@ -4,6 +4,8 @@ import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/absolute.dart';
+import 'package:regula/domain/projective/ck_measure.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 
 import '../../../projective_stubs.dart';
@@ -88,6 +90,100 @@ void main() {
       expect(image.isReal(), isTrue);
       expect(image.isFinite(), isFalse);
       expect(image.closeTo(ProjPoint.real(0, 1, 0)), isTrue);
+    });
+
+    group('under a proper absolute (Phase 127)', () {
+      RotatedPoint rotated(Vec2 p, Vec2 c, double angle) => RotatedPoint(
+        id: 'r',
+        point: FreePoint(id: 'p', position: p),
+        center: FreePoint(id: 'c', position: c),
+        angle: angle,
+      );
+
+      test('an interior centre rotates, where Phase 125 refused', () {
+        // The deferral was on the grounds that the pencil through a
+        // general centre is not uniformly circular. True of centres
+        // *outside* the absolute; the pencil through an interior point
+        // misses the dual conic entirely, so its angle measure is
+        // elliptic and the rotation is as circular as a Euclidean one.
+        final r = rotated(const Vec2(0.5, 0), const Vec2(0.1, 0), 0.6);
+        r.recompute(Absolute.hyperbolic);
+        expect(r.isDefined, isTrue);
+        expect(r.position, isNotNull);
+      });
+
+      test('and it is not the Euclidean answer', () {
+        final euclidean = rotated(const Vec2(0.5, 0), const Vec2(0.1, 0), 0.6);
+        final hyperbolic = rotated(const Vec2(0.5, 0), const Vec2(0.1, 0), 0.6)
+          ..recompute(Absolute.hyperbolic);
+        expect(
+          hyperbolic.position!.closeTo(euclidean.position!, 1e-6),
+          isFalse,
+          reason: '${hyperbolic.position} vs ${euclidean.position}',
+        );
+      });
+
+      test('the image stays on its hyperbolic orbit', () {
+        // The claim that makes it a rotation rather than a map that
+        // merely moves: every image is the same CK distance from the
+        // centre as the subject, which no wrong scale or chart artefact
+        // survives.
+        const centre = Vec2(0.1, -0.2);
+        const subject = Vec2(0.45, 0.3);
+        final radius = distanceBetween(
+          Absolute.hyperbolic,
+          ProjPoint.lift(centre),
+          ProjPoint.lift(subject),
+        )!;
+        for (final angle in [0.3, 1.4, -2.2, 3.9]) {
+          final r = rotated(subject, centre, angle)
+            ..recompute(Absolute.hyperbolic);
+          expect(
+            distanceBetween(
+              Absolute.hyperbolic,
+              ProjPoint.lift(centre),
+              r.projPoint!,
+            )!,
+            closeTo(radius, 1e-9),
+            reason: 'angle $angle left the orbit',
+          );
+        }
+      });
+
+      test('a centre outside the absolute is undefined, not approximated', () {
+        // A boost, whose parameter is a rapidity rather than an angle —
+        // so answering with `cos`/`sin` would be a different isometry,
+        // not an approximate one.
+        final r = rotated(const Vec2(0.5, 0), const Vec2(2, 0), 0.6);
+        r.recompute(Absolute.hyperbolic);
+        expect(r.projPoint, isNull);
+        expect(r.isDefined, isFalse);
+      });
+
+      test('a centre on the absolute is undefined too — parabolic', () {
+        final r = rotated(const Vec2(0.5, 0), const Vec2(1, 0), 0.6);
+        r.recompute(Absolute.hyperbolic);
+        expect(r.projPoint, isNull);
+      });
+
+      test('elliptic rotates about any real centre', () {
+        for (final centre in [
+          const Vec2(0, 0),
+          const Vec2(0.4, 0.4),
+          const Vec2(3, -7),
+        ]) {
+          final r = rotated(const Vec2(0.5, 0), centre, 0.6);
+          r.recompute(Absolute.elliptic);
+          expect(r.projPoint, isNotNull, reason: '$centre');
+        }
+      });
+
+      test('the Euclidean answer is untouched by any of this', () {
+        final r = rotated(const Vec2(1, 0), Vec2.zero, math.pi / 2);
+        expect(r.position!.closeTo(const Vec2(0, 1), 1e-12), isTrue);
+        r.recompute(Absolute.euclidean);
+        expect(r.position!.closeTo(const Vec2(0, 1), 1e-12), isTrue);
+      });
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
