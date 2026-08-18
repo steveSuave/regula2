@@ -1,0 +1,22 @@
+test/domain/tools/ck_tool_kernel_test.dart
+  s_f868d4518223d5::t_8d883976747646 119-120,123-128,132,141-168
+  s_f868d4518223d5::t_21d443df906d44 169
+lib/domain/tools/point_coincidence.dart
+  s_f868d4518223d5::t_2eee60e71d5c33 81-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7bad96c884f5e189e82ee872311a0bbb7600487e",
+  "prompts": {},
+  "sessions": {
+    "s_f868d4518223d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c57b6d26-f912-457c-8856-76743b807fe7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
