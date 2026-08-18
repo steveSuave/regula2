@@ -1,0 +1,14 @@
+.github/workflows/deploy.yml
+  h_7b6bd6d3048c34 44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "890fa45761fba72c26e114e451488a07fe68d3f4",
+  "prompts": {},
+  "humans": {
+    "h_7b6bd6d3048c34": {
+      "author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
