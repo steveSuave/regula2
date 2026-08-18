@@ -19,6 +19,13 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 **Then — Phase 126c, reported straight after.** "The hyperbolic circle has the same background colour as the outer space." The wash was drawn and in the right shape; it was one alpha of **0.09** on the absolute's colour, which measures a 5 % luminance step over the light canvas. Replaced by a per-theme colour with its alpha baked in — the two canvases start from opposite ends, so the alpha that is barely a tint over white is a large lift over near-black. Light and dark now measure 0.14 and 0.10. Suite **2514** green.
 
+**Then — Phase 126d, and this was the real one.** Reported as "the hyperbolic circle has the same background colour as the outer space unless I zoom enough to have some part of the circumference off screen", which is a *precise* description of the defect and which I misread twice before screenshots settled it. `Path.combine(PathOperation.difference, rect, oval)` returns the outer rect **unbroken** on the web renderer when the oval is entirely contained, and the correct annulus as soon as any part crosses an edge. On the VM it is always correct. So a hyperbolic document showed a uniformly washed canvas with the rim floating on it, and repaired itself when the user zoomed out past the boundary.
+
+- Reproduced directly: `flutter test --platform chrome` prints `difference-hole=false` where the VM prints `true`.
+- Both uses are **even-odd fills** now, which express the same region with no boolean op and so have no implementation left to differ. The second use was the region-pick scrim — same shape, same containment, unreported and one grep away.
+- **`test/web/` and a CI browser gate**, which is the finding that outlives the bug: web is the compile target, the VM harness is not the renderer, and nothing in the suite had ever run in a browser. The file keeps the boolean difference as evidence, asserting the broken behaviour, so the day an engine fixes it the test says so.
+- Suite **2520** green + 2 on chrome, 32 goldens byte-identical.
+
 **Next**
 - Merge `phase-126b-ck-presentation` and `phase-126c-absolute-contrast`.
 - **The absolute's radius is fixed at 1 world unit**, which is canonical and is a usability problem: an existing Euclidean construction is entirely outside the plane the moment it is switched. A per-document radius (`diag(1, 1, −1/R²)`, additive to the kernel block) would make switching an existing figure meaningful. It is a schema decision, so it is written down rather than built.
@@ -31,6 +38,9 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 - **When a change moves goldens, ask what the goldens knew.** Raising `maxScale` looked like a nuisance and was in fact the discovery that fit and zoom had been sharing a limit that meant two different things.
 - The triangle-angle-sum test written in Phase 126 passed throughout, because it reads `GeoAngle.measure` directly. It was right and it was not enough: nothing tested the string the user actually reads.
 - **"Drawn in the right shape" and "visible" are different tests, and only one of them was written.** The painter test pins that the wash path contains a point outside the disc and excludes one inside; it was green through a wash nobody could see. Anything whose whole job is to be *noticed* needs a test that rasterizes and measures, not one that inspects geometry.
+- **A green suite is not evidence about the renderer, and it took a user with a screenshot to establish that.** Four defects in this milestone were correct values that never reached the screen; this one was a correct *value*, a correct *shape*, and a renderer that drew neither. `test/web/` exists so the next one is caught by CI.
+- **Read a bug report as a specification.** "The same colour unless I zoom enough to have part of the circumference off screen" names the exact discriminator — containment — and I twice reinterpreted it into something I already believed (too-faint alpha). The condition attached to a report is usually the most informative part of it.
+- **When a rendering primitive has a platform-dependent implementation, prefer the formulation that does not use it.** An even-odd fill is not a workaround for the difference op; it is the more direct statement of "a fill with a hole", and it happens to have no boolean step to get wrong.
 - **One opacity cannot serve two themes that start from opposite ends.** A tint over white and a lift over near-black are different quantities; deriving both from one alpha guarantees at least one of them is wrong.
 
 ---
