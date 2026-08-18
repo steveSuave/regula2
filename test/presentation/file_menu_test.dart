@@ -1,11 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
-// FilePickerPlatform is not re-exported by package:file_picker; overriding
-// `instance` with a fake is the plugin's own documented test seam.
-// ignore: implementation_imports
-import 'package:file_picker/src/platform/file_picker_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,49 +26,84 @@ import '../wide_window.dart';
 class _FakeFilePicker extends FilePickerPlatform {
   Uint8List? savedBytes;
   String? savedFileName;
-  FilePickerResult? openResult;
+  String? savedMimeType;
+  PlatformFile? openResult;
 
   @override
-  Future<String?> saveFile({
+  Future<Uri?> saveFile({
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
     String? dialogTitle,
-    String? fileName,
     String? initialDirectory,
-    FileType type = FileType.any,
-    List<String>? allowedExtensions,
-    Uint8List? bytes,
-    bool lockParentWindow = false,
+    void Function(FilePickerStatus)? onFileSaving,
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
   }) async {
     savedBytes = bytes;
     savedFileName = fileName;
-    return fileName;
+    savedMimeType = mimeType;
+    return Uri.file(fileName);
   }
 
   @override
-  Future<FilePickerResult?> pickFiles({
+  Future<PlatformFile?> pickFile({
     String? dialogTitle,
     String? initialDirectory,
     FileType type = FileType.any,
     List<String>? allowedExtensions,
     void Function(FilePickerStatus)? onFileLoading,
     int compressionQuality = 0,
-    bool allowMultiple = false,
-    bool withData = false,
-    bool withReadStream = false,
-    bool lockParentWindow = false,
-    bool readSequential = false,
-    bool cancelUploadOnWindowBlur = true,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
   }) async {
     return openResult;
   }
 }
 
-FilePickerResult _fileWithBytes(List<int> bytes) => FilePickerResult([
-  PlatformFile(
-    name: 'construction.rgl',
-    size: bytes.length,
-    bytes: Uint8List.fromList(bytes),
-  ),
-]);
+/// A picked file backed by in-memory bytes. [PlatformFile] is abstract as
+/// of file_picker 12 — the picked file is read back through
+/// `readAsBytes()` instead of arriving with its bytes attached — so the
+/// canned open result is a real subclass, not a constructor call.
+base class _FakePickedFile extends PlatformFile {
+  _FakePickedFile(this.bytes, {this.readFails = false});
+
+  final Uint8List bytes;
+
+  /// Makes the read fail the way an unreadable path or a revoked content
+  /// URI does, which is the only way an open can fail now that a picked
+  /// file no longer carries its bytes.
+  final bool readFails;
+
+  @override
+  String get name => 'construction.rgl';
+
+  @override
+  Uri get uri => Uri.file(name);
+
+  @override
+  Never get xFile => throw UnimplementedError('unused by these tests');
+
+  @override
+  Future<int> length() async => bytes.length;
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    if (readFails) {
+      throw const FileSystemException('could not read');
+    }
+    return bytes;
+  }
+
+  @override
+  Stream<Uint8List> readAsByteStream() => Stream.value(bytes);
+}
+
+PlatformFile _fileWithBytes(List<int> bytes) =>
+    _FakePickedFile(Uint8List.fromList(bytes));
 
 void main() {
   late ProviderContainer container;
@@ -214,6 +246,21 @@ void main() {
     await pumpEditor(tester);
     buildSmallConstruction();
     picker.openResult = _fileWithBytes(utf8.encode('not json at all'));
+
+    await tapFileMenu(tester, 'Open…');
+
+    expect(find.text('Could not open file'), findsOneWidget);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(container.read(constructionProvider).construction.length, 3);
+  });
+
+  testWidgets('a file that cannot be read shows the same one dialog', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    buildSmallConstruction();
+    picker.openResult = _FakePickedFile(Uint8List(0), readFails: true);
 
     await tapFileMenu(tester, 'Open…');
 
