@@ -14,6 +14,21 @@ import 'multi_point_tool.dart';
 /// The apex runs through [dedupedDerivedPoint]: a visible existing point
 /// identically coincident with it (re-stamping over the same corners, or
 /// a manually constructed Euclid I.1 apex) is reused instead.
+///
+/// **This is a Euclidean construction, and under a proper absolute it
+/// builds an isoceles triangle rather than an equilateral one** (Phase
+/// 128, measured in `test/domain/tools/ck_macro_tools_test.dart`).
+/// `ckRotation` is an isometry and delivers the 60° it is asked for
+/// exactly, in every geometry — which is precisely the problem, because a
+/// 60° apex is equilateral only where a triangle's angles sum to π. The
+/// two legs stay equal; the base errs long in the hyperbolic plane and
+/// short in the elliptic one — by 1.2 % at a chart side of 0.3, 5.8 % at
+/// 0.6 and 23 % at 0.9.
+///
+/// The fix is not a better constant. The apex angle an equilateral
+/// triangle needs is a function of its side length, and [RotatedPoint]'s
+/// angle is fixed for the object's lifetime, so any baked value stops
+/// being right the moment a corner is dragged.
 class EquilateralTriangleMacroTool extends MultiPointTool {
   EquilateralTriangleMacroTool({required super.newId});
 
