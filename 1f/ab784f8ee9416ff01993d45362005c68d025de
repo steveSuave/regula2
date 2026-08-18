@@ -1,0 +1,21 @@
+lib/domain/construction/object_attributes.freezed.dart
+  s_60105cb0c68d9b::t_aee952d8d8d4e1 26-30,289-293
+lib/application/providers/tool_provider.g.dart
+  s_60105cb0c68d9b::t_aee952d8d8d4e1 59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1fab784f8ee9416ff01993d45362005c68d025de",
+  "prompts": {},
+  "sessions": {
+    "s_60105cb0c68d9b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f050fbd-18ae-4ef1-a9f7-ca354c23eadc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
