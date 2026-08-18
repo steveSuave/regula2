@@ -8,6 +8,35 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 132 (V2 Session 34) — 2026-08-18
+
+**Done — Phase 126e: the two silent re-addressings, said out loud.** On `phase-126e-load-report`, two commits. The checklist line was "wire the decoder's `repairedIntersections` report into the place the geometry switch already reports"; it turned out to be two reports rather than one, and one of them did not exist yet. Suite **2532** green (from 2520), analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **An intersection point's *address* can change without the user touching it in exactly two ways**, and until now neither of them was fully spoken. Opening a document the reader had to repair, and switching the document's geometry, where `branchIndex` names a position in the candidate list *as ordered against the absolute*. Both are invisible by construction — a re-pointed crossing looks exactly like the one the user tapped — and a silent repair is how the Phase 120c document accumulated points nobody could account for in the first place. So they now share one report in one place.
+- **The reader was silent about the case it cannot fix, which is the case that matters more.** `_separateDuplicateBranches` returned the ids it *moved*; a duplicate whose curve pair has no crossing left to give it fell out of the loop with nothing recorded at all. A repaired point is a defect the reader fixed and the user need only know something moved. An unrepaired one is still there, no drag can separate it, and the only remaining fix is to delete the surplus — which is the user's call and not the decoder's, so the honest move is to *say so*. `DecodedDocument.unrepairedIntersections`, the same shape as `GeometryChange.unmatched` and for the same reason.
+- **`intersection_report.dart`: the sentence is the feature.** Both messages are plain functions taking no `BuildContext`, so what they *say* is testable without a widget tree, plus one `showIntersectionReport` so the two read as the same kind of news. The switch's phrasing is unchanged; `GeometryMenu._report` became a call to it.
+- **Checked while wiring `main.dart`**: `decoded.kernel` is never applied on the load path and should not be. The kernel rides on `decoded.construction`, which the codec built with it; reading the field here would be a second source for one fact.
+- **Tested at three levels — the Phase 126b lesson applied rather than restated.** The strings; that `showIntersectionReport` actually puts one on screen; and both real flows end to end — Open through the fake picker `file_menu_test` already had, and the switch through the `geometry_switch_test` witness (two tier-1 conics that miss, so the conics are bit-identical in both geometries, nothing moves, and only the numbering changes). Every one of the four Phase 126b–d defects was a correct value that no test drove all the way to the screen.
+- **And the negative on each**, because "says nothing" is a claim here and not an omission: a well-formed document and an ordinary switch produce no snack bar at all.
+
+**Also established this session (not code)** — the Pages deploy is live and green. `890fa45` ("Change github pages base href") had no STATUS entry; its CI, benchmark and deploy runs all succeeded, `https://stevesuave.github.io/regula2/` serves 200 with `base href="/regula2/"`, and `main.dart.wasm` (2.57 MB) is being served. Phase 122's last box stays **unticked**: the artifact is confirmed, an actual browser loading and driving the app is not, and that is what the box says.
+
+**Next**
+- Merge `phase-126e-load-report`.
+- The **wasm browser smoke** is now one manual step rather than a blocked one — open the deployed URL, confirm the wasm build boots and a construction can be drawn.
+- Phase 125/126's standing debt, unchanged: per-kind CK correctness beyond angle, and **`RotatedPoint`**, which is a gap rather than a refusal.
+- `visibleWorldBounds` contributes nothing for a CK circle (it reads centre and radius, which a bitangent conic has not got), so fit-to-construction under-frames a hyperbolic document.
+- **The absolute's radius is fixed at 1 world unit** — still written down rather than built, and still the thing that makes switching an existing Euclidean figure meaningless.
+
+**Gotchas**
+- **A report that is computed and discarded is worse than one that was never written**, because the code reads as though the obligation is met. `repairedIntersections` had a correct value, a docstring explaining why the user must be told, and no reader, for six phases. Grep for the *consumers* of a diagnostic, not for the diagnostic.
+- **When a repair routine has an unhappy path, the unhappy path is the report.** The loop that finds a free crossing and the branch where there is none looked symmetrical; only one of them recorded anything. The give-away was in the existing docstring — it already explained that a surplus point "keeps its index and stays a duplicate", which is a user-visible outcome described in a comment and nowhere else.
+- **`file_picker` 11 already has a test seam and I nearly added a second one.** `FilePickerPlatform.instance` is overridable and `test/presentation/file_menu_test.dart` has faked it since the file menu shipped; I had written an injectable opener onto `EditorScreen` before finding it. Production API added for testability is worth one grep through the existing tests first.
+- **The `choose` helper in `geometry_menu_test` warns on every tap** ("A call to tap() … ignoring all but last") and has since Phase 126. Pre-existing and benign — the switch demonstrably happens — but it makes a genuinely missed tap unreadable in that file's output.
+- The unrepairable case gets a **six-second snack bar for a defect the user has to act on**. Nobody has hit it in the wild; if anyone does, it wants a dialog naming the ids, or the object tree flagging them. Left as a TODO rather than built on speculation.
+
+---
+
 ## Session 131 (V2 Session 33) — 2026-08-18
 
 **Done — Phase 126b: three user-reported defects, all in the presentation boundary.** The user tried the new mode and reported that a triangle in the hyperbolic plane measured exactly 180°, that no circles appeared, and that elliptic looked identical to Euclidean. All three were real. Suite **2510** green, analyze clean, 32 goldens byte-identical.
