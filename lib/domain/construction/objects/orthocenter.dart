@@ -28,5 +28,6 @@ class Orthocenter extends TriangleCenterPoint {
   ) => perpendicularThrough(
     a,
     b.join(c),
+    absolute,
   ).meet(perpendicularThrough(b, a.join(c), absolute));
 }
