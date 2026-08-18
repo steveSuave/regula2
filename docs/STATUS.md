@@ -8,6 +8,29 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 131 (V2 Session 33) — 2026-08-18
+
+**Done — Phase 126b: three user-reported defects, all in the presentation boundary.** The user tried the new mode and reported that a triangle in the hyperbolic plane measured exactly 180°, that no circles appeared, and that elliptic looked identical to Euclidean. All three were real. Suite **2510** green, analyze clean, 32 goldens byte-identical.
+
+- **The angle label read the marker, not the measure.** `labelText` took `angle.measure` — the chart sweep of the drawn arc — where it meant `GeoAngle.measure`. A triangle now labels 152° / 180° / 202° across the three geometries. This was also the whole of "elliptic looks the same as Euclidean".
+- **Every Cayley–Klein circle was invisible.** `GeoCircle.isDefined` was `circle != null`, which asks whether the conic is a *Euclidean* circle. A CK circle is bitangent to the absolute, so `toCircleEq` answers null, so `isDefined` was false, so the painter skipped it — before ever reaching the conic arm that would have drawn it correctly. The conic was right the whole time.
+- **The plane was two pixels across.** The absolute is the unit circle in *world* units; the default scale is one pixel per world unit. So the entire hyperbolic plane was a dot at the origin while the user's figure sat hundreds of units outside it — outside the plane, where the angles collapse to zero. `fittedToAbsolute` frames the disc on switching.
+- **And that split one constant into two.** Framing needed `maxScale` above 50, which moved six goldens — the useful part of the whole exercise. One number was answering two different questions: how far the *user* may zoom (a hyperbolic document needs a lot) and how far a *fit* may blow a tiny figure up (unchanged). Now `maxScale` = 2000 and `maxFitScale` = 50.
+
+**Next**
+- Merge `phase-126b-ck-presentation`.
+- **The absolute's radius is fixed at 1 world unit**, which is canonical and is a usability problem: an existing Euclidean construction is entirely outside the plane the moment it is switched. A per-document radius (`diag(1, 1, −1/R²)`, additive to the kernel block) would make switching an existing figure meaningful. It is a schema decision, so it is written down rather than built.
+- `visibleWorldBounds` contributes nothing for a CK circle, so fit-to-construction under-frames a hyperbolic document.
+- Unchanged: the load-time `repairedIntersections` report; per-kind CK correctness beyond angle; `RotatedPoint`; the wasm browser smoke.
+
+**Gotchas**
+- **A domain coverage gate cannot see the screen, and that is where this milestone actually failed.** `ck_kind_coverage_test` was green through all three of these. Every one was a correct domain value that the presentation layer either re-derived Euclidean-ly (`labelText`), refused to draw (`isDefined`), or drew two pixels wide (the scale). When a milestone changes what values *mean*, audit every place a value is read for display, not only where it is computed.
+- **`isDefined` is a question about ink, and `circle != null` is a question about Euclid.** Any predicate phrased in terms of the affine view (`circle`, `line`, `position`) is a Euclidean question wearing a general name. The narrow fallback matters: `isParameterized`, not `isDrawable` — the latter admits line pairs and would have started painting degenerate Euclidean circles and moved the goldens.
+- **When a change moves goldens, ask what the goldens knew.** Raising `maxScale` looked like a nuisance and was in fact the discovery that fit and zoom had been sharing a limit that meant two different things.
+- The triangle-angle-sum test written in Phase 126 passed throughout, because it reads `GeoAngle.measure` directly. It was right and it was not enough: nothing tested the string the user actually reads.
+
+---
+
 ## Session 130 (V2 Session 32) — 2026-08-18
 
 **Done — Phase 126 (M-CK3) complete on `phase-126-ck-ui`, five commits.** The first phase of the milestone the user can *see*: three phases of kernel work were reachable only from tests, and this one opens the door. Suite **2500** green (from 2471), analyze clean, 32 goldens byte-identical, perf gate PASS at 1% / 7% of budget with unchanged checksums, `flutter build web --wasm` compiles.

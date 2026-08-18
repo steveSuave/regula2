@@ -16,7 +16,14 @@ import '../../domain/construction/geometry_change.dart';
 /// point, so it is an edit to the construction and belongs in the undo
 /// history with the rest of them.
 class GeometryMenu extends ConsumerWidget {
-  const GeometryMenu({super.key});
+  const GeometryMenu({super.key, this.onFrameAbsolute});
+
+  /// Called after a switch, so the editor can frame the plane the new
+  /// geometry lives in. Supplied by the screen rather than done here
+  /// because framing needs the *canvas* size, which only the screen
+  /// measures — and it is a view change, not an edit, so it stays out of
+  /// the command the switch went through.
+  final VoidCallback? onFrameAbsolute;
 
   /// What each geometry is, in one line each — the menu is where a user
   /// who has never met a Cayley-Klein absolute first meets one.
@@ -75,6 +82,9 @@ class GeometryMenu extends ConsumerWidget {
     }
     final command = SetGeometryCommand(DocumentKernel(metric: metric));
     ref.read(commandStackProvider.notifier).execute(command);
+    // Framing before the report, so the snack bar lands over a view that
+    // already shows the plane it is talking about.
+    onFrameAbsolute?.call();
     final change = command.change;
     if (change != null && change.hasReport && context.mounted) {
       _report(context, change);

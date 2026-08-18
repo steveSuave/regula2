@@ -28,8 +28,37 @@ class CanvasViewport {
   /// Zoom bounds, in screen pixels per world unit. Wide enough that no
   /// reasonable construction hits them; tight enough that float precision
   /// in the transforms never becomes visible.
+  ///
+  /// [maxScale] was 50 through Phase 126, which was ample for Euclidean
+  /// documents — they are drawn at world coordinates of order tens to
+  /// hundreds — and far too tight for a **hyperbolic** one, whose entire
+  /// plane is the unit disc: at 50 the whole geometry was 100 pixels
+  /// across and could not be worked in. Raised to 2000, which frames the
+  /// disc in a typical window at roughly 300 and leaves an order of
+  /// magnitude to zoom in with.
+  ///
+  /// The bound is not a precision cliff and never was. `worldToScreen`
+  /// subtracts the pan *before* scaling, so the significant digits are
+  /// spent in `world − pan` — a difference bounded by the visible window
+  /// in world units, which shrinks as the scale grows. What the ceiling
+  /// really guards is the *view*: a gesture that can zoom without limit
+  /// loses the figure.
   static const double minScale = 0.05;
-  static const double maxScale = 50;
+  static const double maxScale = 2000;
+
+  /// The ceiling a **fit** may reach, which is deliberately lower than
+  /// [maxScale] and used to be the same number.
+  ///
+  /// Raising [maxScale] for the hyperbolic disc moved six goldens, and
+  /// that was the useful part: it showed the two limits were answering
+  /// different questions through one constant. "How far may the user
+  /// zoom?" is about the view, and a hyperbolic document needs a great
+  /// deal of it. "How far may a fit blow a tiny figure up?" is about
+  /// taste — a three-point construction one world unit across should not
+  /// fill the window at 2000× — and its right answer did not change.
+  /// `fittedToAbsolute` takes [maxScale], because the absolute is not a
+  /// figure that happens to be small: it is the whole plane.
+  static const double maxFitScale = 50;
 
   final ViewportState state;
 

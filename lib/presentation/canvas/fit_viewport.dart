@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import '../../application/providers/viewport_provider.dart';
+import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
@@ -77,10 +78,16 @@ const double fitMarginPx = 48;
         }
       case GeoLine():
         break;
-      // isDefined held above, so the null-payload cases are unreachable;
-      // Dart's exhaustiveness checker still wants them spelled out.
-      case GeoPoint():
+      // A Cayley–Klein circle is a conic bitangent to the absolute, so
+      // it projects to no centre and radius and contributes nothing here
+      // (Phase 126). It is *defined* and drawn — the case below is no
+      // longer merely an exhaustiveness formality for `GeoCircle`. A
+      // hyperbolic document is framed by `fittedToAbsolute` instead,
+      // which frames the plane rather than the figure.
       case GeoCircle():
+      // isDefined held above, so the remaining null-payload cases are
+      // unreachable; Dart's exhaustiveness checker still wants them.
+      case GeoPoint():
       case GeoAngle():
       case GeoPolygon():
       case GeoMeasurement():
@@ -95,13 +102,58 @@ const double fitMarginPx = 48;
   return (min: Vec2(left, minY!), max: Vec2(maxX!, maxY!));
 }
 
+/// The viewport framing the Cayley–Klein absolute — the unit disc — in
+/// [canvasSize], or null when the document's geometry has no real
+/// absolute to frame (Phase 126).
+///
+/// A hyperbolic document lives *inside the unit circle*, and the app's
+/// default scale is one pixel per world unit, so on entering hyperbolic
+/// geometry the entire plane is a two-pixel dot at the origin while the
+/// figure sits hundreds of units outside it — outside the plane, where
+/// angles collapse to zero and nothing means what it says. Framing the
+/// disc is how the user is shown where the geometry is; without it the
+/// mode is technically present and practically invisible.
+///
+/// Deliberately frames *only* the absolute, not the union of the absolute
+/// and the construction. A figure built in Euclidean world coordinates is
+/// typically hundreds of units across, and fitting both would put the
+/// plane back in the corner as a dot.
+ViewportState? fittedToAbsolute(
+  FundamentalConic metric,
+  Size canvasSize, {
+  double marginPx = fitMarginPx,
+  double rotation = 0,
+}) {
+  if (metric != FundamentalConic.hyperbolic) {
+    return null;
+  }
+  final usable = math.min(
+    canvasSize.width - 2 * marginPx,
+    canvasSize.height - 2 * marginPx,
+  );
+  if (usable <= 0) {
+    return null;
+  }
+  // The absolute is the unit circle about the world origin, so the scale
+  // that fits it is half the usable extent — and the pan has to be
+  // *solved*, like every other fit: `ViewportState.pan` is the world
+  // point at screen (0, 0), not the one at the canvas centre.
+  return CanvasViewport.pinning(
+    world: Vec2.zero,
+    focal: Offset(canvasSize.width / 2, canvasSize.height / 2),
+    scale: usable / 2,
+    rotation: rotation,
+  );
+}
+
 /// The viewport framing every visible object centered in [canvasSize]
 /// with [marginPx] to spare, or null when there is nothing to frame.
 ///
 /// [rotation] is the view angle the framing keeps (Phase 61 — fit
 /// frames, the compass levels): extents are measured in the rotated
 /// view frame, so the content fits at that angle. Scale is clamped to
-/// [CanvasViewport.minScale]..[maxScale]; a zero-size extent (a single
+/// [CanvasViewport.minScale]..[CanvasViewport.maxFitScale]; a zero-size
+/// extent (a single
 /// point) centers at 100 % instead of zooming to the clamp.
 ViewportState? fittedViewport(
   Iterable<GeoObject> objects,
@@ -124,7 +176,7 @@ ViewportState? fittedViewport(
               width > 0 ? availableWidth / width : double.infinity,
               height > 0 ? availableHeight / height : double.infinity,
             )
-            .clamp(CanvasViewport.minScale, CanvasViewport.maxScale)
+            .clamp(CanvasViewport.minScale, CanvasViewport.maxFitScale)
             .toDouble();
   // The bounds center, rotated by −rotation back into world axes so
   // `pinning` (which solves in world coordinates) can put it at the
