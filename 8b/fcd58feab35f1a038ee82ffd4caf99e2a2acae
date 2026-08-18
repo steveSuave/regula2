@@ -1,0 +1,43 @@
+test/domain/projective/ck_rotation_test.dart
+  s_ef8f9fffe1168a::t_d4e1b27cb9a038 121-149
+  s_ef8f9fffe1168a::t_b6738b54a78cfe 1-60,62-69,71-120,150-198
+  s_ef8f9fffe1168a::t_38b0f6eede3909 61,70
+  s_ef8f9fffe1168a::t_3797141bc5d9d1 199-202
+test/domain/construction/objects/rotated_point_test.dart
+  s_ef8f9fffe1168a::t_c5ba23da9b85b3 7-8,95-186
+  s_ef8f9fffe1168a::t_95c77e2bcf63fb 187-188
+lib/domain/projective/proj_point.dart
+  s_ef8f9fffe1168a::t_ac227cf039faf8 64-86
+lib/domain/construction/objects/rotated_point.dart
+  s_ef8f9fffe1168a::t_ca6179eee12867 17-28,65-75
+docs/PLAN.md
+  s_ef8f9fffe1168a::t_834d8c84164c31 307
+  s_ef8f9fffe1168a::t_d22bccbf7a65d9 311-328,351-352
+lib/domain/projective/proj_transform.dart
+  s_ef8f9fffe1168a::t_d4e1b27cb9a038 165,169-175
+  s_ef8f9fffe1168a::t_f1e3f26e2dc850 125-164,166-168,176-276
+  s_ef8f9fffe1168a::t_d8d7840e7aefef 58-71
+lib/domain/projective/ck_measure.dart
+  s_ef8f9fffe1168a::t_ac227cf039faf8 223
+docs/TODO.md
+  s_ef8f9fffe1168a::t_5d3d3b92bc3c92 43-54
+  s_ef8f9fffe1168a::t_834d8c84164c31 69,112
+regula2.code-workspace
+  s_ef8f9fffe1168a::t_2758af2942abe4 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8bfcd58feab35f1a038ee82ffd4caf99e2a2acae",
+  "prompts": {},
+  "sessions": {
+    "s_ef8f9fffe1168a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b12b385b-160c-4a42-9be8-f2341f021445",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
