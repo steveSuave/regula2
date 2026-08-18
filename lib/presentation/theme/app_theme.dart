@@ -31,6 +31,20 @@ abstract final class AppTheme {
   static const Color _lightAbsolute = Color(0xFFB26A00);
   static const Color _darkAbsolute = Color(0xFFE0A44B);
 
+  /// The wash over the region *outside* the absolute — the part of the
+  /// picture that is not part of the plane (Phase 126b).
+  ///
+  /// Given per theme with its alpha baked in rather than derived from
+  /// [_lightAbsolute] at one shared opacity, because the two canvases
+  /// start from opposite ends: the same alpha that is barely a tint over
+  /// white is a large lift over near-black. It was originally one alpha
+  /// of 0.09 for both, which measured a 5 % luminance step on the light
+  /// canvas — correct, and reported as "the same background colour".
+  /// These are ~15 %, which reads as a distinct region without turning
+  /// the surround into a colour field.
+  static const Color _lightOutside = Color(0x40B26A00);
+  static const Color _darkOutside = Color(0x2EE0A44B);
+
   /// Default object color on the light canvas: a deep blue.
   static const Color _lightPrimary = Color(0xFF1565C0);
 
@@ -58,6 +72,7 @@ abstract final class AppTheme {
         axis: _lightAxis,
         grid: _lightGrid,
         absolute: _lightAbsolute,
+        absoluteOutside: _lightOutside,
       ),
     ],
   );
@@ -69,7 +84,12 @@ abstract final class AppTheme {
     ).copyWith(primary: _darkPrimary, tertiary: _darkTertiary),
     scaffoldBackgroundColor: _darkCanvas,
     extensions: const [
-      CanvasColors(axis: _darkAxis, grid: _darkGrid, absolute: _darkAbsolute),
+      CanvasColors(
+        axis: _darkAxis,
+        grid: _darkGrid,
+        absolute: _darkAbsolute,
+        absoluteOutside: _darkOutside,
+      ),
     ],
   );
 }
@@ -84,6 +104,7 @@ class CanvasColors extends ThemeExtension<CanvasColors> {
     required this.axis,
     required this.grid,
     this.absolute = const Color(0xFFB26A00),
+    this.absoluteOutside = const Color(0x40B26A00),
   });
 
   /// Axis strokes and tick labels.
@@ -92,17 +113,25 @@ class CanvasColors extends ThemeExtension<CanvasColors> {
   /// Grid hairlines.
   final Color grid;
 
-  /// The fundamental conic of a non-Euclidean document, and the wash over
-  /// the region outside it (Phase 126).
+  /// The fundamental conic of a non-Euclidean document (Phase 126).
   final Color absolute;
 
+  /// The wash over the region outside it — the part of the picture that
+  /// is not part of the plane. Carries its own alpha (Phase 126b).
+  final Color absoluteOutside;
+
   @override
-  CanvasColors copyWith({Color? axis, Color? grid, Color? absolute}) =>
-      CanvasColors(
-        axis: axis ?? this.axis,
-        grid: grid ?? this.grid,
-        absolute: absolute ?? this.absolute,
-      );
+  CanvasColors copyWith({
+    Color? axis,
+    Color? grid,
+    Color? absolute,
+    Color? absoluteOutside,
+  }) => CanvasColors(
+    axis: axis ?? this.axis,
+    grid: grid ?? this.grid,
+    absolute: absolute ?? this.absolute,
+    absoluteOutside: absoluteOutside ?? this.absoluteOutside,
+  );
 
   @override
   CanvasColors lerp(CanvasColors? other, double t) {
@@ -113,6 +142,7 @@ class CanvasColors extends ThemeExtension<CanvasColors> {
       axis: Color.lerp(axis, other.axis, t)!,
       grid: Color.lerp(grid, other.grid, t)!,
       absolute: Color.lerp(absolute, other.absolute, t)!,
+      absoluteOutside: Color.lerp(absoluteOutside, other.absoluteOutside, t)!,
     );
   }
 }

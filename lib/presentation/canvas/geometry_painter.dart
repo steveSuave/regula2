@@ -81,6 +81,7 @@ class GeometryPainter extends CustomPainter {
     this.axisColor = const Color(0xFF757575),
     this.gridColor = const Color(0xFFE3E6EA),
     this.absoluteColor = const Color(0xFFB26A00),
+    this.absoluteOutsideColor = const Color(0x40B26A00),
   });
 
   /// Stroke widths of the background layer (logical px) and the font size
@@ -167,15 +168,18 @@ class GeometryPainter extends CustomPainter {
   final Color axisColor;
   final Color gridColor;
 
-  /// The fundamental conic of a non-Euclidean document, and the wash over
-  /// the region outside it (Phase 126).
+  /// The fundamental conic of a non-Euclidean document (Phase 126).
   final Color absoluteColor;
 
-  /// Stroke width (logical px) of the absolute, and the alpha of the wash
-  /// over the region outside it. The stroke is heavier than an axis
+  /// The wash over the region outside it, alpha included (Phase 126b —
+  /// it is a theme colour rather than one opacity applied to
+  /// [absoluteColor], because the light and dark canvases start from
+  /// opposite ends and the same alpha cannot serve both).
+  final Color absoluteOutsideColor;
+
+  /// Stroke width (logical px) of the absolute. Heavier than an axis
   /// because it is not chrome: it is the edge of the plane.
   static const double _absoluteStrokeWidth = 2;
-  static const double _outsideAlpha = 0.09;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -269,10 +273,7 @@ class GeometryPainter extends CustomPainter {
       Path()
         ..addOval(Rect.fromCircle(center: disc.centre, radius: disc.radius)),
     );
-    canvas.drawPath(
-      outside,
-      Paint()..color = absoluteColor.withValues(alpha: _outsideAlpha),
-    );
+    canvas.drawPath(outside, Paint()..color = absoluteOutsideColor);
     canvas.drawCircle(
       disc.centre,
       disc.radius,
@@ -1135,5 +1136,6 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.showGrid != showGrid ||
       oldDelegate.axisColor != axisColor ||
       oldDelegate.gridColor != gridColor ||
-      oldDelegate.absoluteColor != absoluteColor;
+      oldDelegate.absoluteColor != absoluteColor ||
+      oldDelegate.absoluteOutsideColor != absoluteOutsideColor;
 }

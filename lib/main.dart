@@ -384,6 +384,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       axisColor: canvasColors?.axis ?? const Color(0xFF757575),
       gridColor: canvasColors?.grid ?? const Color(0xFFE3E6EA),
       absoluteColor: canvasColors?.absolute ?? const Color(0xFFB26A00),
+      absoluteOutsideColor:
+          canvasColors?.absoluteOutside ?? const Color(0x40B26A00),
     );
     await savePngBytes(bytes);
   }

@@ -74,6 +74,7 @@ Future<ui.Image> renderConstructionImage(
   ui.Color axisColor = const ui.Color(0xFF757575),
   ui.Color gridColor = const ui.Color(0xFFE3E6EA),
   ui.Color absoluteColor = const ui.Color(0xFFB26A00),
+  ui.Color absoluteOutsideColor = const ui.Color(0x40B26A00),
 }) async {
   final width = (logicalSize.width * pixelRatio).round();
   final height = (logicalSize.height * pixelRatio).round();
@@ -110,6 +111,7 @@ Future<ui.Image> renderConstructionImage(
     axisColor: axisColor,
     gridColor: gridColor,
     absoluteColor: absoluteColor,
+    absoluteOutsideColor: absoluteOutsideColor,
   ).paint(canvas, logicalSize);
   final picture = recorder.endRecording();
   try {
@@ -143,6 +145,7 @@ Future<Uint8List> exportConstructionPng(
   ui.Color axisColor = const ui.Color(0xFF757575),
   ui.Color gridColor = const ui.Color(0xFFE3E6EA),
   ui.Color absoluteColor = const ui.Color(0xFFB26A00),
+  ui.Color absoluteOutsideColor = const ui.Color(0x40B26A00),
 }) async {
   final image = await renderConstructionImage(
     construction,
@@ -156,6 +159,7 @@ Future<Uint8List> exportConstructionPng(
     axisColor: axisColor,
     gridColor: gridColor,
     absoluteColor: absoluteColor,
+    absoluteOutsideColor: absoluteOutsideColor,
   );
   try {
     return await encodePng(image);
