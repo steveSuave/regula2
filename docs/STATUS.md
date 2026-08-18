@@ -8,6 +8,32 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 138 (V2 Session 40) — 2026-08-18
+
+**Done — Phases 130 and 131, and the M-CK standing debt closed out.** Still on `phase-128-ck-macro-tools`; seven more commits. The session's brief was "everything that can be finished before the prover"; PLAN's M-P outline says the prover is independent of the kernel track and could have started after Phase 112, so none of this was blocking — it is the milestone tidied rather than a gate lifted. Suite **2615** green (from 2594), analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **Phase 130 — a conic frames itself.** `visibleWorldBounds` read centre and radius, so every CK circle contributed nothing to a fit. `ConicShape.extentAlong(u, v)` is the support interval in a chart direction, built **on** the existing exact `extremesAlong` rather than beside it — I had written a parallel dual-conic implementation before finding it. Gated on `ConicClass.ellipse`, and the gate is the point: `extremesAlong` answers a hyperbola perfectly well and the curve runs out between its tangents. Wider than the CK case — a five-point ellipse contributed nothing to a fit before either.
+- **Phase 131 — the absolute gets a radius, and the schema call was mine.** `DocumentKernel.radius`, `x² + y² = R²w²`, dual still the adjugate. **The radius is a chart scale and not a geometry** — `x = R·x′` carries `⟨P,Q⟩` to `R²` times the unit form and every measure is a ratio of such forms — which is exactly what makes it safe to hand to a document, and it is pinned as a test rather than asserted. The alternative (rescale the construction into the unit disc on switching) gives identical geometry and rewrites the user's data to get there.
+- **Entering a proper geometry now sizes the plane to the figure**, twice the furthest point. That is the whole point of the feature: a Euclidean construction at world coordinates of hundreds lands *inside* its plane with no point moved. Moving between the two proper geometries keeps the radius — by then it is the plane the document is drawn in, and re-fitting would move the boundary under a construction the user is working in.
+- **Schema: `radius ≠ 1` is v3.** A v2 reader skips the key and lands in the right *geometry*, the radius being a chart scale — and then reads a figure drawn at radius 240 against the unit disc, where every point is outside the plane and the document draws as nothing. That is a misread, and the test decodes one both ways to say so. Unit-radius documents stay v2, Euclidean stay v1, `test/fixtures/` still all v1.
+- **The unrepairable-duplicate report names its points** instead of counting them — by label where they have one, by id otherwise, three then "and N more". "Deleting the surplus points is the only fix" asked the user to delete points without saying which.
+- **And the standing per-kind debt is discharged by an isometry gate, which found a real defect on its first run.** Equivariance is the general correctness statement the coverage gate was missing: `f(T·parents) = T·f(parents)` for an isometry of the absolute. 25 kinds, both corpora, both absolutes, two off-centre centres, two angles. **`Orthocenter` was building one of its two altitudes Euclidean** — a `perpendicularThrough` call that never received the absolute — so it met a Euclidean altitude with a hyperbolic one. The error grew with the triangle (0.8 % at one spanning the disc) and vanished in the small limit.
+
+**Next**
+- Merge `phase-128-ck-macro-tools`, which now carries Phases 128–131. It is a **deploy**; check `gh run list` after.
+- **M-P0 — the prover's threading decision.** Benchmark cooperative chunking against a Web Worker on dart2js/dart2wasm with the Phase 101 harness; `Isolate.run` on native either way.
+- **Phase 132 — gluing a point to a general conic**, written out in TODO and deliberately not started. Its real content is parameter *stability*, not the parameterization: `ConicShape.pointAt` already sweeps any nondegenerate conic exactly, but `φ` is read against a base point and axis pair chosen per matrix, so a stored `φ` need not name the same point after a drag. That is Phases 116–117 arriving in a new place.
+- Environment carry-overs, untouched and not mine to do: the Android emulator AVD and the iOS simulator smoke. The V1 SVG-export stretch is left as the explicitly-deferred stretch it has always been.
+
+**Gotchas**
+- **Piping a test run to `tail` throws the exit code away.** `flutter test 2>&1 | tail -2 && git commit` commits whether or not the suite passed, because the pipeline's status is `tail`'s. It happened once this session and was caught by reading the output rather than by the shell; the commit was amended. Read the count, do not trust the `&&`.
+- **A half-substituted kind still *moves*, so the coverage gate passes it.** That is `ck_kind_coverage_test`'s blind spot stated exactly, and `Orthocenter` sat in it for six phases. Any gate whose predicate is "did the answer change" cannot see a construction that changed for one of two reasons.
+- **A defect that grows with the figure is not conditioning.** The first read of the orthocenter discrepancy looked like an ill-conditioned centre of a tiny triangle; the test that settled it was making the triangle *bigger*, where a conditioning problem improves and this one got worse by two orders of magnitude. Worth running before blaming arithmetic.
+- **Look for the routine before writing it.** `extremesAlong` had solved Phase 130's geometry exactly, and I had a working dual-conic implementation of the same thing before I found it. The grep that would have saved it was for the *geometry* ("extreme", "tangent", "support"), not for the function name I was about to invent.
+- **`Absolute.of` is now the lenient door and `DocumentKernel` is the strict one**, and only one of them is reachable from a document. A Euclidean kernel carrying a stray radius is still the default kernel; `Absolute.of(euclidean, radius: 5)` throws. If a third caller ever appears it should go through the kernel.
+
+---
+
 ## Session 137 (V2 Session 39) — 2026-08-18
 
 **Done — Phase 129: the macro triage, and Phase 128's two open boxes closed.** Still on `phase-128-ck-macro-tools`; six more commits. The eleven remaining macro tools sorted by what happens to their *figure* under a proper absolute. Suite **2594** green (from 2575), analyze clean, 32 goldens byte-identical, browser gate green.
