@@ -55,6 +55,20 @@ class ProjTransform {
     Complex.one,
   );
 
+  /// No map at all — what a construction that has no answer returns, per
+  /// the class doc's degeneracy convention.
+  static const ProjTransform zero = ProjTransform(
+    Complex.zero,
+    Complex.zero,
+    Complex.zero,
+    Complex.zero,
+    Complex.zero,
+    Complex.zero,
+    Complex.zero,
+    Complex.zero,
+    Complex.zero,
+  );
+
   /// The translation by the affine vector `(dx, dy)`.
   ProjTransform.translation(double dx, double dy)
     : this(
@@ -106,6 +120,158 @@ class ProjTransform {
       Complex.zero,
       center.w,
     );
+  }
+
+  /// The rotation by [angle] radians about [centre] in the geometry
+  /// [absolute] defines — the Cayley–Klein form of [rotation], which is
+  /// its Euclidean case (Phase 127).
+  ///
+  /// **A rotation is the exponential of one generator, and the generator
+  /// is `Ω*·[C]ₓ`.** The isometries of a Cayley–Klein geometry are the
+  /// projective maps preserving the absolute; their Lie algebra is
+  /// `{Ω⁻¹K : K antisymmetric}`, and a 3×3 antisymmetric matrix is a
+  /// cross-product `[C]ₓ` whose kernel is `C`. So the one-parameter group
+  /// fixing `C` is `exp(t·Ω*[C]ₓ)`, and because that generator `N`
+  /// satisfies `N³ = −λ²N`, the exponential closes into Rodrigues' formula
+  ///
+  ///     R = I + sin θ·(N/λ) + (1 − cos θ)·(N/λ)²
+  ///
+  /// with no series and no square matrices beyond `N²`. Under the
+  /// Euclidean absolute — whose dual is `diag(1,1,0)` — this expands to
+  /// [rotation]'s coefficients entry for entry, `λ = 1` and all, which is
+  /// the same relationship [harmonicHomology] has to [reflection].
+  ///
+  /// **`λ² = 0` and `λ² < 0` are the other two isometry types, and
+  /// refusing them is the phase's actual finding.** `λ²` is the absolute's
+  /// quadratic form at the centre, up to sign and scale, so its sign is
+  /// where `C` sits: inside the absolute, on it, or outside. Only the
+  /// first is a rotation. A centre *on* the absolute generates a parabolic
+  /// map (a horolation, `N³ = 0`, no angle at all) and a centre *outside*
+  /// generates a boost along the polar of `C` — a hyperbolic translation
+  /// whose parameter is a rapidity, not an angle, so `cos` and `sin` are
+  /// the wrong functions for it and would silently answer with the wrong
+  /// isometry rather than with nothing. That is the classical trichotomy
+  /// of hyperbolic isometries arriving as a sign test. Both refuse with
+  /// the zero map. In elliptic geometry the absolute has no real points,
+  /// so every real centre is "inside" and the refusal never fires.
+  ///
+  /// The orientation is anchored rather than inherited: the sign of `λ` is
+  /// free, and the stored dual's own sign is a projective convention (the
+  /// hyperbolic dual is stored as the adjugate, which is `−Ω⁻¹`), so a
+  /// generator taken at face value turns *clockwise* in one geometry and
+  /// counter-clockwise in another. [_handedness] picks the sign that makes
+  /// positive [angle] counter-clockwise in the chart in all three.
+  factory ProjTransform.ckRotation(
+    ProjPoint rawCentre,
+    double angle,
+    Absolute absolute,
+  ) {
+    // The global phase has to come off first, or the construction is not
+    // a function of the projective *point*. `λ²` scales as `k²` and the
+    // handedness as `k`, so an `i`-scaled representative of a perfectly
+    // ordinary interior centre would fail the realness test and be
+    // refused as a boost. Both then scale together with what is left,
+    // which is a real factor, and `N/λ` is invariant under it.
+    final centre = rawCentre.dephased;
+    final dual = absolute.dualConic;
+    // Ω* and [C]ₓ as matrices, then N = Ω*·[C]ₓ and its powers. `compose`
+    // is the matrix product, which is all these are being used for.
+    final omega = ProjTransform(
+      dual.xx,
+      dual.xy,
+      dual.xw,
+      dual.xy,
+      dual.yy,
+      dual.yw,
+      dual.xw,
+      dual.yw,
+      dual.ww,
+    );
+    final cross = ProjTransform(
+      Complex.zero,
+      -centre.w,
+      centre.y,
+      centre.w,
+      Complex.zero,
+      -centre.x,
+      -centre.y,
+      centre.x,
+      Complex.zero,
+    );
+    final n = omega.compose(cross);
+    final n2 = n.compose(n);
+    final lambda2 = _rodriguesScale(n, n2.compose(n));
+    final handedness = _handedness(dual, centre);
+    if (lambda2 == null || handedness == 0) {
+      return zero;
+    }
+    final lambda = math.sqrt(lambda2) * handedness;
+    final a = math.sin(angle) / lambda;
+    final b = (1 - math.cos(angle)) / lambda2;
+    return ProjTransform(
+      Complex.one + n.m00.scale(a) + n2.m00.scale(b),
+      n.m01.scale(a) + n2.m01.scale(b),
+      n.m02.scale(a) + n2.m02.scale(b),
+      n.m10.scale(a) + n2.m10.scale(b),
+      Complex.one + n.m11.scale(a) + n2.m11.scale(b),
+      n.m12.scale(a) + n2.m12.scale(b),
+      n.m20.scale(a) + n2.m20.scale(b),
+      n.m21.scale(a) + n2.m21.scale(b),
+      Complex.one + n.m22.scale(a) + n2.m22.scale(b),
+    );
+  }
+
+  /// The `λ²` of `N³ = −λ²·N`, or null when the generator does not close
+  /// into a *circular* rotation.
+  ///
+  /// Read off the largest entry rather than from a closed form in the
+  /// absolute's determinant, because that form needs `Ω* = adj(Ω)` and the
+  /// Euclidean dual is supplied independently of its point conic (which is
+  /// rank 1, with a vanishing adjugate) — so the closed form is the one
+  /// route that would work for the two proper absolutes and fail for the
+  /// only one every existing document is in.
+  ///
+  /// Null on three counts, all of them "not a rotation": a zero generator
+  /// (a centre with no pencil — the zero triple), a `λ²` that is not real
+  /// (a complex centre), and a `λ²` that is not positive (the parabolic
+  /// and boost cases in the class doc).
+  static double? _rodriguesScale(ProjTransform n, ProjTransform n3) {
+    final scale = n.norm2;
+    if (scale == 0) {
+      return null;
+    }
+    final entries = n._entries;
+    final cubed = n3._entries;
+    var best = 0;
+    for (var i = 1; i < entries.length; i++) {
+      if (entries[i].abs2 > entries[best].abs2) {
+        best = i;
+      }
+    }
+    final ratio = -(cubed[best] / entries[best]);
+    if (!ratio.isRealWithin(projectiveEpsilon) ||
+        ratio.re <= projectiveEpsilon * scale) {
+      return null;
+    }
+    return ratio.re;
+  }
+
+  /// Which way the generator `Ω*·[C]ₓ` turns: +1, −1, or 0 when the
+  /// question is not asked of a real finite centre.
+  ///
+  /// The antisymmetric part of the generator is `(Ω*ₓₓ + Ω*_yy)·w −
+  /// Ω*ₓ_w·x − Ω*_yw·y`, which is `2w` under the Euclidean and elliptic
+  /// duals and `−2w` under the hyperbolic one — the adjugate's sign,
+  /// carrying no geometric content and every bit of the handedness.
+  static int _handedness(ConicMatrix dual, ProjPoint centre) {
+    final omega =
+        (dual.xx + dual.yy) * centre.w -
+        dual.xw * centre.x -
+        dual.yw * centre.y;
+    if (omega.abs2 == 0 || !omega.isRealWithin(projectiveEpsilon)) {
+      return 0;
+    }
+    return omega.re > 0 ? 1 : -1;
   }
 
   /// The reflection across the line [axis] — `(a² + b²)·I − 2·n·lᵀ` with

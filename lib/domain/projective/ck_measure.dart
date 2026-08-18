@@ -220,10 +220,7 @@ Complex? _pivotOf(Complex a, Complex b, Complex c) {
   return Complex(pivot.re / magnitude, pivot.im / magnitude);
 }
 
-ProjPoint _canonical(ProjPoint p) {
-  final pivot = _pivotOf(p.x, p.y, p.w);
-  return pivot == null ? p : ProjPoint(p.x / pivot, p.y / pivot, p.w / pivot);
-}
+ProjPoint _canonical(ProjPoint p) => p.dephased;
 
 ProjLine _canonicalLine(ProjLine l) {
   final pivot = _pivotOf(l.a, l.b, l.c);
