@@ -24,9 +24,7 @@ import 'package:regula/domain/math/vec2.dart';
 void main() {
   /// The angle sum of the triangle on [a], [b], [c] under [metric].
   double sumOf(FundamentalConic metric, Vec2 a, Vec2 b, Vec2 c) {
-    final construction = Construction(
-      kernel: DocumentKernel(metric: metric),
-    );
+    final construction = Construction(kernel: DocumentKernel(metric: metric));
     final points = {
       'a': FreePoint(id: 'a', position: a),
       'b': FreePoint(id: 'b', position: b),
@@ -36,11 +34,7 @@ void main() {
       construction.add(p);
     }
     // Each corner: the wedge between the two sides meeting there.
-    const corners = [
-      ('a', 'b', 'c'),
-      ('b', 'c', 'a'),
-      ('c', 'a', 'b'),
-    ];
+    const corners = [('a', 'b', 'c'), ('b', 'c', 'a'), ('c', 'a', 'b')];
     var sum = 0.0;
     for (final (vertex, arm1, arm2) in corners) {
       final angle = VertexAngle(
@@ -109,7 +103,9 @@ void main() {
       return math.pi - sum;
     }
 
-    final defects = [for (final s in [0.2, 0.5, 0.8, 1.0]) defect(s)];
+    final defects = [
+      for (final s in [0.2, 0.5, 0.8, 1.0]) defect(s),
+    ];
     for (var i = 1; i < defects.length; i++) {
       expect(defects[i], greaterThan(defects[i - 1]), reason: 'step $i');
     }

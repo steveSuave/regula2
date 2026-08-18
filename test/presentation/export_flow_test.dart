@@ -1,8 +1,4 @@
 import 'package:file_picker/file_picker.dart';
-// FilePickerPlatform is not re-exported by package:file_picker; overriding
-// `instance` with a fake is the plugin's own documented test seam.
-// ignore: implementation_imports
-import 'package:file_picker/src/platform/file_picker_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -24,20 +20,24 @@ import '../wide_window.dart';
 class _FakeFilePicker extends FilePickerPlatform {
   Uint8List? savedBytes;
   String? savedFileName;
+  String? savedMimeType;
 
   @override
-  Future<String?> saveFile({
+  Future<Uri?> saveFile({
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
     String? dialogTitle,
-    String? fileName,
     String? initialDirectory,
-    FileType type = FileType.any,
-    List<String>? allowedExtensions,
-    Uint8List? bytes,
-    bool lockParentWindow = false,
+    void Function(FilePickerStatus)? onFileSaving,
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
   }) async {
     savedBytes = bytes;
     savedFileName = fileName;
-    return fileName;
+    savedMimeType = mimeType;
+    return Uri.file(fileName);
   }
 }
 

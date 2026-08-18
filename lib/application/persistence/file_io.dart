@@ -13,7 +13,10 @@ import 'construction_codec.dart';
 /// ordinary JSON.
 const String defaultConstructionFileName = 'construction.rgl';
 
-const List<String> _saveExtensions = ['rgl'];
+/// MIME type stamped on a saved `.rgl`. The save dialog takes a MIME type
+/// rather than an extension list since file_picker 12, and the content is
+/// still ordinary JSON.
+const String _constructionMimeType = 'application/json';
 
 /// `json` stays accepted on open so files saved before the `.rgl` rename
 /// remain openable.
@@ -38,8 +41,7 @@ Future<void> saveConstructionFile(
   await FilePicker.saveFile(
     dialogTitle: 'Save construction',
     fileName: defaultConstructionFileName,
-    type: FileType.custom,
-    allowedExtensions: _saveExtensions,
+    mimeType: _constructionMimeType,
     bytes: bytes,
   );
 }
@@ -54,8 +56,7 @@ Future<void> savePngBytes(Uint8List bytes) async {
   await FilePicker.saveFile(
     dialogTitle: 'Export as PNG',
     fileName: defaultExportPngFileName,
-    type: FileType.custom,
-    allowedExtensions: const ['png'],
+    mimeType: 'image/png',
     bytes: bytes,
   );
 }
@@ -67,17 +68,21 @@ Future<void> savePngBytes(Uint8List bytes) async {
 /// a document [decodeDocument] rejects — so callers show one dialog for
 /// any bad file.
 Future<DecodedDocument?> openConstructionFile() async {
-  final result = await FilePicker.pickFiles(
+  final file = await FilePicker.pickFile(
     dialogTitle: 'Open construction',
     type: FileType.custom,
     allowedExtensions: _openExtensions,
-    withData: true,
   );
-  if (result == null || result.files.isEmpty) {
+  if (file == null) {
     return null;
   }
-  final bytes = result.files.single.bytes;
-  if (bytes == null) {
+  final Uint8List bytes;
+  try {
+    bytes = await file.readAsBytes();
+  } on Exception {
+    // The picked file exists but could not be read back — an unreadable
+    // path, a revoked content URI, a failed blob fetch. That is still
+    // "something wrong with the file", so it joins the one dialog.
     throw const FormatException('Could not read the selected file');
   }
   final Object? json = jsonDecode(utf8.decode(bytes));
