@@ -1,0 +1,23 @@
+test/application/persistence/construction_codec_test.dart
+  s_ef8f9fffe1168a::t_e1c322f3bc8e39 623-628,678-684,718-719,725-747
+  s_ef8f9fffe1168a::t_ee30ebdaea8daa 748
+lib/application/persistence/construction_codec.dart
+  s_ef8f9fffe1168a::t_77b9f3ea40ba5e 254-256,290-292,296,333,340,343-349,351
+  s_ef8f9fffe1168a::t_1276246adde2a3 82,96-111,242,248-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fbb8d978526ef8b56862ae2feac5c22eb25ff05a",
+  "prompts": {},
+  "sessions": {
+    "s_ef8f9fffe1168a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b12b385b-160c-4a42-9be8-f2341f021445",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
