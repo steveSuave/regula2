@@ -8,6 +8,27 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 134 (V2 Session 36) — 2026-08-18
+
+**Done — Phase 127 merged, and Phase 122 is closed.** Two merges to `main` (`ee6b7fc` Phase 126e, `2a1fd7d` Phase 127) plus a docs pass, on `main` directly since it is docs only.
+
+- **The wasm browser smoke was run by the user and is green.** That was Phase 122's last open box and it had been open since the compile-target decision, blocked on infrastructure rather than on code. The kernel track's phase list now has nothing unticked in it.
+- **The repo has a remote, and the durable docs said it did not.** `origin` is `github.com:steveSuave/regula2`. PLAN carried "the repo currently has no remote" in **two** places — the Phase 122 compile-target paragraph and the deferred-decisions list — and TODO carried a third. All three are corrected: the deferred-decisions entry is *deleted* rather than amended, because it is no longer a decision, and the standing facts moved to the reuse contract beside the rest of the process conventions.
+- **CLAUDE.md now says that merging to `main` ships.** Three workflows run on every push — `ci.yml`, `benchmarks.yml` (informational) and `deploy.yml`, which builds `--wasm` with `--base-href "/regula2/"` and publishes to `https://stevesuave.github.io/regula2/`. That belongs in the file that loads every session, not only in PLAN, because it changes what a merge *means*: a phase branch merged into `main` is a release, not a checkpoint.
+
+**Next**
+- **The macro tools that stand on `RotatedPoint`** — equilateral triangle, regular polygon — now have a CK rotation under them and have not been looked at in a CK plane. Their apex used to come back null under a proper absolute and now comes back real; nothing tests what they build there. The most concrete piece of work outstanding.
+- `visibleWorldBounds` contributes nothing for a CK circle, so fit-to-construction under-frames a hyperbolic document; a conic bounding box would fix it.
+- **The absolute's radius is fixed at 1 world unit** — the schema decision, still written down rather than built, and still what makes switching an existing Euclidean figure meaningless.
+- Phase 125's remaining debt: per-kind CK correctness beyond angle, rotation and the handful already pinned. The refusals stand and are documented at their sites.
+- Environment carry-overs, untouched and still environment: the Android emulator AVD and the iOS simulator smoke.
+
+**Gotchas**
+- **A fact that is wrong in the durable docs is worse than one that is missing**, and "the repo has no remote" was wrong in three places while a green deploy ran on every push. It was true when written and nothing re-checks a parenthetical. Anything a doc asserts about *infrastructure* rather than about the code has no test holding it, so it decays silently — worth re-reading the deferred-decisions list whenever one of them quietly resolves.
+- **Merging to `main` is now a deploy.** Nothing in the repo said so before this session, and the previous sessions' habit of merging phase branches at the start of the next session was formed when `main` was local-only. The habit is still fine — CI gates the push — but it is a release now and the docs say so.
+
+---
+
 ## Session 133 (V2 Session 35) — 2026-08-18
 
 **Done — Phase 127: `RotatedPoint`, and the deferral re-examined.** On `phase-127-ck-rotation`, one commit. The last piece of Phase 125's per-kind debt that was a **gap** rather than a refusal, and it closed by finding that the thing the deferral asked for was never needed. Suite **2557** green (from 2532), analyze clean, 32 goldens byte-identical.
