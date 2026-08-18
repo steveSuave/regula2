@@ -130,14 +130,38 @@ void main() {
       );
     });
 
-    test('an unrepairable duplicate names the only remaining fix', () {
+    test('an unrepairable duplicate names the points, not just the fix', () {
       // The half that matters more. A repaired point is a defect the
-      // reader fixed; an unrepaired one is still there, and no drag can
-      // separate it — the pair has no crossing left to give it.
+      // reader fixed; an unrepaired one is still there, no drag can
+      // separate it, and the user has to go and delete it — so the
+      // message says *which* (Phase 131). A count is not something
+      // anyone can act on.
+      expect(
+        decodeRepairMessage(decoded(unrepaired: ['p3']), names: {'p3': 'D'}),
+        'Opened with a repair: 1 had no free crossing to move to and is '
+        'still stacked — deleting point D is the only fix.',
+      );
+    });
+
+    test('an unnamed point falls back to its id', () {
+      // Which is what the object tree shows for it anyway. An id nobody
+      // can act on beats a count nobody can act on.
       expect(
         decodeRepairMessage(decoded(unrepaired: ['p3'])),
         'Opened with a repair: 1 had no free crossing to move to and is '
-        'still stacked — deleting the surplus point is the only fix.',
+        'still stacked — deleting point p3 is the only fix.',
+      );
+    });
+
+    test('a long list is trimmed — a snack bar is not a list view', () {
+      expect(
+        decodeRepairMessage(
+          decoded(unrepaired: ['a', 'b', 'c', 'd', 'e']),
+          names: {'a': 'P', 'b': 'Q'},
+        ),
+        'Opened with a repair: 5 had no free crossing to move to and are '
+        'still stacked — deleting points P, Q and c and 2 more is the '
+        'only fix.',
       );
     });
 
@@ -145,11 +169,12 @@ void main() {
       expect(
         decodeRepairMessage(
           decoded(repaired: ['p2', 'p3'], unrepaired: ['p4', 'p5']),
+          names: {'p4': 'D', 'p5': 'E'},
         ),
         'Opened with a repair: 2 intersection points were stacked on a '
         'crossing another point already held, and moved to a free one; '
         '2 had no free crossing to move to and are still stacked — '
-        'deleting the surplus points is the only fix.',
+        'deleting points D and E is the only fix.',
       );
     });
   });

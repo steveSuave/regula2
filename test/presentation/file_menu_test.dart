@@ -224,7 +224,10 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('deleting the surplus point is the only fix'),
+      // Named rather than counted (Phase 131), and the id is the fallback
+      // for a point the file never named — which is what the object tree
+      // shows for it too.
+      find.textContaining('deleting point p3 is the only fix'),
       findsOneWidget,
     );
   });

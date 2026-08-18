@@ -291,7 +291,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       // re-addressing (Phase 126e). The kernel needs no separate apply:
       // it rides on `decoded.construction`, which the codec built with
       // it, and reading `decoded.kernel` here would be a second source.
-      final repair = decodeRepairMessage(decoded);
+      final repair = decodeRepairMessage(
+        decoded,
+        // Named rather than counted (Phase 131): the unrepairable half is
+        // a defect the user has to *act* on, and "2 points are stacked"
+        // is not something anyone can act on.
+        names: {
+          for (final object in decoded.construction.objects)
+            object.id: object.attributes.name,
+        },
+      );
       if (repair != null && mounted) {
         showIntersectionReport(context, repair);
       }

@@ -64,8 +64,17 @@ String? geometryChangeMessage(
 /// something the user drew. An unrepaired one is a defect that is still
 /// there: the curve pair has no crossing left to give it, so it stays
 /// stacked on another point for ever, and the only remaining fix is to
-/// delete the surplus — which is why that half names the action.
-String? decodeRepairMessage(DecodedDocument document) {
+/// delete the surplus — which is why that half names the action, and
+/// since Phase 131 the *points* as well.
+///
+/// [names] maps object id to the user-facing label, for that naming. An
+/// unnamed point falls back to its id, which is at least what the object
+/// tree shows; an id nobody can act on is still better than a count
+/// nobody can act on.
+String? decodeRepairMessage(
+  DecodedDocument document, {
+  Map<String, String> names = const {},
+}) {
   if (!document.hasIntersectionReport) {
     return null;
   }
@@ -78,8 +87,9 @@ String? decodeRepairMessage(DecodedDocument document) {
           'point already held, and moved to a free one',
     if (unrepaired > 0)
       '$unrepaired had no free crossing to move to and '
-          '${unrepaired == 1 ? 'is' : 'are'} still stacked — deleting the '
-          'surplus ${_points(unrepaired)} is the only fix',
+          '${unrepaired == 1 ? 'is' : 'are'} still stacked — deleting '
+          '${_named(document.unrepairedIntersections, names)} is the only '
+          'fix',
   ];
   return 'Opened with a repair: ${parts.join('; ')}.';
 }
@@ -90,6 +100,23 @@ void showIntersectionReport(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text(message), duration: const Duration(seconds: 6)),
   );
+}
+
+/// "point A", "points A, B and C" — at most [limit] of them, the rest
+/// summarised, because a snack bar is not a list view.
+String _named(List<String> ids, Map<String, String> names, {int limit = 3}) {
+  final labels = [
+    for (final id in ids.take(limit))
+      if (names[id] case final name? when name.isNotEmpty) name else id,
+  ];
+  final rest = ids.length - labels.length;
+  final joined = switch (labels.length) {
+    1 => labels.single,
+    _ => '${labels.take(labels.length - 1).join(', ')} and ${labels.last}',
+  };
+  return rest > 0
+      ? '${_points(ids.length)} $joined and $rest more'
+      : '${_points(ids.length)} $joined';
 }
 
 String _points(int n) => n == 1 ? 'point' : 'points';
