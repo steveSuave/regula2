@@ -1,0 +1,26 @@
+test/domain/construction/ck_isometry_invariance_test.dart
+  s_f868d4518223d5::t_5d8405c3d04411 77-150
+  s_f868d4518223d5::t_8041ee6e20f7a2 161
+  s_f868d4518223d5::t_ce6d33db41f8a1 73-76,153-160,162-163
+  s_f868d4518223d5::t_1a9a7f7c93a58c 1-72,151-152,164-165
+lib/domain/construction/objects/orthocenter.dart
+  s_f868d4518223d5::t_d9fb457ba248f7 31
+docs/TODO.md
+  s_f868d4518223d5::t_9ec9077202cddf 117,160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "90081548a84c032fae917529fb4bfe3570af81db",
+  "prompts": {},
+  "sessions": {
+    "s_f868d4518223d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c57b6d26-f912-457c-8856-76743b807fe7",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
