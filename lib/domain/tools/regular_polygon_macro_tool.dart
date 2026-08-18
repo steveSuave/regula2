@@ -5,32 +5,34 @@ import '../construction/objects/rotated_point.dart';
 import '../construction/objects/segment.dart';
 import 'multi_point_tool.dart';
 
-/// Two taps make a regular polygon: the tapped points A, B are adjacent
-/// vertices, and the remaining [sideCount] − 2 chain as `RotatedPoint`s —
-/// each vertex is the previous-but-one turned about the previous by
-/// 2π/n − π, so the polygon lies to the *left* of A→B, every derived
-/// vertex is single-valued and continuous, and there is no hidden
-/// scaffolding. The side count comes from a dialog before the tool
-/// activates.
+/// Two taps make a regular polygon of [sideCount] sides, and **what the
+/// two taps mean depends on the document's geometry** (Phase 128, PLAN
+/// §"A shape is not an angle"):
 ///
-/// **This is a Euclidean construction, and under a proper absolute the
-/// ring does not close** (Phase 128, measured in
-/// `test/domain/tools/ck_macro_tools_test.dart`). Every chained vertex is
-/// an isometric image of the previous-but-one, so the figure is
-/// equilateral as far as it goes; but the fixed turn is the Euclidean
-/// interior angle, the last vertex does not land adjacent to the first,
-/// and the closing segment draws a side that is not one. The error
-/// accumulates with the vertex count as well as the side: a hyperbolic
-/// octagon at a chart side of 0.6 closes with a segment 3.8× the length
-/// of its others.
+/// - **Euclidean**: A and B are adjacent vertices, and the remaining
+///   [sideCount] − 2 chain as `RotatedPoint`s — each vertex is the
+///   previous-but-one turned about the previous by 2π/n − π, so the
+///   polygon lies to the *left* of A→B, every derived vertex is
+///   single-valued and continuous, and there is no hidden scaffolding.
+/// - **Proper absolute**: A is the polygon's *centre* and B is one
+///   vertex; the rest are B turned about A by 2πk/n. Every side is then
+///   an isometric image of every other by construction, in any geometry.
 ///
-/// A regular n-gon of Cayley–Klein side `s` turns by θ where
-/// `cos(π/n) = σ(s/2)·sin(θ/2)`, with `σ = cosh` in the hyperbolic plane,
-/// `cos` in the elliptic one and `σ ≡ 1` in the Euclidean — which is the
-/// whole of why a constant works here and nowhere else. That turn moves
-/// with `s`, and [RotatedPoint]'s angle is fixed for the object's
-/// lifetime, so baking a better constant would only be correct until the
-/// first drag.
+/// The split is not a preference. A Cayley–Klein plane has no similar
+/// figures, so a regular n-gon of side `s` turns by θ where
+/// `cos(π/n) = σ(s/2)·sin(θ/2)` — σ = cosh hyperbolic, cos elliptic,
+/// ≡ 1 Euclidean — and that turn moves with `s` while
+/// [RotatedPoint.angle] is fixed for the object's lifetime. Chaining a
+/// constant leaves the ring open: a hyperbolic octagon at a chart side of
+/// 0.6 closes with a segment 3.8× the length of its others. `2πk/n`
+/// survives because it is an angle at the **centre of the symmetry that
+/// generates the figure** rather than an angle of the figure — the cyclic
+/// group of order n fixing A acts transitively on a regular n-gon's
+/// vertices under any absolute.
+///
+/// The cost is that the same gesture reads differently in the two cases,
+/// which is preferred to refusing the tool in a non-Euclidean document.
+/// A geometry switch does not rebuild an existing figure either way.
 ///
 /// A dedicated class for the same reason as `RotatedPointTool`: the
 /// toolbar's Macros highlight keys on tool identity, which a closure
@@ -47,12 +49,29 @@ class RegularPolygonMacroTool extends MultiPointTool {
 
   @override
   List<GeoObject> buildObjects(List<GeoPoint> points) {
+    // Each derived vertex dedups independently ([dedupedDerivedPoint]) so
+    // re-stamping over an existing polygon reuses the whole ring; the
+    // chain continues from whichever instance survived.
+    final created = <GeoPoint>[];
+    final vertices = absolute.isEuclidean
+        ? _chained(points, created)
+        : _orbit(points, created);
+    return [
+      ...created,
+      for (var k = 0; k < sideCount; k++)
+        Segment(
+          id: newId(),
+          point1: vertices[k],
+          point2: vertices[(k + 1) % sideCount],
+        ),
+    ];
+  }
+
+  /// Two adjacent vertices, each new one the previous-but-one turned
+  /// about the previous by the Euclidean interior angle.
+  List<GeoPoint> _chained(List<GeoPoint> points, List<GeoPoint> created) {
     final vertices = <GeoPoint>[points[0], points[1]];
     final turn = 2 * math.pi / sideCount - math.pi;
-    // Each derived vertex dedups independently ([dedupedDerivedPoint]) so
-    // re-stamping over an existing polygon's two vertices reuses the whole
-    // ring; the chain continues from whichever instance survived.
-    final created = <GeoPoint>[];
     for (var k = 2; k < sideCount; k++) {
       final candidate = RotatedPoint(
         id: newId(),
@@ -66,14 +85,27 @@ class RegularPolygonMacroTool extends MultiPointTool {
       }
       vertices.add(vertex);
     }
-    return [
-      ...created,
-      for (var k = 0; k < sideCount; k++)
-        Segment(
-          id: newId(),
-          point1: vertices[k],
-          point2: vertices[(k + 1) % sideCount],
-        ),
-    ];
+    return vertices;
+  }
+
+  /// A centre and one vertex; the rest are that vertex's orbit under the
+  /// cyclic rotation group of order [sideCount] fixing the centre.
+  List<GeoPoint> _orbit(List<GeoPoint> points, List<GeoPoint> created) {
+    final centre = points[0];
+    final vertices = <GeoPoint>[points[1]];
+    for (var k = 1; k < sideCount; k++) {
+      final candidate = RotatedPoint(
+        id: newId(),
+        point: points[1],
+        center: centre,
+        angle: 2 * math.pi * k / sideCount,
+      );
+      final vertex = dedupedDerivedPoint(candidate);
+      if (identical(vertex, candidate)) {
+        created.add(candidate);
+      }
+      vertices.add(vertex);
+    }
+    return vertices;
   }
 }
