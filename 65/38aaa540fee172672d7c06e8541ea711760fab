@@ -1,0 +1,19 @@
+docs/TODO.md
+  s_73e8df4fb68565::t_123ff160fe4af8 30,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6538aaa540fee172672d7c06e8541ea711760fab",
+  "prompts": {},
+  "sessions": {
+    "s_73e8df4fb68565": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e876b34f-a94d-4da7-9129-16675bbdf3a9",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
