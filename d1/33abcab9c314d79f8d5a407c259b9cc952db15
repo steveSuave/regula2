@@ -1,0 +1,21 @@
+lib/domain/construction/construction.dart
+  s_0cd74619eea442::t_4bba3461238f27 395-399,401-403,405-414
+  s_0cd74619eea442::t_0799aecc1f860e 426-427
+  s_0cd74619eea442::t_f966957bd76aa5 404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d133abcab9c314d79f8d5a407c259b9cc952db15",
+  "prompts": {},
+  "sessions": {
+    "s_0cd74619eea442": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4aec0e78-ec0b-43c7-b0ba-4dfa4a037245",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
