@@ -1,0 +1,54 @@
+lib/domain/construction/objects/point_on_object.dart
+  s_b040154e1b3384::t_66439fd8b308a4 36-58
+  s_b040154e1b3384::t_bdd7926bcdff6e 3,96-103,170-172,175-178
+lib/domain/tools/drag_session.dart
+  s_b040154e1b3384::t_bdd7926bcdff6e 17,20,516-522,526-527,542-553
+lib/domain/projective/conic_shape.dart
+  s_b040154e1b3384::t_1145ee4fb4846c 556,581-585
+  s_b040154e1b3384::t_bdd7926bcdff6e 503-536,542-545,547,549,553-555,580,586-588
+  s_b040154e1b3384::t_db215e1df56cda 417-430,435,855,857-858
+test/domain/projective/conic_shape_test.dart
+  s_b040154e1b3384::t_7a4fbf9f328a52 1012,1018
+  s_b040154e1b3384::t_df91597aacfa91 1009-1011,1013-1017,1019-1093
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_b040154e1b3384::t_2698c9b4cc16a4 1426-1455,1457-1502
+  s_b040154e1b3384::t_1145ee4fb4846c 1456
+  s_b040154e1b3384::t_4b9b0d592d9eff 6,18-19
+  s_b040154e1b3384::t_e525c9a2db5c51 26
+  s_b040154e1b3384::t_0b8b1f617f89d8 27
+lib/domain/construction/construction.dart
+  s_b040154e1b3384::t_06cdffdd85dce9 6
+  s_b040154e1b3384::t_e0d8e30836c9ec 338-347
+test/domain/tools/drag_session_test.dart
+  s_b040154e1b3384::t_a0521e8da04a08 13,560-607
+  s_b040154e1b3384::t_ff37265e151afb 608-609
+test/presentation/canvas/geometry_canvas_test.dart
+  s_b040154e1b3384::t_3a202e2a95028d 2569
+  s_b040154e1b3384::t_f0250645328756 2539-2566,2570-2587
+  s_b040154e1b3384::t_a789762af00e88 2567-2568
+test/domain/construction/objects/point_on_object_test.dart
+  s_b040154e1b3384::t_ef0e7dfe52a92e 6,16-17,475-500,508-556,558-565,574-583
+  s_b040154e1b3384::t_1145ee4fb4846c 501-507
+  s_b040154e1b3384::t_3a24c2598b7b81 557,566-573
+  s_b040154e1b3384::t_462ccde170dcad 584
+docs/PLAN.md
+  s_b040154e1b3384::t_a02221c761c3c1 44
+docs/TODO.md
+  s_b040154e1b3384::t_5ce15ea000c44c 120-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7623675ec706a80524e9f4a9e85ad7f998cfcde1",
+  "prompts": {},
+  "sessions": {
+    "s_b040154e1b3384": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "513c5805-d34f-4ec2-bad0-87fd7246b492",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
