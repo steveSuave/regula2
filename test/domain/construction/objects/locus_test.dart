@@ -6,6 +6,7 @@ import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
@@ -629,13 +630,23 @@ void main() {
     const thalesCentre = Vec2(-2, 0);
     const thalesRadius = 2.0;
 
-    Locus rig({int sampleCount = 64}) {
+    /// [hideIncidence] hangs the chord off a bit-exact *copy* of the
+    /// driver instead of the driver itself (Phase 135). The figure is
+    /// identical to the last bit; what changes is that
+    /// `sharedIncidentPoints` can no longer see that the driver is on
+    /// both curves, so deflation stands down and the walk has to hold the
+    /// crossing by detouring. That is the only way left to reach the
+    /// detour path from a locus — see the tests below.
+    Locus rig({int sampleCount = 64, bool hideIncidence = false}) {
       final centre = FreePoint(id: 'o', position: Vec2.zero);
       final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
       final host = CircleCenterPoint(id: 'k', center: centre, onCircle: rim);
       final outside = FreePoint(id: 'c', position: c);
       final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
-      final chord = Segment(id: 'seg', point1: outside, point2: driver);
+      final chordEnd = hideIncidence
+          ? HomotheticPoint(id: 'cp', point: driver, center: centre, ratio: 1)
+          : driver;
+      final chord = Segment(id: 'seg', point1: outside, point2: chordEnd);
       final e = IntersectionPoint(
         id: 'e',
         curve1: host,
@@ -666,13 +677,40 @@ void main() {
       expect(samples.first, samples.last, reason: 'the walk closes');
     });
 
-    test('the canonical scan does not: a third of it sits on the driver\'s '
-        'own circle instead — the sheet the walk used to follow', () {
-      // coreSamples is the static, canonical-branch scan. Pinning that it
-      // *disagrees* keeps this test honest: it fails if the fix ever
-      // regresses to canonical resolution, and it fails just as loudly if
-      // the rig stops exercising a crossing at all.
+    test('and so does the canonical scan now — the crossing is named, not '
+        'navigated (Phase 135)', () {
+      // This used to pin the *opposite*: a third of the canonical scan
+      // sat on the driver's own circle, because the canonical order
+      // flips at the tangent points from C and branch 0 stops meaning
+      // "the second intersection" there. That flip is exactly what
+      // deflation removes. D is on the host circle and on the chord by
+      // construction, so E is the root left when D is divided out — the
+      // same root at every parameter, with no order to flip and nothing
+      // for a static scan to get wrong.
+      //
+      // The inverted assertion is the strong one: it fails if deflation
+      // regresses, and `hideIncidence` below keeps the old behaviour
+      // covered where it still applies.
       final locus = rig();
+      final canonical = locus.coreSamples!;
+      for (final p in canonical) {
+        expect(
+          p.distanceTo(thalesCentre),
+          closeTo(thalesRadius, 1e-9),
+          reason: 'canonical sample $p left the chord-midpoint locus',
+        );
+      }
+    });
+
+    test('with the incidence hidden the canonical scan is wrong again — a '
+        'third of it on the driver\'s own circle (Phase 135)', () {
+      // The pre-deflation behaviour, preserved: identical geometry, but
+      // built so nothing can *prove* D is on both curves. This is what a
+      // construction whose shared point comes from a theorem the
+      // incidence detector does not model still looks like, and pinning
+      // it here keeps the inverted test above honest — it fails if the
+      // rig ever stops exercising a crossing at all.
+      final locus = rig(hideIncidence: true);
       final canonical = locus.coreSamples!;
       final off = canonical
           .where(
@@ -693,25 +731,38 @@ void main() {
       }
     });
 
-    test('and it holds them by detouring — two crossings, two arcs '
-        '(Phase 121)', () {
-      // The sheet assertions above are only evidence about the detour
-      // half-plane while the walk actually plans an arc, so pin that it
-      // does. Phase 121 unified the locus half-plane with the drag's
-      // constant, and this rig plus `apatitos-topos.rgl` are the whole
-      // of the corpus's detour coverage: if a future change makes the
-      // walk cross these tangent points some other way, the invariant
-      // above would still pass while silently testing nothing.
-      TraceDiagnostics.reset();
-      TraceDiagnostics.enabled = true;
-      try {
-        TraceDiagnostics.frameBegin('test');
-        rig();
-        TraceDiagnostics.frameEnd();
-      } finally {
-        TraceDiagnostics.enabled = false;
-      }
-      final counts = TraceDiagnostics.history.single.counts;
+    test('a named crossing costs nothing to cross — no arc is planned at '
+        'all (Phase 135)', () {
+      // What deflation buys, stated as work not done. Phase 121 planned
+      // one detour arc per tangent point here; there is now nothing to
+      // detour around, because the root E tracks cannot be confused with
+      // the root it meets.
+      final counts = _countersFor(rig);
+      expect(counts[TraceCounter.locusDetours] ?? 0, 0);
+      expect(counts[TraceCounter.locusFolds] ?? 0, 0);
+    });
+
+    test('and with the incidence hidden the arcs come back — two '
+        'crossings, two arcs (Phase 121)', () {
+      // Detour coverage, and where it now lives. Phase 121 unified the
+      // locus half-plane with the drag's constant, and this rig used to
+      // share the corpus's whole detour coverage with
+      // `apatitos-topos.rgl` — but both documents' crossings were
+      // structural, so deflation took both to zero arcs (measured:
+      // 4 → 0 on each). Hiding the incidence is what is left, and it is
+      // not a contrivance: it is what a shared point arrived at by a
+      // theorem the detector does not model looks like from here.
+      //
+      // **Known limitation, and this rig is its reproducer.** The walk
+      // plans both arcs and still lands on the wrong sheet for a large
+      // stretch — 406 of 723 samples off the Thales circle, identically
+      // on the code before Phase 135, so it is neither caused nor
+      // worsened by deflation. See `docs/TODO.md` Phase 136. The
+      // assertion here is deliberately only about the arcs: it keeps the
+      // detour path from going uncovered while the sheet question is
+      // open, and it must not be strengthened into a sheet claim without
+      // fixing that first.
+      final counts = _countersFor(() => rig(hideIncidence: true));
       expect(
         counts[TraceCounter.locusDetours],
         2,
@@ -963,4 +1014,18 @@ Locus _circleLocus({
     ..add(traced)
     ..add(locus);
   return locus;
+}
+
+/// Runs [body] inside one diagnostics frame and returns its counters.
+Map<TraceCounter, int> _countersFor(void Function() body) {
+  TraceDiagnostics.reset();
+  TraceDiagnostics.enabled = true;
+  try {
+    TraceDiagnostics.frameBegin('test');
+    body();
+    TraceDiagnostics.frameEnd();
+  } finally {
+    TraceDiagnostics.enabled = false;
+  }
+  return TraceDiagnostics.history.single.counts;
 }

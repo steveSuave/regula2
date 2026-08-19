@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
@@ -27,6 +28,19 @@ import 'package:regula/domain/tools/drag_session.dart';
 /// does not merely wobble: G lands on the driver's own root and stays
 /// there, which is what the user reported as the locus disappearing.
 ///
+/// **Why the circle is built through a copy of F rather than F itself**
+/// (Phase 135). F on both curves is a *structural* incidence, and
+/// deflation now resolves exactly that case with no tracing at all — so
+/// the rig as written would stop exercising a single line of what this
+/// file is named after. `HomotheticPoint(F, centre: A, ratio: 1)` is F,
+/// bit for bit, at every parameter (A is the origin, so the arithmetic
+/// is exact); what it is not is F *by construction*, so
+/// `sharedIncidentPoints` cannot see the incidence and the walk has to
+/// earn the crossing the hard way. The geometry, the crossings, the
+/// bail, the budget B needs — all unchanged and re-measured. Deflation's
+/// own coverage of this shape, with the incidence left visible, is
+/// `test/domain/construction/deflation_test.dart`.
+///
 /// The two crossings are not the same difficulty. At t = −8 the two
 /// roots simply meet; at t = 0 the *carrier* collapses with them — the
 /// circle centred A through F has radius zero — so the walk has no
@@ -47,7 +61,10 @@ void main() {
     final unit = FreePoint(id: 'u', position: const Vec2(1, 0));
     final axis = LineThroughTwoPoints(id: 'axis', point1: a, point2: unit);
     final driver = PointOnObject(id: 'drv', curve: axis, parameter: -6.25);
-    final circle = CircleCenterPoint(id: 'd', center: a, onCircle: driver);
+    // F, exactly — but not F as far as structural incidence is
+    // concerned. See the file doc.
+    final copy = HomotheticPoint(id: 'cp', point: driver, center: a, ratio: 1);
+    final circle = CircleCenterPoint(id: 'd', center: a, onCircle: copy);
     final off = FreePoint(id: 'b', position: b);
     final chord = LineThroughTwoPoints(id: 'c', point1: off, point2: driver);
     // Whichever index names the non-driver root where the document
@@ -76,6 +93,7 @@ void main() {
         ..add(unit)
         ..add(axis)
         ..add(driver)
+        ..add(copy)
         ..add(circle)
         ..add(off)
         ..add(chord)

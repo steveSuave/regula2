@@ -108,3 +108,41 @@ bool _derivedIncident(GeoObject curve, GeoPoint point) =>
 bool _samePair(GeoObject a1, GeoObject a2, GeoObject b1, GeoObject b2) =>
     (identical(a1, b1) && identical(a2, b2)) ||
     (identical(a1, b2) && identical(a2, b1));
+
+/// The points the construction puts on **both** [curve1] and [curve2] —
+/// the crossings that are known before any arithmetic is done (Phase
+/// 135).
+///
+/// This is what makes deflation possible. `IntersectionPoint` addresses
+/// its roots by their place in a *geometric* canonical order, and a
+/// geometric order exchanges two roots wherever they coincide — so a
+/// point holding "the second crossing" silently becomes a point holding
+/// the first one as soon as the figure moves through a tangency. A
+/// crossing named here is immune to that: it is the same crossing at
+/// every parameter value, by construction, so the roots left over after
+/// it is divided out are too.
+///
+/// The order is deterministic and depends only on the construction —
+/// [curve1]'s defining points in their declared order, then [curve2]'s
+/// that were not already named — which is what lets a caller address one
+/// of these by position and keep meaning the same crossing across
+/// recomputes, loads and drags. Deduplicated by identity.
+///
+/// Only *defining* points are considered, so a shared crossing that
+/// neither curve was built from — an `IntersectionPoint` of exactly this
+/// pair, say — is not found. That is a missed optimization, never a
+/// wrong answer.
+List<GeoPoint> sharedIncidentPoints(GeoObject curve1, GeoObject curve2) {
+  final shared = <GeoPoint>[];
+  void consider(GeoObject curve, GeoObject other) {
+    for (final point in onCarrierDefiningPoints(curve)) {
+      if (!structurallyIncident(other, point)) continue;
+      if (shared.any((q) => identical(q, point))) continue;
+      shared.add(point);
+    }
+  }
+
+  consider(curve1, curve2);
+  consider(curve2, curve1);
+  return shared;
+}

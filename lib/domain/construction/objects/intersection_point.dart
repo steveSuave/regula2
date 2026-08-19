@@ -9,6 +9,7 @@ import '../../projective/proj_point.dart';
 import '../../projective/tolerances.dart';
 import '../../projective/tracing/traced_branch.dart';
 import '../geo_object.dart';
+import '../incidence.dart';
 import '../object_attributes.dart';
 
 /// One intersection point of two curves (lines and/or circles).
@@ -242,6 +243,32 @@ class IntersectionPoint extends GeoPoint {
   @override
   List<GeoObject> get parents => [curve1, curve2];
 
+  /// The points the construction puts on **both** parent curves — the
+  /// crossings that are known before any arithmetic is done (Phase 135).
+  ///
+  /// Usually empty. When it is not, this point's identity is settled
+  /// structurally instead of geometrically; see [tracksDeflatedRoot].
+  late final List<GeoPoint> _shared = sharedIncidentPoints(curve1, curve2);
+
+  /// The [_shared] index this point *is*, or [_deflated] for the root
+  /// that is none of them. Meaningless until [_roleSettled].
+  int _role = _deflated;
+  bool _roleSettled = false;
+
+  static const int _deflated = -1;
+
+  /// The points the construction puts on both parent curves, in the
+  /// stable order `sharedIncidentPoints` defines.
+  List<GeoPoint> get structurallySharedPoints => List.unmodifiable(_shared);
+
+  /// Whether this point tracks the root left over after the structurally
+  /// known crossings are divided out — the deflated root (Phase 135).
+  ///
+  /// False for every ordinary intersection, and false until the role has
+  /// settled.
+  bool get tracksDeflatedRoot =>
+      _roleSettled && _shared.isNotEmpty && _role == _deflated;
+
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
     final candidates = intersectionCandidates(
@@ -262,11 +289,102 @@ class IntersectionPoint extends GeoPoint {
       _point = null;
       return;
     }
-    if (tracedBranch.isActive) {
-      _point = tracedBranch.follow(candidates);
+    final structural = _structuralIndex(candidates);
+    if (structural != null) {
+      final root = candidates[structural];
+      _point = root;
+      if (tracedBranch.isActive) {
+        // Keep the slot's bookkeeping honest without letting it choose:
+        // the root moved by whatever it moved, and a structurally named
+        // root has no rival it could be confused with, so the separation
+        // this reports is infinite — which is the truth, and is what
+        // stops the step controller shrinking against a crossing that
+        // cannot cost this point its identity.
+        tracedBranch.follow([root]);
+      }
       return;
     }
-    _point = candidates[math.min(branchIndex, candidates.length - 1)];
+    final int index;
+    if (tracedBranch.isActive) {
+      _point = tracedBranch.follow(candidates);
+      index = tracedBranch.matchedIndex;
+    } else {
+      index = math.min(branchIndex, candidates.length - 1);
+      _point = candidates[index];
+    }
+    _settleRole(candidates, index);
+  }
+
+  /// The candidate index this point's structural role names, or null when
+  /// there is no structural role or it has no answer at this state.
+  ///
+  /// Each structurally shared point is matched to the candidate it *is* —
+  /// an exact incidence, so the nearest candidate is the right one and no
+  /// tolerance enters. Matching is greedy in `_shared`'s declared order,
+  /// which is unambiguous because distinct shared points are distinct
+  /// crossings.
+  int? _structuralIndex(List<ProjPoint> candidates) {
+    if (!_roleSettled || _shared.isEmpty) return null;
+    final taken = List<bool>.filled(candidates.length, false);
+    final matched = List<int>.filled(_shared.length, -1);
+    for (var s = 0; s < _shared.length; s++) {
+      final p = _shared[s].projPoint;
+      if (p == null || p.isZero) return null;
+      var best = -1;
+      var bestDistance = double.infinity;
+      for (var i = 0; i < candidates.length; i++) {
+        if (taken[i]) continue;
+        final d = TracedBranch.chordalDistance(p, candidates[i]);
+        if (d < bestDistance) {
+          bestDistance = d;
+          best = i;
+        }
+      }
+      if (best < 0) return null;
+      matched[s] = best;
+      taken[best] = true;
+    }
+    if (_role != _deflated) {
+      return _role < matched.length ? matched[_role] : null;
+    }
+    // Deflation only names a root when exactly one is left over. A conic
+    // pair with four candidates and one shared point has three, and this
+    // point has to go on addressing them geometrically.
+    var only = -1;
+    for (var i = 0; i < candidates.length; i++) {
+      if (taken[i]) continue;
+      if (only >= 0) return null;
+      only = i;
+    }
+    return only < 0 ? null : only;
+  }
+
+  /// Settles which structural role this point plays, once, from the first
+  /// state that can answer unambiguously (Phase 135).
+  ///
+  /// Deriving it rather than storing it is what keeps the save format
+  /// out of this: the role a document loads with is the role it was saved
+  /// with, because it is read back off the same geometry. Ambiguous
+  /// states — candidates within `doubleRootEpsilon` of each other, a
+  /// shared point undefined — settle nothing and leave the point on
+  /// geometric addressing until a state that can.
+  void _settleRole(List<ProjPoint> candidates, int index) {
+    if (_roleSettled || _shared.isEmpty || index < 0) return;
+    if (TracedBranch.candidateSeparation(candidates) <= doubleRootEpsilon) {
+      return;
+    }
+    var role = _deflated;
+    for (var s = 0; s < _shared.length; s++) {
+      final p = _shared[s].projPoint;
+      if (p == null || p.isZero) return;
+      if (TracedBranch.chordalDistance(p, candidates[index]) <=
+          doubleRootEpsilon) {
+        role = s;
+        break;
+      }
+    }
+    _role = role;
+    _roleSettled = true;
   }
 
   static int _distinctRealCount(List<ProjPoint> candidates) {
