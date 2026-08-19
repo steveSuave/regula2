@@ -741,6 +741,119 @@ void main() {
     });
   });
 
+  group('Locus: the seed is the driver\'s own parameter (Phase 133)', () {
+    // The `no-locus.rgl` shape, reduced. F is glued to the x-axis; d is
+    // the circle centred at the origin through F, so F is itself one of
+    // the two crossings of d with the line c through B and F, and the
+    // pair crosses transversally where AF ⟂ FB — at the feet of the
+    // Thales circle over AB, here t = 0 and t = −8. The canonical index
+    // therefore names a different root on each side of those, and out
+    // at the sweep's driver-at-infinity end it names the driver.
+    //
+    // Which root the locus draws is settled by the document: it is
+    // whichever one its traced point holds *where the driver actually
+    // stands*. Seeding anywhere else is free to pick the other one, and
+    // did — the reported document drew the x-axis, invisible under the
+    // line the driver is glued to.
+    const b = Vec2(-8, -1);
+
+    ({Locus locus, IntersectionPoint g}) rig({required int branchIndex}) {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final unit = FreePoint(id: 'c', position: const Vec2(1, 0));
+      final axis = LineThroughTwoPoints(id: 'axis', point1: a, point2: unit);
+      final driver = PointOnObject(id: 'drv', curve: axis, parameter: -6.25);
+      final circle = CircleCenterPoint(id: 'd', center: a, onCircle: driver);
+      final off = FreePoint(id: 'b', position: b);
+      final chord = LineThroughTwoPoints(id: 'c', point1: off, point2: driver);
+      final g = IntersectionPoint(
+        id: 'g',
+        curve1: circle,
+        curve2: chord,
+        branchIndex: branchIndex,
+      );
+      return (
+        locus: Locus(id: 'loc', driver: driver, traced: g, sampleCount: 128),
+        g: g,
+      );
+    }
+
+    for (final branchIndex in [0, 1]) {
+      test('branch $branchIndex: the trace passes through the traced '
+          'point, and rides that root the whole way', () {
+        final (:locus, :g) = rig(branchIndex: branchIndex);
+        final samples = locus.samples!;
+        expect(samples, isNot(contains(null)), reason: 'one component');
+        final points = samples.cast<Vec2>();
+        expect(
+          points.map((p) => p.distanceTo(g.position!)).reduce(math.min),
+          lessThan(1e-9),
+          reason: 'a locus passes through the point it is the locus of',
+        );
+        for (final p in points) {
+          // P on line B–F(t) fixes t; |P| = |t| then says P is on the
+          // circle of radius |AF(t)| — so P really is a crossing.
+          final t = (p.x - b.x) / (p.y - b.y) * -b.y + b.x;
+          expect(
+            (p.norm - t.abs()).abs() / (1 + p.norm),
+            lessThan(1e-6),
+            reason: 'sample $p is not a crossing of d and c',
+          );
+        }
+      });
+    }
+
+    test('a detour that cannot be walked gives up instead of spending the '
+        "run's whole budget on it", () {
+      // The sweep's own ends are driver-at-infinity limits, and the
+      // starvation there classifies as a *crossing* — so the walk plans
+      // an arc across a singularity that is really the edge of the
+      // domain. That arc can never be walked: every trial is refused and
+      // the step halves until no representable step advances it. Before
+      // the floor it halved on and on, and the doomed detour spent the
+      // whole run budget, leaving nothing for the leg that had not been
+      // walked yet — which is how the curved branch above lost its
+      // entire upper half even once it was seeded correctly.
+      TraceDiagnostics.reset();
+      TraceDiagnostics.enabled = true;
+      try {
+        TraceDiagnostics.frameBegin('test');
+        rig(branchIndex: 1);
+        TraceDiagnostics.frameEnd();
+      } finally {
+        TraceDiagnostics.enabled = false;
+      }
+      final counts = TraceDiagnostics.history.single.counts;
+      expect(
+        counts[TraceCounter.locusTrials],
+        lessThan(2000),
+        reason: 'the walk is not grinding a doomed arc to the budget',
+      );
+      expect(
+        counts[TraceCounter.locusBudgetEnds] ?? 0,
+        0,
+        reason: 'and no leg ends by exhausting it',
+      );
+    });
+
+    test('and the two branches are genuinely different curves — one of '
+        'them is the driver line itself', () {
+      final off = rig(branchIndex: 1).locus.samples!.cast<Vec2>();
+      final on = rig(branchIndex: 0).locus.samples!.cast<Vec2>();
+      // Whichever way the solver orders them at the stored parameter,
+      // exactly one of the two roots is the driver, and its trace is the
+      // x-axis. Pinning that keeps the test honest: it fails if the two
+      // branches ever collapse onto one answer.
+      final flat = [off, on].where((c) => c.every((p) => p.y.abs() < 1e-9));
+      expect(flat, hasLength(1), reason: 'one branch is the driver itself');
+      final curved = [off, on].firstWhere((c) => !flat.contains(c));
+      expect(
+        curved.where((p) => p.y.abs() > 1).length,
+        greaterThan(curved.length ~/ 2),
+        reason: 'and the other is a genuine curve',
+      );
+    });
+  });
+
   group('Locus as a parent', () {
     test('is rejected as a PointOnObject host', () {
       final locus = _circleLocus(sampleCount: 4);

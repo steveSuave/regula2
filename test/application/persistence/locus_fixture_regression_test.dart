@@ -4,6 +4,8 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -13,6 +15,13 @@ import 'package:regula/domain/math/vec2.dart';
 /// the whole path — decode, chain construction, sweep, walk, boundary
 /// refinement — is exercised on real-world geometry, not scaled fixtures.
 void main() {
+  Construction construction(String fixture) {
+    final json =
+        jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
+            as Map<String, dynamic>;
+    return decodeDocument(json).construction;
+  }
+
   Locus loadLocus(String fixture, {required List<FreePoint> freeOut}) {
     final json =
         jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
@@ -215,6 +224,59 @@ void main() {
     // must actually get out there — a run that stopped short would pass
     // the residual test trivially.
     expect(points.map((p) => p.norm).reduce(math.max), greaterThan(50));
+  });
+
+  test('no-locus.rgl (the driver is one of the two roots): the walk holds '
+      "the *other* one — the branch the document's own point names", () {
+    // A user document whose locus drew nothing. F is glued to line a
+    // (the x-axis through A); d is the circle centred A through F, so F
+    // itself is always one of the two crossings of d with line c = BF,
+    // and G is the other one. The two roots cross transversally where
+    // AF ⟂ FB — at t = 0 and t = −8, the feet of the Thales circle over
+    // AB — so which of them the *canonical* index names flips with the
+    // sweep parameter.
+    //
+    // The walk used to seed its branch identity at the run's low end,
+    // where the driver is a hundred million units out and the canonical
+    // index there names F. It then held that branch honestly all the
+    // way back: every sample was the driver's own position, so the
+    // locus was the x-axis — painted exactly under line a, in the same
+    // default colour, and reported as "the locus does not show". The
+    // seed is now the driver's *own* parameter, where the document's G
+    // pins the branch.
+    final locus = loadLocus('no-locus.rgl', freeOut: <FreePoint>[]);
+    final samples = locus.samples!;
+    expect(samples, isNot(contains(null)), reason: 'one component');
+    final points = samples.cast<Vec2>();
+
+    // Every sample is on the curve: P is on line B–F(t) fixes t, and
+    // then |P| = |t| says P is on the circle of radius |AF(t)|.
+    for (final p in points) {
+      final t = (p.x + 8) / (p.y + 1) - 8;
+      expect(
+        (p.norm - t.abs()).abs() / (1 + p.norm),
+        lessThan(1e-6),
+        reason: 'sample $p is not a crossing of d and c',
+      );
+    }
+    // …and it is the crossing that is *not* the driver, which is the
+    // whole point: the abandoned branch is the x-axis.
+    expect(
+      points.where((p) => p.y.abs() > 1).length,
+      greaterThan(points.length ~/ 2),
+      reason: 'the trace is not the driver line',
+    );
+    // The invariant the seed exists for: a locus passes through the
+    // position its traced point actually has.
+    final g =
+        construction(
+              'no-locus.rgl',
+            ).objects.singleWhere((o) => o.attributes.name == 'G')
+            as GeoPoint;
+    expect(
+      points.map((p) => p.distanceTo(g.position!)).reduce(math.min),
+      lessThan(1e-9),
+    );
   });
 
   test('locus-miss-2.json (twin tangent points): one closed figure-eight, '
