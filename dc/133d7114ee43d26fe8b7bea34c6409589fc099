@@ -1,0 +1,38 @@
+lib/domain/construction/objects/intersection_point.dart
+  s_0cd74619eea442::t_380eb18f5c9ac1 12,246-271,292-307,310-373,376-387
+test/domain/tools/drag_crossing_test.dart
+  s_0cd74619eea442::t_6b2e05034dcab2 5,31-43,64-67,96
+test/domain/construction/objects/locus_test.dart
+  s_0cd74619eea442::t_6735ad5b7a8a3d 680-693,696-713
+  s_0cd74619eea442::t_82338a4ba072ca 633-640,647-648
+  s_0cd74619eea442::t_e812e005d41b1e 646
+  s_0cd74619eea442::t_3f27ae9a93df9f 649,740
+  s_0cd74619eea442::t_582225d08d3c24 734-739,741-765
+  s_0cd74619eea442::t_ecabb525971e2f 9,1018-1030
+  s_0cd74619eea442::t_9cc649c6ad4564 714,1031
+docs/PLAN.md
+  s_0cd74619eea442::t_786a3c362e0984 164-177
+test/domain/construction/deflation_test.dart
+  s_0cd74619eea442::t_996e78cc3b9331 187-213,218-219,221-229
+  s_0cd74619eea442::t_310221f65b24fa 1-83,85-88,90-128,140-186,230-275
+  s_0cd74619eea442::t_5f2c45f501fa01 84,89,214-217,220
+  s_0cd74619eea442::t_50e4c206b625b3 129-139
+lib/domain/construction/incidence.dart
+  s_0cd74619eea442::t_0cf2840e522b4f 111-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "dc133d7114ee43d26fe8b7bea34c6409589fc099",
+  "prompts": {},
+  "sessions": {
+    "s_0cd74619eea442": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4aec0e78-ec0b-43c7-b0ba-4dfa4a037245",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
