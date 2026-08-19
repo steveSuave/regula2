@@ -556,7 +556,7 @@ class GeometryPainter extends CustomPainter {
         // unpainted.
         break;
       case GeoLocus():
-        _drawLocus(canvas, object, paint, dashPeriod);
+        _drawLocus(canvas, size, object, paint, dashPeriod);
     }
   }
 
@@ -567,42 +567,88 @@ class GeometryPainter extends CustomPainter {
   /// duplicated endpoint, so the closing edge is the painter's to add.
   /// Arc/Sector hosts sweep only their angular extent — an open stroke
   /// whose samples already include both endpoints.
+  ///
+  /// **The polyline is clipped to the visible world box** (Phase 136),
+  /// for the reason [_drawConic] gives twenty lines below: a locus arm
+  /// can run off to infinity and there is no "far enough" to over-extend
+  /// to. A line-host locus sweeps its whole carrier, so a diverging arm
+  /// reaches astronomically far out — `no-locus.rgl` carries a sample at
+  /// **1e9**, which at its own zoom is a *screen* coordinate of 2.7e10 —
+  /// and every one of those went into the same `Path` as the visible
+  /// curve. `GeoLocus.coreSamples` exists because the viewport fitter
+  /// and the label anchor already could not use the raw samples; the
+  /// painter was the last reader still handing them to the rasterizer
+  /// whole.
+  ///
+  /// Clipping is exact and by segment, so a run that leaves the box and
+  /// comes back is two strokes rather than one across the middle. A
+  /// segment nothing trimmed keeps its endpoints *bit-identical* (the
+  /// parameters are compared against 0 and 1 rather than recomputed), so
+  /// a figure that fits on screen paints exactly what it painted before
+  /// and the goldens do not move.
   void _drawLocus(
     Canvas canvas,
+    Size size,
     GeoLocus object,
     Paint paint,
     double dashPeriod,
   ) {
     final samples = object.samples!;
+    final box = viewport.visibleWorldBox(size, margin: _conicClipMargin);
     final runs = <Path>[];
     Path? run;
-    var runLength = 0;
+    Vec2? runEnd;
+    var trimmed = false;
+    var hasGap = false;
     void endRun() {
-      if (run != null && runLength > 1) {
+      if (run != null) {
         runs.add(run!);
       }
       run = null;
-      runLength = 0;
+      runEnd = null;
     }
 
+    Vec2? previous;
     for (final sample in samples) {
       if (sample == null) {
         endRun();
+        hasGap = true;
+        previous = null;
         continue;
       }
-      final screen = viewport.worldToScreen(sample);
-      if (run == null) {
-        run = Path()..moveTo(screen.dx, screen.dy);
-        runLength = 1;
-      } else {
-        run!.lineTo(screen.dx, screen.dy);
-        runLength++;
+      if (previous == null) {
+        previous = sample;
+        continue;
       }
+      final from = previous;
+      previous = sample;
+      final piece = _clipSegmentToBox(from, sample, box.min, box.max);
+      if (piece == null) {
+        // Wholly outside: the stroke resumes where the curve comes back.
+        endRun();
+        trimmed = true;
+        continue;
+      }
+      final (start, end) = piece;
+      if (start != from || end != sample) {
+        trimmed = true;
+      }
+      if (run == null || runEnd != start) {
+        endRun();
+        final from = viewport.worldToScreen(start);
+        run = Path()..moveTo(from.dx, from.dy);
+      }
+      final to = viewport.worldToScreen(end);
+      run!.lineTo(to.dx, to.dy);
+      runEnd = end;
     }
-    final gapless = runLength == samples.length;
     endRun();
     final host = object is Locus ? object.driver.curve : null;
-    if (gapless &&
+    // Only an untrimmed, gapless sweep is a closed loop; a clipped one
+    // has ends because the canvas gave it ends, and joining them would
+    // draw a chord across the figure.
+    if (!hasGap &&
+        !trimmed &&
         runs.length == 1 &&
         host is GeoCircle &&
         host.angularExtent == null) {
@@ -614,6 +660,48 @@ class GeometryPainter extends CustomPainter {
         paint,
       );
     }
+  }
+
+  /// The part of the segment [a]→[b] inside the box [min]..[max], or null
+  /// when none of it is (Liang–Barsky).
+  ///
+  /// An endpoint the box does not cut is returned **as itself**, not
+  /// recomputed from its parameter, so an unclipped segment survives bit
+  /// for bit. A non-finite endpoint is refused rather than clamped: it
+  /// has no position to clip toward, and it is exactly what must never
+  /// reach a `Path`.
+  static (Vec2, Vec2)? _clipSegmentToBox(Vec2 a, Vec2 b, Vec2 min, Vec2 max) {
+    if (!a.x.isFinite || !a.y.isFinite || !b.x.isFinite || !b.y.isFinite) {
+      return null;
+    }
+    final dx = b.x - a.x;
+    final dy = b.y - a.y;
+    var t0 = 0.0;
+    var t1 = 1.0;
+    for (final (p, q) in [
+      (-dx, a.x - min.x),
+      (dx, max.x - a.x),
+      (-dy, a.y - min.y),
+      (dy, max.y - a.y),
+    ]) {
+      if (p == 0) {
+        // Parallel to this edge: in or out for the whole segment.
+        if (q < 0) return null;
+        continue;
+      }
+      final r = q / p;
+      if (p < 0) {
+        if (r > t1) return null;
+        if (r > t0) t0 = r;
+      } else {
+        if (r < t0) return null;
+        if (r < t1) t1 = r;
+      }
+    }
+    return (
+      t0 == 0 ? a : Vec2(a.x + t0 * dx, a.y + t0 * dy),
+      t1 == 1 ? b : Vec2(a.x + t1 * dx, a.y + t1 * dy),
+    );
   }
 
   /// Paints a conic with no centre-and-radius form — an ellipse,

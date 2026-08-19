@@ -8,6 +8,26 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 143 (V2 Session 45) — 2026-08-19
+
+**Done — a rendering defect found from a screen recording, after every headless layer came back clean.** On `phase-135-deflation`. Suite **2651** green, analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **The user built the fix branch and the locus still did not draw.** The recording settles two things at once: `G` sits at the deflated root with `F` dragged to +6, so **Phase 135 is working in the running app** — and there is no locus anywhere, at any parameter, from the moment the document opens.
+- **Every layer below the widget reproduces nothing.** Engine at seven parameters; the real `DragSession` + command path; all five free points dragged four ways; `decodeDocument` and the painter in a **real browser**; and the actual app widget with real providers — 1344 samples, `isDefined`, `visible`, saved viewport, ~4400 px of ink. An ASCII plot of the sweep in the app's own window shows 463 samples inside it: a large, unmissable loop.
+- **The one measurable difference between the build that drew it and the build that does not is the coordinate magnitude.** `main` (Phase 133, deployed, drew): worst locus sample **1.5e5** → screen ~4e6. This branch: **1.0e9** → screen **2.7e10**. Deflation makes the far stretch the *true* diverging curve instead of the bounded x-axis, and Phase 134's density refinement walks further out it. `_drawLocus` put all of it into one unclipped `Path` with the visible loop.
+- **So the locus polyline now clips to the visible world box** — which `_drawConic` twenty lines below it has always done, for the reason it already states. `GeoLocus.coreSamples` exists because the viewport fitter and the label anchor could not use raw samples either; the painter was the last reader handing them to the rasterizer whole. Exact, by segment, Liang–Barsky, and an untrimmed segment keeps its endpoints bit-identical, so the goldens did not move.
+- **Said plainly: the rendering failure itself was never reproduced.** A `Path` with a 2.7e10 vertex draws fine under `flutter test --platform chrome` — which may not be the renderer `flutter run -d chrome` uses. The clip is correct on its own merits and is the only mechanism found that separates the two builds, but whether it is *the* fix is unconfirmed until the user runs it.
+
+**Next.** Have the user re-run `phase-135-deflation`. If the locus is there, merge — it is a deploy carrying Phases 133–136. If not, the browser console is the next evidence, and Phase 136's last box says so.
+
+**Gotchas.**
+
+- **Reproducing "the app" needs the app.** Four layers of headless test — engine, codec, painter, widget — all agreed the locus was fine, and all four were right. The recording cost one message and settled in seconds what an hour of probes could not. Ask earlier.
+- Nearly shipped a fix for a hypothesis I had already falsified: far vertices *do* rasterize in the browser gate. The clip is justified by the `_drawConic` precedent and by unbounded coordinates being a hazard, not by that measurement.
+- The user's standing preference is the **pure** route for deflation — the structural order as the *stored* address, with a version bump and a migration — over the derived role. Deferred because the locus was broken in their build, not rejected. Worth opening as its own phase once this ships.
+
+---
+
 ## Session 142 (V2 Session 44) — 2026-08-19
 
 **Done — the second symptom is fixed, and the diagnosis that ran through Phases 133 and 134 was wrong.** On `phase-135-deflation` (off the unmerged 134 branch). Suite **2649** green, analyze clean, 32 goldens byte-identical, browser gate green.

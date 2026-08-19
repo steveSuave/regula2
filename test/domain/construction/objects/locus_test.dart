@@ -757,7 +757,7 @@ void main() {
       // plans both arcs and still lands on the wrong sheet for a large
       // stretch — 406 of 723 samples off the Thales circle, identically
       // on the code before Phase 135, so it is neither caused nor
-      // worsened by deflation. See `docs/TODO.md` Phase 136. The
+      // worsened by deflation. See `docs/TODO.md` Phase 136b. The
       // assertion here is deliberately only about the arcs: it keeps the
       // detour path from going uncovered while the sheet question is
       // open, and it must not be strengthened into a sheet claim without
