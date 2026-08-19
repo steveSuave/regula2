@@ -14,8 +14,10 @@ import '../construction/objects/expression_text.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/intersection_point.dart';
 import '../construction/objects/point_on_object.dart';
+import '../math/circle_eq.dart';
 import '../math/grid_snap.dart';
 import '../math/vec2.dart';
+import '../projective/conic_shape.dart';
 import '../projective/proj_point.dart';
 import '../projective/tracing/drag_path.dart';
 import '../projective/tracing/trace_diagnostics.dart';
@@ -511,9 +513,18 @@ class _SlideDragSession implements DragSession {
     Vec2 grabStart,
   ) {
     final curve = target.curve;
+    // A general conic slides by its pencil angle, the same map a tap uses
+    // (Phase 132). The shape is built once per gesture rather than per
+    // frame: a slide moves the point along its host, never the host.
+    final shape = switch (curve) {
+      GeoCircle(circle: null, :final conic?) => ConicShape.of(conic),
+      _ => null,
+    };
     final project = switch (curve) {
       GeoLine(:final line?) => line.parameterAt,
       GeoCircle(:final circle?) => circle.angleAt,
+      GeoCircle() when shape != null && shape.isParameterized =>
+        (Vec2 p) => shape.parameterNear(p) ?? target.parameter,
       _ => null,
     };
     if (project == null) {
@@ -528,11 +539,18 @@ class _SlideDragSession implements DragSession {
     // a host shrank past the stored parameter the point renders on the
     // extent's end, and that is where the user grabbed it.
     var grabOffset = clamp(target.parameter) - project(grabStart);
-    if (curve is GeoCircle) {
-      // Angular parameters are periodic: near atan2's ±π cut the raw
-      // offset can come out ~2π even though the grab sits on the point.
-      // Normalize to (−π, π] so the stored parameter never jumps a turn.
-      grabOffset -= 2 * math.pi * (grabOffset / (2 * math.pi)).roundToDouble();
+    // Angular parameters are periodic: near the wrap the raw offset can
+    // come out a whole period even though the grab sits on the point.
+    // Normalize to half a period either side so the stored parameter
+    // never jumps a turn. A circle's polar angle has period 2π; a
+    // conic's pencil angle is exactly π-periodic (`ConicShape.pointAt`).
+    final period = switch (curve) {
+      GeoCircle(circle: final CircleEq _) => 2 * math.pi,
+      GeoCircle() => math.pi,
+      _ => null,
+    };
+    if (period != null) {
+      grabOffset -= period * (grabOffset / period).roundToDouble();
     }
     return _SlideDragSession._(
       construction,

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
@@ -12,6 +13,8 @@ import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
+import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/domain/projective/proj_line.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 
@@ -468,5 +471,115 @@ void main() {
         expect(circle.conic!.containsPoint(p.projPoint!, 1e-9), isTrue);
       },
     );
+  });
+
+  group('a general conic is a curve a point can be glued to (Phase 132)', () {
+    // Before this phase `PointOnObject` knew two parameterizations —
+    // signed arc-length on a line, polar angle on a circle — and a conic
+    // with no `CircleEq` fell off the end of both: `recompute` left the
+    // point undefined and `.near` *threw*. The hit tester has reported
+    // general conics since Phase 119 and `resolvePoint` glue-probes every
+    // hit curve, so that throw was reachable from the toolbar; the widget
+    // test in `geometry_canvas_test.dart` pins the whole path.
+    //
+    // The parameter is `ConicShape`'s pencil angle, π-periodic and a
+    // bijection from [0, π) onto the whole curve. A circle keeps its
+    // polar angle, so no stored parameter changes meaning and no
+    // document has to be migrated.
+
+    List<FreePoint> ellipsePoints() => [
+      FreePoint(id: 'p0', position: const Vec2(4, 0)),
+      FreePoint(id: 'p1', position: const Vec2(0, 3)),
+      FreePoint(id: 'p2', position: const Vec2(-4, 0)),
+      FreePoint(id: 'p3', position: const Vec2(0, -3)),
+      FreePoint(id: 'p4', position: const Vec2(2.4, 2.4)),
+    ];
+
+    test('a glued point sits exactly on the conic, not merely near it', () {
+      final pts = ellipsePoints();
+      final k = FivePointConic(id: 'k', points: pts);
+      expect(
+        k.circle,
+        isNull,
+        reason:
+            'not a circle — the case that had no '
+            'parameterization at all',
+      );
+      for (var i = 0; i < 12; i++) {
+        final p = PointOnObject(id: 'g', curve: k, parameter: math.pi * i / 12);
+        expect(p.isDefined, isTrue);
+        expect(k.conic!.containsPoint(p.projPoint!, 1e-9), isTrue);
+      }
+    });
+
+    test('the parameter is exactly π-periodic', () {
+      final k = FivePointConic(id: 'k', points: ellipsePoints());
+      for (final phi in [0.0, 0.4, 1.1, 2.9]) {
+        final a = PointOnObject(id: 'a', curve: k, parameter: phi);
+        final b = PointOnObject(id: 'b', curve: k, parameter: phi + math.pi);
+        expect(a.position!.closeTo(b.position!), isTrue);
+      }
+    });
+
+    test('.near glues where the tap landed — the nearest point of the ink, '
+        'not the arc of the join', () {
+      final k = FivePointConic(id: 'k', points: ellipsePoints());
+      for (final tap in [
+        const Vec2(3.6, 1.3),
+        const Vec2(-3.9, 0.2),
+        const Vec2(0.1, -2.9),
+      ]) {
+        final glued = PointOnObject.near(id: 'g', curve: k, position: tap);
+        expect(k.conic!.containsPoint(glued.projPoint!, 1e-9), isTrue);
+        // No sample of the curve is closer to the tap than the glue is.
+        final shape = ConicShape.of(k.conic!);
+        final chosen = glued.position!.distanceTo(tap);
+        for (var i = 0; i < 720; i++) {
+          final v = shape.chartPointAt(math.pi * i / 720);
+          if (v == null) continue;
+          expect(v.distanceTo(tap), greaterThan(chosen - 1e-6));
+        }
+      }
+    });
+
+    test('the point rides the conic when a defining point moves', () {
+      final pts = ellipsePoints();
+      final k = FivePointConic(id: 'k', points: pts);
+      final construction = Construction();
+      for (final p in pts) {
+        construction.add(p);
+      }
+      construction
+        ..add(k)
+        ..add(PointOnObject(id: 'g', curve: k, parameter: 0.97));
+      for (var i = 1; i <= 8; i++) {
+        construction.moveFreePoint('p4', Vec2(2.4, 2.4 + i * 0.05));
+        final glued = construction.byId('g')! as PointOnObject;
+        expect(glued.isDefined, isTrue);
+        expect(k.conic!.containsPoint(glued.projPoint!, 1e-9), isTrue);
+      }
+    });
+
+    test('a conic with no real curve leaves the point undefined', () {
+      // An imaginary ellipse: real coefficients, no real points.
+      final empty = StubProjectiveConic(
+        const ConicMatrix(
+          Complex.one,
+          Complex.zero,
+          Complex.one,
+          Complex.zero,
+          Complex.zero,
+          Complex.one,
+        ),
+      );
+      expect(ConicShape.of(empty.conic!).isParameterized, isFalse);
+      final p = PointOnObject(id: 'g', curve: empty, parameter: 0.5);
+      expect(p.isDefined, isFalse);
+      expect(p.projPoint, isNull);
+      expect(
+        () => PointOnObject.near(id: 'g', curve: empty, position: Vec2.zero),
+        throwsArgumentError,
+      );
+    });
   });
 }

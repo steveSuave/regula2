@@ -1,5 +1,6 @@
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
+import '../../projective/conic_shape.dart';
 import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
@@ -31,6 +32,29 @@ import '../geo_object.dart';
 /// wart in PLAN. Dragging the point *along* its curve re-sets [parameter]
 /// via `Construction.setPointOnObjectParameter`, the same way free points
 /// move through `moveFreePoint`.
+///
+/// **A general conic is a host too** (Phase 132). A conic with no
+/// `CircleEq` — a five-point conic, a Cayley-Klein circle, any ellipse
+/// that is not a circle — used to fall off the end of both
+/// parameterizations: [recompute] left the point undefined and [near]
+/// *threw*. Since the hit tester has reported general conics since Phase
+/// 119 and `resolvePoint` glue-probes every hit curve, that throw was
+/// reachable from the toolbar in six taps. Such a host is swept by
+/// `ConicShape`'s **pencil angle** instead: π-periodic, a bijection from
+/// `[0, π)` onto the whole curve, and polynomial in homogeneous
+/// coordinates rather than a chart evaluation. A circle keeps its polar
+/// angle, so no stored parameter changes meaning, no document needs a
+/// migration, and the save format does not move.
+///
+/// Two things follow from the parameter being a pencil angle. [near]
+/// glues to the **nearest point of the ink** (`ConicShape.parameterNear`,
+/// the search the hit tester already runs) rather than to
+/// `ConicShape.parameterOf`, which answers the arc of the join and is a
+/// different point for a tap that missed the curve. And the pencil angle
+/// is *not* stable as the conic moves: `ConicShape` picks its base point
+/// and axis pair per matrix, so a stored angle can name a different point
+/// of the curve after a drag — measured, and it is the open half of this
+/// phase. See `docs/TODO.md` Phase 132.
 ///
 /// Bounded hosts confine the point to their drawn extent: the effective
 /// parameter is clamped into the host's `angularExtent` (arcs, sectors)
@@ -69,6 +93,14 @@ class PointOnObject extends GeoPoint {
       GeoCircle(:final circle?) && final GeoCircle host => host.clampAngle(
         circle.angleAt(position),
       ),
+      // A tap on a general conic glues to the point it selected, which
+      // is the nearest point of the ink — the same search the hit tester
+      // runs, not the arc of the join `parameterOf` would answer.
+      GeoCircle(:final conic?) =>
+        ConicShape.of(conic).parameterNear(position) ??
+            (throw ArgumentError(
+              'Cannot project onto a conic with no real curve',
+            )),
       GeoLine() || GeoCircle() => throw ArgumentError(
         'Cannot project onto an undefined curve',
       ),
@@ -135,9 +167,15 @@ class PointOnObject extends GeoPoint {
       GeoLine(:final line) && final GeoLine host => line?.pointAt(
         host.clampParameter(parameter),
       ),
-      GeoCircle(:final circle) && final GeoCircle host => circle?.pointAt(
+      // A circle keeps its polar angle: the parameter a document stores
+      // means what it has always meant (see [parameter]).
+      GeoCircle(:final circle?) && final GeoCircle host => circle.pointAt(
         host.clampAngle(parameter),
       ),
+      // Any other conic — a five-point conic, a Cayley-Klein circle —
+      // is swept by the pencil angle instead (Phase 132).
+      GeoCircle(:final conic?) => ConicShape.of(conic).chartPointAt(parameter),
+      GeoCircle() => null,
       GeoPoint() ||
       GeoAngle() ||
       GeoPolygon() ||

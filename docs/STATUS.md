@@ -8,6 +8,29 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 146 (V2 Session 48) — 2026-08-20
+
+**Done — Phase 136c merged and deployed, and Phase 132's static half landed, including a live crash nobody knew was there.** On `phase-132-conic-gluing`. Suite **2676** green, analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **Phase 136c is on `main`** (`759042c`), all three workflows green.
+- **Gluing a point to a general conic was not only a missing capability — it threw.** The hit tester has reported general conics since Phase 119 and `resolvePoint` glue-probes every hit curve, so `PointOnObject.near`, which had no branch for a conic with no `CircleEq`, raised `ArgumentError` on a tap. **Six taps from a clean document**: Conics tool → five taps → point tool → tap the conic. Verified by running the new widget test against the previous commit, where it fails with the exact message. Nothing in 2661 tests went near it, because no test ever tapped a conic with the point tool.
+- **A general conic host is swept by `ConicShape`'s pencil angle** — π-periodic, a bijection from `[0, π)` onto the whole curve, and polynomial in homogeneous coordinates rather than a chart evaluation. A circle keeps its polar angle, so **no stored parameter changes meaning, no migration, no format bump**.
+- **Three consumers needed the same arm, and the third was the interesting one.** A tap glues via `ConicShape.parameterNear` — new, reporting *where* `distanceTo` measured, sharing one search so glue and hit test cannot disagree. `_SlideDragSession` gains a `project` map, so a glued point can actually be dragged (it answered null before). And `Construction._chartEvaluator` threw for "anything else" on the argument that *an undefined carrier leaves every dependent candidate-free, so a detour is unreachable* — **a conic host is a defined carrier with no chart, which is exactly what that argument does not cover**, so this phase made the throw reachable and the arm had to be built. `pointAtComplex` is the expression `pointAt` already was, and reproduces it bitwise on a real angle.
+- **The phase's stated design question — parameter stability — is measured and left open, deliberately.** `ConicShape` picks its base point and axis pair per matrix. Over smooth 600–1200-step sweeps: a rotating ellipse and a rotating circle are clean (max step 0.011 and 0.000, no switches at all), but a rotating **elongated** ellipse — a rigid motion, no class change — jumps **30 times by up to 2.7 world units**, from 12 base-point jumps and 4 axis switches; a deformation crossing ellipse → hyperbola jumps by 75.
+- **And the design that measurement implies, written down and not built.** A globally canonical angle is the wrong target — continuously choosing a point on a conic across the whole family is topologically obstructed, which is presumably why the scan exists. The stable statement is Phase 133's: anchor on the object's own point, re-expressing the angle against the current shape from the point's *previous* homogeneous value. Cost to settle first: that makes `recompute` history-dependent, which `GeoObject` says it is not.
+
+**Next.** Merge `phase-132-conic-gluing` — a **deploy** (it carries a crash fix), so check `gh run list` after. Then Phase 132's open half: parameter stability, and `_SweepDomain.of` refusing a conic host so a locus driven by such a point is silently absent. Then the phase Phase 136c opened — re-founding line orientation projectively. Carried over: the two 136b boxes, the `dragStepBudget` decision in Phase 134, M-P0, the Android/iOS smokes. Standing and deferred: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **Committed to `main` by mistake and moved it.** `git branch phase-132-conic-gluing` then `git reset --hard origin/main`; nothing was pushed, so nothing was affected. Branch first.
+- **This phase widened a reachable-state argument without noticing at first.** `_chartEvaluator`'s throw was documented as unreachable, and the documented *reason* stopped being true the moment a conic became a valid host. When a phase adds a new kind of carrier, re-read every "this cannot happen because carriers are X" comment — the comment was right when written.
+- **`.near` on a conic must use `parameterNear`, not `parameterOf`.** `parameterOf` answers the arc of the join `P₀ ∨ p`, which is the right answer to a different question and lands a tap somewhere the user did not click. Both exist; they agree only for points already on the curve.
+- **The stability numbers came from throwaway probes, deleted after.** The 0-of-1200 / 800-of-800 pattern from Session 145 repeated: measuring first changed what got built. The rotating *circle* being perfectly stable while the rotating *thin ellipse* jumps 30 times is the whole shape of the defect, and no amount of reasoning would have produced that pair.
+- A conic's `ConicShape` is rebuilt per `recompute` (the balanced-frame classification is not free). Captured once per gesture in the drag and tracing paths, but not in `recompute`. Not measured; note it before anyone glues many points to one conic.
+
+---
+
 ## Session 145 (V2 Session 47) — 2026-08-19
 
 **Done — Phase 136c, the audit Session 144 asked for, and it found the defect it went looking for plus one it did not.** On `phase-136c-carrier-audit`. Suite **2661** green (2653 + 8), analyze clean, 32 goldens byte-identical, browser gate green.

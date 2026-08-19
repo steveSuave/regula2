@@ -414,12 +414,25 @@ class ConicShape {
   /// the whole curve, points at infinity included.
   ///
   /// Returns the zero triple when this shape has no parameterization.
-  ProjPoint pointAt(double phi) {
+  ProjPoint pointAt(double phi) => pointAtComplex(Complex(phi));
+
+  /// [pointAt] continued to a complex pencil angle — the holomorphic form
+  /// tracing needs when a constrained point's host is a general conic
+  /// (Phase 132).
+  ///
+  /// Not a separate construction: [pointAt] *is* this, called with a real
+  /// angle, so a real-valued [Complex] reproduces the real evaluation
+  /// bitwise and a detour rejoins the real axis exactly — the property
+  /// `Construction._chartEvaluator`'s line and circle arms already have.
+  /// Nothing here needed extending: `X(Q) = (QᵀAQ)·P₀ − 2·(P₀ᵀAQ)·Q` is
+  /// polynomial in `Q` over ℂ already, and only the pencil sweep
+  /// `Q(φ) = e_i·cos φ + e_j·sin φ` had a real signature.
+  ProjPoint pointAtComplex(Complex phi) {
     final p0 = basePoint;
     if (p0 == null || !isParameterized) {
       return const ProjPoint(Complex.zero, Complex.zero, Complex.zero);
     }
-    final q = _pencilPoint(phi);
+    final q = _pencilPointAt(phi);
     final qaq = conic.evaluate(q);
     final p0aq = p0.incidence(conic.polarLine(q)).scale(2);
     return ProjPoint(
@@ -487,24 +500,60 @@ class ConicShape {
       final v = chartPointAt(math.pi * i / scan);
       if (v != null) squared[i] = v.squaredDistanceTo(p);
     }
-    var best = double.infinity;
+    final best = _nearestOverScan(squared, p).squared;
+    return best.isFinite ? math.sqrt(best) : double.infinity;
+  }
+
+  /// The pencil angle of the curve point nearest [p] in the chart, or
+  /// null when this shape has no parameterization or no real ink.
+  ///
+  /// The same search [distanceTo] runs, reporting *where* rather than how
+  /// far — so a tap that hit-tests onto a conic glues to the point it
+  /// selected (Phase 132). Distinct from [parameterOf], which answers the
+  /// arc of the join `P₀ ∨ p` and is the inverse of [pointAt] for points
+  /// already on the curve; for a point off the curve the two differ, and
+  /// only this one is what a tap means.
+  double? parameterNear(Vec2 p) {
+    if (!isParameterized) return null;
+    const scan = 360;
+    final squared = List<double>.filled(scan, double.infinity);
+    for (var i = 0; i < scan; i++) {
+      final v = chartPointAt(math.pi * i / scan);
+      if (v != null) squared[i] = v.squaredDistanceTo(p);
+    }
+    final best = _nearestOverScan(squared, p);
+    return best.squared.isFinite ? best.phi % math.pi : null;
+  }
+
+  /// Refines every local minimum of [squared] and returns the winner.
+  /// Shared by [distanceTo] and [parameterNear] so the two can never
+  /// disagree about which point of the curve is the nearest one.
+  ({double phi, double squared}) _nearestOverScan(
+    List<double> squared,
+    Vec2 p,
+  ) {
+    final scan = squared.length;
+    var best = (phi: 0.0, squared: double.infinity);
     for (var i = 0; i < scan; i++) {
       final current = squared[i];
       if (!current.isFinite) continue;
       if (current > squared[(i - 1 + scan) % scan]) continue;
       if (current > squared[(i + 1) % scan]) continue;
-      best = math.min(
-        best,
-        _refinedMinimum(math.pi * (i - 1) / scan, math.pi * (i + 1) / scan, p),
+      final refined = _refinedMinimum(
+        math.pi * (i - 1) / scan,
+        math.pi * (i + 1) / scan,
+        p,
       );
+      if (refined.squared < best.squared) best = refined;
     }
-    return best.isFinite ? math.sqrt(best) : double.infinity;
+    return best;
   }
 
   /// The least squared distance to [p] over the pencil interval
-  /// `[lo, hi]`, by golden-section search. Parameters whose point is at
-  /// infinity score infinity, which the search walks away from.
-  double _refinedMinimum(double lo, double hi, Vec2 p) {
+  /// `[lo, hi]`, and the angle attaining it, by golden-section search.
+  /// Parameters whose point is at infinity score infinity, which the
+  /// search walks away from.
+  ({double phi, double squared}) _refinedMinimum(double lo, double hi, Vec2 p) {
     const inverseGolden = 0.6180339887498949;
     const steps = 60;
     double at(double phi) =>
@@ -528,7 +577,15 @@ class ConicShape {
         fd = at(d);
       }
     }
-    return math.min(math.min(fc, fd), math.min(at(lo), at(hi)));
+    var best = (phi: c, squared: fc);
+    for (final candidate in [
+      (phi: d, squared: fd),
+      (phi: lo, squared: at(lo)),
+      (phi: hi, squared: at(hi)),
+    ]) {
+      if (candidate.squared < best.squared) best = candidate;
+    }
+    return best;
   }
 
   /// The points of the curve whose tangent is perpendicular to the
@@ -795,10 +852,10 @@ class ConicShape {
     }
   }
 
-  ProjPoint _pencilPoint(double phi) {
+  ProjPoint _pencilPointAt(Complex phi) {
     final c = [Complex.zero, Complex.zero, Complex.zero];
-    c[_axisI] = Complex(math.cos(phi));
-    c[_axisJ] = Complex(math.sin(phi));
+    c[_axisI] = phi.cos;
+    c[_axisJ] = phi.sin;
     return ProjPoint(c[0], c[1], c[2]);
   }
 
