@@ -1,0 +1,25 @@
+lib/presentation/panels/object_tree_panel.dart
+  s_b040154e1b3384::t_76d9d24d87a0e2 10,88,103-112
+  s_b040154e1b3384::t_54e0c52878eb56 11-12
+test/presentation/panels/object_tree_panel_test.dart
+  s_b040154e1b3384::t_52fce19ea12175 10,12
+  s_b040154e1b3384::t_6159776c9348c2 579-638
+docs/TODO.md
+  s_b040154e1b3384::t_70b84cc36c8e1d 137-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7e535fdc71f2ef1568efefc94a59b8a77750e45b",
+  "prompts": {},
+  "sessions": {
+    "s_b040154e1b3384": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "513c5805-d34f-4ec2-bad0-87fd7246b492",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
