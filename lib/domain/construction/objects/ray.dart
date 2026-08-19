@@ -18,10 +18,16 @@ import 'line_through_two_points.dart';
 /// [throughPosition] — not the carrier — to know which half-line exists.
 ///
 /// Migrated (Phase 107): the carrier is the projective join
-/// ([carrierThrough]), but like `Segment` a ray needs its endpoint and
-/// direction anchor drawable, so both parents must stay real and finite —
-/// a parent at infinity leaves the whole object undefined, carrier
-/// included, exactly as in V1.
+/// ([carrierThrough]).
+///
+/// **The carrier is total; only the drawn extent is a chart reading**
+/// (Phase 136b) — the same split `Segment` makes, and for the same
+/// reason. A ray needs its endpoint and direction anchor drawable, so
+/// [line], [start], [throughPosition], [parameterExtent] and therefore
+/// [isDefined] all require both parents real and finite, exactly as in
+/// V1; [projLine] does not, because gating a projective value on the
+/// chart makes the object untraceable the moment a pass complexifies a
+/// parent. See `Segment` for the failure that argument was measured on.
 class Ray extends GeoLine {
   Ray({
     required super.id,
@@ -69,14 +75,11 @@ class Ray extends GeoLine {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    _carrier = carrierThrough(origin, through);
     final p1 = origin.position;
     final p2 = through.position;
-    if (p1 == null || p2 == null) {
-      _carrier = null;
-      _line = null;
-      return;
-    }
-    _carrier = carrierThrough(origin, through);
-    _line = orientedAlong(_carrier?.toLineEq(), p2 - p1);
+    _line = (p1 == null || p2 == null)
+        ? null
+        : orientedAlong(_carrier?.toLineEq(), p2 - p1);
   }
 }
