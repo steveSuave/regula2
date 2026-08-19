@@ -134,6 +134,15 @@ The capability every other CK gap turned out to want: `PointOnObject` parameteri
 - [ ] **A locus cannot yet be driven by a point on a conic.** `_SweepDomain.of` requires `circle != null` and returns null otherwise, so the locus is silently absent rather than wrong. An ellipse host is the easy case (cyclic, no infinity); a hyperbola or parabola crosses infinity mid-sweep, which PLAN §Parameterization already says is not walked through. Untouched here
 - [ ] What it closes when both halves land: the rhombus macro (Phase 129), and gluing a point to any conic at all — a five-point conic had the same hole in the Euclidean plane and nobody had asked, because no tool offered it
 
+## Phase 132b — conics had the wrong header in the object tree
+
+Reported by the user: the object tree filed conics under **Circles**.
+
+- [x] **The three genuine conic kinds get their own `Conics` header** — `FivePointConic`, `BifocalConic`, `FocalConic`, the same three that override `isDefined` with `ConicShape.isDrawable`. They are `GeoCircle` subclasses because that is where the conic-valued carrier lives, not because a user thinks of them as circles
+- [x] **Matched by kind, never by whether the geometry currently projects to a `CircleEq`.** A five-point conic that passes through circularity mid-drag must not hop between headers while the pointer is down, and a bifocal ellipse must not stop being a conic because it went round. Arcs, sectors and the CK circles stay under Circles, which is what the rest of the UI calls them
+- [x] **Only the header was wrong.** `object_kind_label.dart` already answered `Conic` / `Parabola` / `Ellipse` / `Hyperbola` per row, so the row text needed no change — the group name was the whole defect
+- [x] Coverage: a circle and a conic side by side land under different headers with the right row label, and a circles-only document still shows no `Conics` header (empty groups are skipped). Gates: suite **2678** green, analyze clean, 32 goldens byte-identical
+
 ## Phase 130 — a conic frames itself
 
 - [x] `ConicShape.extentAlong(u, v)`: the conic's support interval in a chart direction, on the existing exact `extremesAlong` rather than beside it, gated on `ConicClass.ellipse` because that is the only class with a bounded curve. Taking a *direction* rather than an axis makes the rotated view frame a different argument instead of a transformed conic

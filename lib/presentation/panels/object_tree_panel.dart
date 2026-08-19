@@ -7,6 +7,9 @@ import '../../application/providers/construction_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/bifocal_conic.dart';
+import '../../domain/construction/objects/five_point_conic.dart';
+import '../../domain/construction/objects/focal_conic.dart';
 import 'object_kind_label.dart';
 
 /// Side panel listing every object in the construction, grouped by
@@ -82,6 +85,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
       'Points': [],
       'Lines': [],
       'Circles': [],
+      'Conics': [],
       'Angles': [],
       'Polygons': [],
       'Measurements': [],
@@ -96,6 +100,16 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
       groups[switch (object) {
             GeoPoint() => 'Points',
             GeoLine() => 'Lines',
+            // The three genuine conic kinds get their own header: they
+            // are `GeoCircle` subclasses because that is where the
+            // conic-valued carrier lives, not because a user thinks of
+            // them as circles. Matched by *kind*, never by whether the
+            // current geometry happens to project to a `CircleEq` — a
+            // five-point conic that passes through circularity mid-drag
+            // must not hop between headers while the pointer is down.
+            // Arcs, sectors and the CK circles stay under Circles, which
+            // is what they are called everywhere else in the UI.
+            FivePointConic() || BifocalConic() || FocalConic() => 'Conics',
             GeoCircle() => 'Circles',
             GeoAngle() => 'Angles',
             GeoPolygon() => 'Polygons',
