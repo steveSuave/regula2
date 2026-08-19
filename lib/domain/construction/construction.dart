@@ -205,18 +205,35 @@ class Construction {
   /// continue. When nothing seeds, the pass collapses to a single static
   /// solve at the path's end (reported as one accepted step).
   ///
-  /// Matching continuity assumes `path.start` is where the point
-  /// currently sits (drag sessions anchor each preview path at the
-  /// previous one's end). [onStep] fires after each *accepted* step's
+  /// The pass drives to `path.start` and recomputes before it seeds, so
+  /// matching continuity is anchored on the path's own start rather than
+  /// on wherever the caller left the point (Phase 134 — the frame after
+  /// a bail starts behind the construction).
+  ///
+  /// [startStep] is the fraction of the path the step controller opens
+  /// with. It exists because a pass restarts the collapse law from
+  /// nothing, so its first trial is otherwise unbounded and a crossing
+  /// strictly inside the path is glided over — see the returned
+  /// `closing`, which is what a caller sets this from.
+  ///
+  /// Returns the accepted and rejected trial counts, the number of
+  /// completed detours, and `closing`: how far the tightest candidate
+  /// pair closed over the pass, as a ratio of end separation to start.
+  /// Zero means they met — an end state no later pass can seed identity
+  /// from, so a caller must not anchor its next path there.
+  ///
+  /// [onStep] fires after each *accepted* step's
   /// recompute at a real parameter — the arc's interior steps are
   /// complex and silent; a completed detour fires once, at its exit —
   /// the observation hook for the toy harness and the Phase 116 debug
   /// overlay. Notifies once, like [moveFreePoint]. Throws
   /// [ArgumentError] when [id] is not a [FreePoint] or [stepBudget] < 1.
-  ({int acceptedSteps, int rejectedSteps, int detours}) recomputeAlongPath(
+  ({int acceptedSteps, int rejectedSteps, int detours, double closing})
+  recomputeAlongPath(
     String id,
     DragPath path, {
     int stepBudget = 128,
+    double startStep = 1.0,
     Map<String, ProjPoint>? seedMemory,
     void Function(double t)? onStep,
   }) {
@@ -229,6 +246,7 @@ class Construction {
       driveReal: (t) => object.position = path.at(t),
       driveComplex: (t) => object.tracedPosition = path.evaluate(t),
       stepBudget: stepBudget,
+      startStep: startStep,
       seedMemory: seedMemory,
       onStep: onStep,
     );
@@ -250,16 +268,17 @@ class Construction {
   ///
   /// Everything else — seeding, acceptance, collision refusal, detour
   /// planning, branch adoption at pass end, bail semantics — is
-  /// [recomputeAlongPath]'s, verbatim; matching continuity likewise
-  /// assumes [from] is where the point currently sits. Throws
+  /// [recomputeAlongPath]'s, verbatim; the pass likewise drives to
+  /// [from] and recomputes before it seeds. Throws
   /// [ArgumentError] when [id] is not a [PointOnObject] or [stepBudget]
   /// < 1.
-  ({int acceptedSteps, int rejectedSteps, int detours})
+  ({int acceptedSteps, int rejectedSteps, int detours, double closing})
   recomputeAlongParameterPath(
     String id,
     double from,
     double to, {
     int stepBudget = 128,
+    double startStep = 1.0,
     Map<String, ProjPoint>? seedMemory,
     void Function(double t)? onStep,
   }) {
@@ -281,6 +300,7 @@ class Construction {
         object.tracedPosition = evaluate(s.scale(from) + t.scale(to));
       },
       stepBudget: stepBudget,
+      startStep: startStep,
       seedMemory: seedMemory,
       onStep: onStep,
     );
@@ -341,11 +361,13 @@ class Construction {
   /// it on bail and drops it at gesture end) — continuation state never
   /// survives a commit, save or bail, per the Phase 115 architecture
   /// notes.
-  ({int acceptedSteps, int rejectedSteps, int detours}) _traceAlong({
+  ({int acceptedSteps, int rejectedSteps, int detours, double closing})
+  _traceAlong({
     required String id,
     required void Function(double t) driveReal,
     required void Function(Complex t) driveComplex,
     required int stepBudget,
+    double startStep = 1.0,
     Map<String, ProjPoint>? seedMemory,
     void Function(double t)? onStep,
   }) {
@@ -388,6 +410,19 @@ class Construction {
         excluded.addAll(o.chain);
       }
     }
+    // Seed at the path's *start* state, not at whatever state the
+    // construction happens to be in (Phase 134). Every pass used to
+    // assume its caller had left the point on `path.start`, which holds
+    // for a gesture whose frames all succeed and fails for the frame
+    // after a bail: a bailed frame ends on a static solve at the
+    // pointer, and the drag sessions now keep their path anchor at the
+    // last parameter identity was actually carried through — so the
+    // construction sits *ahead* of the path the next pass walks. One
+    // recompute makes the precondition true instead of assumed, and on
+    // the frames that do satisfy it already the drive is a no-op that
+    // recomputes the same values.
+    driveReal(0);
+    _recomputeAffected(affectedCore);
     final seeded = <IntersectionPoint>[];
     for (final o in _objects.values) {
       if (o is IntersectionPoint &&
@@ -435,7 +470,7 @@ class Construction {
         driveReal(1);
         _recomputeAffected(affectedCore);
         onStep?.call(1);
-        return (acceptedSteps: 1, rejectedSteps: 0, detours: 0);
+        return (acceptedSteps: 1, rejectedSteps: 0, detours: 0, closing: 1.0);
       }
       final checkpoints = List<TracedBranchCheckpoint?>.filled(
         seeded.length,
@@ -449,7 +484,7 @@ class Construction {
 
       snapshot();
       var t = 0.0;
-      var step = 1.0;
+      var step = startStep;
       var accepted = 0;
       var rejected = 0;
       var detours = 0;
@@ -462,6 +497,9 @@ class Construction {
       var sepPrev = double.infinity;
       var tCurr = 0.0;
       var sepCurr = minSeparation(seeded);
+      // Where the roots stood when the pass began — the denominator of
+      // the `closing` ratio it reports back (Phase 134).
+      final sepStart = sepCurr;
       // The widest span the next accepted step may cover before an
       // extrapolated root collision could hide inside it (Phase 117b).
       var stepLimit = double.infinity;
@@ -739,6 +777,31 @@ class Construction {
         acceptedSteps: accepted,
         rejectedSteps: rejected,
         detours: detours,
+        // How far the tightest pair closed over this pass. A frame that
+        // ends with the roots much nearer than it started is a frame the
+        // *next* one must approach carefully, and this is the only
+        // warning available: a crossing strictly inside a path cannot be
+        // seen from that path's two ends, because the two roots exchange
+        // there and every endpoint statistic is invariant under the
+        // exchange (Phase 134). Ratio rather than a threshold, so it
+        // carries no world scale of its own.
+        //
+        // A pass that ends *coasting* reports 0 outright. Coasting sets
+        // the separation to infinity — the candidates went away, so
+        // there is no pair left to measure — and that reads as a ratio
+        // saying "nothing to fear" where in fact the carrier itself has
+        // collapsed, which is the loudest warning the walk can give.
+        //
+        // Exactly zero is its own statement: the roots have closed all
+        // the way, so no pass can seed identity from this state — the
+        // caller must not anchor its next path here.
+        closing:
+            seeded.any((o) => o.tracedBranch.matchedIndex < 0) ||
+                sepCurr <= doubleRootEpsilon
+            ? 0.0
+            : sepStart.isFinite && sepStart > 0
+            ? (sepCurr / sepStart).clamp(0.0, 1.0)
+            : 1.0,
       );
     } finally {
       for (final o in seeded) {

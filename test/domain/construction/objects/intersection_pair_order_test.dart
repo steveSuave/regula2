@@ -245,10 +245,16 @@ void main() {
   // branch point, and a loop around a branch point permutes the sheets.
   // The alternative — a round trip restoring every label — is the
   // reversal-identity convention Phase 120c deliberately replaced, so a
-  // future reader must not "fix" this into an identity.
+  // future reader must not "fix" this into an identity. Which
+  // permutation a given route realizes is *not* part of the convention:
+  // it is whatever the walk's own excursions encircle, and it changes
+  // when the walk gets better at continuing through a degeneracy instead
+  // of bailing to a canonical solve (Phase 134 lengthened this one from
+  // a transposition to a 3-cycle). So the test pins the period, not its
+  // value.
 
-  test('an identical round trip trades the two crossings that vanish, and '
-      'the next trip trades them back', () {
+  test('an identical round trip permutes the crossings that vanish, and '
+      'enough trips bring every name home', () {
     final (construction, points, home) = seatedRig();
     final start = (construction.byId('D')! as FreePoint).position;
     final atHome = seating(points, home);
@@ -266,16 +272,33 @@ void main() {
       seen.add(seating(points, home));
     }
 
-    // Strictly alternating: an odd number of trips is the trade, an even
-    // number is back where it started.
+    // Exactly periodic, and the period is the order of whatever
+    // permutation this route realizes — not a fixed number. It was two
+    // until Phase 134, when the walk stopped bailing at degeneracies it
+    // can now continue through: a bail resolves canonically, and a
+    // canonical relabel is not monodromy at all, so the shorter cycle
+    // was partly an artefact of giving up. What must hold is that the
+    // route realizes *a* permutation, the same one every trip, and that
+    // repeating it returns every name home.
+    final period = seen.indexOf(atHome) + 1;
+    expect(period, greaterThan(1), reason: 'a round trip is not the identity');
+    expect(
+      period,
+      lessThanOrEqualTo(seen.length),
+      reason: 'the route must close inside six trips',
+    );
     for (var i = 0; i < seen.length; i++) {
-      if (i.isOdd) {
-        expect(seen[i], atHome, reason: 'trip ${i + 1} restores');
-      } else {
-        expect(seen[i], isNot(atHome), reason: 'trip ${i + 1} trades');
-      }
+      expect(
+        seen[i],
+        seen[i % period],
+        reason: 'trip ${i + 1} repeats the cycle',
+      );
     }
-    expect(seen.toSet(), hasLength(2), reason: 'two states, not a drift');
+    expect(
+      seen.toSet(),
+      hasLength(period),
+      reason: 'a fixed cycle, not a drift',
+    );
   });
 
   test('however the names permute, all four survive and none ever doubles', () {

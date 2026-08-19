@@ -437,7 +437,10 @@ void main() {
           ],
         );
         final result = construction.recomputeAlongPath('d', path);
-        expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
+        expect(
+          (result.acceptedSteps, result.rejectedSteps, result.detours),
+          (1, 0, 0),
+        );
         expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
         expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
       },
@@ -455,7 +458,10 @@ void main() {
         tracedCandidates: [ProjPoint.real(0.1, 0, 1), ProjPoint.real(5, 0, 1)],
       );
       final result = construction.recomputeAlongPath('d', path);
-      expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
+      expect(
+        (result.acceptedSteps, result.rejectedSteps, result.detours),
+        (1, 0, 0),
+      );
       expect(a.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
       expect(b.projPoint!.closeTo(ProjPoint.real(0.1, 0, 1)), isTrue);
     });
@@ -499,7 +505,10 @@ void main() {
       );
 
       expect(observedTs, [1.0]);
-      expect(result, (acceptedSteps: 1, rejectedSteps: 0, detours: 0));
+      expect(
+        (result.acceptedSteps, result.rejectedSteps, result.detours),
+        (1, 0, 0),
+      );
       // Bitwise-exact endpoint, like moveFreePoint.
       expect(b.position, const Vec2(4, 4));
       expect(ip.position!.closeTo(Vec2.zero), isTrue);

@@ -219,11 +219,53 @@ class _TranslateDragSession implements DragSession {
   /// single-path walk cannot continue yet.
   final bool _traceDrags = TracingFlags.dragTracing;
 
-  /// The previous traced preview's end — where the next preview path
-  /// starts, so branch matching is continuous across pointer events.
-  /// Null until the first traced update (the gesture starts from the
-  /// point's start position).
+  /// The last position a traced preview actually carried identity to —
+  /// where the next preview path starts, so branch matching is
+  /// continuous across pointer events. Null until the first *successful*
+  /// traced update (the gesture starts from the point's start position).
+  ///
+  /// A bailed frame does not advance it (Phase 134). The bail's fallback
+  /// is a static solve, which resolves canonically and so is precisely
+  /// the state whose branch identity the gesture has no reason to trust;
+  /// anchoring the next path there hands that relabelling to the walk as
+  /// a fact. Held back, the next path spans the anchor to the new
+  /// pointer instead — which is also what puts a degeneracy the pointer
+  /// landed exactly on into the path's *interior*, where a detour arc
+  /// has somewhere to land, rather than at an endpoint where it has not.
   Vec2? _lastPreview;
+
+  /// Consecutive bailed frames since the anchor last advanced.
+  int _stale = 0;
+
+  /// The smallest fraction of a path a cautious frame starts at. Below
+  /// this the approach costs more trials than a frame's budget buys, and
+  /// measurement finds nothing left to win: every floor from 1/64 to 1/2
+  /// crosses the same degeneracies.
+  static const double _minStartStep = 1 / 64;
+
+  /// Consecutive bailed frames the path anchor is held for. One: a
+  /// second failure says the gesture has genuinely lost the thread, and
+  /// widening the path every frame from then on only spends budget.
+  /// Measured — holding without limit buys two more crossings on the
+  /// reported document and costs five times the bails on the four-point
+  /// ellipse rig, which is the wrong side of that trade.
+  static const int _anchorHoldFrames = 1;
+
+  /// Where the next traced pass starts its step controller — 1 for a
+  /// frame with nothing to fear, and the fraction by which the previous
+  /// frame's roots closed when they were converging.
+  ///
+  /// A pass restarts its collapse-law samples from nothing, so its first
+  /// trial is unbounded and spans the whole frame; a crossing strictly
+  /// inside that span is glided over and the nearest match silently
+  /// takes the wrong root, because the two roots exchange at a crossing
+  /// and no statistic read from the path's two ends can tell the
+  /// exchange from a small motion (Phase 134). The previous frame's
+  /// `closing` ratio is the one warning that does carry across, so the
+  /// next frame starts at that fraction of its path and lets the walk
+  /// find the collapse by refining into it. A bail reports no ratio at
+  /// all, and takes the floor.
+  double _startStep = 1.0;
 
   /// Gesture-scoped continuation memory: each traced pass writes back
   /// the roots it followed, so a later pass can re-seed an intersection
@@ -292,14 +334,23 @@ class _TranslateDragSession implements DragSession {
   void _tracedUpdate(Vec2 target) {
     final id = _pointIds.single;
     final from = _lastPreview ?? _startPositions[id]!;
-    _lastPreview = target;
     try {
       final result = _construction.recomputeAlongPath(
         id,
         DragPath(from, target),
         stepBudget: TracingFlags.dragStepBudget,
+        startStep: _startStep,
         seedMemory: _seedMemory,
       );
+      // Zero says the roots closed all the way, so this end state is
+      // one no pass can seed from: hold the anchor, exactly as a bail
+      // does. The anchor advances only to states identity can be picked
+      // up again at.
+      if (result.closing > 0) {
+        _lastPreview = target;
+        _stale = 0;
+      }
+      _startStep = result.closing.clamp(_minStartStep, 1.0);
       _traceStats = (
         accepted: result.acceptedSteps,
         rejected: result.rejectedSteps,
@@ -310,6 +361,11 @@ class _TranslateDragSession implements DragSession {
       _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
       TraceDiagnostics.count(TraceCounter.dragBails);
       _seedMemory.clear();
+      _startStep = _minStartStep;
+      if (++_stale > _anchorHoldFrames) {
+        _lastPreview = target;
+        _stale = 0;
+      }
       _construction.moveFreePoint(id, target);
     }
   }
@@ -511,6 +567,23 @@ class _SlideDragSession implements DragSession {
   /// an intersection undefined; cleared on bail, dies with the session.
   final Map<String, ProjPoint> _seedMemory = {};
 
+  /// The last parameter a traced preview actually carried identity to —
+  /// the start of the next preview path, and the slide session's twin of
+  /// [_TranslateDragSession._lastPreview]. A bailed frame does not
+  /// advance it; see that field for why.
+  late double _anchor = _startParameter;
+
+  /// Consecutive bailed frames since [_anchor] last advanced.
+  int _stale = 0;
+
+  /// The slide session's twins of [_TranslateDragSession._minStartStep]
+  /// and [_TranslateDragSession._anchorHoldFrames].
+  static const double _minStartStep = 1 / 64;
+  static const int _anchorHoldFrames = 1;
+
+  /// The slide session's twin of [_TranslateDragSession._startStep].
+  double _startStep = 1.0;
+
   TraceFrameStats? _traceStats;
 
   @override
@@ -534,14 +607,15 @@ class _SlideDragSession implements DragSession {
   }
 
   void _update(Vec2 pointer) {
-    final from = _parameter;
     _parameter = _clamp(_project(pointer) + _grabOffset);
     if (!_traceDrags) {
       _construction.setPointOnObjectParameter(_pointId, _parameter);
       return;
     }
-    // One traced preview frame, anchored at the previous frame's
-    // parameter so branch matching is continuous across pointer events.
+    final from = _anchor;
+    // One traced preview frame, anchored at the last parameter a pass
+    // carried identity to, so branch matching is continuous across
+    // pointer events.
     // The static bail stands, exactly as for free-point drags: whatever
     // goes wrong inside the engine, the frame falls back to the static
     // solve and the gesture carries on.
@@ -551,8 +625,15 @@ class _SlideDragSession implements DragSession {
         from,
         _parameter,
         stepBudget: TracingFlags.dragStepBudget,
+        startStep: _startStep,
         seedMemory: _seedMemory,
       );
+      // See the free-point session: a fully-closed end is not an anchor.
+      if (result.closing > 0) {
+        _anchor = _parameter;
+        _stale = 0;
+      }
+      _startStep = result.closing.clamp(_minStartStep, 1.0);
       _traceStats = (
         accepted: result.acceptedSteps,
         rejected: result.rejectedSteps,
@@ -563,6 +644,11 @@ class _SlideDragSession implements DragSession {
       _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
       TraceDiagnostics.count(TraceCounter.dragBails);
       _seedMemory.clear();
+      _startStep = _minStartStep;
+      if (++_stale > _anchorHoldFrames) {
+        _anchor = _parameter;
+        _stale = 0;
+      }
       _construction.setPointOnObjectParameter(_pointId, _parameter);
     }
   }
