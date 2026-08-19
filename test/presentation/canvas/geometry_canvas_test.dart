@@ -2536,6 +2536,55 @@ void main() {
     );
   });
 
+  testWidgets('tapping a conic with the point tool glues a point to it '
+      '(Phase 132)', (tester) async {
+    // On the code before Phase 132 this threw `ArgumentError: Cannot
+    // project onto an undefined curve`: the hit tester has reported
+    // general conics since Phase 119, `resolvePoint` glue-probes every
+    // hit curve, and `PointOnObject.near` had no branch for a conic with
+    // no `CircleEq`. So the crash was reachable with two tools and six
+    // taps, and nothing in the suite went near it.
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byType(ConicIcon));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Conic through five points'));
+    await tester.pumpAndSettle();
+    const taps = [
+      Offset(120, 200),
+      Offset(220, 120),
+      Offset(340, 160),
+      Offset(300, 280),
+      Offset(160, 300),
+    ];
+    for (final tap in taps) {
+      await tester.tapAt(origin + tap);
+      await tester.pump();
+    }
+    expect(objectCount(), 6);
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
+    // A tap on the conic's ink, between two of the defining points.
+    await tester.tapAt(origin + const Offset(170, 145));
+    await tester.pump();
+
+    expect(objectCount(), 7);
+    final construction = container.read(constructionProvider).construction;
+    final glued = construction.objects.whereType<PointOnObject>().single;
+    expect(glued.curve, isA<FivePointConic>());
+    expect(glued.isDefined, isTrue);
+    final conic = (glued.curve as FivePointConic).conic!;
+    expect(
+      conic.evaluate(glued.projPoint!).abs,
+      lessThan(1e-6),
+      reason: 'the glued point sits on the conic, not merely near it',
+    );
+  });
+
   testWidgets('the conic tool: five taps build one conic through them, '
       'in one undo unit (Phase 120)', (tester) async {
     await pumpEditor(tester);

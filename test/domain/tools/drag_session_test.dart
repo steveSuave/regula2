@@ -10,6 +10,7 @@ import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
@@ -554,6 +555,56 @@ void main() {
       expect(onCircle.position, const Vec2(4, 0));
       command.apply(construction);
       expect(onCircle.position!.y, closeTo(4, 1e-12));
+    });
+
+    test('slides along a general conic host, staying on the ink '
+        '(Phase 132)', () {
+      // A conic with no `CircleEq` had no `project` map at all, so
+      // `_SlideDragSession.start` answered null and a point glued to a
+      // conic could be created but never moved. It slides by the pencil
+      // angle now — the same map a tap uses.
+      final pts = [
+        FreePoint(id: 'c0', position: const Vec2(4, 0)),
+        FreePoint(id: 'c1', position: const Vec2(0, 3)),
+        FreePoint(id: 'c2', position: const Vec2(-4, 0)),
+        FreePoint(id: 'c3', position: const Vec2(0, -3)),
+        FreePoint(id: 'c4', position: const Vec2(2.4, 2.4)),
+      ];
+      final k = FivePointConic(id: 'k', points: pts);
+      final glued = PointOnObject.near(
+        id: 'q',
+        curve: k,
+        position: const Vec2(4, 0),
+      );
+      for (final p in pts) {
+        construction.add(p);
+      }
+      construction
+        ..add(k)
+        ..add(glued);
+      final startedAt = glued.position!;
+
+      final session = DragSession.start(construction, glued, startedAt)!;
+      // Drag to the far side of the ellipse, from well off the ink: the
+      // point must project back onto the curve.
+      session.update(const Vec2(-6, 0.5));
+      final moved = glued.position!;
+      expect(
+        k.conic!.containsPoint(glued.projPoint!, 1e-9),
+        isTrue,
+        reason: 'a slide never leaves the curve',
+      );
+      expect(
+        (moved - startedAt).norm,
+        greaterThan(4),
+        reason: 'and it actually went somewhere',
+      );
+
+      final command = session.end()!;
+      expect(glued.position!.closeTo(startedAt), isTrue, reason: 'rolled back');
+      command.apply(construction);
+      expect(glued.position!.closeTo(moved), isTrue);
+      expect(k.conic!.containsPoint(glued.projPoint!, 1e-9), isTrue);
     });
 
     test('slide on a sector stops at the wedge ends instead of circling', () {

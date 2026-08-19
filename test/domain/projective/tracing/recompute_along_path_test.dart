@@ -3,6 +3,7 @@ import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/bifocal_conic.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -14,11 +15,15 @@ import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/domain/projective/tolerances.dart';
 import 'package:regula/domain/projective/tracing/drag_path.dart';
 import 'package:regula/domain/projective/tracing/trace_step_budget_exception.dart';
 import 'package:regula/domain/projective/tracing/traced_branch.dart';
+
+import '../../../projective_stubs.dart';
 
 /// A puppet intersection point: real parents wire it into the graph (and
 /// their real candidates give the seed its separation), but its own
@@ -1415,6 +1420,83 @@ void main() {
               '${points.map((p) => '${p.id}#${p.branchIndex}').join(' ')}',
         );
       }
+    });
+  });
+
+  group('the parameter drive on a general conic host (Phase 132)', () {
+    // `_chartEvaluator` had two arms — a line's `pointAt` and a circle's
+    // — and *threw* for anything else, on the argument that an undefined
+    // carrier leaves every dependent candidate-free so a detour is
+    // unreachable. Phase 132 made a conic host a *defined* carrier with
+    // no `CircleEq`, which is exactly the case that argument does not
+    // cover, so the throw became reachable and the arm is now real.
+    (Construction, PointOnObject, FivePointConic) conicRig() {
+      final construction = Construction();
+      final pts = [
+        fp('c0', 4, 0),
+        fp('c1', 0, 3),
+        fp('c2', -4, 0),
+        fp('c3', 0, -3),
+        fp('c4', 2.4, 2.4),
+      ];
+      final k = FivePointConic(id: 'k', points: pts);
+      final glued = PointOnObject(id: 'g', curve: k, parameter: 0.2);
+      for (final p in pts) {
+        construction.add(p);
+      }
+      construction
+        ..add(k)
+        ..add(glued);
+      return (construction, glued, k);
+    }
+
+    test('a real parameter path drives the point along the conic', () {
+      final (construction, glued, k) = conicRig();
+      final seen = <double>[];
+      construction.recomputeAlongParameterPath('g', 0.2, 2.6, onStep: seen.add);
+      expect(glued.isDefined, isTrue);
+      expect(glued.parameter, closeTo(2.6, 1e-12));
+      expect(
+        k.conic!.containsPoint(glued.projPoint!, 1e-9),
+        isTrue,
+        reason: 'every real step lands on the curve',
+      );
+      expect(seen, isNotEmpty);
+    });
+
+    test('the drive ends bitwise on the static solve at the path end', () {
+      // What the evaluator's "real angle reproduces the real evaluation"
+      // property buys: the commit's static recompute must not move the
+      // point the drive left behind.
+      final (construction, glued, _) = conicRig();
+      construction.recomputeAlongParameterPath('g', 0.2, 1.9);
+      final afterDrive = glued.position!;
+      glued.recompute();
+      expect(glued.position!.x, afterDrive.x);
+      expect(glued.position!.y, afterDrive.y);
+    });
+
+    test('an unparameterized conic host still refuses to continue', () {
+      // The evaluator's guard is `isParameterized`, not "is a GeoCircle":
+      // an imaginary ellipse has a conic and no ink, and there is nothing
+      // to walk along.
+      final construction = Construction();
+      final empty = StubProjectiveConic(
+        const ConicMatrix(
+          Complex.one,
+          Complex.zero,
+          Complex.one,
+          Complex.zero,
+          Complex.zero,
+          Complex.one,
+        ),
+        id: 'e',
+      );
+      final glued = PointOnObject(id: 'g', curve: empty, parameter: 0.3);
+      construction
+        ..add(empty)
+        ..add(glued);
+      expect(glued.isDefined, isFalse);
     });
   });
 

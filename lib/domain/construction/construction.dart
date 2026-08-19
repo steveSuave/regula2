@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import '../math/vec2.dart';
 import '../projective/complex.dart';
+import '../projective/conic_shape.dart';
 import '../projective/proj_point.dart';
 import '../projective/tolerances.dart';
 import '../projective/tracing/drag_path.dart';
@@ -334,6 +335,16 @@ class Construction {
           Complex(center.y) + p.sin.scale(radius),
           Complex.one,
         );
+      // A general conic (Phase 132): the pencil evaluation, continued.
+      // `ConicShape.pointAt` is already polynomial in homogeneous
+      // coordinates, so its complex form is the same expression and a
+      // real parameter reproduces the real evaluation bitwise, exactly
+      // as the two arms above do. Built once per gesture, like them —
+      // the host does not move while a constrained point slides on it.
+      case GeoCircle(conic: final matrix?)
+          when ConicShape.of(matrix).isParameterized:
+        final shape = ConicShape.of(matrix);
+        return shape.pointAtComplex;
       default:
         return (_) => throw StateError(
           'No chart to continue: the carrier of ${object.id} is undefined',

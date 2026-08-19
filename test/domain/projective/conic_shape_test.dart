@@ -1006,4 +1006,89 @@ void main() {
       expect(ConicShape.of(parabola).extentAlong(1, 0), isNull);
     });
   });
+
+  group('parameterNear and the complex continuation (Phase 132)', () {
+    ConicShape ellipse() => ConicShape.of(
+      ConicMatrix.throughFivePoints([
+        ProjPoint.real(4, 0),
+        ProjPoint.real(0, 3),
+        ProjPoint.real(-4, 0),
+        ProjPoint.real(0, -3),
+        ProjPoint.real(2.4, 2.4),
+      ])!,
+    );
+
+    test('parameterNear reports where distanceTo measured', () {
+      final shape = ellipse();
+      for (final p in [
+        const Vec2(3.6, 1.3),
+        const Vec2(-3.9, 0.2),
+        const Vec2(0.1, -2.9),
+        const Vec2(10, 10),
+        Vec2.zero,
+      ]) {
+        final phi = shape.parameterNear(p)!;
+        expect(
+          shape.chartPointAt(phi)!.distanceTo(p),
+          closeTo(shape.distanceTo(p), 1e-6),
+          reason: 'the two share one search, so they cannot disagree',
+        );
+      }
+    });
+
+    test('parameterNear beats every sample of the curve', () {
+      final shape = ellipse();
+      const p = Vec2(3.6, 1.3);
+      final best = shape.chartPointAt(shape.parameterNear(p)!)!.distanceTo(p);
+      for (var i = 0; i < 720; i++) {
+        final v = shape.chartPointAt(math.pi * i / 720);
+        if (v != null) expect(v.distanceTo(p), greaterThan(best - 1e-9));
+      }
+    });
+
+    test('pointAtComplex reproduces pointAt bitwise on a real angle', () {
+      // The property tracing depends on: a detour that returns to the
+      // real axis must rejoin the real evaluation exactly, so the
+      // commit's static solve lands on the same point.
+      final shape = ellipse();
+      for (var i = 0; i < 32; i++) {
+        final phi = math.pi * i / 32;
+        final real = shape.pointAt(phi);
+        final complex = shape.pointAtComplex(Complex(phi));
+        expect(complex.x.re, real.x.re);
+        expect(complex.x.im, real.x.im);
+        expect(complex.y.re, real.y.re);
+        expect(complex.y.im, real.y.im);
+        expect(complex.w.re, real.w.re);
+        expect(complex.w.im, real.w.im);
+      }
+    });
+
+    test('a complex angle leaves the real axis and stays on the conic', () {
+      final shape = ellipse();
+      final off = shape.pointAtComplex(const Complex(0.7, 0.3));
+      expect(off.isReal(), isFalse, reason: 'a genuine detour');
+      expect(
+        shape.conic.evaluate(off).abs,
+        lessThan(1e-9),
+        reason: 'the conic equation is what pointAt solves, over ℂ as over ℝ',
+      );
+    });
+
+    test('an unparameterized shape answers null rather than a point', () {
+      final empty = ConicShape.of(
+        const ConicMatrix(
+          Complex.one,
+          Complex.zero,
+          Complex.one,
+          Complex.zero,
+          Complex.zero,
+          Complex.one,
+        ),
+      );
+      expect(empty.isParameterized, isFalse);
+      expect(empty.parameterNear(Vec2.zero), isNull);
+      expect(empty.pointAtComplex(Complex.zero).isZero, isTrue);
+    });
+  });
 }
