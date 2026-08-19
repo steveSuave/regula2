@@ -823,10 +823,22 @@ void main() {
         TraceDiagnostics.enabled = false;
       }
       final counts = TraceDiagnostics.history.single.counts;
+      // The claim is "did not spend the run's whole budget", and that is
+      // exactly what a budget end reports — a bound on raw trials was a
+      // proxy for it, and stopped being one when Phase 134's density
+      // rule started refining for drawing and spending honest trials of
+      // its own. Both counters are asserted so the proxy still catches a
+      // grind that stays just inside the budget.
       expect(
-        counts[TraceCounter.locusTrials],
-        lessThan(2000),
+        counts[TraceCounter.locusBudgetEnds],
+        anyOf(isNull, 0),
         reason: 'the walk is not grinding a doomed arc to the budget',
+      );
+      expect(
+        (counts[TraceCounter.locusTrials] ?? 0) -
+            (counts[TraceCounter.locusDensityTrials] ?? 0),
+        lessThan(8000),
+        reason: 'and the walk proper is not grinding either',
       );
       expect(
         counts[TraceCounter.locusBudgetEnds] ?? 0,

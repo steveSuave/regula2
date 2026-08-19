@@ -53,6 +53,11 @@ enum TraceCounter {
   /// Trials the locus walk spent.
   locusTrials,
 
+  /// Trials the locus walk spent refining for *drawing* density rather
+  /// than for branch safety — bounded in advance, and kept apart so
+  /// `locusTrials` stays a reading of the walk's own effort.
+  locusDensityTrials,
+
   /// Detour arcs the locus walk walked.
   locusDetours,
 
@@ -107,7 +112,8 @@ class TraceFrameRecord {
       'drag=${this[TraceCounter.dragAccepted]}a/'
           '${this[TraceCounter.dragRejected]}r/'
           '${this[TraceCounter.dragDetours]}d',
-      'locusWalk=${this[TraceCounter.locusTrials]}t/'
+      'locusWalk=${this[TraceCounter.locusTrials]}t'
+          '+${this[TraceCounter.locusDensityTrials]}dens/'
           '${this[TraceCounter.locusDetours]}d/'
           '${this[TraceCounter.locusFolds]}fold',
       'probes=${this[TraceCounter.collisionProbes]}',

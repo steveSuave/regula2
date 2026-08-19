@@ -335,6 +335,35 @@ void main() {
     }
   });
 
+  test('no-locus.rgl: the drawn polyline turns smoothly — the walk refines '
+      'for density, not only for branch safety (Phase 134)', () {
+    // The user's second report on this document was "unexpected angles":
+    // the acceptance rules bound branch *safety* — motion under half the
+    // candidate separation — and a stretch of curve that moves fast
+    // against its sweep parameter is perfectly safe to cross in one step
+    // and draws as a straight line between two scan cells. Before the
+    // density rule the sharpest turn here was 29°, on a curve with no
+    // corner in it.
+    final locus = loadLocus('no-locus.rgl', freeOut: <FreePoint>[]);
+    final points = [for (final p in locus.samples!) ?p];
+    var worst = 0.0;
+    for (var i = 1; i < points.length - 1; i++) {
+      final a = points[i] - points[i - 1];
+      final b = points[i + 1] - points[i];
+      if (a.norm < 1e-12 || b.norm < 1e-12) continue;
+      final cosine = ((a.x * b.x + a.y * b.y) / (a.norm * b.norm)).clamp(
+        -1.0,
+        1.0,
+      );
+      worst = math.max(worst, math.acos(cosine) * 180 / math.pi);
+    }
+    expect(
+      worst,
+      lessThan(8),
+      reason: 'the polyline still has a visible corner in it',
+    );
+  });
+
   test('locus-miss-2.json (twin tangent points): one closed figure-eight, '
       'no gap and no dropped half', () {
     // Traced is itself the coalescing intersection; the walk must flip

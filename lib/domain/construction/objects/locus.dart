@@ -745,6 +745,20 @@ class _TracedSweep {
   int _trials = 0;
   int _budget = 0;
 
+  /// Trials spent on density refinement, and the pool they come from.
+  ///
+  /// Kept apart from [_budget] deliberately. That budget is the walk's
+  /// guard against *grinding* — a doomed detour arc halving forever, the
+  /// thing Phase 133 had to bound — and a density refusal is not that:
+  /// it is a drawing decision about a step the acceptance rules already
+  /// called safe, and it is bounded in advance by [_densityFloor]. Paying
+  /// for it out of the safety budget starves legs mid-run and reports
+  /// boundaries the curve does not have (a segment-hosted sweep lost its
+  /// own endpoint); raising the safety budget to cover it instead would
+  /// hand a doomed arc five times the grinding it is allowed.
+  int _densityTrials = 0;
+  int _densityBudget = 0;
+
   static const _maxWalkSegments = 8;
   static const _maxLaps = 4;
 
@@ -853,7 +867,8 @@ class _TracedSweep {
   /// accepted step. See the class doc of [Locus] for the
   /// fold/crossing/termination semantics.
   List<Vec2> walkRun(_Run run) {
-    _budget = _maxWalkSegments * (4 * run.params.length + 160);
+    _budget = _maxWalkSegments * (_perCellTrials * run.params.length + 160);
+    _densityBudget = _maxWalkSegments * run.params.length ~/ _densityFloor;
     _trials = 0;
     try {
       final x0 = _seedParameterIn(run);
@@ -1000,7 +1015,8 @@ class _TracedSweep {
   /// then closes the loop. A lap that cannot complete (a sub-cell
   /// degeneracy the scan missed) returns the honest partial trace.
   List<Vec2> walkLaps() {
-    _budget = _maxLaps * (4 * domain.grid.length + 160);
+    _budget = _maxLaps * (_perCellTrials * domain.grid.length + 160);
+    _densityBudget = _maxLaps * domain.grid.length ~/ _densityFloor;
     _trials = 0;
     try {
       final x0 = domain.seedX;
@@ -1063,6 +1079,37 @@ class _TracedSweep {
   /// unit-normalized parameter must clear its ~1e-16 resolution).
   static const double _foldSwapSeparation = 1e-6;
 
+  /// The longest chord an accepted step may draw, as a fraction of the
+  /// figure's half-diagonal (the [balance] scale the sweep fits to the
+  /// core samples).
+  ///
+  /// The acceptance rules bound branch *safety* — motion under half the
+  /// candidate separation, and the absolute chordal cap — and safety has
+  /// nothing to say about smoothness. A stretch of curve that moves fast
+  /// against its sweep parameter is perfectly safe to step across in one
+  /// go and draws as a straight line between two scan cells, which is
+  /// what a user sees as corners on a smooth curve. Refusing a long
+  /// chord refines the step instead, and refinement is exactly how the
+  /// walk already handles every other refusal.
+  static const double _maxChordFraction = 0.01;
+
+  /// Refinement floor for [_maxChordFraction], as a fraction of a scan
+  /// cell. Density is a drawing concern, not a correctness one, so it
+  /// must never be the reason a leg refines to the floating-point floor
+  /// and reports a boundary: where the curve genuinely runs away — a
+  /// diverging arm — no step is short enough, and the walk should draw
+  /// the long chord and move on rather than stall.
+  static const double _densityFloor = 1 / 16;
+
+  /// Trials a leg is budgeted per scan cell. Four were enough while a
+  /// cell was the walk's finest accepted step. The density rule refines
+  /// below that, and each of those finer steps is *accepted* — a real
+  /// trial the safety budget has to cover, or a leg starves mid-run and
+  /// reports a boundary the curve does not have. Refusals do not come
+  /// from here (see [_densityTrials]); accepts do, and there are at most
+  /// one per [_densityFloor] of a cell.
+  static const int _perCellTrials = 4 + 1 ~/ _densityFloor;
+
   /// Chordal tolerance for "the lap returned to its seed root" — loose
   /// against accumulated matching drift, far tighter than any genuine
   /// second sheet.
@@ -1081,7 +1128,14 @@ class _TracedSweep {
       final a = samples[samples.length - 3];
       final b = samples[samples.length - 2];
       final c = samples.last;
-      if (c.distanceTo(b) > b.distanceTo(a)) {
+      // A *clear* growth, not any growth (Phase 134). The rule reads
+      // "the samples are running away", and on a genuine divergence the
+      // gaps grow geometrically — which is the case this was written
+      // for. The density rule holds gaps near-constant by design, so
+      // ordinary jitter about that constant used to read as divergence
+      // and ate the dive's tail, taking a segment-hosted run's own
+      // endpoint with it.
+      if (c.distanceTo(b) > 2 * b.distanceTo(a)) {
         samples.removeLast();
       } else {
         break;
@@ -1185,6 +1239,8 @@ class _TracedSweep {
     var confident = _isConfident()
         ? (x, [for (final c in _checkpoints) c!])
         : null;
+    // The last accepted step's drawn point, for the density rule.
+    var lastPoint = traced.position;
     while (d < span) {
       TraceDiagnostics.checkpoint(
         'locus leg',
@@ -1267,9 +1323,41 @@ class _TracedSweep {
         // the floor instead; underflow below reports the fold.
         ok = false;
       }
+      if (ok &&
+          out != null &&
+          _densityTrials < _densityBudget &&
+          step > domain.cell * _densityFloor) {
+        // Density (Phase 134): a step that would draw a chord longer
+        // than the figure can show as a curve is refined instead —
+        // measured in the balanced frame, so it means the same thing
+        // wherever on the figure the walk is, and floored so a diverging
+        // arm draws its long chord instead of stalling the leg.
+        //
+        // This refusal takes its own path back to the top of the loop
+        // and *does not* fall through to the starvation classifier
+        // below. Halving here is a drawing decision about a step the
+        // acceptance rules already called safe; feeding it to the
+        // throttle would let a legitimately fast stretch of curve
+        // converge into a fold or a detour and end the leg — which it
+        // did, and which moved a segment-hosted run off its endpoint.
+        final b = balance;
+        final here = traced.position;
+        if (b != null &&
+            here != null &&
+            lastPoint != null &&
+            here.distanceTo(lastPoint) > _maxChordFraction * b.scale) {
+          _restoreAll();
+          step /= 2;
+          _trials--;
+          _densityTrials++;
+          TraceDiagnostics.count(TraceCounter.locusDensityTrials);
+          continue;
+        }
+      }
       if (ok) {
         d = trialD;
         x = trialX;
+        lastPoint = traced.position;
         step = math.min(step * 2, domain.cell);
         _snapshot();
         for (var i = 0; i < seeded.length; i++) {
