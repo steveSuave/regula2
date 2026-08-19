@@ -8,7 +8,9 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/drag_session.dart';
 
 /// Regression tests over the two user documents that drove Phases 39b–39d,
 /// kept verbatim in `test/fixtures/`. They load through the real codec so
@@ -277,6 +279,60 @@ void main() {
       points.map((p) => p.distanceTo(g.position!)).reduce(math.min),
       lessThan(1e-9),
     );
+  });
+
+  test('no-locus.rgl: a branch flip the walk cannot cross is *self-healing* '
+      '— sliding F back between A and B brings the locus back', () {
+    // The document's two roots cross where AF ⟂ FB, at F = A and F = B,
+    // and the drag walk cannot presently carry G across either (Phase
+    // 134): at B the frame budget runs out just after the detour, and
+    // at A the circle itself has radius zero, so the walk coasts and
+    // re-acquires on a coin flip. G therefore lands on the driver's own
+    // root and the locus draws the x-axis, invisibly under line a.
+    //
+    // That is a defect, and this test does not pin it. What it pins is
+    // that it stays *recoverable*: `branchIndex` is not written by the
+    // pass, so the canonical flip is symmetric and sliding back undoes
+    // it. Tracing the chain member instead — which Phase 134 wants, and
+    // which its stated Phase 113 reason no longer forbids — adopts the
+    // index at the end of every pass, so one uncrossable return leaves
+    // the wrong root stored for good: measured at 12 of 12 randomized
+    // gesture sequences ending stuck, against 0 of 12 here.
+    const steps = [0.02, 0.05, 0.1, 0.25, 0.5, 1.0];
+    final rng = math.Random(7);
+    for (var trial = 0; trial < 4; trial++) {
+      // A fresh document per trial: the point of the test is that no
+      // *sequence* of gestures can strand the locus, so each one starts
+      // from the state the user opens.
+      final json =
+          jsonDecode(File('test/fixtures/no-locus.rgl').readAsStringSync())
+              as Map<String, dynamic>;
+      final construction = decodeDocument(json).construction;
+      final f = construction.objects.whereType<PointOnObject>().single;
+      final locus = construction.objects.whereType<Locus>().single;
+
+      void slideTo(double target, double step) {
+        final session = DragSession.start(construction, f, f.position!)!;
+        var at = f.parameter;
+        final dir = target > at ? 1.0 : -1.0;
+        while (dir * (target - at) > 1e-9) {
+          at += dir * step;
+          if (dir * (at - target) > 0) at = target;
+          session.update(Vec2(at, 0));
+        }
+        session.end()?.apply(construction);
+      }
+
+      for (var gesture = 0; gesture < 6; gesture++) {
+        slideTo(-14 + rng.nextDouble() * 20, steps[rng.nextInt(steps.length)]);
+      }
+      slideTo(-4, 0.25);
+      expect(
+        locus.samples!.any((p) => p != null && p.y.abs() > 1e-9),
+        isTrue,
+        reason: 'trial $trial left the locus stuck on the driver root',
+      );
+    }
   });
 
   test('locus-miss-2.json (twin tangent points): one closed figure-eight, '

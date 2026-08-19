@@ -369,6 +369,19 @@ class Construction {
     ];
     final affectedCore = {...affected}
       ..removeAll([for (final l in affectedLoci) l.id]);
+    // Locus-chain intersection points do not trace (Phase 113), and the
+    // reason has changed. The original one — that a locus recompute
+    // mid-walk would sweep its driver and drag the tracked root along —
+    // expired in Phase 117b, which holds loci out of the walk entirely.
+    // What keeps the exclusion is **branch adoption**: tracing writes
+    // `branchIndex` back at the end of a pass, so a pass that crosses a
+    // coalescence and cannot get back across leaves the stored index
+    // naming the wrong root *for good*. Untraced, the index never moves
+    // and a canonical flip is symmetric — the point jumps out and jumps
+    // back, which is wrong but self-healing. Measured both ways on
+    // `no-locus.rgl` (Phase 134): 0 of 12 randomized gesture sequences
+    // end stuck with the exclusion, 12 of 12 without it. Lifting it is
+    // worth doing and needs the crossing to be crossable first.
     final excluded = <GeoObject>{};
     for (final o in _objects.values) {
       if (o is Locus) {
@@ -491,6 +504,24 @@ class Construction {
               );
             }
             final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
+            if (trialTheta == theta) {
+              // Refinement bottomed out on the floating-point grid: no
+              // representable step advances the arc, so no budget can
+              // walk it — stop here rather than spend the frame's whole
+              // allowance refusing one trial over and over. The locus
+              // walk's `_traceArc` carries the identical floor. The
+              // pass bails to the static solve, which is what it would
+              // have done at the budget anyway, only sooner.
+              for (final o in seeded) {
+                o.tracedBranch.allowComplexCarriers = false;
+              }
+              driveReal(arc.entry);
+              _recomputeAffected(affectedCore);
+              throw TraceStepBudgetException(
+                tReached: arc.entry,
+                trials: accepted + rejected,
+              );
+            }
             driveComplex(arc.tAt(trialTheta));
             _recomputeAffected(affectedCore);
             if (trialAccepted(
