@@ -7,7 +7,9 @@ import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -573,5 +575,65 @@ void main() {
       findsNothing,
     );
     expect(find.text('No objects yet'), findsOneWidget);
+  });
+
+  testWidgets('conics get their own header instead of being filed under '
+      'Circles (Phase 132b)', (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    // A real circle and a five-point conic, side by side.
+    final c = addPoint('c', Vec2.zero);
+    final r = addPoint('r', const Vec2(3, 0));
+    construction.add(CircleCenterPoint(id: 'k', center: c, onCircle: r));
+    final on = [
+      addPoint('e0', const Vec2(4, 0)),
+      addPoint('e1', const Vec2(0, 3)),
+      addPoint('e2', const Vec2(-4, 0)),
+      addPoint('e3', const Vec2(0, -3)),
+      addPoint('e4', const Vec2(2.4, 2.4)),
+    ];
+    construction.add(FivePointConic(id: 'q', points: on));
+    await openTree(tester);
+
+    final tree = find.byType(ObjectTreePanel);
+    expect(
+      find.descendant(of: tree, matching: find.text('Circles')),
+      findsOneWidget,
+      reason: 'the circle is still a circle',
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Conics')),
+      findsOneWidget,
+      reason: 'and the conic is no longer filed under it',
+    );
+
+    await expandGroup(tester, 'conics');
+    expect(
+      find.descendant(of: tree, matching: find.text('Conic')),
+      findsOneWidget,
+      reason: 'the row label was already right; only the header was wrong',
+    );
+  });
+
+  testWidgets('a document with only circles shows no Conics header', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    final c = addPoint('c', Vec2.zero);
+    final r = addPoint('r', const Vec2(3, 0));
+    construction.add(CircleCenterPoint(id: 'k', center: c, onCircle: r));
+    await openTree(tester);
+
+    final tree = find.byType(ObjectTreePanel);
+    expect(
+      find.descendant(of: tree, matching: find.text('Circles')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tree, matching: find.text('Conics')),
+      findsNothing,
+      reason: 'empty groups are still skipped',
+    );
   });
 }
