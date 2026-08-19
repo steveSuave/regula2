@@ -8,6 +8,31 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 142 (V2 Session 44) — 2026-08-19
+
+**Done — the second symptom is fixed, and the diagnosis that ran through Phases 133 and 134 was wrong.** On `phase-135-deflation` (off the unmerged 134 branch). Suite **2649** green, analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **The user handed us the answer: "F carries G with it when dragged to the right or to the left."** Measured immediately, and exactly right — past t = 0 and t = −8, `G.position` is **bit-identical** to `F.position`, and the locus is not gone but flat: max |y| = 0 where the true curve has half-height 9.06. It was drawing the x-axis on top of line `a`.
+- **The cause is structural, not numerical.** `d` is the circle centred A **through F**; `c` is the line through B **and F**. F is on both curves by construction, at every parameter value, so `d ∩ c` always has F as one root and `G` is meant to be the other. `branchIndex` addresses a *geometric* order, which exchanges the two roots wherever they coincide — so past those coincidences index 1 stops naming the other root and starts naming F.
+- **This kills two phases of standing diagnosis.** It was never the drag budget, never the crossing at B, never continuation: a **fresh load** of the file at t = 4 is already wrong, with no drag involved. Session 141 had just finished proving B is not budget-bound at 128–2048 without seeing why — this is why. A budget of 2048 could not have helped.
+- **The fix is deflation** (PLAN §"A crossing the construction already knows is named, not navigated"). The sharp version of the observation: two roots of a real quadratic can coincide *and stay real* only where the discriminant touches zero without changing sign — only where a root is pinned by the construction. **A real transversal root exchange and a structurally shared point are the same phenomenon.** So name it instead of navigating it: `sharedIncidentPoints` on Phase 44b's existing zero-epsilon incidence relation, and an `IntersectionPoint` on such a pair holds a *role* (one of the shared points, or the root left over) rather than an address. Exact, total, continuous.
+- **The role is derived, never stored** — settled once from the first state that can answer, so a document loads with the role it was saved with. No format change, no version bump, no migration, no fixture rewrite; documents with no shared point are untouched.
+- **Nearly wrote a whole incidence module that already existed.** `lib/domain/construction/incidence.dart` has done this since Phase 44b, better than the version being drafted — and it was found only because `cat >` clobbered it and the analyzer surfaced an orphaned test. **Search for the concept before building it; a destructive redirect is not a safe way to discover prior art.**
+- **Deflation removed every detour from the fixture corpus** — `apatitos-topos.rgl` and `no-locus.rgl` both 4 → 0 arcs — because both documents' crossings were structural. That is the fix working, and it leaves the detour path with no coverage from real documents, so two rigs now hide their incidence behind `HomotheticPoint(driver, centre: origin, ratio: 1)`: bit-exact at every parameter, but not F *by construction*, so `sharedIncidentPoints` cannot see it. `drag_crossing_test.dart` keeps all 11 Phase 134 assertions verbatim on it, including B needing budget 512.
+
+**Next.** The branch is unmerged and merging is a **deploy** — it carries Phases 133, 134 and 135, and both reported symptoms. That is the user's call and the first thing to ask.
+
+Then **Phase 136**, opened by the hidden-incidence rig: the locus walk plans both detour arcs and still lands on the wrong sheet for **406 of 723** samples there. Identical on the code before deflation, so pre-existing and neither caused nor worsened — the structural rig was hiding it. The drag walk on the *same* hidden geometry is fine, so the two walks differ in something the rig can now isolate. Carried over: Phase 132 (gluing a point to a general conic), M-P0, the Android/iOS smokes.
+
+**Gotchas.**
+
+- **The `IntersectionPoint` factory readdresses the caller's index into canonical pair order using the geometry it is handed, and at a degenerate state that remap is its own coin flip** — measured, asked 1 → stored 0 at the coincidence against 1 → 1 at any ordinary parameter. Pre-existing, upstream of deflation, and it is why `deflation_test.dart` pins *consistency* for a point born at the coincidence rather than which root it lands on.
+- Deflation names the left-over root only when exactly one is left over, so a conic pair with four candidates and one shared point still addresses geometrically. Deliberate, and untested either way.
+- `sharedIncidentPoints` reads only *defining* points. A crossing shared by a theorem `incidence.dart` does not model is a missed deflation, never a wrong answer — widening `onCarrierDefiningPoints` is cheap and exact when a document calls for it.
+- The procedural lesson from Session 141 held and paid: **reproduce on the reported document first, the cheapest way the report allows.** This defect needed one `setPointOnObjectParameter` loop and no drag session at all. Two phases went to the drag path without that check.
+
+---
+
 ## Session 141 (V2 Session 43) — 2026-08-19
 
 **Done — one of the user's two symptoms fixed, the other diagnosed and honestly still open.** On `phase-134-drag-branch-memory`. The user pushed back on Session 140: "what exactly was fixed?" — and they were right. Suite **2635** green, analyze clean, browser gate green, two locus goldens resampled.
