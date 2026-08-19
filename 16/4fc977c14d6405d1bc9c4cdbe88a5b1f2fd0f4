@@ -1,0 +1,28 @@
+test/application/persistence/locus_fixture_regression_test.dart
+  s_9f85b5cd367f95::t_fca211baaaa08b 271-279
+  s_9f85b5cd367f95::t_2bf96e941980e9 7-8,18-24,229-270
+  s_9f85b5cd367f95::t_0dcdec31ec7d81 280-281
+test/fixtures/no-locus.rgl
+  s_9f85b5cd367f95::t_9355e269707b7d 1-347
+test/domain/construction/objects/locus_test.dart
+  s_9f85b5cd367f95::t_f69e2164cfc722 744
+  s_9f85b5cd367f95::t_792ed36a64385f 788-789
+  s_9f85b5cd367f95::t_b3a80313080016 805-837
+  s_9f85b5cd367f95::t_f837bbd056ce39 745-787,790-804,838-856
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "164fc977c14d6405d1bc9c4cdbe88a5b1f2fd0f4",
+  "prompts": {},
+  "sessions": {
+    "s_9f85b5cd367f95": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ec886fa3-aeca-4e6c-aafb-ab5bde5eb2c8",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
