@@ -81,17 +81,28 @@ void main() {
   });
 
   group('projective semantics (Phase 107)', () {
-    test('a parent at infinity leaves the ray wholly undefined', () {
+    test('a parent at infinity leaves the ray undefined but keeps its '
+        'carrier (Phase 136b)', () {
+      // The same split `Segment` makes: the drawn extent is a chart
+      // reading and stays gated, the carrier is the projective value and
+      // is total.
       final a = FreePoint(id: 'a', position: const Vec2(1, 2));
       final inf = StubProjectivePoint(ProjPoint.real(3, 4, 0));
       final r = Ray(id: 'r', origin: a, through: inf);
       expect(r.isDefined, isFalse);
-      expect(r.line, isNull);
       expect(
-        r.projLine,
+        r.line,
         isNull,
         reason: 'a ray needs a drawable endpoint and direction anchor',
       );
+      expect(r.start, const Vec2(1, 2));
+      expect(r.throughPosition, isNull);
+      expect(r.parameterExtent, isNull);
+      final carrier = r.projLine;
+      expect(carrier, isNotNull);
+      expect(carrier!.isReal(), isTrue);
+      expect(carrier.contains(ProjPoint.real(1, 2, 1)), isTrue);
+      expect(carrier.contains(ProjPoint.real(3, 4, 0)), isTrue);
     });
 
     Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(

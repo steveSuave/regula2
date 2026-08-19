@@ -8,6 +8,28 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 144 (V2 Session 46) — 2026-08-19
+
+**Done — the clip is confirmed, Phases 133–136 are deployed, and Phase 136b's headline defect turned out to be three phases upstream of where it was being hunted.** On `phase-136b-total-carriers`. Suite **2653** green, analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **The user ran the build: the locus draws.** That was Phase 136's one open box, and it was never a code question — the rendering failure did not reproduce in any headless layer, so only the app could answer it. `main` was already carrying Phases 134/135/136 locally; pushing it is the merge, and all three workflows went green. What generalizes past this document is the rule the clip enforces and `_drawConic` had written down years earlier: **an unbounded world coordinate must not reach a `Path`**, whatever a given rasterizer does with one.
+- **Phase 136b's reproducer was measured instead of theorized, and the answer was not in either walk.** The hidden-incidence Thales rig planned both detour arcs and still put 406 of 723 samples on the driver's own circle. Logging the arc showed the slot at `matchedIndex = −1`, `separation = ∞`, `motion = 0` for **every trial of both arcs** — the branch was coasting the whole detour on a stale root, and the exit was a nearest match taken *at the crossing*, which is exactly the coin flip the arc exists to remove.
+- **The cause: `Segment` nulled its projective carrier off the affine chart.** `recompute` bailed to `_carrier = null` whenever an endpoint had no `position`, so the instant the detour drove the driver off the real axis the chord had no carrier, the intersection had no candidates, and there was nothing to continue along. Phase 107 wrote that gate down deliberately — "a segment *is* its drawn extent — carrier included" — and the extent half of that argument is right. The carrier half was a **fourth, undocumented exception to the one degeneracy convention**.
+- **And that is the whole difference the rig was built to isolate.** The drag walk crosses identical geometry because `drag_crossing_test.dart` builds its chord as a `LineThroughTwoPoints`, whose carrier has been total since Phase 107. Two different walks, two different carrier kinds; the walks were never the variable.
+- **The fix is the split the convention already implies**: `Segment` and `Ray` compute `carrierThrough` unconditionally, and only the *projection* stays gated on the chart. `line`, `start`, `end`, `parameterExtent` and therefore `isDefined` read exactly as before — painter, hit tester and extent-clamped constrained points see nothing. **406 of 723 wrong → 0 of 602**, and the walk closes.
+- Recorded in **PLAN §5**: a chart-gated projective accessor is an object that *cannot be continued through*, and no static test can tell it from a correct one — the realness gate refuses complex carriers anyway, so every static answer is identical. The symptom surfaces only inside a walk, phases downstream, as a wrong branch.
+
+**Next.** Merge `phase-136b-total-carriers` — a **deploy**, so check `gh run list` after. Then the two items left in 136b were always "as real documents call for it" (widening `onCarrierDefiningPoints`; whether shared roles are worth naming when more than one root is left over). Carried over: Phase 132 (gluing a point to a general conic), the `dragStepBudget` decision in Phase 134, M-P0, the Android/iOS smokes. Standing and deferred, not rejected: the user's preferred **pure** route for deflation — the structural order as the *stored* address, with a version bump and a migration.
+
+**Gotchas.**
+
+- **Only two tests moved in 2653, and both were the assertions that pinned the old behaviour** (`segment_test.dart`, `ray_test.dart`: "wholly undefined — carrier included"). That is the shape of this class of bug: a chart-gated projective accessor is statically indistinguishable from a correct one, so the suite has nothing to say about it. Do not read "the suite is green" as evidence that a kind's projective value is total.
+- An endpoint at *infinity* now yields a real carrier where it yielded none, so static intersections on such a segment gain candidates. That is the change `LineThroughTwoPoints` took in Phase 107 and what `IntersectionPoint` already assumed when it said segments intersect via their infinite carrier — but it is a real semantic change and it is the only one here.
+- **Worth auditing the remaining kinds for the same shape.** These two were found by following one walk; nothing has swept `lib/domain/construction/objects/` asking "does this projective accessor read `.position` or any other chart value on its way to a null?".
+- The detour path's coverage still rests entirely on rigs that hide an incidence behind `HomotheticPoint(driver, centre: origin, ratio: 1)`, because every crossing in the fixture corpus is structural and deflation takes them to zero arcs. That has not changed.
+
+---
+
 ## Session 143 (V2 Session 45) — 2026-08-19
 
 **Done — a rendering defect found from a screen recording, after every headless layer came back clean.** On `phase-135-deflation`. Suite **2651** green, analyze clean, 32 goldens byte-identical, browser gate green.

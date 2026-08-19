@@ -753,15 +753,8 @@ void main() {
       // not a contrivance: it is what a shared point arrived at by a
       // theorem the detector does not model looks like from here.
       //
-      // **Known limitation, and this rig is its reproducer.** The walk
-      // plans both arcs and still lands on the wrong sheet for a large
-      // stretch — 406 of 723 samples off the Thales circle, identically
-      // on the code before Phase 135, so it is neither caused nor
-      // worsened by deflation. See `docs/TODO.md` Phase 136b. The
-      // assertion here is deliberately only about the arcs: it keeps the
-      // detour path from going uncovered while the sheet question is
-      // open, and it must not be strengthened into a sheet claim without
-      // fixing that first.
+      // This rig was also the reproducer for Phase 136b, and the sheet
+      // claim it could not make then is the test right below.
       final counts = _countersFor(() => rig(hideIncidence: true));
       expect(
         counts[TraceCounter.locusDetours],
@@ -773,6 +766,35 @@ void main() {
         0,
         reason: 'the crossings are transversal — the curve never turns',
       );
+    });
+
+    test('and the detour holds the sheet through both of them — a chord '
+        'that is a Segment traces like one that is a Line (Phase 136b)', () {
+      // The walk planned both arcs here and still put 406 of 723 samples
+      // on the driver's own circle, and the arcs were not the reason.
+      // `Segment` nulled its projective *carrier* whenever an endpoint
+      // had no affine position, so the instant a detour drove the driver
+      // off the real axis the chord had no carrier at all: the slot
+      // coasted the whole arc on a stale root, and the exit was decided
+      // by a nearest match at the crossing — the coin flip the arc
+      // exists to remove. The drag walk's rig built its chord as a
+      // `LineThroughTwoPoints`, whose carrier was already total, which
+      // is the entire difference between the two walks that this rig was
+      // built to isolate.
+      //
+      // So this asserts the sheet on the *hidden* incidence, where
+      // deflation stands down and the detour is the only mechanism left.
+      final locus = rig(hideIncidence: true);
+      final samples = locus.samples!;
+      expect(samples, isNot(contains(null)), reason: 'one closed component');
+      for (final p in samples.cast<Vec2>()) {
+        expect(
+          p.distanceTo(thalesCentre),
+          closeTo(thalesRadius, 1e-9),
+          reason: 'sample $p left the chord-midpoint locus',
+        );
+      }
+      expect(samples.first, samples.last, reason: 'the walk closes');
     });
 
     test('the sweep resolution does not decide the answer', () {

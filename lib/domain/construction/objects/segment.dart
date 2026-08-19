@@ -14,10 +14,31 @@ import 'line_through_two_points.dart';
 /// coincide or a parent is undefined.
 ///
 /// Migrated (Phase 107): the carrier is the projective join
-/// ([carrierThrough]), but unlike `LineThroughTwoPoints` a segment *is*
-/// its drawn extent, so it additionally requires both endpoints real and
-/// finite — an endpoint at infinity leaves the whole object undefined,
-/// carrier included, exactly as in V1.
+/// ([carrierThrough]).
+///
+/// **The carrier is total; only the drawn extent is a chart reading**
+/// (Phase 136b). A segment *is* its extent, so [line], [start], [end],
+/// [parameterExtent] and therefore [isDefined] all require both
+/// endpoints real and finite, exactly as in V1 — but [projLine] does
+/// not, because it is the projective value and the one degeneracy
+/// convention says a projective value is null only when a parent's is
+/// or the join is the zero triple (see `GeoObject`). Phase 107 gated the
+/// carrier on the chart too, and that made the object silently
+/// *untraceable*: a complex detour drives an endpoint off the real axis,
+/// the carrier vanished, and every intersection riding this segment
+/// coasted through the whole arc on a stale root — so the detour
+/// resolved nothing and the exit fell back to a nearest match at the
+/// crossing, which is the coin flip the arc exists to remove. A chord
+/// built as a `LineThroughTwoPoints` had no such problem, which is the
+/// entire difference Phase 136b's reproducer was measuring.
+///
+/// Nothing static changes for a *complex* endpoint: `intersectionCandidates`
+/// refuses complex carriers on its own (the Phase 110 realness gate), so
+/// the carrier is visible only to a pass that has asked for it. An
+/// endpoint at *infinity* does now yield the real line through the finite
+/// endpoint in that direction, which is what `LineThroughTwoPoints` has
+/// answered since Phase 107 and what `IntersectionPoint` already assumes
+/// when it says segments intersect via their infinite carrier.
 class Segment extends GeoLine {
   Segment({
     required super.id,
@@ -62,14 +83,15 @@ class Segment extends GeoLine {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    _carrier = carrierThrough(point1, point2);
     final p1 = point1.position;
     final p2 = point2.position;
-    if (p1 == null || p2 == null) {
-      _carrier = null;
-      _line = null;
-      return;
-    }
-    _carrier = carrierThrough(point1, point2);
-    _line = orientedAlong(_carrier?.toLineEq(), p2 - p1);
+    // The projection stays gated on the chart: a segment with an
+    // endpoint that has no real finite position has no drawable extent,
+    // so it stays undefined ([isDefined] reads [line]) and the painter,
+    // hit tester and [parameterExtent] see exactly what they saw before.
+    _line = (p1 == null || p2 == null)
+        ? null
+        : orientedAlong(_carrier?.toLineEq(), p2 - p1);
   }
 }
