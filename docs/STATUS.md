@@ -8,6 +8,29 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 145 (V2 Session 47) — 2026-08-19
+
+**Done — Phase 136c, the audit Session 144 asked for, and it found the defect it went looking for plus one it did not.** On `phase-136c-carrier-audit`. Suite **2661** green (2653 + 8), analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **Phase 136b is merged and deployed** — `192f34f` on `main`, all three workflows green. STATUS 144's "Next: merge" was already done.
+- **The sweep is cheap and should have happened three phases ago.** Every `get projPoint` / `get projLine` / `get conic` in `objects/` is a plain field read, so "does a projective accessor reach a null by way of a chart value?" reduces to reading 52 `recompute` bodies. That is an hour, and it is the *only* way to find these: the suite cannot see them.
+- **`Sector` had `Segment`'s defect.** `circleThrough(center, start)` reads no chart, but the guard bundled all three parents' `position`s *and* `end.closeTo(center)` into the same early return that nulled `_conic`. `Arc` — its sibling, same file family — has had the right split since Phase 109, which is what makes it an oversight. Fixed the same way: carrier total, wedge gated.
+- **The fix needed an `isDefined` override, and that is the part worth remembering.** `GeoCircle.isDefined` falls through to *"`conic` is parameterized"* when `circle` is null. So the instant the carrier stopped being chart-gated, a sector with a parent off the chart read **defined with no extent** — and `geometry_painter.dart` dereferences `circle!`, `startAngle!` and `sweep!` unconditionally on a defined sector. **Making a projective value total can hand a null-check crash to a consumer two layers away**, through a base-class fallback nobody was thinking about. `Arc` escapes only because its carrier reads all three parents, so an off-chart parent makes the circumcircle non-parameterized as well — checked, not assumed.
+- **`TangentLine`'s realness gate is `IntersectionPoint`'s Phase 110 argument verbatim** and is kept; the exception list on `GeoObject` now names both kinds instead of sanctioning one and leaving the other looking like a violation.
+- **The finding I did not expect has no null in it, and my first two statements about it were wrong.** `TwoLineBisectorLine` pins *which* of its two branches it names from a parent's affine `LineEq.direction`. I asserted the projection would vanish with it (it does not) and that Phase 136b made the fallback reachable through `Segment`/`Ray` (**0 of 1200** configurations move — `carrierThrough`'s representative already agrees with the direction `orientedAlong` uses). Measured instead: the sign *is* load-bearing (800/800 flip when a parent's rep is negated), and **four line kinds orient their chart against their own representative** — `TwoLineBisectorLine`, `PolarLine`, `RadicalAxisLine`, `TangentLine`, each via a `_v1Direction()` unrelated to the raw rep — while the other seven never do. A `PolarLine` whose pole sits on the circle's centre has a carrier (ℓ∞) and no chart, which Phase 134 showed grid snapping lands on exactly, and the bisector below it names the other branch.
+- Recorded in **PLAN §5**: a projective value can be total and still discontinuous at a chart event. Totality is the floor, not the property.
+
+**Next.** Merge `phase-136c-carrier-audit` — a **deploy**, so check `gh run list` after. Then the open item this phase produced: **re-founding line orientation projectively**, which is the fix for the bisector branch and would move `PolarLine`, `RadicalAxisLine` and `TangentLine` with it — a branch-ordering change, so it wants its own phase and its own agreement check against `test/v1_oracle/`. Carried over: the two 136b boxes (widening `onCarrierDefiningPoints`; shared roles when more than one root is left over), Phase 132 (gluing a point to a general conic), the `dragStepBudget` decision in Phase 134, M-P0, the Android/iOS smokes. Standing and deferred, not rejected: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **Two of my three claims about the bisector were wrong before I measured them, and both were plausible.** The pattern from 136b — "136b made a chartless carrier reachable, so downstream chart readers changed" — was the obvious inference and it is false for exactly the kinds it names. Probe first; the probes cost one test file each and were deleted after.
+- **`closeTo` bands are still nulling projective values** in `Arc`, `ApolloniusCircle`, `ThreePointCircle`, `AngleBisectorLine`, `HarmonicConjugatePoint` and `Sector`'s surviving `start.closeTo(center)`. That contradicts PLAN §5's "only exact degeneracy degenerates", but it is a uniform Phases 107–110 decision guarding a genuine carrier collapse — a different argument from this phase's, and a sweep of its own. Noted in the phase, deliberately not touched.
+- **The audit does not extend past `objects/`.** It asked one question of one directory. `lib/domain/projective/` and the tracing code were not swept for the same shape, and a chart reading on a *continuation* path would be just as invisible.
+- New test helper `ChartlessLine` in `test/projective_stubs.dart` — a line with a carrier and no chart. It exists because that state is now reachable in three ways and several kinds read a parent's `line` on the way to a projective answer.
+
+---
+
 ## Session 144 (V2 Session 46) — 2026-08-19
 
 **Done — the clip is confirmed, Phases 133–136 are deployed, and Phase 136b's headline defect turned out to be three phases upstream of where it was being hunted.** On `phase-136b-total-carriers`. Suite **2653** green, analyze clean, 32 goldens byte-identical, browser gate green.

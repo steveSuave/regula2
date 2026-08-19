@@ -124,6 +124,92 @@ void main() {
       expect(sector.sweep!, closeTo(math.pi / 2, 1e-9));
     });
 
+    test('an end off the chart keeps the carrier and loses only the wedge '
+        '(Phase 136c)', () {
+      // The defect the audit was looking for: `circleThrough(center,
+      // start)` reads no chart at all, but the old guard nulled the
+      // carrier the moment any parent lost its affine position. A pass
+      // that complexifies `end` then had nothing to continue along.
+      final c = FreePoint(id: 'c', position: Vec2.zero);
+      final s = FreePoint(id: 's', position: const Vec2(2, 0));
+      final e = StubProjectivePoint(
+        ProjPoint(const Complex(0, 5), const Complex(3, 0), Complex.one),
+        id: 'e',
+      );
+      final sector = Sector(id: 'k', center: c, start: s, end: e);
+
+      final carrier = sector.conic;
+      expect(carrier, isNotNull, reason: 'the carrier does not read the chart');
+      expect(carrier!.isReal(), isTrue, reason: 'center and start are real');
+      expect(
+        carrier.toCircleEq()!.radius,
+        closeTo(2, 1e-9),
+        reason: 'and it is the circle center-through-start it always was',
+      );
+
+      expect(sector.isDefined, isFalse, reason: 'the wedge is unchanged');
+      expect(sector.circle, isNull);
+      expect(sector.startAngle, isNull);
+      expect(sector.sweep, isNull);
+      expect(sector.angularExtent, isNull);
+      expect(sector.startRim, isNull);
+      expect(sector.endRim, isNull);
+      expect(sector.containsAngle(0), isFalse);
+    });
+
+    test('an end at infinity is the same split, and the carrier stays real '
+        '(Phase 136c)', () {
+      final sector = Sector(
+        id: 'k',
+        center: FreePoint(id: 'c', position: Vec2.zero),
+        start: FreePoint(id: 's', position: const Vec2(2, 0)),
+        end: StubProjectivePoint(ProjPoint.real(1, 1, 0), id: 'e'),
+      );
+      expect(sector.conic, isNotNull);
+      expect(sector.conic!.toCircleEq()!.radius, closeTo(2, 1e-9));
+      expect(sector.isDefined, isFalse);
+      expect(sector.circle, isNull);
+    });
+
+    test('an end coincident with the center is the wedge\'s degeneracy, not '
+        'the carrier\'s (Phase 136c)', () {
+      // `end` fixes only the end angle, so it was never in the carrier —
+      // but it does collapse the angle, so the wedge stays undefined and
+      // `isDefined` reads exactly as it did before the split.
+      final sector = Sector(
+        id: 'k',
+        center: FreePoint(id: 'c', position: const Vec2(1, 1)),
+        start: FreePoint(id: 's', position: const Vec2(3, 1)),
+        end: FreePoint(id: 'e', position: const Vec2(1 + 1e-12, 1)),
+      );
+      expect(sector.isDefined, isFalse);
+      expect(sector.circle, isNull);
+      expect(sector.sweep, isNull);
+      expect(sector.conic, isNotNull);
+      expect(sector.conic!.toCircleEq()!.radius, closeTo(2, 1e-9));
+    });
+
+    test('a complex start hides the carrier from static intersection '
+        '(Phase 136c)', () {
+      // The other half of the split, as in `Segment`: the carrier exists
+      // for a pass that asked for it, and `intersectionCandidates`
+      // refuses complex carriers on its own (the Phase 110 realness
+      // gate), so no static answer anywhere moves.
+      final sector = Sector(
+        id: 'k',
+        center: FreePoint(id: 'c', position: Vec2.zero),
+        start: StubProjectivePoint(
+          ProjPoint(const Complex(2, 0.5), const Complex(0, 0), Complex.one),
+          id: 's',
+        ),
+        end: FreePoint(id: 'e', position: const Vec2(0, 5)),
+      );
+      expect(sector.conic, isNotNull);
+      expect(sector.conic!.isReal(), isFalse);
+      expect(sector.isDefined, isFalse);
+      expect(sector.circle, isNull);
+    });
+
     test('a start within relative tolerance of the center is undefined '
         '(V2: closeTo replaces exact equality)', () {
       final sector = Sector(

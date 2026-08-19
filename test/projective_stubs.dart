@@ -50,6 +50,33 @@ class StubProjectiveLine extends GeoLine {
   void recompute([Absolute absolute = Absolute.euclidean]) {}
 }
 
+/// A line with a carrier and **no chart** — the state `Segment` and `Ray`
+/// entered in Phase 136b, and the one a `PolarLine` reaches when its pole
+/// sits on the circle's centre and the polar is the line at infinity.
+///
+/// It exists because several kinds read a parent's affine [GeoLine.line]
+/// on their way to a *projective* answer, and the Phase 136c audit needed
+/// to ask what those kinds do when the chart is withdrawn but the carrier
+/// is still there. Distinct from [StubProjectiveLine], which projects its
+/// value in the normal way.
+class ChartlessLine extends GeoLine {
+  ChartlessLine(this.value, {super.id = 'chartless-line'});
+
+  ProjLine? value;
+
+  @override
+  ProjLine? get projLine => value;
+
+  @override
+  LineEq? get line => null;
+
+  @override
+  List<GeoObject> get parents => const [];
+
+  @override
+  void recompute([Absolute absolute = Absolute.euclidean]) {}
+}
+
 /// The circle sibling of [StubProjectivePoint] (Phase 109): a parent
 /// whose conic is set directly — for exercising kinds that consume
 /// [GeoCircle.conic] with complex-rescaled or degenerate carriers.
