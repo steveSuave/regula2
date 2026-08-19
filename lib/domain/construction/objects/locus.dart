@@ -52,6 +52,18 @@ import 'point_on_object.dart';
 ///   physical-linkage continuation through the coalescence —
 ///   `branchIndex` is never touched), and the walk reverses.
 ///
+/// **The walk is seeded at the driver's own parameter**
+/// ([_SweepDomain.seedX]) — never at the run's end. Branch identity is
+/// only pinned where the construction actually stands: that is where
+/// [traced] holds the value the user sees, and where its `branchIndex`
+/// names the root it names. Every other parameter is a place the
+/// canonical order may already have flipped, so a walk seeded there can
+/// hold a *different* root honestly all the way back, and draw a locus
+/// the traced point is not on. It did: a document whose driver is one
+/// of its own two roots (a circle centred on the driver's line, met by
+/// a line through the driver) traced the driver itself, painting the
+/// locus invisibly along the host line.
+///
 /// Termination keeps the Phase 39c contract: a parity set tracks
 /// outstanding fold swaps, and a walk that returns to the original
 /// assignment *and* geometrically rejoins its start ([_closes]) closes —
@@ -469,6 +481,7 @@ class _SweepDomain {
     required this.cyclic,
     required this.grid,
     required this.cell,
+    required this.seedX,
     required this.evalReal,
     required this.evalComplex,
     required this.isCore,
@@ -489,6 +502,20 @@ class _SweepDomain {
 
   /// The scan cell width — the walk's maximum accepted real step.
   final double cell;
+
+  /// The normalized parameter the driver *actually sits at* — its stored
+  /// (host-clamped) parameter mapped through the same formula the sweep
+  /// evaluates, so `evalReal(seedX)` reproduces the driver's static
+  /// position.
+  ///
+  /// This is where the walk anchors branch identity, and it has to be:
+  /// the traced point's branch is only pinned where the construction
+  /// actually stands. Seeding at a run's end instead would let a
+  /// crossing between there and here hand the walk a different sheet —
+  /// and then the locus does not pass through the very point it is the
+  /// locus of. Always inside `[0, 1]`, and inside the run that contains
+  /// the driver.
+  final double seedX;
 
   /// The driver's homogeneous value at real `x`. Interior evaluations
   /// lift the chart point with `w` exactly 1 (bitwise the static
@@ -515,7 +542,8 @@ class _SweepDomain {
   }) {
     final n = sampleCount;
     switch (driver.curve) {
-      case GeoCircle(:final circle, :final angularExtent):
+      case GeoCircle(:final circle, :final angularExtent) &&
+          final GeoCircle host:
         if (circle == null) {
           return null;
         }
@@ -526,9 +554,16 @@ class _SweepDomain {
         // cyclically (no duplicated closing sample).
         final (start, sweep) = angularExtent ?? (0.0, 2 * math.pi);
         final cyclic = angularExtent == null;
+        // The driver's own angle, in the sweep's normalized parameter —
+        // wrapped on the full turn, clamped into the drawn extent
+        // otherwise, exactly as `PointOnObject.recompute` reads it.
+        final seedAngle = host.clampAngle(driver.parameter);
         ProjPoint atAngle(double u) => ProjPoint.lift(circle.pointAt(u));
         return _SweepDomain._(
           cyclic: cyclic,
+          seedX: cyclic
+              ? ((seedAngle - start) / sweep) % 1.0
+              : ((seedAngle - start) / sweep).clamp(0.0, 1.0),
           grid: cyclic
               ? [for (var i = 0; i < n; i++) i / n]
               : [for (var i = 0; i < n; i++) i / (n - 1)],
@@ -544,7 +579,7 @@ class _SweepDomain {
           },
           isCore: (_) => true,
         );
-      case GeoLine(:final line, :final parameterExtent):
+      case GeoLine(:final line, :final parameterExtent) && final GeoLine host:
         if (line == null) {
           return null;
         }
@@ -557,6 +592,10 @@ class _SweepDomain {
           Complex.one,
         );
         final (min, max) = parameterExtent ?? (null, null);
+        // See [seedX]: the driver's stored arc-length, host-clamped like
+        // `PointOnObject.recompute` reads it, inverted through each
+        // branch's own `x -> t` below.
+        final seedT = host.clampParameter(driver.parameter);
         if (min != null && max != null) {
           // A two-sided extent (Segment): uniform over it, endpoints
           // included — the constrained driver cannot leave it.
@@ -564,6 +603,7 @@ class _SweepDomain {
             cyclic: false,
             grid: [for (var i = 0; i < n; i++) i / (n - 1)],
             cell: 1 / (n - 1),
+            seedX: ((seedT - min) / (max - min)).clamp(0.0, 1.0),
             evalReal: (x) => atT(min + (max - min) * x),
             evalComplex: (x) => atComplexT(Complex(min) + x.scale(max - min)),
             isCore: (_) => true,
@@ -586,6 +626,8 @@ class _SweepDomain {
             cyclic: false,
             grid: [for (var i = 0; i < n; i++) i / n],
             cell: 1 / n,
+            seedX: (2 / math.pi * math.atan(sign * (seedT - edge) / halfSpan))
+                .clamp(0.0, 1.0),
             evalReal: (x) => x == 1
                 ? ProjPoint(
                     Complex(sign * d.x),
@@ -617,6 +659,7 @@ class _SweepDomain {
           hasInfinityWrap: true,
           grid: [for (var i = 0; i < n; i++) (i + 0.5) / n],
           cell: 1 / n,
+          seedX: 0.5 + math.atan((seedT - center) / halfSpan) / math.pi,
           // An integer x is φ ≡ ±π/2 — the driver's point at infinity,
           // evaluated as the carrier's direction point rather than
           // through the (finite, garbage-precision) tan formula.
@@ -803,16 +846,18 @@ class _TracedSweep {
 
   /// Walks one defined run into a polyline component.
   ///
-  /// The walk first *positions* to the run's low end (recording
-  /// nothing), then traces full-run segments — up, and back on fold
-  /// reversals — recording [traced]'s position at every accepted step.
-  /// See the class doc of [Locus] for the fold/crossing/termination
-  /// semantics.
+  /// The walk seeds at [_seedParameterIn] — the driver's own parameter
+  /// for the run that holds it — then *positions* to the run's low end
+  /// (recording the approach), then traces full-run segments — up, and
+  /// back on fold reversals — recording [traced]'s position at every
+  /// accepted step. See the class doc of [Locus] for the
+  /// fold/crossing/termination semantics.
   List<Vec2> walkRun(_Run run) {
     _budget = _maxWalkSegments * (4 * run.params.length + 160);
     _trials = 0;
     try {
-      _seedAt(run.params.first);
+      final x0 = _seedParameterIn(run);
+      _seedAt(x0);
       final low = run.leftGap ?? 0.0;
       final high = run.rightGap ?? 1.0;
       // Position to the run's low limit, recording the approach — the
@@ -820,26 +865,28 @@ class _TracedSweep {
       // samples are the ones that dive onto a fold's touch point or a
       // stroke's driver-at-infinity limit (the walk may re-expand past
       // the deepest usable evaluations, so recording only the way out
-      // would lose the closest approach).
+      // would lose the closest approach). From the anchor rather than
+      // from the run's end, so the *seeded* identity is carried down by
+      // a continuous walk instead of being re-derived canonically where
+      // the driver is not.
       final prefix = <Vec2>[];
-      final positioned = advance(from: run.params.first, to: low, out: prefix);
+      advance(from: x0, to: low, out: prefix);
       _trimDivergentTail(prefix);
-      var x = positioned.x;
-      driveReal(x);
+      // Then walk away from the anchor again, rather than out of where
+      // the dive stopped. A dive ends *on* a limit — a fold's touch
+      // point, a driver-at-infinity frontier — where nearest matching
+      // is a coin flip and the acceptance rule cannot re-expand, so
+      // leaving from there is the walk's weakest moment; the anchor is
+      // the one parameter whose branch is pinned, and re-seeding on it
+      // is exact. The dive's samples are already recorded, so nothing
+      // is lost by not re-walking the span.
+      _clearSeeded();
+      _seedAt(x0);
+      var x = x0;
       final out = <Vec2>[...prefix.reversed];
       final first = traced.position;
       if (first != null) {
         out.add(first);
-      }
-      // Lift off the low limit before walking away: the positioning
-      // dive may have ended near a coalescence (or the numeric
-      // frontier), where nearest matching is a coin flip and the
-      // acceptance rule cannot re-expand — rewind continuity to the
-      // last confident state.
-      final liftOff = positioned.confident;
-      if (!_isConfident() && liftOff != null) {
-        x = liftOff.$1;
-        _restoreState(liftOff);
       }
       var goingUp = true;
       final parity = <IntersectionPoint>{};
@@ -925,6 +972,28 @@ class _TracedSweep {
     }
   }
 
+  /// Where in [run] to seed branch identity: the driver's own parameter
+  /// ([_SweepDomain.seedX]) when this run covers it — every locus must
+  /// pass through the traced point's current position, and only there is
+  /// the branch pinned — and the run's low end otherwise, which is the
+  /// best a component the driver does not stand in can do (a separate
+  /// component has no continuation path to the driver to inherit an
+  /// identity along). On a cyclic domain a run's parameters may be
+  /// unwrapped past 1, so the period shift is tried too.
+  double _seedParameterIn(_Run run) {
+    final lo = run.params.first;
+    final hi = run.params.last;
+    for (final x
+        in domain.cyclic
+            ? [domain.seedX, domain.seedX + 1, domain.seedX - 1]
+            : [domain.seedX]) {
+      if (x >= lo && x <= hi) {
+        return x;
+      }
+    }
+    return lo;
+  }
+
   /// Walks a fully-defined cyclic domain: laps until every traced root
   /// returns to its seed (the sheet posture closes — one lap for plain
   /// chains, more when crossings compose to a nontrivial monodromy),
@@ -934,7 +1003,7 @@ class _TracedSweep {
     _budget = _maxLaps * (4 * domain.grid.length + 160);
     _trials = 0;
     try {
-      final x0 = domain.grid.first;
+      final x0 = domain.seedX;
       _seedAt(x0);
       final out = <Vec2>[];
       final first = traced.position;
@@ -1415,9 +1484,25 @@ class _TracedSweep {
           driveReal(from + dir * arc.entry);
           return false;
         }
+        final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
+        if (trialTheta == theta) {
+          // Refinement bottomed out on the floating-point grid: no
+          // representable step advances the arc, so no budget will
+          // ever walk it — give up here instead of grinding the run's
+          // whole allowance away on a doomed detour (an arc planned
+          // against a starvation at the leg's own end, where the
+          // driver runs to infinity, does exactly that). The caller
+          // ends the leg, which is the honest answer: the curve
+          // reaches the domain edge and stops. Mirrors [advance]'s
+          // own `trialX == x` exit.
+          for (final o in seeded) {
+            o.tracedBranch.allowComplexCarriers = false;
+          }
+          driveReal(from + dir * arc.entry);
+          return false;
+        }
         _trials++;
         TraceDiagnostics.count(TraceCounter.locusTrials);
-        final trialTheta = theta - dTheta > 0 ? theta - dTheta : 0.0;
         _driveComplex(Complex(from) + arc.tAt(trialTheta).scale(dir));
         if (trialAccepted(
               seeded,
