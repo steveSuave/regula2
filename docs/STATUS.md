@@ -8,6 +8,35 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 140 (V2 Session 42) — 2026-08-19
+
+**Done — Phase 133 merged and deployed, then Phase 134's frame-to-frame seam.** On `phase-134-drag-branch-memory`. `fix-locus-branch-anchor` went to `main` first; all three workflows green. Then five of Phase 134's boxes, which turned out to be one defect wearing several costumes. Suite **2634** green (from 2623), analyze clean, browser gate green.
+
+- **The rig is the finding's foundation, and it is the reported shape with the locus taken off.** A locus-chain intersection is held out of tracing entirely, so the reported document cannot show what the *walk* does with this geometry — it only shows the canonical relabel. Remove the locus and G is an ordinary traced slot with every mechanism live. Baseline: **1 of 32** rows across four step sizes, two grid offsets and four budgets ended on the right branch. Both crossings failed at every budget, including 2048 — which is why "raise the budget" read as hopeless.
+- **A pass assumed its caller had left the point on `path.start`.** True for a gesture whose frames all succeed, false for the frame after a bail, whose end state is a static solve at the pointer. The pass drives there and recomputes before seeding now — the precondition is made true instead of trusted. One extra recompute per pass, and it is the whole measured cost of this session.
+- **A bailed frame no longer advances the session's path anchor, and nor does one whose pair closed all the way.** Both end states resolve canonically, and that relabelling *is* the defect — anchoring there hands it to the next walk as a fact. Holding the anchor is also what puts a degeneracy the pointer landed exactly on into the next path's **interior**, where a detour arc has somewhere to land rather than at an endpoint where it has not. Grid snapping puts the pointer exactly on t = 0 and t = −8 every gesture in the reported document, so this was every gesture.
+- **And the reason a crossing inside a frame was glided over: a pass's first trial is unbounded.** The collapse law needs two separation samples and a restart has none, so the first trial spans the whole frame, and nearest matching then takes the wrong root at a *small measured motion* — because the roots exchange at a crossing and the swap looks locally better than the truth. **No statistic read from a path's two ends can tell the exchange from a small motion**, which is worth stating as a rule: interior information is required, and a frame boundary is exactly where it is thrown away. A pass now reports `closing` — the ratio its tightest pair closed by — and the next frame opens its controller at that fraction.
+- **The collapse at A is crossed**, where the last session measured "always jumps, every budget, every step size". 16 of 16 rows against 0. The transversal at B crosses at budget 512 at every step size and stays budget-bound at 128.
+- Cost: **0.073 → 0.098 ms/frame** on the bare 100-object stress rig, noise (0.53 → 0.54) on the same rig carrying a 128-sample locus — 1 % and 7 % of the 8 ms gate.
+- Coverage: `test/domain/tools/drag_crossing_test.dart`, eleven tests — the collapse crossed at four step sizes and held across a whole sweep frame by frame, the transversal at a budget that affords it, the anchor held across a bail, a pass seeded behind the construction, and the three `closing` readings.
+
+**Next**
+- Merge `phase-134-drag-branch-memory` — a **deploy**, so check `gh run list` after.
+- **The budget decision, which is now the single remaining reason B jumps.** One trial is ~0.08 ms on the 100-object rig, so 128 is already ~10 ms of starving frame and 512 would be ~40. A constant is the wrong shape; a budget that scales with the graph is the candidate. Nothing else in Phase 134 can be finished before it — in particular lifting the locus-chain exclusion, whose stated order (make the crossing crossable first) is now half satisfied.
+- **Locus polyline density** — the user's other report, untouched.
+- Phase 132 — gluing a point to a general conic.
+- M-P0 — the prover's threading decision.
+- Environment carry-overs, untouched: the Android emulator AVD and the iOS simulator smoke.
+
+**Gotchas**
+- **The four-point ellipse round trip now realizes a 3-cycle where it realized a transposition**, and `intersection_pair_order_test.dart` pins the period rather than its value now. The reasoning is worth keeping: a bail resolves canonically, a canonical relabel is not monodromy, so the shorter cycle was partly an artefact of giving up. A walk that bails less encircles more. Do not "restore" the 2-cycle.
+- **Bails rose on that rig, 75 → 153 of 4410 frames.** That is the price of holding the anchor: the next frame re-walks the span the bailed one failed on. The frames it costs are inside degenerate neighbourhoods, which is exactly where the old code was silently wrong, so it is the right side of the trade — but it is a real regression in bail *count* and the budget work will move it again.
+- **Holding the anchor without a limit was measured and rejected.** It buys two more crossings at B on the reported shape and costs **five times** the bails on the ellipse rig (735 of 4410). Capped at one frame; a second consecutive bail says the gesture has lost the thread.
+- **The `closing` floor does not matter and the ratio does.** Every floor from 1/64 to 1/2 crosses the same degeneracies; turning the ratio off entirely loses every t = 0 row. Do not tune the floor expecting anything.
+- **A pass ending *at* a degeneracy bails at 128 and completes at 512**, so tests that want a finished pass on a fully-closed end must set the budget. That asymmetry is why the bail was a bad signal to build on and the `closing` report is a good one.
+
+---
+
 ## Session 139 (V2 Session 41) — 2026-08-19
 
 **Done — Phase 133: a bug report, and the locus that was drawing the wrong root.** On `fix-locus-branch-anchor`. A user document whose locus appears in the object tree and not on the canvas. It *was* on the canvas: the trace was the x-axis, in the default colour, underneath the very line its driver is glued to. Suite **2622** green (from 2615), analyze clean, browser gate green, two locus goldens regenerated.
