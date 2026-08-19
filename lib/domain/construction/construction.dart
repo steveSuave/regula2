@@ -392,18 +392,26 @@ class Construction {
     final affectedCore = {...affected}
       ..removeAll([for (final l in affectedLoci) l.id]);
     // Locus-chain intersection points do not trace (Phase 113), and the
-    // reason has changed. The original one — that a locus recompute
-    // mid-walk would sweep its driver and drag the tracked root along —
-    // expired in Phase 117b, which holds loci out of the walk entirely.
-    // What keeps the exclusion is **branch adoption**: tracing writes
-    // `branchIndex` back at the end of a pass, so a pass that crosses a
+    // reason has changed twice. The original one — that a locus
+    // recompute mid-walk would sweep its driver and drag the tracked
+    // root along — expired in Phase 117b, which holds loci out of the
+    // walk entirely. What kept it after that was **branch adoption**: a
+    // traced pass writes `branchIndex` back, so a pass that crosses a
     // coalescence and cannot get back across leaves the stored index
-    // naming the wrong root *for good*. Untraced, the index never moves
-    // and a canonical flip is symmetric — the point jumps out and jumps
-    // back, which is wrong but self-healing. Measured both ways on
-    // `no-locus.rgl` (Phase 134): 0 of 12 randomized gesture sequences
-    // end stuck with the exclusion, 12 of 12 without it. Lifting it is
-    // worth doing and needs the crossing to be crossable first.
+    // naming the wrong root *for good*, where an untraced point's index
+    // never moves and the canonical flip is symmetric — wrong, but
+    // self-healing.
+    //
+    // Phase 134 tried the obvious separation — trace these slots and
+    // suppress only the write-back — and **it buys nothing**: without
+    // adoption the carried identity dies at the gesture's end, when the
+    // command applies and the point resolves canonically again. Measured
+    // on `no-locus.rgl`: byte-identical to not tracing at all. With
+    // adoption back on it crosses the collapse at A and strands 7 of 12
+    // randomized gesture sequences on the transversal at B — at every
+    // budget from 128 to 2048, so it is not the budget. Against 0 of 12
+    // stuck with the exclusion in place. The order therefore still
+    // stands: make *every* crossing on the shape crossable first.
     final excluded = <GeoObject>{};
     for (final o in _objects.values) {
       if (o is Locus) {
@@ -415,8 +423,8 @@ class Construction {
     // assume its caller had left the point on `path.start`, which holds
     // for a gesture whose frames all succeed and fails for the frame
     // after a bail: a bailed frame ends on a static solve at the
-    // pointer, and the drag sessions now keep their path anchor at the
-    // last parameter identity was actually carried through — so the
+    // pointer, and the drag sessions keep their path anchor at the last
+    // parameter identity was actually carried through — so the
     // construction sits *ahead* of the path the next pass walks. One
     // recompute makes the precondition true instead of assumed, and on
     // the frames that do satisfy it already the drive is a no-op that
