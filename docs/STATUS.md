@@ -8,6 +8,32 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 139 (V2 Session 41) — 2026-08-19
+
+**Done — Phase 133: a bug report, and the locus that was drawing the wrong root.** On `fix-locus-branch-anchor`. A user document whose locus appears in the object tree and not on the canvas. It *was* on the canvas: the trace was the x-axis, in the default colour, underneath the very line its driver is glued to. Suite **2622** green (from 2615), analyze clean, browser gate green, two locus goldens regenerated.
+
+- **The document is a shape where the driver is one of its own roots.** F is glued to line a; d is the circle centred A through F, so F is always one of the two crossings of d with the line c through B and F, and G is the other. The two roots cross transversally where AF ⟂ FB — at t = 0 and t = −8, the feet of the Thales circle over AB — so **which root the canonical index names flips with the sweep parameter**, and out at the sweep's driver-at-infinity end it names F.
+- **The walk seeded branch identity at the run's low end**, a hundred million units out, and then held that root honestly all the way back. Every sample was the driver's own position. The engine was not wrong about continuity; it was answering a question the document had not asked.
+- **The seed is the driver's own parameter now** (`_SweepDomain.seedX`, one inverse per host). That is the only parameter where the branch is pinned — where `traced` holds the value the user sees and `branchIndex` names the root it names — and the invariant it buys is the one that was violated: *a locus passes through the position its traced point has.* Worth stating as a rule: **anywhere else in the sweep is a place the canonical order may already have flipped.**
+- **Fixing the seed was half of it, and the second half was hiding behind the first.** With the anchor mid-run the walk dives to the domain's low end first — and the starvation *at* a sweep's own end classifies as a **crossing**, because the roots really are real on both sides of it. So the walk plans a detour arc across what is actually the edge of the domain, and no representable step ever advances it: `_traceArc` halved forever and spent the run's entire trial budget, leaving nothing for the half of the curve that had not been walked. It now gives up at `theta - dTheta == theta`, which is `advance`'s own floor. Latent before this session only because the old (wrong) trace reached that end with nothing left to do.
+- **The walk resumes from the anchor after the opening dive** rather than leaving from wherever the dive stopped, and the lift-off rewind that used to paper over that spot is gone. A dive ends *on* a limit, which is the walk's weakest moment; re-seeding on the anchor is exact. It also drops the span the old shape re-walked.
+- Coverage: the document as a fixture (`test/fixtures/no-locus.rgl`, v1) checked against its analytic curve equation, plus a reduced synthetic rig pinning that *each* branch's locus passes through *its* own point, that the two branches are genuinely different curves, and that the sweep no longer grinds a budget. All fail without the fix.
+
+**Next**
+- Merge `fix-locus-branch-anchor` — a **deploy**, so check `gh run list` after.
+- **The drag walk's `traceArc` in `construction.dart` is the same loop without the floor.** Bounded there by a much smaller budget and a static-solve fallback, so it degrades instead of hanging — but it is the same latent grind, and the two loops are supposed to be twins. Left untouched deliberately; worth a line in whatever phase next opens the drag walk.
+- Phase 132 — gluing a point to a general conic, still the most concrete piece of work outstanding.
+- M-P0 — the prover's threading decision.
+- Environment carry-overs, untouched: the Android emulator AVD and the iOS simulator smoke.
+
+**Gotchas**
+- **`coreSamples` is still the canonical scan, and on this document a third of it sits on the other root.** It is what fit-to-construction and label anchoring read, so both are anchored on points the drawn curve does not pass through. Deliberate (PLAN's Phase 117 shape) and pre-existing, but this document is the first one where the two disagree grossly.
+- **The anchor sample is bitwise exact only when the sweep's `center` equals the driver's stored parameter** — true for a freshly stamped locus, because the tool bakes `center` from the parameter, and false forever after the user slides the driver. The `x → t` round trip costs ~1e-16 relative otherwise, so tests assert a distance, not membership.
+- **An invisible object is not the same as an absent one, and the object tree said so.** The whole diagnosis turned on printing the samples rather than on looking at the canvas: 231 samples, all defined, all with `y == 0`. A locus that draws in the default colour on top of an existing line is indistinguishable from one that draws nothing.
+- **A single-leg walk that starts mid-run still closes.** The fold/parity machinery is written around a walk that begins at one end, and the obvious restructure — walk outward from the anchor in both directions — breaks it: each leg restores parity halfway round and trims itself back, so the tangency-bounded circle came out as half a circle. Keeping the dive-then-walk shape and only moving the *seed* preserves every closure test. Do not "clean that up" without re-reading the three closure tests first.
+
+---
+
 ## Session 138 (V2 Session 40) — 2026-08-18
 
 **Done — Phases 130 and 131, and the M-CK standing debt closed out.** Still on `phase-128-ck-macro-tools`; seven more commits. The session's brief was "everything that can be finished before the prover"; PLAN's M-P outline says the prover is independent of the kernel track and could have started after Phase 112, so none of this was blocking — it is the milestone tidied rather than a gate lifted. Suite **2615** green (from 2594), analyze clean, 32 goldens byte-identical, browser gate green.

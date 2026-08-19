@@ -14,6 +14,17 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 133 — a locus is anchored on its own point
+
+A user document (`test/fixtures/no-locus.rgl`) whose locus was created, listed in the object tree, and drew nothing visible. It was drawing — the x-axis, in the default colour, underneath the very line its driver is glued to.
+
+- [x] **The walk seeded its branch identity at the run's low end, and that is a place the document says nothing about.** The driver F is glued to line a; d is the circle centred A through F, so F is *itself* one of the two crossings of d with the line through B and F, and the pair crosses transversally at the two feet of the Thales circle over AB. The canonical index therefore names a different root on each side of those, and out at the sweep's driver-at-infinity end it names F. The walk then held that root honestly all the way back: every sample was the driver's own position
+- [x] The seed is now `_SweepDomain.seedX` — the driver's stored (host-clamped) parameter mapped through each host's own `x → t`, for all four sweep domains. Branch identity is only pinned where the construction actually stands, which is the one parameter at which `traced` holds the value the user sees. The invariant it buys, and the one that was violated: **a locus passes through the position its traced point has**
+- [x] The walk also *resumes* from the anchor after the opening dive, instead of leaving from wherever the dive stopped. A dive ends on a limit — a fold's touch point, a driver-at-infinity frontier — where nearest matching is a coin flip and the acceptance rule cannot re-expand; the lift-off rewind that used to paper over that is gone, because re-seeding on the anchor is exact. It also removes the span the old shape re-walked
+- [x] **A doomed detour arc no longer spends the run's whole budget.** The starvation at a sweep's own end classifies as a *crossing* (the roots are real on both sides), so the walk plans an arc across what is really the edge of the domain, and no representable step advances it. `_traceArc` now gives up when `theta - dTheta == theta`, mirroring `advance`'s own floor. This was latent before the seed changed: the old locus reached that end with nothing left to walk. The drag walk's twin loop in `construction.dart` has the same shape, bounded by a much smaller budget and a static fallback — noted, not touched
+- [x] Coverage: the document as a fixture with its analytic curve equation, plus a reduced synthetic rig pinning both branches (each passes through *its* point), that the two branches are different curves, and that the sweep no longer grinds a budget away. All fail without the fix
+- [x] The two locus goldens moved by a sub-pixel resampling of the same curve (0.17 %) and were regenerated
+
 ## Phase 121 — Old kernel deletion + convention unification
 
 - [x] ~~Revisit the detour orientation convention~~ — **settled in Phase 120c**: drags take a constant half-plane and a round trip carries honest monodromy (PLAN §"A round trip is honest"). Was deferred from 117 on a user decision of 2026-08-14 and reopened by the user on 2026-08-17
