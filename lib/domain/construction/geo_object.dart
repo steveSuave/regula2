@@ -48,11 +48,19 @@ import 'object_attributes.dart';
 /// degenerates.
 ///
 /// Three sanctioned exceptions, each argued where it lives rather than
-/// here: `IntersectionPoint`'s realness gate (a *complex* carrier yields
-/// no candidates rather than a mined real point — Phase 110),
-/// `PointOnObject` on a carrier with no chart (§Parameterization keeps
-/// carrier parameters real), and the Phase 112 consumer kinds, whose
-/// outputs are chart quantities by definition.
+/// here: the realness gate shared by `IntersectionPoint` and
+/// `TangentLine` (a *complex* carrier or pole yields nothing rather than
+/// a mined real point — Phase 110, and named for both kinds since the
+/// Phase 136c audit), `PointOnObject` on a carrier with no chart
+/// (§Parameterization keeps carrier parameters real), and the Phase 112
+/// consumer kinds, whose outputs are chart quantities by definition.
+///
+/// Everything *else* that nulls a projective value off a chart reading is
+/// a defect, and one the suite cannot see: `Segment` and `Ray` (Phase
+/// 136b) and `Sector` (Phase 136c) each read as correct under every
+/// static test and each meant the object could not be continued through.
+/// Phase 136c swept all 52 kinds for the shape; its result is in
+/// `docs/TODO.md`.
 sealed class GeoObject {
   GeoObject({required this.id, ObjectAttributes? attributes})
     : attributes = attributes ?? const ObjectAttributes();

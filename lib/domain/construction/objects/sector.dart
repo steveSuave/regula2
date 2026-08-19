@@ -21,6 +21,24 @@ import '../geo_object.dart';
 /// views of [center] and [start]; [circle] is its projection and the
 /// angular extent stays affine metadata read off that projection.
 ///
+/// **The carrier is total; only the wedge is a chart reading** (Phase
+/// 136c), the same split `Segment` and `Ray` took in Phase 136b and the
+/// one `Arc` has had since Phase 109. [circle], [startAngle], [sweep],
+/// [startRim], [endRim], [angularExtent], [containsAngle] and therefore
+/// [isDefined] all still require three real finite positions and an
+/// [end] off the [center], exactly as before — but [conic] does not,
+/// because it is the projective value and the one degeneracy convention
+/// says a projective value is null only when a parent's is or the
+/// computed value is the zero triple (see `GeoObject`). The old guard
+/// bundled the positions and `end.closeTo(center)` into the same early
+/// return that nulled the carrier, and neither is in it: [end] fixes
+/// only the end angle, and [circleThrough] reads no chart at all. A
+/// chart-gated carrier is an object that **cannot be continued
+/// through** — a complex detour drives a parent off the real axis, the
+/// carrier vanishes, and every intersection riding it coasts the whole
+/// arc on a stale root — and no static test can tell one from a correct
+/// one, which is why this was found by reading rather than by running.
+///
 /// Painter and hit tester must use [startAngle]/[sweep] and the two rim
 /// points — the carrier alone is the full circle.
 class Sector extends GeoCircle {
@@ -91,6 +109,21 @@ class Sector extends GeoCircle {
     return ccwSweep(startAngle, angle) <= sweep;
   }
 
+  /// The wedge draws, which is a stronger question than the base class's
+  /// "does the carrier project to a circle?".
+  ///
+  /// Overridden in Phase 136c because the carrier stopped being a chart
+  /// reading and the base class reads `conic` when `circle` is null: a
+  /// sector with a parent off the chart now has a perfectly good
+  /// parameterized carrier, and would have read *defined* with no extent
+  /// at all. The painter dereferences [circle], [startAngle] and [sweep]
+  /// unconditionally on a defined sector, so that is not a cosmetic
+  /// difference. This is exactly the old behaviour restated: before the
+  /// split the four fields were nulled together, so `circle != null` and
+  /// `sweep != null` named the same states.
+  @override
+  bool get isDefined => _sweep != null;
+
   @override
   List<GeoObject> get parents => [center, start, end];
 
@@ -107,19 +140,10 @@ class Sector extends GeoCircle {
     final c = center.projPoint;
     final s = start.projPoint;
     final e = end.projPoint;
-    final cp = center.position;
-    final sp = start.position;
-    final ep = end.position;
-    // The wedge's angles need real finite positions with directions from
-    // the center — a sector, unlike an arc, has no meaning without them.
-    if (c == null ||
-        s == null ||
-        e == null ||
-        cp == null ||
-        sp == null ||
-        ep == null ||
-        s.closeTo(c) ||
-        e.closeTo(c)) {
+    // The carrier's own gate: a parent with no projective value, and the
+    // one coincidence that collapses the circle itself. [end] is not in
+    // it — it fixes only the end angle.
+    if (c == null || s == null || e == null || s.closeTo(c)) {
       _conic = null;
       _circle = null;
       _startAngle = null;
@@ -128,6 +152,19 @@ class Sector extends GeoCircle {
     }
     final k = circleThrough(c, s);
     _conic = k.isZero ? null : k;
+    // The projection stays gated on the chart: the wedge's angles need
+    // real finite positions with directions from the center, so a sector
+    // with a parent off the chart keeps its carrier but has no drawable
+    // extent and stays undefined ([isDefined] reads [circle]).
+    final cp = center.position;
+    final sp = start.position;
+    final ep = end.position;
+    if (cp == null || sp == null || ep == null || e.closeTo(c)) {
+      _circle = null;
+      _startAngle = null;
+      _sweep = null;
+      return;
+    }
     final circle = _circle = _conic?.toCircleEq();
     if (circle == null) {
       _startAngle = null;
