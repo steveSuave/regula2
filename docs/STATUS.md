@@ -8,6 +8,31 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 141 (V2 Session 43) — 2026-08-19
+
+**Done — one of the user's two symptoms fixed, the other diagnosed and honestly still open.** On `phase-134-drag-branch-memory`. The user pushed back on Session 140: "what exactly was fixed?" — and they were right. Suite **2635** green, analyze clean, browser gate green, two locus goldens resampled.
+
+- **Session 140's work does not reach the reported document, and that was measurable in a minute.** Running `no-locus.rgl` through both symptoms on Session 140's code and on the code before it gives **byte-identical** results. G is a locus-chain intersection and `_traceAlong` excludes those from tracing, so every mechanism Session 140 repaired lives on a path that document never enters. **The lesson is procedural: the rig was built by removing the locus so G would trace, and the session then reported progress without putting the *document* back through.** Measure the reported artefact at the end, not the rig.
+- **The obvious way through the exclusion was tried and is dead.** Its stated defence is *branch adoption*, so trace the slots and suppress only the write-back. That buys nothing at all: without adoption the carried identity dies when the gesture's command applies and the point resolves canonically again — byte-identical to not tracing. With adoption back on it crosses the collapse at A and strands **7 of 12** randomized gesture sequences at B — **at every budget from 128 to 2048**. So the standing story that B is budget-bound is wrong for this document, which is the more useful half of the finding. Reverted, with the numbers written on the exclusion.
+- **Locus polyline density — the "straight lines" report — is fixed.** The acceptance rules bound branch *safety*, and safety says nothing about smoothness: a stretch of curve moving fast against its sweep parameter is entirely safe to cross in one accepted step and draws as a chord between two scan cells. An accepted step whose chord exceeds **1 % of the figure's half-diagonal** is refined instead, measured in the balanced frame. **Worst turn on the reported document 29° → 5.5°**, 236 → ~2000 drawn points.
+- **Three separate places assumed "the walk's finest accepted step is one scan cell", and each broke a different thing.** A density refusal fell through to the starvation classifier and converged a fast stretch into a fold; refusals charged to the walk's trial budget starved legs mid-run (that budget is Phase 133's anti-grinding guard, and raising it would have handed a doomed arc five times the room, so density refusals now come from a bounded pool of their own); and `_trimDivergentTail` trimmed on *any* growth in sample spacing, which the density rule holds near-constant by design, so jitter read as divergence and ate a segment-hosted run's own endpoint.
+- Cost: the 8 ms gate goes **7 % → 19 %** used on the stress rig carrying a locus; `locus-miss-2` 1.66 → 3.78 ms/sweep.
+
+**Next**
+- **Why B is uncrossable, and it is not the budget.** The synthetic rig crosses B at 512; the document does not at 2048. Find what differs — the host's parameterization, the clamped extent, or the locus sweep running between frames — before anyone touches `dragStepBudget`. That is the whole remaining path to the user's second symptom.
+- Merge `phase-134-drag-branch-memory` — a **deploy**, so check `gh run list` after. It carries a real user-visible fix (density) and no user-visible regression.
+- Phase 132 — gluing a point to a general conic.
+- M-P0 — the prover's threading decision.
+- Environment carry-overs, untouched: the Android emulator AVD and the iOS simulator smoke.
+
+**Gotchas**
+- **A rig that removes the reported document's locus cannot answer questions about the reported document.** It was the right rig for the *engine*, and the wrong thing to draw conclusions from. Keep a fixture-level check on the actual artefact in the loop.
+- **The density rule's constants are tied to each other.** `_maxChordFraction` (1/100 of the half-diagonal), `_densityFloor` (1/16 of a scan cell) and `_perCellTrials` (4 + 1/floor) are one design: the floor bounds the refinement, and the safety budget has to cover the *accepted* finer steps it produces. Move one and the others follow.
+- **`locusTrials` no longer means what the grinding test read it as.** Density refinement spends honest trials, so that test now asserts `locusBudgetEnds == 0` — the faithful statement of "did not spend the run's whole budget" — with a coarse trials tripwire beside it. `locusDensityTrials` is the new counter for the refusals.
+- **The two locus goldens moved again** (denser polyline). Third resample in three sessions; that is what the file is for, but it means a golden diff is no longer evidence of anything by itself here.
+
+---
+
 ## Session 140 (V2 Session 42) — 2026-08-19
 
 **Done — Phase 133 merged and deployed, then Phase 134's frame-to-frame seam.** On `phase-134-drag-branch-memory`. `fix-locus-branch-anchor` went to `main` first; all three workflows green. Then five of Phase 134's boxes, which turned out to be one defect wearing several costumes. Suite **2634** green (from 2623), analyze clean, browser gate green.
