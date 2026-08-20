@@ -8,6 +8,29 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 154 (V2 Session 56) — 2026-08-20
+
+**Done — Phase 141 / M-P1: the predicate vocabulary and the numeric filter, sampled per diagram rather than per predicate.** On `phase-141-mp1-predicates`, unmerged, four commits. Suite **2799** green (2756 + 43), analyze clean, browser gate green, wasm build compiles.
+
+- **`lib/domain/prover/` opens** with the ten DD predicates (`coll / para / perp / cong / cyclic / eqangle / eqratio / midp / simtri / contri`): `PredicateKind` with fixed arities (enforced as a programmer-error contract, the `LineEq` pattern), numeric evaluators as pure chart functions on dimensionless or scale-relative residuals against one 1e-6 tolerance — deliberately the coincidence probe's magnitude, and for its argument: identical predicates compute to float noise, accidents broken by a probe separate by ~`probeScale`.
+- **The filter's shape is the phase's main design decision: configurations are sampled once, predicates are answered many times.** `DiagramFilter.probe` perturbs every mutable root, recomputes, snapshots every point's position, restores bit-exactly — `probeCount` (3) times up front — and `holds(predicate)` reads the stored snapshots. M-P2's forward chaining screens *every candidate deduction* against this filter, so the recompute cost had to be per diagram, not per predicate.
+- **The probe machinery is `point_coincidence.dart`'s, extracted rather than duplicated**: `lib/domain/construction/mutable_roots.dart` (collect roots / perturb-from-base / bit-exact restore / `recomputeCarriers`), with the coincidence probe re-pointed at it — same constants, same RNG draw order, its 10 tests untouched.
+- **Euclidean-only, refused rather than approximated**: the vocabulary measures in the Euclidean chart, so `probe` throws on a proper absolute. A CK prover re-founds the predicates at this boundary — the same place M-CK re-founded measurement — rather than inheriting chart answers about a figure in a different geometry.
+- **Degeneracies answer conservatively, and the one that slipped through is worth naming**: `cyclic` via inscribed angles guards every coincidence its denominators name, but c ≡ d makes the test compare an angle with its own copy — vacuously true with no zero anywhere in the formula. Caught by its test; the guard now enumerates the pairs, not the denominators.
+- `simtri`/`contri` are orientation-free (side ratios / SSS), admitting reflected triangles; Newclid's direct/reflected split goes beside the ratio check if M-P2's rules need it, said at the site. Canonical forms and fact keying (two `eqangle`s naming one fact) are deliberately absent — `Predicate` compares by identity and says so; that is M-P2's fact database.
+
+**Next.** Merge `phase-141-mp1-predicates` — a **deploy**, so check `gh run list` after. Then M-P2 (forward chaining: fact database on canonical predicate forms, the ~20-rule DD core, fixpoint with the Phase 140 resumable shape and rule-application budget, proof DAG for free). Carried: the `MessageChannel` yield needs its `dart:js_interop` home when the M-P2 engine first chunks; Phase 139's open box (decline an unaffordable detour); the Android/iOS smokes. Standing and deferred: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **A formula's guards are not its degeneracies.** `cyclic`'s coincidence guards came from the four direction vectors in the formula, and the one coincident pair (c, d) that zeroes *no* vector is exactly the one that makes the test vacuous. When a check's degenerate cases are enumerated from its algebra, also enumerate them from its arguments.
+- The filter's `holds` throws on a predicate over a point outside the diagram rather than answering false — misuse is a programmer error, not a numeric outcome, and swallowing it would hide M-P2 bugs. But an *undefined* point (in any configuration) is false, not a throw: that is a real state of the diagram.
+- `Predicate.holdsNow` is one configuration, no perturbation — useful in tests and for M-P4's always-on cheap probe someday, but never evidence of a fact. The filter is the only thing that speaks for the diagram.
+- The extraction preserved `point_coincidence`'s RNG draw order (free points then parameters, per probe) deliberately; its default `Random(57)` outcomes are unchanged. If `MutableRoots.perturb` ever reorders its loops, that determinism moves.
+- `flutter build web --wasm` was run this session and compiles, but the prover code is pure `dart:math` Dart — the layer-rule test is what actually guards its portability.
+
+---
+
 ## Session 153 (V2 Session 55) — 2026-08-20
 
 **Done — Phase 140 / M-P0: the threading decision, and the thing that decides it is the yield primitive, which the plan never named.** On `phase-140-mp0-threading`, **merged and pushed** (`11fa132`). Suite **2756** green (unchanged — a spike adds no `lib/` code), analyze clean, browser gate green and now carrying two more tests. Phase 139 merged and pushed to `main` at `d98f103` at the user's direction, without a `gh run list` check.
