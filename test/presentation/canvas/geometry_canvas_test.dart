@@ -10,6 +10,8 @@ import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/commands/set_geometry_command.dart';
+import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
@@ -32,6 +34,7 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/ck_measure.dart';
 import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
@@ -2583,6 +2586,110 @@ void main() {
       lessThan(1e-6),
       reason: 'the glued point sits on the conic, not merely near it',
     );
+  });
+
+  testWidgets('the rhombus macro builds and drags in a hyperbolic '
+      'document (Phase 138)', (tester) async {
+    // The session-level counterpart of the engine tests: `availableUnder`
+    // is checked in `collectVertex`, the figure is built by the *command*
+    // path, and the third tap is position-only — none of which an engine
+    // test exercises. Every one of these taps was refused before this
+    // phase.
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    container
+        .read(commandStackProvider.notifier)
+        .execute(
+          SetGeometryCommand(
+            // A disc wide enough to hold the canvas: the radius is a
+            // chart scale (Phase 131), and an empty document has no
+            // figure to fit one to.
+            const DocumentKernel(
+              metric: FundamentalConic.hyperbolic,
+              radius: 1000,
+            ),
+          ),
+        );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.crop_square));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rhombus'));
+    await tester.pumpAndSettle();
+
+    for (final tap in const [
+      Offset(200, 260),
+      Offset(300, 260),
+      Offset(300, 160),
+    ]) {
+      await tester.tapAt(origin + tap);
+      await tester.pump();
+    }
+
+    final construction = container.read(constructionProvider).construction;
+    final absolute = construction.kernel.absolute;
+    final corners = [
+      for (final o in construction.objects)
+        if (o is GeoPoint && o.attributes.visible) o,
+    ];
+    expect(corners, hasLength(4), reason: 'A, B, C and D all committed');
+    expect(corners.last, isA<ReflectedPoint>());
+
+    double side(GeoPoint p, GeoPoint q) =>
+        distanceBetween(absolute, p.projPoint!, q.projPoint!)!;
+    void expectEquilateral(String when) {
+      final target = side(corners[0], corners[1]);
+      for (final pair in [
+        (corners[1], corners[2]),
+        (corners[2], corners[3]),
+        (corners[3], corners[0]),
+      ]) {
+        expect(side(pair.$1, pair.$2), closeTo(target, 1e-9), reason: when);
+      }
+    }
+
+    expectEquilateral('as stamped');
+
+    // A glued corner on a CK compass circle can actually be dragged, and
+    // the gesture is one undo unit. The *continuity* of D across the flat
+    // configuration is not what this pins — a screen-length drag does not
+    // reach it, and the equilateral check could not see it if it did
+    // (D ≡ B is equilateral too). That is the engine test's 600-sample
+    // sweep, in `rhombus_macro_tool_test.dart`.
+    //
+    // C is the tap *projected* onto its compass circle, so the grab goes
+    // where the point actually is rather than where the tap was.
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
+    await tester.pump();
+    final viewport = CanvasViewport(container.read(viewportProvider));
+    final before = corners[2].position!;
+    final drag = await tester.startGesture(
+      origin + viewport.worldToScreen(before),
+    );
+    for (final step in const [
+      Offset(240, 150),
+      Offset(190, 210),
+      Offset(200, 300),
+      Offset(280, 350),
+    ]) {
+      await drag.moveTo(origin + step);
+      await tester.pump();
+      expectEquilateral('mid-drag at $step');
+    }
+    await drag.up();
+    await tester.pumpAndSettle();
+
+    expectEquilateral('after the drag');
+    expect(corners[2].position, isNot(before), reason: 'C actually moved');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pumpAndSettle();
+    expect(
+      corners[2].position,
+      before,
+      reason: 'the whole gesture is one undo unit',
+    );
+    expectEquilateral('after the undo');
   });
 
   testWidgets('the conic tool: five taps build one conic through them, '
