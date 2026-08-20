@@ -1,0 +1,32 @@
+lib/domain/commands/translate_objects_command.dart
+  s_a80d22329e56cb::t_a18961441eae7d 5,18-23,25-29,37-38,54-58,68-70
+lib/domain/tools/drag_session.dart
+  s_a80d22329e56cb::t_8dc622919d0758 180-360,383-387,400-403,503-506,508-509,571-574,583-587,595,599,602-606,613-618,621
+  s_a80d22329e56cb::t_fb59b8d9ecd6a2 510
+test/domain/projective/conic_shape_test.dart
+  s_a80d22329e56cb::t_a51f954fd59f7c 1282
+test/domain/tools/glue_drag_test.dart
+  s_a80d22329e56cb::t_267725ee7056ae 1-150
+lib/domain/construction/objects/point_on_object.dart
+  s_a80d22329e56cb::t_886ebc705159c6 54-64
+lib/domain/commands/move_free_point_command.dart
+  s_a80d22329e56cb::t_2045b5e37ef26e 31-37,44,51,53-56,62-64,73-74
+  s_a80d22329e56cb::t_8dc622919d0758 75
+  s_a80d22329e56cb::t_0eb40efb0d3159 10-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "add9f57817bc2105504a92c1fcf149778e437c26",
+  "prompts": {},
+  "sessions": {
+    "s_a80d22329e56cb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e484460-0fff-4299-8860-8599034f94f3",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
