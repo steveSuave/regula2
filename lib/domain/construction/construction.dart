@@ -341,10 +341,17 @@ class Construction {
       // real parameter reproduces the real evaluation bitwise, exactly
       // as the two arms above do. Built once per gesture, like them —
       // the host does not move while a constrained point slides on it.
+      //
+      // `chartLiftAt` rather than `pointAtComplex` because the two arms
+      // above answer `w` exactly one and this one has to as well: the
+      // pencil form is homogeneous, so its `w` is whatever the algebra
+      // leaves — arbitrary in scale and *sign* — and `tracedPosition`
+      // hands that straight to consumers that read the chart back
+      // without dividing (Phase 132c).
       case GeoCircle(conic: final matrix?)
           when ConicShape.of(matrix).isParameterized:
         final shape = ConicShape.of(matrix);
-        return shape.pointAtComplex;
+        return shape.chartLiftAt;
       default:
         return (_) => throw StateError(
           'No chart to continue: the carrier of ${object.id} is undefined',

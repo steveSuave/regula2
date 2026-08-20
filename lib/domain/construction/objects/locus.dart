@@ -606,28 +606,11 @@ class _SweepDomain {
         // One expression for both evaluations, because `pointAt` *is*
         // `pointAtComplex` at a real angle (Phase 132): a real-valued `x`
         // reproduces [evalReal] bitwise with nothing kept in step by hand.
-        //
-        // The division is the part that is not free. The pencil form is
-        // homogeneous and polynomial, so it answers at whatever scale the
-        // algebra leaves — `w` is not 1 and is not close to it — while
-        // [PointOnObject.tracedPosition]'s contract is `w` exactly one or
-        // exactly zero, because `position` reads `x` and `y` back without
-        // dividing. Normalizing here is what makes `evalReal(x).position`
-        // the driver's own `chartPointAt(π·x)`, bit for bit.
-        ProjPoint atPhi(Complex phi) {
-          final p = shape.pointAtComplex(phi);
-          if (!p.isFinite()) {
-            // No chart point at this parameter, at the projection's own
-            // relative tolerance: hand the walk the driver *at infinity*,
-            // as a ray host's open edge does, so `position` answers null
-            // and the run breaks rather than carrying a coordinate no
-            // consumer can use. An ellipse has no real point at infinity,
-            // so this is a far-degenerate matrix, not a crossing.
-            return ProjPoint(p.x, p.y, Complex.zero);
-          }
-          return ProjPoint(p.x / p.w, p.y / p.w, Complex.one);
-        }
-
+        // [ConicShape.chartLiftAt] is that evaluation with `w` brought to
+        // exactly one, which is what [PointOnObject.tracedPosition] takes
+        // and what makes `evalReal(x).position` the driver's own
+        // `chartPointAt(π·x)`, bit for bit — see its doc for why the
+        // homogeneous value cannot be handed over raw.
         return _SweepDomain._(
           cyclic: true,
           grid: [for (var i = 0; i < n; i++) i / n],
@@ -637,8 +620,8 @@ class _SweepDomain {
           // `PointOnObject.recompute` reads it — wrapped onto the period
           // the sweep covers.
           seedX: (driver.parameter / math.pi) % 1.0,
-          evalReal: (x) => atPhi(Complex(math.pi * x)),
-          evalComplex: (x) => atPhi(x.scale(math.pi)),
+          evalReal: (x) => shape.chartLiftAt(Complex(math.pi * x)),
+          evalComplex: (x) => shape.chartLiftAt(x.scale(math.pi)),
           // Bounded, like a circle host: every defined sample is core.
           isCore: (_) => true,
         );

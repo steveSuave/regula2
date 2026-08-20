@@ -446,6 +446,35 @@ class ConicShape {
   /// passes through infinity.
   Vec2? chartPointAt(double phi) => pointAt(phi).toVec2(_eps);
 
+  /// [pointAtComplex] with `w` **exactly one** — or, where the curve
+  /// passes through infinity, the honest direction point with `w` exactly
+  /// zero. The zero triple where there is no parameterization.
+  ///
+  /// The form every *tracing* consumer wants, and the reason is a
+  /// contract two layers away: `PointOnObject.tracedPosition` takes a
+  /// homogeneous value whose `w` is one or zero, because `position` reads
+  /// `x` and `y` straight back without dividing (so that a sweep along a
+  /// diverging arm keeps full precision instead of meeting a relative
+  /// at-infinity cutoff). [pointAtComplex] cannot serve that: it is
+  /// polynomial and homogeneous, so it answers at whatever scale the
+  /// algebra leaves — `w = −0.079` at `φ = 0.3` on `x²/16 + y²/4 = 1`,
+  /// and *negative*, which is the part that bites. A chain member reading
+  /// the driver's chart position mid-pass would read it scaled by an
+  /// arbitrary factor and, half the time, reflected — and the four line
+  /// kinds Phase 136c named orient their branch off exactly such a
+  /// reading.
+  ///
+  /// So the division belongs here, once, rather than at each of the two
+  /// call sites (`Construction._chartEvaluator`'s conic arm, and the
+  /// locus sweep's conic domain).
+  ProjPoint chartLiftAt(Complex phi) {
+    final p = pointAtComplex(phi);
+    if (!p.isFinite(_eps)) {
+      return ProjPoint(p.x, p.y, Complex.zero);
+    }
+    return ProjPoint(p.x / p.w, p.y / p.w, Complex.one);
+  }
+
   /// The pencil angle in `[0, π)` whose [pointAt] is [p], or null when this
   /// shape has no parameterization.
   ///
