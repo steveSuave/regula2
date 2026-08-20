@@ -1,0 +1,30 @@
+lib/domain/construction/objects/locus.dart
+  s_caaae016b70c24::t_c4b3474960f464 584,586-600,609,611-616,620-628,635,637-655,658-663,667-684,686-689
+  s_caaae016b70c24::t_5174f8ed89028d 617-619,791-812
+  s_caaae016b70c24::t_d0993d6b47daa6 813
+lib/domain/projective/conic_shape.dart
+  s_caaae016b70c24::t_4848f2afe955fc 786-797,801-812
+test/domain/projective/conic_shape_test.dart
+  s_caaae016b70c24::t_b1d00d266f33f8 1166-1215
+test/domain/construction/objects/locus_test.dart
+  s_caaae016b70c24::t_4dcc958c7a0cb8 1190-1192
+  s_caaae016b70c24::t_f3f70af1221c3a 1168-1189,1193-1201,1203-1204
+  s_caaae016b70c24::t_5e452a6b12764c 1365-1396
+  s_caaae016b70c24::t_17ee35e358b7a9 1253-1364,1397-1426
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5a3eb1adff0631bff67e5c6d39c23d81ac0b1061",
+  "prompts": {},
+  "sessions": {
+    "s_caaae016b70c24": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a066cc1-4013-47c6-8013-3da00ad7dfb3",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
