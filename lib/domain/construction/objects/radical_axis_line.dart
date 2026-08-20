@@ -2,6 +2,8 @@ import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
+import '../../projective/complex.dart';
+import '../../projective/conic_matrix.dart';
 import '../../projective/proj_line.dart';
 import '../geo_object.dart';
 
@@ -64,8 +66,22 @@ class RadicalAxisLine extends GeoLine {
       return;
     }
     final axis = radicalAxisOf(c1, c2);
-    _carrier = axis.isZero ? null : axis;
+    _carrier = axis.isZero ? null : _oriented(axis, c1, c2);
     _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());
+  }
+
+  /// [axis] with its representative sign carrying the V1 orientation
+  /// (Phase 137, PLAN §"Orientation is the representative's sign").
+  /// `radicalAxisOf`'s linear part is `s₁·s₂·(center₂ − center₁)` for
+  /// circle-shaped conics with quadratic scales `s₁`, `s₂` — V1's
+  /// "normal points centre₁→centre₂" is the raw representative times
+  /// `sign(tr Q₁ · tr Q₂)`, and a circle-shaped block's trace never
+  /// vanishes, so the sign is total here. A degenerate line-conic parent
+  /// (the flattening limit) can zero a trace; the raw sign stands there,
+  /// where V1's chart rule never classified either.
+  static ProjLine _oriented(ProjLine axis, ConicMatrix c1, ConicMatrix c2) {
+    final sign = (c1.xx.re + c1.yy.re) * (c2.xx.re + c2.yy.re);
+    return sign < 0 ? axis.scaledBy(const Complex(-1)) : axis;
   }
 
   /// The V1 orientation: `radicalAxis`'s normal is the center₁→center₂

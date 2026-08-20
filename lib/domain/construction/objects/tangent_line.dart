@@ -1,6 +1,7 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
+import '../../projective/complex.dart';
 import '../../projective/conic_matrix.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/proj_point.dart';
@@ -82,8 +83,21 @@ class TangentLine extends GeoLine {
     }
     final touch = _v1Ordered(touches)[branch];
     final tangent = a.polarLine(touch);
-    _carrier = tangent.isZero ? null : tangent;
+    _carrier = tangent.isZero ? null : _oriented(tangent, a, touch);
     _line = orientedAlong(_carrier?.toLineEq(), _v1Direction(touch));
+  }
+
+  /// [tangent] with its representative sign carrying the V1 orientation
+  /// (Phase 137, PLAN §"Orientation is the representative's sign"). For a
+  /// circle-shaped conic the raw `A·t` has normal `s·w_t·(touch − center)`
+  /// while V1 runs the tangent along the touch radius rotated
+  /// counter-clockwise — normal along `−(touch − center)` — so the V1
+  /// representative is the raw one times `−sign(tr Q · w_t)`. The sign's
+  /// discontinuity loci (`w_t = 0`, `tr Q = 0`) are states V1's chart
+  /// rule never classified either; at either the raw sign stands.
+  static ProjLine _oriented(ProjLine tangent, ConicMatrix a, ProjPoint t) {
+    final sign = (a.xx.re + a.yy.re) * t.w.re;
+    return sign > 0 ? tangent.scaledBy(const Complex(-1)) : tangent;
   }
 
   /// Reorders the two touch points into V1's branch order — the point to

@@ -103,14 +103,33 @@ class TwoLineBisectorLine extends GeoLine {
       _line = null;
       return;
     }
-    final carrier = twoLineBisectorOf(
-      _anchored(l1, line1.line),
-      _anchored(l2, line2.line),
-      branch,
-      absolute,
-    );
-    _carrier = carrier.isZero ? null : carrier;
+    final a1 = _anchored(l1, line1.line);
+    final a2 = _anchored(l2, line2.line);
+    final carrier = twoLineBisectorOf(a1, a2, branch, absolute);
+    _carrier = carrier.isZero ? null : _oriented(carrier, a1, a2, absolute);
     _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());
+  }
+
+  /// [carrier] with its representative sign carrying the V1 orientation
+  /// (Phase 137, PLAN §"Orientation is the representative's sign"). The
+  /// Euclidean route builds `crossing.join(direction)`, whose chart
+  /// direction is `w_crossing` times the branch combination `d̂1 ± d̂2` of
+  /// the parents' representative directions — so the V1 orientation is
+  /// the raw representative times `sign(w_crossing)`, which vanishes only
+  /// on parallel carriers, where the bisector is the zero triple anyway.
+  /// The non-Euclidean route combines the representatives directly with
+  /// no crossing factor, and V1 never spoke there: the raw sign stands.
+  static ProjLine _oriented(
+    ProjLine carrier,
+    ProjLine l1,
+    ProjLine l2,
+    Absolute absolute,
+  ) {
+    if (!absolute.isEuclidean) {
+      return carrier;
+    }
+    final wMeet = l1.meet(l2).w.re;
+    return wMeet < 0 ? carrier.scaledBy(const Complex(-1)) : carrier;
   }
 
   /// [l] with its representative sign anchored to [affine]'s oriented

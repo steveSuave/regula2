@@ -1,7 +1,10 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
+import '../../projective/complex.dart';
+import '../../projective/conic_matrix.dart';
 import '../../projective/proj_line.dart';
+import '../../projective/proj_point.dart';
 import '../geo_object.dart';
 
 /// The polar line of [point] (the pole) with respect to [circle]:
@@ -55,8 +58,21 @@ class PolarLine extends GeoLine {
       return;
     }
     final polar = a.polarLine(p);
-    _carrier = polar.isZero ? null : polar;
+    _carrier = polar.isZero ? null : _oriented(polar, a, p);
     _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());
+  }
+
+  /// [polar] with its representative sign carrying the V1 orientation
+  /// (Phase 137, PLAN §"Orientation is the representative's sign"). For a
+  /// circle-shaped conic the quadratic block is `s·I`, so the raw
+  /// `A·p` has normal `s·w_p·(pole − center)` — V1's "normal points
+  /// centre→pole" is the raw representative times `sign(tr Q · w_p)`.
+  /// The sign's discontinuity loci are `w_p = 0` (the pole at infinity)
+  /// and `tr Q = 0` (a balanced-hyperbola conic) — both states V1's
+  /// chart rule never classified either; at either the raw sign stands.
+  static ProjLine _oriented(ProjLine polar, ConicMatrix a, ProjPoint p) {
+    final sign = (a.xx.re + a.yy.re) * p.w.re;
+    return sign < 0 ? polar.scaledBy(const Complex(-1)) : polar;
   }
 
   /// The V1 orientation: `polarLine`'s normal is the center→pole offset,

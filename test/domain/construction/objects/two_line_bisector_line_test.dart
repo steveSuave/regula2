@@ -256,20 +256,14 @@ void main() {
     });
   });
 
-  group('the branch rests on a chart reading (Phase 136c)', () {
-    // Found by the audit, not by a failure, and it is not a nullability
-    // defect: `_carrier` is nulled only by a parent's null `projLine` or
-    // the zero triple, so the one degeneracy convention holds here. What
-    // does *not* hold is continuity. `_anchored` fixes each parent's
-    // representative **sign** off the parent's affine
-    // `LineEq.direction`, and leaves the sign alone when there is no
-    // chart — so which of the two bisectors `branch` names can change at
-    // the instant a parent loses its projection.
-    //
-    // These tests pin the measurements rather than assert the behaviour
-    // is right. Making the branch chart-free means re-founding line
-    // orientation projectively, which is a branch-ordering change, and
-    // CLAUDE.md calls those load-bearing: its own phase, not this one.
+  group('the branch rests on the representative (Phases 136c → 137)', () {
+    // Phase 136c measured four kinds orienting their chart *against*
+    // their own representative, so a parent that lost its chart swapped
+    // the branch below it. Phase 137 re-founded orientation on the
+    // representative's sign (PLAN §"Orientation is the representative's
+    // sign"): every line kind's stored representative now carries the V1
+    // orientation, derived projectively — so the agreement is universal
+    // and the chart's presence or absence changes nothing downstream.
 
     test('the representative sign is load-bearing: negating a parent names '
         'the other bisector', () {
@@ -292,16 +286,14 @@ void main() {
       );
     });
 
-    test('seven line kinds orient their chart along their own '
-        'representative; four can orient against it', () {
-      // `_anchored`'s own test, asked of each kind over a sweep of
+    test('all eleven line kinds orient their chart along their own '
+        'representative, always', () {
+      // The Phase 137 gate, asked of each kind over a sweep of
       // configurations: does `line.direction` agree with the raw
-      // representative's (b, -a)? Where it always does, withdrawing the
-      // chart is a no-op and no bisector below it can move — which is
-      // why Phase 136b's `Segment`/`Ray` change could not affect one.
-      // Where it can disagree, the unanchored fallback names the *other*
-      // bisector; measured at roughly half of configurations for each of
-      // the four.
+      // representative's (b, -a)? Since it always does, withdrawing the
+      // chart is a no-op and no bisector below any line kind can move.
+      // Before Phase 137 the last four kinds below disagreed at roughly
+      // half of configurations.
       bool agrees(GeoLine kind) {
         final proj = kind.projLine!;
         final chart = kind.line!;
@@ -355,18 +347,6 @@ void main() {
         'PerpendicularLine',
         'PerpendicularBisectorLine',
         'AngleBisectorLine',
-      ]) {
-        expect(samples[name], greaterThan(0), reason: '$name was measured');
-        expect(
-          disagreements[name] ?? 0,
-          0,
-          reason:
-              '$name orients along its own representative, always — so '
-              'a chartless one changes no bisector',
-        );
-      }
-
-      for (final name in [
         'TwoLineBisectorLine',
         'PolarLine',
         'RadicalAxisLine',
@@ -375,11 +355,10 @@ void main() {
         expect(samples[name], greaterThan(0), reason: '$name was measured');
         expect(
           disagreements[name] ?? 0,
-          greaterThan(0),
+          0,
           reason:
-              '$name orients by a V1-compat direction unrelated to its '
-              'representative, so withdrawing its chart swaps the bisector '
-              'below it',
+              '$name orients along its own representative, always — so '
+              'a chartless one changes no bisector',
         );
       }
     });
@@ -406,11 +385,12 @@ void main() {
       expect(polar.isDefined, isFalse);
     });
 
-    test('and then the bisector below it names the other branch', () {
-      // The two halves put together, on a real kind: the same carrier,
-      // the same branch index, anchored and unanchored — two different
-      // bisectors. This is the discontinuity, demonstrated rather than
-      // argued.
+    test('and the bisector below it names the same branch without the '
+        'chart', () {
+      // The Phase 136c defect, inverted by Phase 137: the same carrier,
+      // the same branch index, with and without the parent's chart — one
+      // bisector. The representative carries the orientation, so
+      // withdrawing the chart is invisible downstream.
       final k = ThreePointCircle(
         id: 'k',
         point1: FreePoint(id: 'a', position: const Vec2(3, 0)),
@@ -436,8 +416,8 @@ void main() {
       );
       expect(
         unanchored.projLine!.closeTo(anchored.projLine!),
-        isFalse,
-        reason: 'losing the chart swapped the branch',
+        isTrue,
+        reason: 'the representative, not the chart, names the branch',
       );
     });
   });
