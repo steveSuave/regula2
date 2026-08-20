@@ -1246,7 +1246,8 @@ void main() {
     test('the canonical base point is bitwise a member of frameSeeds, '
         'for all three curve classes', () {
       final shapes = [
-        for (var i = 0; i < 40; i++) ConicShape.of(rotatedEllipse(4, 1, i * math.pi / 40)),
+        for (var i = 0; i < 40; i++)
+          ConicShape.of(rotatedEllipse(4, 1, i * math.pi / 40)),
         for (var i = 0; i < 20; i++)
           ConicShape.of(conic(1, 0.2 + i * 0.05, -0.3, 0.2, -1.1, -2)),
         ConicShape.of(parabola),
@@ -1287,9 +1288,7 @@ void main() {
       var fixedMax = 0.0;
       var switches = 0;
       for (var i = 1; i <= steps; i++) {
-        final shape = ConicShape.of(
-          rotatedEllipse(4, 1, math.pi * i / steps),
-        );
+        final shape = ConicShape.of(rotatedEllipse(4, 1, math.pi * i / steps));
         final carried = shape.carryParameterFrom(previous, phi);
         expect(carried, isNotNull, reason: 'no class change on this path');
         if (carried != phi) switches++;
@@ -1319,9 +1318,7 @@ void main() {
       // identically — the common case pays nothing and drifts nowhere.
       var previous = ConicShape.of(rotatedEllipse(2, 1.9, 0));
       for (var i = 1; i <= 200; i++) {
-        final shape = ConicShape.of(
-          rotatedEllipse(2, 1.9, math.pi * i / 200),
-        );
+        final shape = ConicShape.of(rotatedEllipse(2, 1.9, math.pi * i / 200));
         expect(shape.carryParameterFrom(previous, 1.234), 1.234);
         previous = shape;
       }
@@ -1337,9 +1334,7 @@ void main() {
       var previous = ConicShape.of(rotatedEllipse(4, 1, 0));
       var checked = 0;
       for (var i = 1; i <= steps; i++) {
-        final shape = ConicShape.of(
-          rotatedEllipse(4, 1, math.pi * i / steps),
-        );
+        final shape = ConicShape.of(rotatedEllipse(4, 1, math.pi * i / steps));
         final carried = shape.carryParameterFrom(previous, phi)!;
         if (carried != phi) {
           final before = previous.chartPointAt(phi);
@@ -1364,9 +1359,7 @@ void main() {
       var phi = 0.9;
       var previous = ConicShape.of(rotatedEllipse(4, 1, 0));
       for (var i = 1; i <= steps; i++) {
-        final shape = ConicShape.of(
-          rotatedEllipse(4, 1, math.pi * i / steps),
-        );
+        final shape = ConicShape.of(rotatedEllipse(4, 1, math.pi * i / steps));
         final carried = shape.carryParameterFrom(previous, phi)!;
         if (carried != phi) {
           // Not bitwise: the two carries run on matrices one step apart,
