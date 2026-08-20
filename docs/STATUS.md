@@ -8,6 +8,27 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 148 (V2 Session 50) — 2026-08-20
+
+**Done — Phase 132d: the pencil angle is an address, and the settlement is `branchIndex`'s, not the one the phase was opened with.** On `phase-132d-pencil-angle-stability`, unmerged, three commits. Suite **2713** green (2701 + 12), analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **Phase 132c is merged and deployed** — `52dc029` on `main`, all three workflows green. STATUS 147's "Next: merge, check `gh run list`" was already half done; the check is now done.
+- **The written design sketch was worked through and rejected, and that is the session's finding.** "Re-express on each recompute from the point's previous value" fails twice: unconditional continuation drifts *first-order under pure translation* (each step projects the old point onto the new curve instead of riding the frame — over a drag the point crawls off the figure), and any parameter mutation inside `recompute` is left behind by the locus sweep's restore (which restores only the driver's parameter), survives `point_coincidence`'s perturb-and-restore, and breaks bitwise undo. `recompute` stays a pure function — the exception the TODO asked to settle never materializes. The **gesture** holds identity, the **command** adopts it: `_GlueTracker` beside `_BranchSnapshot`, `GlueChange` beside `BranchChange`.
+- **Switch detection is exact, and the mechanism is bitwise membership.** `ConicShape.frameSeeds` recomputes the base-point candidates by the factory's own operations, so the canonical choice is bitwise an element; "did the frame jump?" is an element comparison, no world-space tolerance anywhere. `carryParameterFrom` hands the angle back *identically* when nothing switched (pinned: 200 steps of a rotating near-circle, all bitwise no-ops), and at a switch replays the old frame on the new matrix so the named point does not move. Measured on the 146 rig: fixed angle jumps **4.4** world units, carried angle moves **0.034**.
+- **The polar ↔ pencil boundary was found on the way and is covered**: a `FivePointConic` drifting through the `CircleEq` projection tolerance flips the parameter's *meaning* (polar angle ↔ pencil angle) — a latent jump nobody had reported. The tracker carries the point's position across that flip.
+- Session-level coverage per the standing rule (engine tests miss the command path): a rigid translation and a single-point drag each cross a *probed* switch; continuity, command adoption, bitwise cancel/undo/redo, and no-switch-no-changes all pinned. Every guard mutation-checked — removing the per-frame reanchor or either command's undo replay fails exactly its own tests.
+
+**Next.** Merge `phase-132d-pencil-angle-stability` — a **deploy**, so check `gh run list` after. Phase 132 is then fully closed and the rhombus macro (Phase 129) is unblocked — its un-refusal is a small tool change of its own. Then the phase Phase 136c opened — re-founding line orientation projectively. Carried over: the two 136b boxes, the `dragStepBudget` decision in Phase 134, M-P0, the Android/iOS smokes. Standing and deferred: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **An origin-centred rotated ellipse never switches frames** — its balanced frame is exact (`poleOf(ℓ∞)` is the zero vector bitwise), so every discrete choice is stable and the rig cannot exercise the carry at all. The first headline test asserted `switches > 0` and got 0. Probe rigs for this machinery need a *generic* centre; (0.4, 0.7) separates 130× (fixed 4.4 vs carried 0.034).
+- **The there-and-back carry is not bitwise** — the two carries run on matrices one step apart, so the residue is the frame drift over the step (6.3e-4 measured, second order). Bitwise restoration is the session snapshot's job and the tests say so; don't "fix" the arithmetic toward a tolerance it cannot meet.
+- **Commit before mutation-testing.** A `git stash -- lib` and later a `git checkout <file>` both clobbered *uncommitted* implementation mid-session (the stash was recoverable, the checkout meant rewriting two command files from context). Mutations want a committed baseline so reverting a mutation is `git checkout` with nothing else in flight.
+- Chain members glued to a conic keep fixed-angle evaluation inside traced passes and locus sweeps — a mid-pass switch is generic carrier motion to the walk. Named as 132d's one open box; no document exercises it.
+
+---
+
 ## Session 147 (V2 Session 49) — 2026-08-20
 
 **Done — Phase 132c: a locus can be driven by a point glued to a conic, all three curve classes, and the defect the hard half fixes was not the one it was opened for.** On `phase-132c-locus-on-conic`, unmerged. Suite **2701** green, analyze clean, 32 goldens byte-identical, browser gate green.
