@@ -7,6 +7,7 @@ import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/incidence.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/diameter_circle.dart';
 import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
@@ -76,6 +77,59 @@ void main() {
       final circle = CircleCenterPoint(id: 'k', center: a, onCircle: u);
       expect(sharedIncidentPoints(line, circle), isEmpty);
     });
+  });
+
+  test('a diameter circle shares both ends of its diameter', () {
+    // Phase 136b's other box, worked as far as it goes without a document
+    // to call for more: `DiameterCircle` was the one curve kind whose
+    // defining points lie on its own carrier and were not listed, while
+    // every sibling that has that property already was. A compass
+    // circle's radius pair stays out for the opposite reason — it fixes a
+    // length somewhere else.
+    final p = FreePoint(id: 'p', position: const Vec2(-2, 0));
+    final q = FreePoint(id: 'q', position: const Vec2(2, 0));
+    final r = FreePoint(id: 'r', position: const Vec2(0, 3));
+    final thales = DiameterCircle(id: 'k', point1: p, point2: q);
+    final chord = LineThroughTwoPoints(id: 'c', point1: p, point2: r);
+
+    expect(structurallyIncident(thales, p), isTrue);
+    expect(structurallyIncident(thales, q), isTrue);
+    expect(structurallyIncident(thales, r), isFalse);
+    expect(sharedIncidentPoints(thales, chord), [same(p)]);
+
+    // And it is worth naming: a chord through one end of the diameter
+    // has P as one of its two crossings at every position of R, so the
+    // two roles split cleanly and neither can be exchanged for the other.
+    final construction = Construction();
+    for (final object in [p, q, r, thales, chord]) {
+      construction.add(object);
+    }
+    final branches = [
+      for (var k = 0; k < 2; k++)
+        IntersectionPoint(
+          id: 'x$k',
+          curve1: thales,
+          curve2: chord,
+          branchIndex: k,
+        ),
+    ];
+    branches.forEach(construction.add);
+    final shared = branches.singleWhere((b) => !b.tracksDeflatedRoot);
+    final deflated = branches.singleWhere((b) => b.tracksDeflatedRoot);
+
+    for (final y in [3.0, 1.0, -1.0, -4.0, 0.25, 12.0]) {
+      construction.moveFreePoint('r', Vec2(0, y));
+      expect(
+        shared.position,
+        p.position,
+        reason: 'the named crossing is P, at r=(0, $y)',
+      );
+      expect(
+        deflated.position!.distanceTo(p.position),
+        greaterThan(1e-6),
+        reason: 'and the deflated root is never P, at r=(0, $y)',
+      );
+    }
   });
 
   group('the root that is left over', () {
