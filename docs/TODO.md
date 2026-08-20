@@ -14,6 +14,20 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 140 — M-P0: the threading decision (open)
+
+The milestone gate PLAN puts before any prover code: "No isolates on web. The prover engine is written as a resumable state machine with an explicit work queue from day one — cooperatively chunked on web, `Isolate.run`-wrapped on native, Worker-portable later. A straight-line fixpoint loop cannot be retrofitted."
+
+Scoped as a **spike**, exactly like Phase 101 (SPIKE 1): the deliverable is a measurement and a pinned decision, not an engine. There is no prover to drive yet, and an abstraction with no consumer is what this project keeps deciding not to build on spec. What must exist before M-P1 is the *shape*, chosen against numbers.
+
+- [ ] **The premise, checked rather than assumed.** `Isolate.run` **compiles cleanly** for both web targets and fails at *runtime* — `UnsupportedError: new RawReceivePort` (dart2js), a trap (dart2wasm). So the compiler will not catch an isolate smuggled into shared code; only a web test run will. Recorded because the failure mode is worse than a build error
+- [ ] **A representative synthetic fixpoint** (`benchmark/threading_bench.dart`): a fact database plus a rule loop deriving new facts in rounds to quiescence — DD forward chaining's shape, not a real prover
+- [ ] **Measure cooperative chunking** against the straight-line loop: throughput cost of yielding at a range of granularities, on VM / AOT / dart2js / dart2wasm. The output that matters is the chunk size that keeps a step under the frame budget while costing acceptable throughput
+- [ ] **Measure `Isolate.run` on native**: round trip plus the cost of getting the fact database in and the proof out
+- [ ] **Answer the Web Worker question with evidence**, on the target that actually ships (dart2wasm), rather than deferring it as folklore
+- [ ] **Record the decision in PLAN**, replacing the M-P0 bullet in the milestone outline with what was measured
+- [ ] Gates: analyze clean, suite green (a spike adds no `lib/` code, so the suite is a no-regression check)
+
 ## Phase 139 — the step budget is an amount of work, not a number of trials
 
 Phase 134's last open decision. `dragStepBudget` shipped as the constant 128 (Phase 114); a degeneracy needs ~150 trials to cross (~90 to classify the starvation, ~20 for the arc, ~40 for the exit), so a coarse frame bails *just after* a successful detour and the static fallback relabels the root the detour carried. A constant is the wrong shape because a trial's cost scales with the construction. Decision recorded in PLAN §"The step budget is an amount of work, not a number of trials".
