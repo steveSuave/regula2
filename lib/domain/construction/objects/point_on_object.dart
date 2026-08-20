@@ -51,10 +51,17 @@ import '../geo_object.dart';
 /// the search the hit tester already runs) rather than to
 /// `ConicShape.parameterOf`, which answers the arc of the join and is a
 /// different point for a tap that missed the curve. And the pencil angle
-/// is *not* stable as the conic moves: `ConicShape` picks its base point
-/// and axis pair per matrix, so a stored angle can name a different point
-/// of the curve after a drag — measured, and it is the open half of this
-/// phase. See `docs/TODO.md` Phase 132.
+/// names a point only through `ConicShape`'s canonical frame, whose
+/// discrete choices switch as the host moves — so the angle is an
+/// **address**, held stable the way `branchIndex` is (Phase 132d):
+/// statically it resolves canonically ([recompute] stays a pure function
+/// of parents and params — no history here), while *during a drag* the
+/// session carries it across each frame switch
+/// (`ConicShape.carryParameterFrom`) and the gesture's command replays
+/// the net re-expressions, so commit, undo and redo restore glue
+/// identity exactly. A single static step across a switch (one command
+/// moving a parent far) may still re-address, exactly as a static step
+/// may relabel an intersection branch.
 ///
 /// Bounded hosts confine the point to their drawn extent: the effective
 /// parameter is clamped into the host's `angularExtent` (arcs, sectors)

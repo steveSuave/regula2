@@ -8,6 +8,7 @@ import 'proj_line.dart';
 import 'proj_point.dart';
 import 'proj_transform.dart';
 import 'tolerances.dart';
+import 'tracing/traced_branch.dart';
 
 /// What a real conic looks like in the affine chart — the classification a
 /// renderer or a hit-tester dispatches on.
@@ -492,6 +493,141 @@ class ConicShape {
     final cj = _componentOf(q, _axisJ).re;
     if (ci == 0 && cj == 0) return null;
     return math.atan2(cj, ci) % math.pi;
+  }
+
+  /// The real base points the canonical constructor chooses among — every
+  /// candidate `P₀` the class's selection rule considers, in the rule's
+  /// own order, so [ConicShape.of]'s [basePoint] is always bitwise one of
+  /// them (pinned by test). Empty for a conic with no parameterization.
+  ///
+  /// This is what makes a frame *switch* decidable exactly
+  /// ([carryParameterFrom]): the canonical choice is a tie-break over this
+  /// list — for an ellipse the first real root of two probe directions,
+  /// for a hyperbola the first of its two meets with ℓ∞ — and each
+  /// tie-break jumps discontinuously at its tie while every member moves
+  /// continuously with the matrix. So "did the frame jump?" is "did the
+  /// canonical choice land on the member that continues the previous base
+  /// point?", a comparison between elements of one computed list, needing
+  /// no world-space tolerance.
+  ///
+  /// Recomputed lazily by the same operations the factory runs, in the
+  /// same balanced frame — both are deterministic in the matrix, which is
+  /// what makes the bitwise-membership guarantee hold.
+  late final List<ProjPoint> frameSeeds = _computeFrameSeeds();
+
+  List<ProjPoint> _computeFrameSeeds() {
+    if (!isParameterized) return const [];
+    final (balanced, unbalance) = _balancedFrame(conic, _eps);
+    switch (kind) {
+      case ConicClass.parabola:
+        // The doubled meet with ℓ∞ is canonically unique — both columns
+        // of the null direction name the same projective point — so a
+        // parabola's base never switches; only its axis pair can.
+        return [unbalance.apply(_nullDirectionOf(balanced)).normalized];
+      case ConicClass.hyperbola:
+        final atInfinity = intersectLineConic(ProjLine.infinity, balanced, _eps);
+        return [
+          for (final root in atInfinity)
+            if (root.isReal(_eps)) unbalance.apply(root).normalized,
+        ];
+      case ConicClass.ellipse:
+        final centre = balanced.poleOf(ProjLine.infinity);
+        final seeds = <ProjPoint>[];
+        for (final direction in const [
+          ProjPoint(Complex.one, Complex.zero, Complex.zero),
+          ProjPoint(Complex.zero, Complex.one, Complex.zero),
+        ]) {
+          final onProbe = intersectLineConic(
+            centre.join(direction),
+            balanced,
+            _eps,
+          );
+          for (final root in onProbe) {
+            if (root.isReal(_eps)) {
+              seeds.add(unbalance.apply(root).normalized);
+            }
+          }
+        }
+        return seeds;
+      case ConicClass.none ||
+          ConicClass.empty ||
+          ConicClass.linePair ||
+          ConicClass.isolatedPoint ||
+          ConicClass.doubleLine:
+        return const [];
+    }
+  }
+
+  /// A pencil angle carried across a host motion: the angle in **this**
+  /// shape's canonical frame naming the point that [phi] names in
+  /// [previous]'s frame, held by continuity (Phase 132d).
+  ///
+  /// The canonical frame's discrete choices — which [frameSeeds] member is
+  /// the base point, which coordinate pair sweeps the pencil — jump at
+  /// their tie-breaks while the conic moves smoothly, and a stored angle
+  /// then names a different point of the curve (measured in Phase 132: a
+  /// rigid rotation of an elongated ellipse moves a fixed angle by up to
+  /// 2.7 world units across 30 such switches). This is the continuation a
+  /// caller holds identity with across one such step:
+  ///
+  /// - When the canonical frame *continues* [previous]'s — the base point
+  ///   is the seed nearest the previous base and the axis pair is
+  ///   unchanged — the answer is [phi] itself, identically: between
+  ///   switches the fixed angle already moves the point continuously, and
+  ///   this call must be a bitwise no-op there.
+  /// - At a switch, [previous]'s frame is replayed on this matrix (its
+  ///   base point continued to the nearest seed, its axis pair kept), the
+  ///   point is evaluated there, and its angle is read back in the
+  ///   canonical frame — exact up to the arithmetic, so the point does
+  ///   not move at the switch.
+  ///
+  /// Null when no continuation is defined: either shape unparameterized,
+  /// the affine class changed (an ellipse's finite base cannot continue
+  /// onto a hyperbola's meets with ℓ∞ — the caller falls back to
+  /// re-expressing from the glued point's own previous position), no
+  /// seeds, or the replayed frame degenerates. The caller decides what a
+  /// null falls back to; this never guesses.
+  double? carryParameterFrom(ConicShape previous, double phi) {
+    final own = basePoint;
+    final anchor = previous.basePoint;
+    if (!isParameterized ||
+        !previous.isParameterized ||
+        previous.kind != kind ||
+        own == null ||
+        anchor == null) {
+      return null;
+    }
+    final seeds = frameSeeds;
+    if (seeds.isEmpty) return null;
+    var continued = seeds[0];
+    var best = double.infinity;
+    for (final seed in seeds) {
+      final d = TracedBranch.chordalDistance(anchor, seed);
+      if (d < best) {
+        best = d;
+        continued = seed;
+      }
+    }
+    if (continued == own &&
+        previous._axisI == _axisI &&
+        previous._axisJ == _axisJ) {
+      return phi;
+    }
+    // The previous frame, continued onto this matrix. Its pencil line
+    // `x_k = 0` must miss the continued base point, exactly as the
+    // canonical argmax guarantees for its own choice.
+    final c = [continued.x, continued.y, continued.w];
+    if (c[3 - previous._axisI - previous._axisJ].abs2 == 0) return null;
+    final pinned = ConicShape._(
+      kind,
+      conic,
+      const [],
+      continued,
+      previous._axisI,
+      previous._axisJ,
+      _eps,
+    );
+    return parameterOf(pinned.pointAt(phi));
   }
 
   /// The distance from [p] to the conic's real ink, in the chart —

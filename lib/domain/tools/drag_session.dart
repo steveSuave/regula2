@@ -177,6 +177,187 @@ class _BranchSnapshot {
   ];
 }
 
+/// How a [PointOnObject]'s circle-kind host is currently parameterized —
+/// the dispatch `PointOnObject.recompute` runs, held from frame to frame
+/// so a change of frame is an *event* the session can act on.
+sealed class _HostFrame {
+  const _HostFrame();
+}
+
+/// The host projects to a `CircleEq`: the parameter is its polar angle,
+/// which has no discrete frame choice and never switches by itself.
+class _PolarFrame extends _HostFrame {
+  const _PolarFrame();
+}
+
+/// The host is a general conic: the parameter is [shape]'s pencil angle,
+/// whose canonical frame carries the discrete choices of Phase 132d.
+class _PencilFrame extends _HostFrame {
+  const _PencilFrame(this.shape);
+
+  final ConicShape shape;
+}
+
+/// The drag-session side of pencil-angle re-anchoring (Phase 132d) — the
+/// same settlement branch adoption chose, applied to the other stored
+/// address a drag can strand.
+///
+/// A conic-glued [PointOnObject]'s parameter names a point of the curve
+/// only through `ConicShape`'s canonical frame, and that frame's discrete
+/// choices switch as the host moves — a stored angle then names a
+/// different point (up to 2.7 world units on the measured rig, PLAN
+/// §Parameterization). Statics stay canonical: `recompute` remains a pure
+/// function of (parents, params, ambient), a save carries a canonical
+/// angle, a load re-derives everything — the alternative, re-anchoring
+/// inside `recompute` itself, was rejected because a history-dependent
+/// recompute breaks every exactness contract at once (the locus sweep's
+/// restore, the point-coincidence probe's perturb-and-restore, bitwise
+/// undo). Instead **identity across a switch is held by the gesture**:
+/// after each preview frame this tracker compares every affected host's
+/// frame with the previous frame's, and where it switched, re-expresses
+/// the stored angle so the point stays put
+/// ([ConicShape.carryParameterFrom] — exact at the switch; a class
+/// change, where no frame continues, falls back to re-expressing from
+/// the point's own previous position). [restore] puts the start
+/// parameters back for a rollback, and [diff] turns the net
+/// re-expressions into the gesture command's [GlueChange]s, so commit,
+/// undo and redo replay them exactly — the [_BranchSnapshot] shape,
+/// deliberately.
+class _GlueTracker {
+  _GlueTracker(this._construction, List<String> draggedIds) {
+    final affected = <String>{};
+    for (final id in draggedIds) {
+      affected.addAll(_construction.transitiveDependentsOf(id));
+    }
+    for (final id in affected) {
+      final object = _construction.byId(id);
+      if (object is! PointOnObject) continue;
+      final host = object.curve;
+      if (host is! GeoCircle) continue;
+      (_byHost[host.id] ??= []).add(id);
+      _start[id] = object.parameter;
+      _lastPosition[id] = object.position;
+    }
+    for (final hostId in _byHost.keys) {
+      final frame = _frameOf(hostId);
+      if (frame != null) _frames[hostId] = frame;
+    }
+  }
+
+  final Construction _construction;
+
+  /// Tracked glued points per affected circle-kind host.
+  final Map<String, List<String>> _byHost = {};
+
+  /// Pre-drag parameters of every tracked point.
+  final Map<String, double> _start = {};
+
+  /// Each point's chart position as of the last frame's end, after any
+  /// re-expression — what a fallback re-expression anchors on when no
+  /// frame continues. Only overwritten while defined, so a host that
+  /// degenerates mid-gesture and comes back re-anchors on the last state
+  /// that had a position at all.
+  final Map<String, Vec2?> _lastPosition = {};
+
+  /// Each host's parameterization frame as of the last frame's end. A
+  /// host with no live frame (undefined, or an unparameterized conic)
+  /// keeps its previous entry: the switch is detected against the last
+  /// frame that meant anything.
+  final Map<String, _HostFrame> _frames = {};
+
+  _HostFrame? _frameOf(String hostId) {
+    final host = _construction.byId(hostId);
+    if (host is! GeoCircle) return null;
+    // Mirrors PointOnObject.recompute's dispatch: a CircleEq projection
+    // wins, and only a general conic takes the pencil angle.
+    if (host.circle != null) return const _PolarFrame();
+    final conic = host.conic;
+    if (conic == null) return null;
+    final shape = ConicShape.of(conic);
+    return shape.isParameterized ? _PencilFrame(shape) : null;
+  }
+
+  /// Re-anchors every tracked point whose host's frame switched since the
+  /// last call. Call once per preview frame, after the frame's move.
+  void reanchor() {
+    _byHost.forEach((hostId, pointIds) {
+      final current = _frameOf(hostId);
+      if (current == null) return;
+      final previous = _frames[hostId];
+      _frames[hostId] = current;
+      for (final id in pointIds) {
+        final object = _construction.byId(id);
+        if (object is! PointOnObject) continue;
+        final carried = _carry(object, previous, current);
+        if (carried != null && carried != object.parameter) {
+          _construction.setPointOnObjectParameter(id, carried);
+        }
+        final position = object.position;
+        if (position != null) _lastPosition[id] = position;
+      }
+    });
+  }
+
+  /// The parameter [object] should hold under [current], or null when
+  /// nothing needs saying (no previous frame, or nothing to anchor on).
+  double? _carry(
+    PointOnObject object,
+    _HostFrame? previous,
+    _HostFrame current,
+  ) {
+    switch ((previous, current)) {
+      case (null, _) || (_PolarFrame(), _PolarFrame()):
+        // No previous frame to have switched from; and a polar angle has
+        // no frame choice — it moves the point continuously by itself.
+        return null;
+      case (final _PencilFrame p, final _PencilFrame c):
+        final carried = c.shape.carryParameterFrom(p.shape, object.parameter);
+        if (carried != null) return carried;
+        // The class changed under the point — no frame continues, so
+        // anchor on the point's own previous position, the Phase 133
+        // move.
+        return _fromPosition(object, current);
+      case (_PolarFrame(), _PencilFrame()) || (_PencilFrame(), _PolarFrame()):
+        // The parameter's *meaning* flipped (polar angle ↔ pencil angle,
+        // the host crossing the CircleEq projection boundary): only the
+        // position carries across.
+        return _fromPosition(object, current);
+    }
+  }
+
+  double? _fromPosition(PointOnObject object, _HostFrame current) {
+    final position = _lastPosition[object.id];
+    if (position == null) return null;
+    switch (current) {
+      case _PencilFrame(:final shape):
+        return shape.parameterOf(ProjPoint.lift(position));
+      case _PolarFrame():
+        final host = object.curve;
+        if (host is! GeoCircle) return null;
+        final circle = host.circle;
+        if (circle == null) return null;
+        return host.clampAngle(circle.angleAt(position));
+    }
+  }
+
+  /// Puts the pre-drag parameters back — raw writes, like
+  /// [_BranchSnapshot.restore]: the rollback's own moves recompute.
+  void restore() {
+    for (final entry in _start.entries) {
+      if (_construction.byId(entry.key) case final PointOnObject point) {
+        point.parameter = entry.value;
+      }
+    }
+  }
+
+  List<GlueChange> diff() => [
+    for (final entry in _start.entries)
+      if (_construction.byId(entry.key) case final PointOnObject point
+          when point.parameter != entry.value)
+        (id: entry.key, from: entry.value, to: point.parameter),
+  ];
+}
+
 /// A free point moving itself, or a derived non-point rigidly translating
 /// its free-point ancestors.
 class _TranslateDragSession implements DragSession {
@@ -199,6 +380,11 @@ class _TranslateDragSession implements DragSession {
     _branches = _isFreePoint && _traceDrags
         ? _BranchSnapshot(_construction, _pointIds.single)
         : _BranchSnapshot.empty(_construction);
+    // Conic-glued points re-anchor per frame, whatever moves their host —
+    // a single dragged point and a rigid translation both carry a host
+    // across a parameterization-frame switch (an argmax tie crosses under
+    // pure translation).
+    _glue = _GlueTracker(_construction, _pointIds);
   }
 
   final Construction _construction;
@@ -210,6 +396,10 @@ class _TranslateDragSession implements DragSession {
   /// Pre-drag branch indices — populated only for traced
   /// single-free-point drags (see the constructor).
   late final _BranchSnapshot _branches;
+
+  /// Pencil-angle re-anchoring state for conic-glued points downstream of
+  /// the drag (Phase 132d; see [_GlueTracker]).
+  late final _GlueTracker _glue;
 
   /// Non-zero only for a single free point (see [DragSession.start]).
   final double _gridSnapStep;
@@ -310,11 +500,14 @@ class _TranslateDragSession implements DragSession {
           } else {
             _construction.moveFreePoint(_pointIds.single, _freePointPosition);
           }
-          return;
+        } else {
+          for (final id in _pointIds) {
+            _construction.moveFreePoint(id, _startPositions[id]! + _delta);
+          }
         }
-        for (final id in _pointIds) {
-          _construction.moveFreePoint(id, _startPositions[id]! + _delta);
-        }
+        // After the frame's move: carry conic-glued points across any
+        // host frame switch the move crossed (Phase 132d).
+        _glue.reanchor();
       });
     } finally {
       TraceDiagnostics.frameEnd();
@@ -375,18 +568,23 @@ class _TranslateDragSession implements DragSession {
   @override
   Command? end() {
     final delta = _delta;
+    // Diff the adoptions the previews left behind — branch indices and
+    // re-expressed glue parameters — before rollback restores the start
+    // values.
+    final glueChanges = _glue.diff();
     if (_isFreePoint) {
       final id = _pointIds.single;
       final from = _startPositions[id]!;
       final to = _freePointPosition;
-      // Diff the branch adoptions the traced previews left behind,
-      // before rollback restores the start indices.
       final branchChanges = _branches.diff();
       _rollback();
       // A snapped drag can quantize back onto its start — nothing to
       // undo, unless the loop crossed degeneracies with a net branch
-      // change, which is a real re-pointing to commit.
-      if ((delta == Vec2.zero || to == from) && branchChanges.isEmpty) {
+      // change or a net re-anchoring, which is a real re-pointing to
+      // commit.
+      if ((delta == Vec2.zero || to == from) &&
+          branchChanges.isEmpty &&
+          glueChanges.isEmpty) {
         return null;
       }
       return MoveFreePointCommand(
@@ -394,26 +592,33 @@ class _TranslateDragSession implements DragSession {
         from: from,
         to: to,
         branchChanges: branchChanges,
+        glueChanges: glueChanges,
       );
     }
     _rollback();
-    if (delta == Vec2.zero) {
+    if (delta == Vec2.zero && glueChanges.isEmpty) {
       return null;
     }
-    return TranslateObjectsCommand(pointIds: _pointIds, delta: delta);
+    return TranslateObjectsCommand(
+      pointIds: _pointIds,
+      delta: delta,
+      glueChanges: glueChanges,
+    );
   }
 
   @override
   void cancel() => _rollback();
 
   /// Restores every dragged point's start position verbatim (float-exact,
-  /// like the commands), and the pre-drag branch indices any traced
-  /// previews adopted away — indices first, so the moves' recompute
-  /// re-selects the original branches. Objects that vanished under the
-  /// session — an undo mid-drag can remove them — are skipped rather
-  /// than thrown on.
+  /// like the commands), the pre-drag branch indices any traced previews
+  /// adopted away, and the pre-drag glue parameters any frame switch
+  /// re-expressed — stored state first, so the moves' recompute
+  /// re-selects the original branches and re-evaluates the original
+  /// angles. Objects that vanished under the session — an undo mid-drag
+  /// can remove them — are skipped rather than thrown on.
   void _rollback() {
     _branches.restore();
+    _glue.restore();
     for (final id in _pointIds) {
       if (_construction.contains(id)) {
         _construction.moveFreePoint(id, _startPositions[id]!);

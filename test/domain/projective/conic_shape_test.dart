@@ -1213,4 +1213,216 @@ void main() {
       expect(seen.length, greaterThan(10), reason: 'they are not pinned');
     });
   });
+
+  group('frameSeeds / carryParameterFrom (Phase 132d)', () {
+    /// `x'²/a² + y'²/b² = 1` rotated by [theta] about its own centre,
+    /// which sits at a *generic* spot: centred exactly on the origin the
+    /// balanced frame is exact and the discrete frame choices never
+    /// switch, so that configuration cannot exercise the carry at all.
+    ConicMatrix rotatedEllipse(
+      double a,
+      double b,
+      double theta, {
+      Vec2 centre = const Vec2(0.4, 0.7),
+    }) {
+      final aa = 1 / (a * a), bb = 1 / (b * b);
+      final c = math.cos(theta), s = math.sin(theta);
+      final q11 = aa * c * c + bb * s * s;
+      final q12 = (aa - bb) * s * c;
+      final q22 = aa * s * s + bb * c * c;
+      return conic(
+        q11,
+        2 * q12,
+        q22,
+        -2 * (q11 * centre.x + q12 * centre.y),
+        -2 * (q12 * centre.x + q22 * centre.y),
+        q11 * centre.x * centre.x +
+            2 * q12 * centre.x * centre.y +
+            q22 * centre.y * centre.y -
+            1,
+      );
+    }
+
+    test('the canonical base point is bitwise a member of frameSeeds, '
+        'for all three curve classes', () {
+      final shapes = [
+        for (var i = 0; i < 40; i++) ConicShape.of(rotatedEllipse(4, 1, i * math.pi / 40)),
+        for (var i = 0; i < 20; i++)
+          ConicShape.of(conic(1, 0.2 + i * 0.05, -0.3, 0.2, -1.1, -2)),
+        ConicShape.of(parabola),
+        ConicShape.of(conic(1, 2, 1, -13, 9, 10)), // slanted parabola-ish
+      ];
+      for (final shape in shapes) {
+        if (!shape.isParameterized) continue;
+        expect(
+          shape.frameSeeds.any((seed) => seed == shape.basePoint),
+          isTrue,
+          reason:
+              '${shape.kind}: the canonical choice must be an element of '
+              'the seed list, or a frame switch is undecidable',
+        );
+      }
+    });
+
+    test('a conic with no curve has no frame seeds', () {
+      expect(ConicShape.of(imaginaryEllipse).frameSeeds, isEmpty);
+      expect(ConicShape.of(crossingLines).frameSeeds, isEmpty);
+    });
+
+    test('a rigid rotation of an elongated ellipse: the fixed angle jumps '
+        'and the carried angle does not', () {
+      // The Session 146 measurement, as a regression: `ConicShape` picks
+      // its base point and axis pair per matrix, and over a smooth
+      // rotation those discrete choices switch — a *fixed* pencil angle
+      // then names a point that jumps by world units. Carrying the angle
+      // across each step must keep the named point continuous, and must
+      // return the angle *identically* wherever no switch happened.
+      const steps = 600;
+      var phi = 0.9;
+      const fixedPhi = 0.9;
+      var previous = ConicShape.of(rotatedEllipse(4, 1, 0));
+      var carriedPoint = previous.chartPointAt(phi)!;
+      var fixedPoint = previous.chartPointAt(fixedPhi)!;
+      var carriedMax = 0.0;
+      var fixedMax = 0.0;
+      var switches = 0;
+      for (var i = 1; i <= steps; i++) {
+        final shape = ConicShape.of(
+          rotatedEllipse(4, 1, math.pi * i / steps),
+        );
+        final carried = shape.carryParameterFrom(previous, phi);
+        expect(carried, isNotNull, reason: 'no class change on this path');
+        if (carried != phi) switches++;
+        phi = carried!;
+        final point = shape.chartPointAt(phi);
+        expect(point, isNotNull);
+        carriedMax = math.max(carriedMax, point!.distanceTo(carriedPoint));
+        carriedPoint = point;
+        final fixed = shape.chartPointAt(fixedPhi);
+        if (fixed != null) {
+          fixedMax = math.max(fixedMax, fixed.distanceTo(fixedPoint));
+          fixedPoint = fixed;
+        }
+        previous = shape;
+      }
+      // The sweep must actually cross switches, or the carry was never
+      // exercised; and π of rigid rotation brings the figure back onto
+      // itself, so the carried point must close up too.
+      expect(switches, greaterThan(0));
+      expect(fixedMax, greaterThan(1.0), reason: 'the defect this pins');
+      expect(carriedMax, lessThan(0.2), reason: 'continuity across switches');
+    });
+
+    test('where the frame is stable the carry is a bitwise no-op', () {
+      // A near-circular ellipse rotating: measured clean in Session 146
+      // (no switches at all), so every step must hand the angle back
+      // identically — the common case pays nothing and drifts nowhere.
+      var previous = ConicShape.of(rotatedEllipse(2, 1.9, 0));
+      for (var i = 1; i <= 200; i++) {
+        final shape = ConicShape.of(
+          rotatedEllipse(2, 1.9, math.pi * i / 200),
+        );
+        expect(shape.carryParameterFrom(previous, 1.234), 1.234);
+        previous = shape;
+      }
+    });
+
+    test('a carry across a switch keeps the named point where it was', () {
+      // Find one switch on the elongated sweep and check the exactness
+      // claim directly: the two frames name (almost) the same chart point
+      // at the old and carried angles, at the very matrix the switch was
+      // detected on.
+      const steps = 600;
+      var phi = 0.9;
+      var previous = ConicShape.of(rotatedEllipse(4, 1, 0));
+      var checked = 0;
+      for (var i = 1; i <= steps; i++) {
+        final shape = ConicShape.of(
+          rotatedEllipse(4, 1, math.pi * i / steps),
+        );
+        final carried = shape.carryParameterFrom(previous, phi)!;
+        if (carried != phi) {
+          final before = previous.chartPointAt(phi);
+          final after = shape.chartPointAt(carried);
+          if (before != null && after != null) {
+            // One rotation step moves a point of this figure by at most
+            // ~4·π/600 ≈ 0.021; the switch must not add to that scale.
+            expect(after.distanceTo(before), lessThan(0.05));
+            checked++;
+          }
+        }
+        phi = carried;
+        previous = shape;
+      }
+      expect(checked, greaterThan(0));
+    });
+
+    test('carrying there and back returns the original angle', () {
+      // Two frames straddling a switch: A→B→A must be the identity up to
+      // arithmetic, or a cancelled gesture would leave a residue.
+      const steps = 600;
+      var phi = 0.9;
+      var previous = ConicShape.of(rotatedEllipse(4, 1, 0));
+      for (var i = 1; i <= steps; i++) {
+        final shape = ConicShape.of(
+          rotatedEllipse(4, 1, math.pi * i / steps),
+        );
+        final carried = shape.carryParameterFrom(previous, phi)!;
+        if (carried != phi) {
+          // Not bitwise: the two carries run on matrices one step apart,
+          // so the residue is the frame drift over that step (measured
+          // 6.3e-4 here, second order in the step). Bitwise restoration
+          // is the session snapshot's job, not this arithmetic's.
+          final back = previous.carryParameterFrom(shape, carried)!;
+          expect(angularGap(back, phi), lessThan(1e-2));
+        }
+        phi = carried;
+        previous = shape;
+      }
+    });
+
+    test('a class change carries nothing — the caller falls back', () {
+      final asEllipse = ConicShape.of(ellipse);
+      final asHyperbola = ConicShape.of(hyperbola);
+      expect(asHyperbola.carryParameterFrom(asEllipse, 0.5), isNull);
+      expect(asEllipse.carryParameterFrom(asHyperbola, 0.5), isNull);
+      expect(
+        asEllipse.carryParameterFrom(ConicShape.of(crossingLines), 0.5),
+        isNull,
+      );
+    });
+
+    test('a hyperbola rotating: switches are carried too', () {
+      // The hyperbola's base point is one of its two meets with ℓ∞, and
+      // the pair swaps order as the asymptotes turn — the same defect in
+      // the class whose base cannot be anything finite.
+      const steps = 400;
+      var phi = 0.3;
+      var previous = ConicShape.of(conic(1, 0, -0.25, 0, 0, -1));
+      var switches = 0;
+      for (var i = 1; i <= steps; i++) {
+        final t = math.pi * i / steps;
+        final c = math.cos(t), s = math.sin(t);
+        // x²/1 − y²/4 = 1 rotated by t.
+        const aa = 1.0, bb = -0.25;
+        final shape = ConicShape.of(
+          conic(
+            aa * c * c + bb * s * s,
+            2 * (aa - bb) * s * c,
+            aa * s * s + bb * c * c,
+            0,
+            0,
+            -1,
+          ),
+        );
+        expect(shape.kind, ConicClass.hyperbola);
+        final carried = shape.carryParameterFrom(previous, phi);
+        expect(carried, isNotNull);
+        if (carried != phi) switches++;
+        phi = carried!;
+        previous = shape;
+      }
+      expect(switches, greaterThan(0));
+    });
+  });
 }
