@@ -14,6 +14,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 139 — the step budget is an amount of work, not a number of trials
+
+Phase 134's last open decision. `dragStepBudget` shipped as the constant 128 (Phase 114); a degeneracy needs ~150 trials to cross (~90 to classify the starvation, ~20 for the arc, ~40 for the exit), so a coarse frame bails *just after* a successful detour and the static fallback relabels the root the detour carried. A constant is the wrong shape because a trial's cost scales with the construction. Decision recorded in PLAN §"The step budget is an amount of work, not a number of trials".
+
+- [ ] **Measure what a trial costs, and against what.** `benchmark/drag_budget_bench.dart`: a starving frame on the stress construction at a range of graph sizes and budgets, VM + the three compile targets
+- [ ] **Derive the budget per gesture** from the objects recomputed per trial (transitive dependents, loci excluded — 117b settles those once per pass): `dragStepBudgetWork / perTrialObjects`, clamped. `TracingFlags.dragStepBudget` becomes an `int?` override, null by default; the two drag sessions capture the derived value once at `start`, like `dragTracing`
+- [ ] **The work constant is the shipped constant restated** — 12288 = 128 × 96, the 100-object gate rig's downstream count — so that construction's budget is unchanged and the recalibration is visible as such
+- [ ] **Floor at 128** (no construction loses budget; large graphs unchanged) and **ceiling at 2048** (measured: a starving walk stops progressing past ~500 trials)
+- [ ] Coverage: the derivation itself; the B-crossing in `drag_crossing_test.dart` carried at the *derived* budget rather than a hand-set 512; the override still pins and still bails at 0
+- [ ] Gates: suite green, analyze clean, goldens byte-identical, browser gate green, drag-frame perf gate PASS
+- [ ] **Left open, named**: on a graph large enough for the floor to bind, a starving frame costs time linear in the graph *and* has too few trials to finish a detour — it pays and fails. Pre-existing, not introduced here; the fix is for a pass to decline a detour it cannot afford, and bail at once. Its own phase
+
 ## Phase 138 — the rhombus un-refused, and the corner that jumps
 
 Phase 132's last box, and Phase 129's. Gluing a point to a general conic was what the rhombus was refused for; Phases 132/132d built it, so the refusal goes. The content turned out to be elsewhere — the *fourth* corner's route, which PLAN §"The macro triage" had recorded as Euclid I.1 and which measurement rejected.
