@@ -1,0 +1,25 @@
+lib/domain/construction/mutable_roots.dart
+  s_3c4efc67427960::t_7e1997350a60f5 71
+test/domain/prover/diagram_filter_test.dart
+  s_3c4efc67427960::t_3f46027e0ed6f0 1-92,94-170,176-219
+  s_3c4efc67427960::t_7e1997350a60f5 93
+  s_3c4efc67427960::t_8cc1571b5ace46 171-175
+lib/domain/prover/diagram_filter.dart
+  s_3c4efc67427960::t_f34d76815e0c23 1-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "068394f432cc869378ca190248ea450150db5ad9",
+  "prompts": {},
+  "sessions": {
+    "s_3c4efc67427960": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "de7ed9d2-f31e-42a7-a4a5-2645a7e193ad",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
