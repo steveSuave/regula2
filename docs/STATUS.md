@@ -10,7 +10,7 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ## Session 153 (V2 Session 55) — 2026-08-20
 
-**Done — Phase 140 / M-P0: the threading decision, and the thing that decides it is the yield primitive, which the plan never named.** On `phase-140-mp0-threading`, unmerged. Suite **2756** green (unchanged — a spike adds no `lib/` code), analyze clean, browser gate green and now carrying two more tests. Phase 139 merged and pushed to `main` at `d98f103` at the user's direction, without a `gh run list` check.
+**Done — Phase 140 / M-P0: the threading decision, and the thing that decides it is the yield primitive, which the plan never named.** On `phase-140-mp0-threading`, **merged and pushed** (`11fa132`). Suite **2756** green (unchanged — a spike adds no `lib/` code), analyze clean, browser gate green and now carrying two more tests. Phase 139 merged and pushed to `main` at `d98f103` at the user's direction, without a `gh run list` check.
 
 - **Scoped as a spike, in the Phase 101 sense**, and that framing is load-bearing: PLAN requires the decision "before any prover code", not an engine. There is nothing to drive yet, and an abstraction with no consumer is what this project keeps declining to build. The deliverable is three measurements and a pinned decision.
 - **The prior held in every part except one, and the exception is the whole phase.** "Resumable state machine, cooperatively chunked on web, `Isolate.run` on native, Worker-portable later" is right. What it did not name is *how* the web engine yields — and the Dart-idiomatic answer is a 105× trap.
@@ -21,7 +21,7 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 - **`dart:isolate` compiles cleanly for both web targets and throws at runtime** (`UnsupportedError: new RawReceivePort` on dart2js, a trap on dart2wasm). Recorded as a rule, because the failure mode is worse than a build error: the native path must be reached by conditional import, and the browser gate is the only thing that can catch a violation.
 - **The Web Worker is rejected for now, and the write-up says exactly how far the evidence goes.** Not needed — chunking cleared the bar it would have been introduced to clear. *Not verified* to work under dart2wasm; that was not measured, and saying so is better than deferring it as folklore.
 
-**Next.** Merge `phase-140-mp0-threading` — a **deploy**. Then M-P1 (predicates + the numeric filter, generalizing `point_coincidence.dart`'s perturbation probe from "same position" to "predicate survives perturbation"), which M-P0 no longer blocks. Carried: the Android/iOS smokes (environment-blocked), Phase 139's named open box (a pass should decline a detour it cannot afford rather than pay and fail), Phase 134's uncontested locus-chain exclusion. Standing and deferred: the user's preferred **pure** route for deflation.
+**Next.** M-P1 (predicates + the numeric filter, generalizing `point_coincidence.dart`'s perturbation probe from "same position" to "predicate survives perturbation"), which M-P0 no longer blocks. Carried: the Android/iOS smokes (environment-blocked), Phase 139's named open box (a pass should decline a detour it cannot afford rather than pay and fail), Phase 134's uncontested locus-chain exclusion. Standing and deferred: the user's preferred **pure** route for deflation.
 
 **Gotchas.**
 
