@@ -1,18 +1,9 @@
 import 'dart:math' as math;
 
 import '../construction/geo_object.dart';
-import '../construction/objects/free_point.dart';
-import '../construction/objects/point_on_object.dart';
+import '../construction/mutable_roots.dart';
 import '../math/vec2.dart';
 import '../projective/absolute.dart';
-
-/// How far a probe displaces each mutable root, relative to the root's
-/// magnitude (floored at 1 world unit): far enough that an accidental
-/// overlap separates by orders of magnitude more than [_tolerance], small
-/// enough to usually stay in the same qualitative configuration. A probe
-/// that does trip a degeneracy makes the candidate undefined, which
-/// conservatively keeps the duplicate.
-const double _probeScale = 0.03;
 
 /// How many random configurations a coincidence must survive.
 const int _probeCount = 3;
@@ -20,7 +11,7 @@ const int _probeCount = 3;
 /// Positions closer than this (relative to magnitude, floored at 1) count
 /// as coincident, both for the initial screen and for surviving a probe.
 /// Identical points agree to floating-point error (~1e-12 relative);
-/// accidental overlaps separate by ~[_probeScale] under a probe — this
+/// accidental overlaps separate by ~[probeScale] under a probe — this
 /// sits between the two with orders of magnitude to spare on both sides.
 double _tolerance(Vec2 at) => 1e-6 * math.max(1.0, at.norm);
 
@@ -108,30 +99,11 @@ GeoPoint? coincidentExistingPoint(
     return null;
   }
 
-  final freeRoots = <FreePoint>{};
-  final parameterRoots = <PointOnObject>{};
-  _collectMutableRoots([candidate, ...matches], freeRoots, parameterRoots);
-  final savedPositions = {for (final root in freeRoots) root: root.position};
-  final savedParameters = {
-    for (final root in parameterRoots) root: root.parameter,
-  };
+  final roots = MutableRoots.reachedFrom([candidate, ...matches]);
   final rng = random ?? math.Random(57);
 
   for (var probe = 0; probe < _probeCount && matches.isNotEmpty; probe++) {
-    for (final root in freeRoots) {
-      final base = savedPositions[root]!;
-      final radius = _probeScale * math.max(1.0, base.norm);
-      final angle = rng.nextDouble() * 2 * math.pi;
-      root.position = base + Vec2(math.cos(angle), math.sin(angle)) * radius;
-    }
-    for (final root in parameterRoots) {
-      final base = savedParameters[root]!;
-      final magnitude =
-          (0.5 + rng.nextDouble() / 2) *
-          _probeScale *
-          math.max(1.0, base.abs());
-      root.parameter = base + (rng.nextBool() ? magnitude : -magnitude);
-    }
+    roots.perturb(rng);
     _recomputeCarriers(all, privateChain, absolute);
     final moved = candidate.position;
     matches = [
@@ -143,8 +115,7 @@ GeoPoint? coincidentExistingPoint(
     ];
   }
 
-  savedPositions.forEach((root, saved) => root.position = saved);
-  savedParameters.forEach((root, saved) => root.parameter = saved);
+  roots.restore();
   _recomputeCarriers(all, privateChain, absolute);
 
   return matches.isEmpty ? null : matches.first;
@@ -168,48 +139,15 @@ List<GeoObject> _privateAncestorChain(List<GeoObject> all, GeoPoint candidate) {
   return chain;
 }
 
-/// Every mutable root the objects in [from] transitively depend on:
-/// [FreePoint] positions and [PointOnObject] parameters. A glued point is
-/// both a root (its parameter) and a dependent (of its host curve), so
-/// traversal continues through it.
-void _collectMutableRoots(
-  Iterable<GeoObject> from,
-  Set<FreePoint> freeRoots,
-  Set<PointOnObject> parameterRoots,
-) {
-  final seen = Set<GeoObject>.identity();
-  void visit(GeoObject object) {
-    if (!seen.add(object)) {
-      return;
-    }
-    if (object is FreePoint) {
-      freeRoots.add(object);
-      return;
-    }
-    if (object is PointOnObject) {
-      parameterRoots.add(object);
-    }
-    object.parents.forEach(visit);
-  }
-
-  from.forEach(visit);
-}
-
-/// Recomputes every point, line and circle in [all] (insertion order is
-/// topological), then the private chain. Angles, polygons, measurements
-/// and loci are skipped: no point position depends on them, nothing reads
-/// them while probing, and the restore pass brings their carrier inputs
-/// back bit-exactly, so they are never observed stale.
+/// [recomputeCarriers] over the construction, then the private chain —
+/// the candidate's scaffolding is downstream of the construction's
+/// objects and outside it, so it recomputes last.
 void _recomputeCarriers(
   List<GeoObject> all,
   List<GeoObject> privateChain,
   Absolute absolute,
 ) {
-  for (final object in all) {
-    if (object is GeoPoint || object is GeoLine || object is GeoCircle) {
-      object.recompute(absolute);
-    }
-  }
+  recomputeCarriers(all, absolute);
   for (final object in privateChain) {
     object.recompute(absolute);
   }
