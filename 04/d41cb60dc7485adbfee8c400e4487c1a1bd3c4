@@ -1,0 +1,26 @@
+lib/domain/construction/objects/tangent_line.dart
+  s_c8a0cef1da7985::t_ac2248183e1e45 83
+  s_c8a0cef1da7985::t_7495ad9790a427 103-124,127,132,139-149
+  s_c8a0cef1da7985::t_60d9d008630f4a 133-138,150
+  s_c8a0cef1da7985::t_25370f5e8f3106 151
+lib/domain/construction/objects/intersection_point.dart
+  s_c8a0cef1da7985::t_aff53a6723c4d0 546-553
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_c8a0cef1da7985::t_0ce61223e0e9e8 14-18,22-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "04d41cb60dc7485adbfee8c400e4487c1a1bd3c4",
+  "prompts": {},
+  "sessions": {
+    "s_c8a0cef1da7985": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31dbc4d2-5990-4bdc-a1f8-38c2ef6fb3fc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
