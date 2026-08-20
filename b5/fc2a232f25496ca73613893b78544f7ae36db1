@@ -1,0 +1,29 @@
+lib/domain/construction/objects/locus.dart
+  s_caaae016b70c24::t_fc253f63080a75 580-650
+  s_caaae016b70c24::t_976d2f13738c53 546
+  s_caaae016b70c24::t_c48bb428e3c838 6
+test/domain/construction/objects/locus_test.dart
+  s_caaae016b70c24::t_bdeecfe39ddfe2 5,8,21,23-27,30-31,977-1006,1012-1025,1050-1054,1056-1059,1063,1069-1070,1098-1104,1109-1167,1183,1223-1233,1235-1236,1359-1385
+  s_caaae016b70c24::t_de74eb1f74e5fd 1405-1407
+  s_caaae016b70c24::t_1ba7491567e0a6 1007-1011,1026-1049,1105-1108,1168-1182,1184-1222,1234,1237-1270
+  s_caaae016b70c24::t_8c3d24e4f8a59f 1055,1064
+  s_caaae016b70c24::t_55fc2a68d447d0 1060-1062,1065-1068
+  s_caaae016b70c24::t_c6348494d8c955 1071-1097,1386-1404,1408-1415
+  s_caaae016b70c24::t_29758ca4249f54 1271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b5fc2a232f25496ca73613893b78544f7ae36db1",
+  "prompts": {},
+  "sessions": {
+    "s_caaae016b70c24": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a066cc1-4013-47c6-8013-3da00ad7dfb3",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
