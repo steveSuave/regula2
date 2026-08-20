@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/incidence.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
@@ -227,6 +230,214 @@ void main() {
           reason: 'changed roots at t = $t',
         );
       }
+    });
+  });
+
+  group('a conic pair with four candidates and one shared point', () {
+    // Phase 136b's second open box, measured. Deflation names the
+    // left-over root only when exactly one is left over, so a conic pair
+    // with four candidates and one shared point cannot use it. The
+    // question the box left open is whether the *shared* role alone is
+    // worth naming there — it is, and it already was: the code path is
+    // independent of how many roots remain. This group is the pin it
+    // never had.
+
+    /// Two ellipses, `x²/9 + y²/4 = 1` and `x²/4 + y²/9 = 1`, which cross
+    /// in four real points at (±s, ±s). P = (s, s) is a *defining* point
+    /// of both, so the construction knows that one crossing; the other
+    /// three it does not.
+    ///
+    /// `blind` is the second ellipse built on a bit-exact *copy* of P
+    /// (a ratio-1 homothety, structurally invisible — the Phase 135/136b
+    /// technique), so the same geometry addresses its crossings the way
+    /// it would with no theorem to name them.
+    ({
+      Construction construction,
+      FreePoint p,
+      FivePointConic e1,
+      FivePointConic e2,
+      FivePointConic blind,
+      double s,
+    })
+    fourWayRig() {
+      final s = 6 / math.sqrt(13);
+      final p = FreePoint(id: 'p', position: Vec2(s, s));
+      final onE1 = [
+        FreePoint(id: 'a1', position: const Vec2(3, 0)),
+        FreePoint(id: 'a2', position: const Vec2(0, 2)),
+        FreePoint(id: 'a3', position: const Vec2(-3, 0)),
+        FreePoint(id: 'a4', position: const Vec2(0, -2)),
+      ];
+      final onE2 = [
+        FreePoint(id: 'b1', position: const Vec2(2, 0)),
+        FreePoint(id: 'b2', position: const Vec2(0, 3)),
+        FreePoint(id: 'b3', position: const Vec2(-2, 0)),
+        FreePoint(id: 'b4', position: const Vec2(0, -3)),
+      ];
+      final origin = FreePoint(id: 'o', position: Vec2.zero);
+      final copy = HomotheticPoint(
+        id: 'pc',
+        point: p,
+        center: origin,
+        ratio: 1,
+      );
+      final e1 = FivePointConic(id: 'e1', points: [p, ...onE1]);
+      final e2 = FivePointConic(id: 'e2', points: [p, ...onE2]);
+      final blind = FivePointConic(id: 'eb', points: [copy, ...onE2]);
+      final construction = Construction();
+      for (final object in [p, ...onE1, ...onE2, origin, copy, e1, e2, blind]) {
+        construction.add(object);
+      }
+      return (
+        construction: construction,
+        p: p,
+        e1: e1,
+        e2: e2,
+        blind: blind,
+        s: s,
+      );
+    }
+
+    test('the pair has four real crossings and knows exactly one', () {
+      final rig = fourWayRig();
+      expect(sharedIncidentPoints(rig.e1, rig.e2), [same(rig.p)]);
+      expect(
+        sharedIncidentPoints(rig.e1, rig.blind),
+        isEmpty,
+        reason: 'the copy is bit-exact and structurally invisible',
+      );
+
+      final probe = IntersectionPoint(
+        id: 'probe',
+        curve1: rig.e1,
+        curve2: rig.e2,
+        branchIndex: 0,
+      );
+      rig.construction.add(probe);
+      expect(probe.candidateCount, 4);
+    });
+
+    test('the shared role is named even with three roots left over', () {
+      final rig = fourWayRig();
+      final roles = <bool>[];
+      for (var k = 0; k < 4; k++) {
+        final point = IntersectionPoint(
+          id: 'k$k',
+          curve1: rig.e1,
+          curve2: rig.e2,
+          branchIndex: k,
+        );
+        rig.construction.add(point);
+        roles.add(point.tracksDeflatedRoot);
+      }
+      expect(
+        roles.where((deflated) => !deflated),
+        hasLength(1),
+        reason: 'exactly one branch settles on the shared point',
+      );
+      expect(
+        roles.where((deflated) => deflated),
+        hasLength(3),
+        reason: 'the other three are left over, and deflation refuses them',
+      );
+    });
+
+    test('so it holds its crossing where a geometric address cannot', () {
+      // The measurement the box asked for. P is wiggled around its start
+      // in a circle small enough to keep all five defining points of each
+      // conic in general position, so nothing degenerates and the only
+      // thing moving is the four crossings.
+      final rig = fourWayRig();
+      final named = IntersectionPoint(
+        id: 'named',
+        curve1: rig.e1,
+        curve2: rig.e2,
+        branchIndex: 3,
+      );
+      final blind = IntersectionPoint(
+        id: 'blind',
+        curve1: rig.e1,
+        curve2: rig.blind,
+        branchIndex: 3,
+      );
+      rig.construction
+        ..add(named)
+        ..add(blind);
+      expect(named.tracksDeflatedRoot, isFalse);
+      expect(named.position, rig.p.position);
+      expect(blind.position, rig.p.position, reason: 'both start on P');
+
+      var namedOff = 0;
+      var blindOff = 0;
+      var blindWorstStep = 0.0;
+      var blindPrevious = blind.position!;
+      const steps = 720;
+      for (var i = 1; i <= steps; i++) {
+        final t = 2 * math.pi * i / steps;
+        rig.construction.moveFreePoint(
+          'p',
+          Vec2(rig.s + 0.35 * math.cos(t), rig.s + 0.35 * math.sin(t)),
+        );
+        final target = rig.p.position;
+        if (named.position!.distanceTo(target) > 1e-9) namedOff++;
+        final now = blind.position!;
+        if (now.distanceTo(target) > 1e-9) blindOff++;
+        blindWorstStep = math.max(
+          blindWorstStep,
+          now.distanceTo(blindPrevious),
+        );
+        blindPrevious = now;
+      }
+
+      expect(
+        namedOff,
+        0,
+        reason: 'the named crossing is P at every one of $steps samples',
+      );
+      expect(
+        blindOff,
+        greaterThan(steps ~/ 3),
+        reason:
+            'the blind twin loses it for half the sweep — 359 of 720 when '
+            'this was written',
+      );
+      expect(
+        blindWorstStep,
+        greaterThan(1),
+        reason: 'and gets there by jumping, ~3.4 world units',
+      );
+    });
+
+    test('the three left-over roots keep addressing geometrically', () {
+      // Deflation's refusal is right — with three roots left over there
+      // is nothing unique to divide out — and it is not free. Each of
+      // them exchanges during the same wiggle, by the same ~3.4 the blind
+      // twin does. Naming the shared role does not rescue them, and this
+      // is what it would take to widen the box further.
+      final rig = fourWayRig();
+      final leftOver = IntersectionPoint(
+        id: 'k0',
+        curve1: rig.e1,
+        curve2: rig.e2,
+        branchIndex: 0,
+      );
+      rig.construction.add(leftOver);
+      expect(leftOver.tracksDeflatedRoot, isTrue);
+
+      var worstStep = 0.0;
+      var previous = leftOver.position!;
+      const steps = 720;
+      for (var i = 1; i <= steps; i++) {
+        final t = 2 * math.pi * i / steps;
+        rig.construction.moveFreePoint(
+          'p',
+          Vec2(rig.s + 0.35 * math.cos(t), rig.s + 0.35 * math.sin(t)),
+        );
+        final now = leftOver.position!;
+        worstStep = math.max(worstStep, now.distanceTo(previous));
+        previous = now;
+      }
+      expect(worstStep, greaterThan(1));
     });
   });
 
