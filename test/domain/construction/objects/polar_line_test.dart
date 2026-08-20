@@ -176,4 +176,59 @@ void main() {
       },
     );
   });
+
+  group('representative-founded orientation (Phase 137)', () {
+    test('the oriented representative is continuous through the '
+        'pole-at-centre chart event', () {
+      // Grid snapping lands poles exactly on the centre (Phase 134), so
+      // this is a state drags actually visit. The carrier there is ℓ∞ —
+      // no chart — and the representative-founded orientation must not
+      // jump crossing it: successive representatives along a path
+      // through the centre never oppose each other.
+      final k = StubProjectiveCircle(
+        ConicMatrix.lift(CircleEq(const Vec2(1, 2), 2)),
+      );
+      ProjLine repAt(double t) => PolarLine(
+        id: 'p',
+        point: FreePoint(id: 'f', position: Vec2(1 + t, 2)),
+        circle: k,
+      ).projLine!;
+      var prev = repAt(-0.01);
+      for (var t = -0.008; t <= 0.0101; t += 0.002) {
+        final cur = repAt(t);
+        final dot =
+            prev.a.re * cur.a.re + prev.b.re * cur.b.re + prev.c.re * cur.c.re;
+        expect(dot, greaterThan(0), reason: 'sign jump at t = $t');
+        prev = cur;
+      }
+    });
+
+    test('a chartless carrier polarizes with a specified orientation', () {
+      // An ellipse has no CircleEq, so V1's centre→pole chart rule never
+      // spoke here and the chart orientation used to be the
+      // largest-coefficient artifact of `normalized`. Now it is the
+      // representative's, which for x²/4 + y² = 1 and the pole (4, 0)
+      // is `tr Q · w_p` times `A·p = (1, 0, −1)` — normal +x, direction
+      // −y (downward).
+      final ellipse = StubProjectiveCircle(
+        ConicMatrix(
+          const Complex(0.25),
+          Complex.zero,
+          Complex.one,
+          Complex.zero,
+          Complex.zero,
+          const Complex(-1),
+        ),
+      );
+      expect(ellipse.circle, isNull);
+      final polar = PolarLine(
+        id: 'p',
+        point: FreePoint(id: 'f', position: const Vec2(4, 0)),
+        circle: ellipse,
+      );
+      expect(polar.line, isNotNull);
+      expect(polar.line!.normal.dot(const Vec2(1, 0)), greaterThan(0));
+      expect(polar.line!.direction.dot(const Vec2(0, -1)), greaterThan(0));
+    });
+  });
 }

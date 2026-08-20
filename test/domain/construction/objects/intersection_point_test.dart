@@ -751,6 +751,43 @@ void main() {
       expect(x.projPoint, isNull);
     });
   });
+
+  group('the w-positive candidate contract (Phase 137)', () {
+    // Solver output carries either representative sign — measured, 41%
+    // of real finite line∩conic candidates come back with w < 0 — and
+    // line orientation flows covariantly through joins as products of
+    // the parents' w signs, so `intersectionCandidates` normalizes at
+    // the source. Candidates and stored points share the convention,
+    // so bitwise membership comparisons keep holding.
+    test('a line∩line meet with negative solver w is stored positive', () {
+      // (1, 0, 0) ∧ (0, −1, 0): the raw cross product is (0, 0, −1) —
+      // the origin at w = −1.
+      final l1 = StubProjectiveLine(ProjLine.real(1, 0, 0));
+      final l2 = StubProjectiveLine(ProjLine.real(0, -1, 0));
+      final candidates = intersectionCandidates(l1, l2);
+      expect(candidates, hasLength(1));
+      expect(candidates.single.w.re, greaterThan(0));
+      expect(candidates.single.toVec2()!.closeTo(Vec2.zero), isTrue);
+    });
+
+    Glados2(any.vec2, any.vec2).test(
+      'every exactly-real finite line∩circle candidate carries w > 0',
+      (a, b) {
+        if (a.closeTo(b)) return;
+        final line = StubProjectiveLine(
+          ProjLine.lift(LineEq.throughPoints(a, b)),
+        );
+        final circle = StubProjectiveCircle(
+          ConicMatrix.lift(CircleEq(b, 1 + a.norm / 4)),
+        );
+        for (final p in intersectionCandidates(line, circle)) {
+          if (p.x.im == 0 && p.y.im == 0 && p.w.im == 0 && p.w.re != 0) {
+            expect(p.w.re, greaterThan(0), reason: 'candidate $p');
+          }
+        }
+      },
+    );
+  });
 }
 
 typedef GeoPointPair = (FreePoint, FreePoint);

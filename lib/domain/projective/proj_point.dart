@@ -96,8 +96,7 @@ class ProjPoint {
   /// output through this at its store site. An exact `×(−1)`,
   /// projectively nothing; idempotent; a no-op for the kinds that store
   /// `w` exactly 1.
-  ProjPoint get wPositive =>
-      (x.im == 0 && y.im == 0 && w.im == 0 && w.re < 0)
+  ProjPoint get wPositive => (x.im == 0 && y.im == 0 && w.im == 0 && w.re < 0)
       ? scaledBy(const Complex(-1))
       : this;
 

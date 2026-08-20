@@ -525,7 +525,11 @@ class ConicShape {
         // parabola's base never switches; only its axis pair can.
         return [unbalance.apply(_nullDirectionOf(balanced)).normalized];
       case ConicClass.hyperbola:
-        final atInfinity = intersectLineConic(ProjLine.infinity, balanced, _eps);
+        final atInfinity = intersectLineConic(
+          ProjLine.infinity,
+          balanced,
+          _eps,
+        );
         return [
           for (final root in atInfinity)
             if (root.isReal(_eps)) unbalance.apply(root).normalized,

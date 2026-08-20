@@ -279,4 +279,80 @@ void main() {
       },
     );
   });
+
+  group('representative-founded ordering (Phase 137)', () {
+    test('a chartless carrier orders its tangents — the ellipse from an '
+        'outside pole', () {
+      // x²/4 + y² = 1 projects to no CircleEq, so V1's chart rule could
+      // not classify and solver order stood. The determinant rule orders
+      // exactly as the chart rule would if there were one: from the pole
+      // (4, 0) the polar is x = 1, the touches are (1, ±√3/2), and the
+      // touch *left* of the directed centre→pole line (+x) is the one
+      // with y > 0 — branch 0.
+      final ellipse = StubProjectiveCircle(
+        ConicMatrix(
+          const Complex(0.25),
+          Complex.zero,
+          Complex.one,
+          Complex.zero,
+          Complex.zero,
+          const Complex(-1),
+        ),
+      );
+      expect(ellipse.circle, isNull, reason: 'the carrier really is chartless');
+      final pole = FreePoint(id: 'p', position: const Vec2(4, 0));
+      final upper = ProjPoint.real(1, math.sqrt(3) / 2, 1);
+      final lower = ProjPoint.real(1, -math.sqrt(3) / 2, 1);
+      final branch0 = TangentLine(
+        id: 't0',
+        point: pole,
+        circle: ellipse,
+        branch: 0,
+      );
+      final branch1 = TangentLine(
+        id: 't1',
+        point: pole,
+        circle: ellipse,
+        branch: 1,
+      );
+      expect(branch0.line, isNotNull);
+      expect(branch1.line, isNotNull);
+      expect(branch0.projLine!.contains(upper, 1e-9), isTrue);
+      expect(branch1.projLine!.contains(lower, 1e-9), isTrue);
+      expect(branch0.projLine!.closeTo(branch1.projLine!), isFalse);
+    });
+
+    Glados2(any.vec2, any.vec2).test(
+      'on a circle the determinant rule is the chart rule — branch 0 '
+      'touch left of the directed centre→pole line',
+      (c, p) {
+        const radius = 1.5;
+        if ((p - c).norm <= radius * 1.05) return;
+        final centerPt = FreePoint(id: 'c', position: c);
+        final rimPt = FreePoint(id: 'r', position: c + Vec2(radius, 0));
+        final k = CircleCenterPoint(id: 'k', center: centerPt, onCircle: rimPt);
+        final pole = FreePoint(id: 'p', position: p);
+        for (final branch in [0, 1]) {
+          final tangent = TangentLine(
+            id: 't$branch',
+            point: pole,
+            circle: k,
+            branch: branch,
+          );
+          // The touch is the centre's foot on the tangent (tangent ⊥
+          // radius at the touch).
+          final touch = tangent.line!.project(c);
+          final cross = (p - c).cross(touch - c);
+          // Relative near-tie guard: a nearly-collapsed tangency has no
+          // stable left/right at fp resolution.
+          if (cross.abs() < 1e-7 * (p - c).norm * (touch - c).norm) continue;
+          expect(
+            cross > 0,
+            branch == 0,
+            reason: 'branch $branch touch $touch, cross $cross',
+          );
+        }
+      },
+    );
+  });
 }
