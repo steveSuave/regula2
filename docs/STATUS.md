@@ -8,6 +8,31 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 153 (V2 Session 55) — 2026-08-20
+
+**Done — Phase 140 / M-P0: the threading decision, and the thing that decides it is the yield primitive, which the plan never named.** On `phase-140-mp0-threading`, unmerged. Suite **2756** green (unchanged — a spike adds no `lib/` code), analyze clean, browser gate green and now carrying two more tests. Phase 139 merged and pushed to `main` at `d98f103` at the user's direction, without a `gh run list` check.
+
+- **Scoped as a spike, in the Phase 101 sense**, and that framing is load-bearing: PLAN requires the decision "before any prover code", not an engine. There is nothing to drive yet, and an abstraction with no consumer is what this project keeps declining to build. The deliverable is three measurements and a pinned decision.
+- **The prior held in every part except one, and the exception is the whole phase.** "Resumable state machine, cooperatively chunked on web, `Isolate.run` on native, Worker-portable later" is right. What it did not name is *how* the web engine yields — and the Dart-idiomatic answer is a 105× trap.
+- **`await Future.delayed(Duration.zero)` is `setTimeout`, and setTimeout is clamped.** The HTML spec mandates a 4 ms floor once five timeouts have nested. Measured in Chrome: **5.07 ms/yield**, against **0.048 ms** for a `MessageChannel` `postMessage` round trip — a macrotask, so the browser still renders, but not a timer, so nothing clamps it. On the synthetic fixpoint the difference is not tuning: chunking a 109 ms run at a 1 000-application budget takes **16.8 s** on dart2wasm, and dart2js never finishes. Through the channel, sixty 4 ms chunks in a browser showed **no measurable scheduling overhead**.
+- **That number could only be taken in a browser, and finding that out cost most of the session.** Node clamps setTimeout to ~1 ms rather than 4, and — worse — **dart2js under Node exits silently part-way through a microtask-yield loop**, exit code 0, output truncated because dart2js buffers stdout to a pipe. Two separate Node artifacts, both of which read as real findings until checked. `test/web/` is where the measurement belongs, for exactly the reason Phase 126d created it.
+- **The resumable shape is cheap and budget-independent**: 10% VM, 2% AOT, 11% dart2js, 4% dart2wasm over the straight-line loop, flat from 1 000 to 500 000 rule applications per step. So it is what the prover should be *everywhere* — the native isolate wraps it rather than replacing it, which is also what keeps "Worker-portable later" real. Its budget is counted in rule applications, not milliseconds, for Phase 139's reason exactly: bound a resumable walk by work, and it stays a deterministic function of its input.
+- **`Isolate.run` on native is close to free**: 0.05–0.09 ms round trip, ~4 ns/int to bring a fact database home, 0.16–0.22 ms of boundary on a 75–91 ms job (1.00×). The rule that follows from the numbers rather than taste: export a job only when it is longer than the round trip.
+- **`dart:isolate` compiles cleanly for both web targets and throws at runtime** (`UnsupportedError: new RawReceivePort` on dart2js, a trap on dart2wasm). Recorded as a rule, because the failure mode is worse than a build error: the native path must be reached by conditional import, and the browser gate is the only thing that can catch a violation.
+- **The Web Worker is rejected for now, and the write-up says exactly how far the evidence goes.** Not needed — chunking cleared the bar it would have been introduced to clear. *Not verified* to work under dart2wasm; that was not measured, and saying so is better than deferring it as folklore.
+
+**Next.** Merge `phase-140-mp0-threading` — a **deploy**. Then M-P1 (predicates + the numeric filter, generalizing `point_coincidence.dart`'s perturbation probe from "same position" to "predicate survives perturbation"), which M-P0 no longer blocks. Carried: the Android/iOS smokes (environment-blocked), Phase 139's named open box (a pass should decline a detour it cannot afford rather than pay and fail), Phase 134's uncontested locus-chain exclusion. Standing and deferred: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **A benchmark harness can be the wrong instrument, and say so only by being weird.** dart2js/Node exiting silently mid-`await` is not a Dart fact or a web fact; it is a Node fact. The tell was an exit code of 0 with half the output missing. When a measurement on a surrogate platform looks impossible rather than merely bad, suspect the surrogate before the subject.
+- **dart2js buffers stdout to a pipe**, so `timeout N cmd | tail` loses everything on kill. Redirect to a file when a run might not finish.
+- **The warmup in the yield test is load-bearing, not hygiene.** The timer clamp engages only after five nested timeouts, so a measurement that does not first nest deeply enough reports setTimeout's *unclamped* cost and misses the finding entirely. It is commented as such at the site.
+- The first synthetic fixpoint saturated a 65 536-fact space and took minutes; the modulus is the only dial on run length (work is ~3·N²) and is now set so the baseline lands in the tens of milliseconds. Convergence-by-saturation is the intended shape — a real DD run also converges because most applications rediscover something.
+- `Stopwatch.elapsedMicroseconds` on dart2js has millisecond resolution — its columns print as whole milliseconds. Fine at these magnitudes, misleading at smaller ones.
+
+---
+
 ## Session 152 (V2 Session 54) — 2026-08-20
 
 **Done — Phase 139: the step budget is an amount of work, and the number that argued against raising it was a frame cost read as a trial cost.** On `phase-139-drag-step-budget`, unmerged, four commits. Suite **2756** green (2745 + 11), analyze clean, 32 goldens byte-identical, browser gate green, `flutter build web` compiles, drag-frame perf gate PASS unchanged (1% plain / 19% with a locus, checksums identical).
