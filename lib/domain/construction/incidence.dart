@@ -3,6 +3,7 @@ import 'objects/angle_bisector_line.dart';
 import 'objects/arc.dart';
 import 'objects/bifocal_conic.dart';
 import 'objects/circle_center_point.dart';
+import 'objects/diameter_circle.dart';
 import 'objects/five_point_conic.dart';
 import 'objects/intersection_point.dart';
 import 'objects/line_through_two_points.dart';
@@ -65,6 +66,11 @@ List<GeoPoint> onCarrierDefiningPoints(GeoObject curve) => switch (curve) {
   // Both tangent branches pass through the external point.
   TangentLine() => [curve.point],
   CircleCenterPoint() => [curve.onCircle],
+  // Both ends of the diameter are on the circle it spans — the same
+  // fact as `ThreePointCircle`'s, and missing from this switch until
+  // Phase 136b's box was worked. A compass circle's radius pair is not
+  // here for the opposite reason: it fixes a length somewhere else.
+  DiameterCircle() => [curve.point1, curve.point2],
   ThreePointCircle() => [curve.point1, curve.point2, curve.point3],
   // Five points determine the conic, so all five are on it.
   FivePointConic() => curve.points,
