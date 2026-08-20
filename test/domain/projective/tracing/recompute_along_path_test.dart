@@ -757,6 +757,51 @@ void main() {
       expect(locus.samples, tracedSamples);
     });
 
+    test('and tracedWorkPerTrial counts exactly what a trial recomputes '
+        '(Phase 139)', () {
+      // The budget divides a work quota by this number, so it has to be
+      // what a trial really costs — which means the locus held back
+      // above must not be in it. The rule lives in one place
+      // (`_tracedPartition`) precisely so the walk and the budget cannot
+      // drift apart; this pins the half a reader is likely to get wrong.
+      final construction = Construction();
+      final fixed = fp('a', 0, 0);
+      final moving = fp('c2', -6, 4);
+      final anchor = fp('an', 10, 10);
+      final k1 = FixedRadiusCircle(id: 'k1', center: fixed, radius: 2);
+      final k2 = FixedRadiusCircle(id: 'k2', center: moving, radius: 2);
+      final driver = PointOnObject(id: 'drv', curve: k2, parameter: 0);
+      final traced = Midpoint(id: 'm', point1: driver, point2: anchor);
+      final locus = _CountingLocus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 32,
+      );
+      construction
+        ..add(fixed)
+        ..add(moving)
+        ..add(anchor)
+        ..add(k1)
+        ..add(k2)
+        ..add(driver)
+        ..add(traced)
+        ..add(locus);
+
+      // k2, drv, m, loc hang off the dragged point; the locus is one of
+      // them and is the one a trial does not pay for.
+      final dependents = construction.transitiveDependentsOf('c2');
+      expect(dependents, contains('loc'));
+      expect(construction.tracedWorkPerTrial('c2'), dependents.length - 1);
+
+      // An object nothing depends on costs a trial nothing.
+      expect(
+        construction.tracedWorkPerTrial('an'),
+        lessThan(dependents.length),
+      );
+      expect(construction.tracedWorkPerTrial('m'), 0);
+    });
+
     test('a bailing pass still settles its loci', () {
       // The budget path throws, and the public API must not leave a
       // stale locus behind for a caller that catches and carries on.

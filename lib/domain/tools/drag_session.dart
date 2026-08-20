@@ -13,7 +13,6 @@ import '../construction/objects/compass_circle.dart';
 import '../construction/objects/expression_text.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/intersection_point.dart';
-import '../construction/objects/locus.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/circle_eq.dart';
 import '../math/grid_snap.dart';
@@ -144,23 +143,12 @@ abstract class DragSession {
 /// and [diff] turns the net adoptions into the gesture command's
 /// [BranchChange]s. Objects that vanished under the session (an undo
 /// mid-drag) are skipped everywhere.
-/// How many objects a traced pass recomputes on every trial: the
-/// dragged point's transitive dependents, less any `Locus` among them.
-///
-/// A locus is *not* per-trial work — Phase 117b holds loci out of the
-/// walk and settles them once in the pass's `finally` — so counting one
-/// would shrink the budget for work no trial does. This is what
-/// [TracingFlags.dragStepBudgetFor] divides the work quota by, taken
-/// once per gesture (Phase 139).
-int _perTrialWork(Construction construction, String pointId) {
-  var objects = 0;
-  for (final id in construction.transitiveDependentsOf(pointId)) {
-    if (construction.byId(id) is! Locus) objects++;
-  }
-  return objects;
-}
-
 /// The trial budget one gesture on [pointId] derives from its graph.
+///
+/// The quota is divided by what one trial of *this* construction costs,
+/// which `Construction.tracedWorkPerTrial` answers off the same
+/// partition the walk uses — loci excluded, since Phase 117b settles
+/// those once per pass rather than once per trial.
 ///
 /// Taken at session start rather than per frame because the graph is
 /// what it divides and a drag cannot change the graph. The *pin*
@@ -168,7 +156,7 @@ int _perTrialWork(Construction construction, String pointId) {
 /// debug override, and a caller that sets it mid-gesture means it to
 /// take effect now.
 int _derivedStepBudget(Construction construction, String pointId) =>
-    TracingFlags.dragStepBudgetFor(_perTrialWork(construction, pointId));
+    TracingFlags.dragStepBudgetFor(construction.tracedWorkPerTrial(pointId));
 
 class _BranchSnapshot {
   _BranchSnapshot(this._construction, String pointId) {

@@ -379,6 +379,44 @@ class Construction {
   /// it on bail and drops it at gesture end) — continuation state never
   /// survives a commit, save or bail, per the Phase 115 architecture
   /// notes.
+  /// The dragged point's dependents, split into what a traced pass
+  /// recomputes on every *trial* and the loci it settles once per pass.
+  ///
+  /// Loci are DAG leaves (nothing may take one as a parent: both
+  /// [IntersectionPoint] and [PointOnObject] reject them), so no
+  /// acceptance decision can read one. Recomputing a locus is a whole
+  /// traced sweep of its own — orders of magnitude more work than the
+  /// rest of the graph — so the walk holds them back and settles them
+  /// once, at whatever state the pass ends on. Before Phase 117b a
+  /// single starving frame paid `stepBudget` full sweeps (~130) before
+  /// bailing, which is what froze the app on documents carrying both a
+  /// locus and a degenerate intersection.
+  ({Set<String> affected, Set<String> affectedCore, List<Locus> affectedLoci})
+  _tracedPartition(String id) {
+    final affected = transitiveDependentsOf(id);
+    final affectedLoci = [
+      for (final o in _objects.values)
+        if (o is Locus && affected.contains(o.id)) o,
+    ];
+    final affectedCore = {...affected}
+      ..removeAll([for (final l in affectedLoci) l.id]);
+    return (
+      affected: affected,
+      affectedCore: affectedCore,
+      affectedLoci: affectedLoci,
+    );
+  }
+
+  /// How many objects a traced pass over [id] recomputes on every trial
+  /// — the size of [_tracedPartition]'s core.
+  ///
+  /// This is what a trial *costs*, and Phase 139 divides a fixed work
+  /// quota by it to get the pass's step budget
+  /// ([TracingFlags.dragStepBudgetFor]). It reads off the same partition
+  /// the walk itself uses, so the two cannot drift: a kind that starts
+  /// or stops being held back changes both together.
+  int tracedWorkPerTrial(String id) => _tracedPartition(id).affectedCore.length;
+
   ({int acceptedSteps, int rejectedSteps, int detours, double closing})
   _traceAlong({
     required String id,
@@ -393,22 +431,7 @@ class Construction {
       throw ArgumentError.value(stepBudget, 'stepBudget', 'must be at least 1');
     }
     TraceDiagnostics.count(TraceCounter.dragPasses);
-    final affected = transitiveDependentsOf(id);
-    // Loci are DAG leaves (nothing may take one as a parent: both
-    // `IntersectionPoint` and `PointOnObject` reject them), so no
-    // acceptance decision can read one. Recomputing a locus is a whole
-    // traced sweep of its own — orders of magnitude more work than the
-    // rest of the graph — so the walk holds them back and settles them
-    // once, in the `finally` below, at whatever state the pass ends on.
-    // Before Phase 117b a single starving frame paid `stepBudget` full
-    // sweeps (~130) before bailing, which is what froze the app on
-    // documents that carry both a locus and a degenerate intersection.
-    final affectedLoci = [
-      for (final o in _objects.values)
-        if (o is Locus && affected.contains(o.id)) o,
-    ];
-    final affectedCore = {...affected}
-      ..removeAll([for (final l in affectedLoci) l.id]);
+    final (:affected, :affectedCore, :affectedLoci) = _tracedPartition(id);
     // Locus-chain intersection points do not trace (Phase 113), and the
     // reason has changed twice. The original one — that a locus
     // recompute mid-walk would sweep its driver and drag the tracked
