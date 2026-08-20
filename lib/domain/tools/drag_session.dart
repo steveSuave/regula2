@@ -143,6 +143,21 @@ abstract class DragSession {
 /// and [diff] turns the net adoptions into the gesture command's
 /// [BranchChange]s. Objects that vanished under the session (an undo
 /// mid-drag) are skipped everywhere.
+/// The trial budget one gesture on [pointId] derives from its graph.
+///
+/// The quota is divided by what one trial of *this* construction costs,
+/// which `Construction.tracedWorkPerTrial` answers off the same
+/// partition the walk uses — loci excluded, since Phase 117b settles
+/// those once per pass rather than once per trial.
+///
+/// Taken at session start rather than per frame because the graph is
+/// what it divides and a drag cannot change the graph. The *pin*
+/// ([TracingFlags.dragStepBudget]) is read per frame instead — it is a
+/// debug override, and a caller that sets it mid-gesture means it to
+/// take effect now.
+int _derivedStepBudget(Construction construction, String pointId) =>
+    TracingFlags.dragStepBudgetFor(construction.tracedWorkPerTrial(pointId));
+
 class _BranchSnapshot {
   _BranchSnapshot(this._construction, String pointId) {
     for (final id in _construction.transitiveDependentsOf(pointId)) {
@@ -380,6 +395,9 @@ class _TranslateDragSession implements DragSession {
     _branches = _isFreePoint && _traceDrags
         ? _BranchSnapshot(_construction, _pointIds.single)
         : _BranchSnapshot.empty(_construction);
+    _derivedBudget = _isFreePoint && _traceDrags
+        ? _derivedStepBudget(_construction, _pointIds.single)
+        : 0;
     // Conic-glued points re-anchor per frame, whatever moves their host —
     // a single dragged point and a rigid translation both carry a host
     // across a parameterization-frame switch (an argmax tie crosses under
@@ -410,6 +428,17 @@ class _TranslateDragSession implements DragSession {
   /// rigid translations move several roots at once, which the naive
   /// single-path walk cannot continue yet.
   final bool _traceDrags = TracingFlags.dragTracing;
+
+  /// Trials this gesture's traced frames may spend before bailing,
+  /// derived from the graph once at session start (Phase 139; see
+  /// [_derivedStepBudget]). Zero for untraced sessions, which never read
+  /// it.
+  late final int _derivedBudget;
+
+  /// What a frame actually spends: the pin if one is set, else the
+  /// derivation. See [_derivedStepBudget] for why only one of the two is
+  /// captured.
+  int get _stepBudget => TracingFlags.dragStepBudget ?? _derivedBudget;
 
   /// The last position a traced preview actually carried identity to —
   /// where the next preview path starts, so branch matching is
@@ -533,7 +562,7 @@ class _TranslateDragSession implements DragSession {
       final result = _construction.recomputeAlongPath(
         id,
         DragPath(from, target),
-        stepBudget: TracingFlags.dragStepBudget,
+        stepBudget: _stepBudget,
         startStep: _startStep,
         seedMemory: _seedMemory,
       );
@@ -708,6 +737,9 @@ class _SlideDragSession implements DragSession {
     _branches = _traceDrags
         ? _BranchSnapshot(_construction, _pointId)
         : _BranchSnapshot.empty(_construction);
+    _derivedBudget = _traceDrags
+        ? _derivedStepBudget(_construction, _pointId)
+        : 0;
   }
 
   /// Null when the host curve is undefined — nothing to slide on (the hit
@@ -781,6 +813,12 @@ class _SlideDragSession implements DragSession {
   /// session's tracing. Captured once per gesture, like there.
   final bool _traceDrags = TracingFlags.dragTracing;
 
+  /// The free-point session's twins: the budget derived from the graph
+  /// once at session start, and what a frame spends (Phase 139).
+  late final int _derivedBudget;
+
+  int get _stepBudget => TracingFlags.dragStepBudget ?? _derivedBudget;
+
   /// Pre-drag branch indices — populated only when tracing (see the
   /// constructor).
   late final _BranchSnapshot _branches;
@@ -847,7 +885,7 @@ class _SlideDragSession implements DragSession {
         _pointId,
         from,
         _parameter,
-        stepBudget: TracingFlags.dragStepBudget,
+        stepBudget: _stepBudget,
         startStep: _startStep,
         seedMemory: _seedMemory,
       );
