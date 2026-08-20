@@ -1,0 +1,21 @@
+test/web/yield_cost_web_test.dart
+  s_3c4efc67427960::t_2db85a5e401b51 125-133
+docs/STATUS.md
+  s_3c4efc67427960::t_3353a06d88019b 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8145bff42b18135fe68ba0fbab025a13cdc61a0e",
+  "prompts": {},
+  "sessions": {
+    "s_3c4efc67427960": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "de7ed9d2-f31e-42a7-a4a5-2645a7e193ad",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
