@@ -1,0 +1,21 @@
+lib/domain/prover/fact.dart
+  s_c2d92678372113::t_d90de2e8384984 1-209
+test/domain/prover/fact_test.dart
+  s_c2d92678372113::t_d517a950f442d2 1-317
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "3a803a1783666fd44582a4b0ce6793ff848a9afc",
+  "prompts": {},
+  "sessions": {
+    "s_c2d92678372113": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "61db39f0-bfb0-4d6c-b18d-6197273bd271",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
