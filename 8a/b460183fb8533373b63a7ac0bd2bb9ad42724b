@@ -1,0 +1,26 @@
+lib/domain/projective/tracing/tracing_flags.dart
+  s_d3d11928d3ca96::t_c89099c9f22536 34-41
+docs/TODO.md
+  s_d3d11928d3ca96::t_a0962ce9e8b7fd 117
+  s_d3d11928d3ca96::t_c90c22a3dd3f45 21-30
+docs/STATUS.md
+  s_d3d11928d3ca96::t_36ba12a773164f 11-34
+docs/PLAN.md
+  s_d3d11928d3ca96::t_c89099c9f22536 183,192-194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8ab460183fb8533373b63a7ac0bd2bb9ad42724b",
+  "prompts": {},
+  "sessions": {
+    "s_d3d11928d3ca96": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bfdafdcd-2755-4d46-a48a-5460a04a864b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
