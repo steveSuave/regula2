@@ -46,6 +46,6 @@ class CircleCenter extends GeoPoint {
       return;
     }
     final pole = circle.conic?.poleOf(ProjLine.infinity);
-    _point = (pole == null || pole.isZero) ? null : pole;
+    _point = (pole == null || pole.isZero) ? null : pole.wPositive;
   }
 }

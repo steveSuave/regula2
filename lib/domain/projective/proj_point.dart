@@ -84,6 +84,23 @@ class ProjPoint {
     return ProjPoint(x / phase, y / phase, w / phase);
   }
 
+  /// The same point with the representative's sign fixed so `w.re > 0`,
+  /// when the triple is exactly real with a negative `w` — itself
+  /// otherwise (points at infinity, complex values, and triples already
+  /// compliant pass through untouched).
+  ///
+  /// The Phase 137 point-representative contract (PLAN §"Orientation is
+  /// the representative's sign"): line orientation flows covariantly
+  /// through joins and relative-line constructions as products of the
+  /// parents' `w` signs, so every point kind normalizes solver and matrix
+  /// output through this at its store site. An exact `×(−1)`,
+  /// projectively nothing; idempotent; a no-op for the kinds that store
+  /// `w` exactly 1.
+  ProjPoint get wPositive =>
+      (x.im == 0 && y.im == 0 && w.im == 0 && w.re < 0)
+      ? scaledBy(const Complex(-1))
+      : this;
+
   /// The line through this point and [other] (cross product of the triples).
   /// The zero line when the points are projectively equal.
   ProjLine join(ProjPoint other) => ProjLine(

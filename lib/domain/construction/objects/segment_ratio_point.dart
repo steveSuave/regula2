@@ -62,6 +62,6 @@ class SegmentRatioPoint extends GeoPoint {
       return;
     }
     final r = lerpOf(p1, p2, ratio);
-    _point = r.isZero ? null : r;
+    _point = r.isZero ? null : r.wPositive;
   }
 }

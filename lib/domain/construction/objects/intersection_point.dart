@@ -492,7 +492,7 @@ List<ProjPoint> intersectionCandidates(
         return const [];
       }
       final p = l1.meet(l2);
-      return p.isZero ? const [] : [p];
+      return p.isZero ? const [] : [p.wPositive];
     case (final GeoLine a, final GeoCircle b):
       return _lineConicCandidates(a, b, complexCarriers, absolute);
     case (final GeoCircle a, final GeoLine b):
@@ -508,7 +508,8 @@ List<ProjPoint> intersectionCandidates(
       }
       return [
         for (final p in intersectConicConic(c1, c2))
-          if (!p.isZero && !_sharedWithAbsolute(p, absolute)) _realSnapped(p),
+          if (!p.isZero && !_sharedWithAbsolute(p, absolute))
+            _realSnapped(p).wPositive,
       ];
     // Unreachable from IntersectionPoint: its constructor rejects
     // non-curve parents.
@@ -538,7 +539,8 @@ List<ProjPoint> _lineConicCandidates(
   }
   final candidates = [
     for (final p in intersectLineConic(l, c))
-      if (!p.isZero && !_sharedWithAbsolute(p, absolute)) _realSnapped(p),
+      if (!p.isZero && !_sharedWithAbsolute(p, absolute))
+        _realSnapped(p).wPositive,
   ];
   // `intersectLineConic` orders along the *representative's* direction,
   // but no kind contract pins the stored carrier's sign — a join through

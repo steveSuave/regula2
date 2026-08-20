@@ -58,6 +58,6 @@ abstract class TriangleCenterPoint extends GeoPoint {
       return;
     }
     final center = computeCenter(a, b, c, absolute);
-    _center = (center == null || center.isZero) ? null : center;
+    _center = (center == null || center.isZero) ? null : center.wPositive;
   }
 }

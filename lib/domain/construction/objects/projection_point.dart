@@ -51,6 +51,6 @@ class ProjectionPoint extends GeoPoint {
       return;
     }
     final foot = perpendicularThrough(p, carrier, absolute).meet(carrier);
-    _point = foot.isZero ? null : foot;
+    _point = foot.isZero ? null : foot.wPositive;
   }
 }

@@ -56,6 +56,6 @@ class HarmonicConjugatePoint extends GeoPoint {
       return;
     }
     final d = harmonicConjugateOf(a, b, c);
-    _point = d.isZero ? null : d;
+    _point = d.isZero ? null : d.wPositive;
   }
 }

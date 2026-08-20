@@ -65,6 +65,6 @@ class HomotheticPoint extends GeoPoint {
       return;
     }
     final image = ProjTransform.homothety(c, ratio).apply(p);
-    _point = image.isZero ? null : image;
+    _point = image.isZero ? null : image.wPositive;
   }
 }

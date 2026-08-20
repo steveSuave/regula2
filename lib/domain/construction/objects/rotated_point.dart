@@ -73,6 +73,6 @@ class RotatedPoint extends GeoPoint {
         ? ProjTransform.rotation(c, angle)
         : ProjTransform.ckRotation(c, angle, absolute);
     final image = transform.apply(p);
-    _point = image.isZero ? null : image;
+    _point = image.isZero ? null : image.wPositive;
   }
 }

@@ -59,6 +59,6 @@ class TranslatedPoint extends GeoPoint {
       return;
     }
     final image = ProjTransform.translationTaking(from, to).apply(p);
-    _point = image.isZero ? null : image;
+    _point = image.isZero ? null : image.wPositive;
   }
 }
