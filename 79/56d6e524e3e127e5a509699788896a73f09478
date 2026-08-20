@@ -1,0 +1,23 @@
+test/domain/construction/deflation_test.dart
+  s_4966f0c7cfe2d4::t_9e57276f33b4c6 101-102,107-120,123-128,130
+  s_4966f0c7cfe2d4::t_b2e192f92d202e 10,82-100,103-106,121-122,129,131-132
+  s_4966f0c7cfe2d4::t_bd8fd08feea417 133-134
+lib/domain/construction/incidence.dart
+  s_4966f0c7cfe2d4::t_07714befc357f7 6,69-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7956d6e524e3e127e5a509699788896a73f09478",
+  "prompts": {},
+  "sessions": {
+    "s_4966f0c7cfe2d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d9368574-caae-421c-934c-20538603096b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
