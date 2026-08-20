@@ -31,11 +31,14 @@ abstract final class TracingFlags {
   /// [objectsPerTrial] is how many objects the pass recomputes on every
   /// trial — the dragged point's transitive dependents, less any `Locus`
   /// among them, which Phase 117b settles once per pass rather than once
-  /// per trial. A trial costs 0.30–0.33 µs per such object, flat across
-  /// a 32× range of graph sizes (`benchmark/drag_budget_bench.dart`), so
-  /// dividing a fixed work quota by the count bounds the marginal cost
-  /// of a *starving* frame at ~3.9 ms on any construction — where a
-  /// constant trial count let it grow without bound with the graph.
+  /// per trial. A trial's cost is flat *per such object* across a 32×
+  /// range of graph sizes (`benchmark/drag_budget_bench.dart`) — 0.33 µs
+  /// on the VM, 0.45 dart2js, 0.52 dart2wasm, 0.64 AOT — so dividing a
+  /// fixed work quota by the count bounds the marginal cost of a
+  /// *starving* frame at ~4 ms (VM) to ~7.8 ms (AOT) on any
+  /// construction, where a constant trial count let it grow without
+  /// bound with the graph. Those are today's worst case, not a new one:
+  /// the quota is pinned to the gate rig's shipped budget.
   ///
   /// Deterministic on purpose: a wall-clock deadline would bound the
   /// same quantity more directly and would make which root a point holds
