@@ -1,0 +1,33 @@
+test/domain/projective/tracing/tracing_flags_test.dart
+  s_d3d11928d3ca96::t_3020d5392b6394 1-30,35-82
+  s_d3d11928d3ca96::t_a6fa8bcf1c2e93 31-34
+lib/domain/construction/construction.dart
+  s_d3d11928d3ca96::t_91c8a9223373cd 382-419,434
+test/domain/projective/tracing/recompute_along_path_test.dart
+  s_d3d11928d3ca96::t_86dbe0e9eaa762 760-803
+  s_d3d11928d3ca96::t_0db11b7cb45be7 759
+benchmark/drag_budget_bench.dart
+  s_d3d11928d3ca96::t_14f8b91a86aeae 1-129,131-208,213-219,221-226,231-232
+  s_d3d11928d3ca96::t_5ce1c493caeb90 130,209-212,227-230
+  s_d3d11928d3ca96::t_e2a1d49fd291ad 220
+lib/domain/tools/drag_session.dart
+  s_d3d11928d3ca96::t_b64618381f3563 148-152,159
+benchmark/run_drag_budget.sh
+  s_d3d11928d3ca96::t_5ce1c493caeb90 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3a8c67574fdd4e50ff62e167f711cbd5182e7a96",
+  "prompts": {},
+  "sessions": {
+    "s_d3d11928d3ca96": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bfdafdcd-2755-4d46-a48a-5460a04a864b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
