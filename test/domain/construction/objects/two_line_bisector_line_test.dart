@@ -191,15 +191,18 @@ void main() {
   });
 
   group('projective semantics (Phase 110)', () {
-    test('branch semantics anchor to the affine orientation, not the '
-        'carrier representative sign', () {
-      // A line whose stored representative is flipped (one parent held at
-      // w = −1) while its affine view keeps the V1 orientation. Both
-      // branches must match V1 computed on the affine views.
+    test('branch semantics follow the representatives, which the charts '
+        'carry (Phase 137)', () {
+      // A line one of whose parents is held at w = −1 — unrepresentable
+      // from a real kind under the w-positive contract; the stub flips
+      // the join's representative and therefore its chart. The branch
+      // semantics live on the representatives, and the V1 oracle
+      // computed on the (equally flipped) affine views agrees, because
+      // orientation has one source since Phase 137.
       final flipped = StubProjectivePoint(ProjPoint.real(-4, 0, -1));
       final plain = StubProjectivePoint(ProjPoint.real(0, 0, 1));
       final l1 = LineThroughTwoPoints(id: 'h', point1: plain, point2: flipped);
-      expect(l1.line!.direction.dot(const Vec2(1, 0)), greaterThan(0));
+      expect(l1.line!.direction.dot(const Vec2(1, 0)), lessThan(0));
       final l2 = LineThroughTwoPoints(
         id: 'v',
         point1: FreePoint(id: 'o', position: Vec2.zero),

@@ -158,10 +158,20 @@ void main() {
         );
         expect(scaled.projLine!.closeTo(baseline.projLine!), isTrue);
         expect(scaled.line!.closeTo(baseline.line!), isTrue);
+        // The *geometric* line is scale-invariant. The orientation is the
+        // representative's sign (Phase 137), so it is pinned only under a
+        // sign-preserving rescale — a complex phase legitimately carries
+        // into the representative. Real kinds never hand a polar a
+        // phase-scaled parent statically (the w-positive contract), and
+        // tracing's chart evaluator builds w = 1 by hand (Phase 132c).
+        final positively = PolarLine(
+          id: 'z',
+          point: StubProjectivePoint(pole.scaledBy(Complex(k.abs))),
+          circle: StubProjectiveCircle(conic.scaledBy(Complex(k.abs))),
+        );
         expect(
-          scaled.line!.direction.dot(baseline.line!.direction),
+          positively.line!.direction.dot(baseline.line!.direction),
           greaterThan(0),
-          reason: 'orientation is anchored affinely, not to the carrier',
         );
       },
     );

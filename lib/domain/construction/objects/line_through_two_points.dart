@@ -39,12 +39,9 @@ class LineThroughTwoPoints extends GeoLine {
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
     _carrier = carrierThrough(point1, point2);
-    final p1 = point1.position;
-    final p2 = point2.position;
-    _line = orientedAlong(
-      _carrier?.toLineEq(),
-      (p1 == null || p2 == null) ? null : p2 - p1,
-    );
+    // The join of w-positive representatives runs p1 → p2 by itself
+    // (Phase 137): the chart direction of `p1 × p2` is `w₁w₂·(p2 − p1)`.
+    _line = _carrier?.toOrientedLineEq();
   }
 }
 

@@ -18,9 +18,9 @@ import '../geo_object.dart';
 /// Migrated (Phase 111): stores the homogeneous lift of the chart
 /// evaluation. The `line`/`circle` reads in [recompute] are the sanctioned
 /// chart reads of the pinned parameterization decision (parameters are
-/// chart quantities; the migrated carriers' projections carry the
-/// `orientedAlong` anchor this parameterization depends on) — not bridge
-/// leftovers. Until tracing (Phase 113+) continues the point's homogeneous
+/// chart quantities; the carriers' projections carry the representative's
+/// orientation this parameterization depends on — Phase 137) — not
+/// bridge leftovers. Until tracing (Phase 113+) continues the point's homogeneous
 /// value, the stored lift always has `w` exactly one, so [position] reads
 /// the chart coordinates back exactly at any magnitude — no at-infinity
 /// cutoff, which locus sweeps along diverging line arms rely on.

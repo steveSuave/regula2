@@ -1,5 +1,4 @@
 import '../../math/line_eq.dart';
-import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/metric.dart';
@@ -59,12 +58,8 @@ class AngleBisectorLine extends GeoLine {
     _carrier = carrier.isZero ? null : carrier;
     // A canonical vertex has w = 1, so the carrier's raw representative
     // direction is exactly the kernel's (dx, dy) — V1's direction on real
-    // inputs. Re-anchor the (chart-normalized) projection to it.
-    final raw = _carrier;
-    _line = orientedAlong(
-      _carrier?.toLineEq(),
-      raw == null ? null : Vec2(raw.b.re, -raw.a.re),
-    );
+    // inputs. The oriented projection carries it to the chart (Phase 137).
+    _line = _carrier?.toOrientedLineEq();
   }
 
   /// The chart-canonical representative the kernel's selection rules are

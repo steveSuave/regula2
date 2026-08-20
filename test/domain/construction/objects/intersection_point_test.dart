@@ -572,16 +572,19 @@ void main() {
       },
     );
 
-    test('branch order is anchored to the affine direction, not the '
-        'carrier representative sign', () {
+    test('branch order follows the representative, which the chart '
+        'carries (Phase 137)', () {
       // Two parents with identical positions (−2, 0) → (2, 0), but the
-      // first stored at w = −1, flipping the join's representative. The
-      // affine view is orientation-anchored either way, and the branch
-      // order must follow it.
+      // first stored at w = −1 — a state no point kind can store under
+      // the Phase 137 w-positive contract, so only a stub reaches it.
+      // The flipped w flips the join's representative, and the chart and
+      // the branch order flip *with* it: orientation has one source, so
+      // the two can never disagree (before Phase 137 the chart was
+      // re-anchored to the parents' positions and the two could).
       final flipped = StubProjectivePoint(ProjPoint.real(2, 0, -1));
       final plain = StubProjectivePoint(ProjPoint.real(2, 0, 1));
       final l = LineThroughTwoPoints(id: 'l', point1: flipped, point2: plain);
-      expect(l.line!.direction.dot(const Vec2(1, 0)), greaterThan(0));
+      expect(l.line!.direction.dot(const Vec2(1, 0)), lessThan(0));
       final k = StubProjectiveCircle(ConicMatrix.lift(CircleEq(Vec2.zero, 1)));
       final x0 = IntersectionPoint(
         id: 'x0',
@@ -595,8 +598,8 @@ void main() {
         curve2: k,
         branchIndex: 1,
       );
-      expect(x0.position!.closeTo(const Vec2(-1, 0)), isTrue);
-      expect(x1.position!.closeTo(const Vec2(1, 0)), isTrue);
+      expect(x0.position!.closeTo(const Vec2(1, 0)), isTrue);
+      expect(x1.position!.closeTo(const Vec2(-1, 0)), isTrue);
     });
 
     Glados2(any.coordinate, any.coordinate).test(

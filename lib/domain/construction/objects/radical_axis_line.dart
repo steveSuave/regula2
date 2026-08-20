@@ -1,5 +1,4 @@
 import '../../math/line_eq.dart';
-import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/circles.dart';
 import '../../projective/complex.dart';
@@ -67,7 +66,7 @@ class RadicalAxisLine extends GeoLine {
     }
     final axis = radicalAxisOf(c1, c2);
     _carrier = axis.isZero ? null : _oriented(axis, c1, c2);
-    _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());
+    _line = _carrier?.toOrientedLineEq();
   }
 
   /// [axis] with its representative sign carrying the V1 orientation
@@ -82,18 +81,5 @@ class RadicalAxisLine extends GeoLine {
   static ProjLine _oriented(ProjLine axis, ConicMatrix c1, ConicMatrix c2) {
     final sign = (c1.xx.re + c1.yy.re) * (c2.xx.re + c2.yy.re);
     return sign < 0 ? axis.scaledBy(const Complex(-1)) : axis;
-  }
-
-  /// The V1 orientation: `radicalAxis`'s normal is the center₁→center₂
-  /// offset, so its direction is that offset rotated clockwise. Null
-  /// without an affine view of both parents (no V1 precedent).
-  Vec2? _v1Direction() {
-    final a = circle1.circle;
-    final b = circle2.circle;
-    if (a == null || b == null) {
-      return null;
-    }
-    final d = b.center - a.center;
-    return d == Vec2.zero ? null : Vec2(d.y, -d.x);
   }
 }

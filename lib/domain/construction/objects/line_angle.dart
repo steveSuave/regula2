@@ -32,10 +32,10 @@ import '../object_attributes.dart';
 /// absolute `intersectLineLine` parallel band is gone; near-parallel
 /// carriers mark a genuine faraway vertex, at-infinity within `toVec2`'s
 /// relative tolerance goes undefined). The wedge *directions* stay reads
-/// of the parents' anchored affine projections — [sign1]/[sign2] are ray
-/// concepts relative to the canonical carrier orientations, which only
-/// `GeoLine.line` (via `orientedAlong`) carries; same sanctioned chart
-/// read as `TwoLineBisectorLine`'s branch anchoring.
+/// of the parents' oriented affine projections — [sign1]/[sign2] are ray
+/// concepts relative to the canonical carrier orientations, which the
+/// representative's sign carries (`ProjLine.toOrientedLineEq`, Phase 137;
+/// PLAN §"Orientation is the representative's sign").
 class LineAngle extends GeoAngle {
   LineAngle({
     required super.id,

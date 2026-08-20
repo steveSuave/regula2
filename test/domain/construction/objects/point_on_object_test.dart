@@ -336,10 +336,18 @@ void main() {
       expect(p.projPoint, isNull);
     });
 
-    Glados3(any.vec2, any.vec2, any.nonZeroComplex).test(
-      'line host: recompute is invariant under complex rescaling of a '
-      'carrier parent',
+    Glados3(any.vec2, any.vec2, any.positiveDouble).test(
+      'line host: recompute is invariant under positive real rescaling '
+      'of a carrier parent',
       (p, q, k) {
+        // Positive real, not any complex scalar: the carrier's
+        // orientation is its representative's sign since Phase 137, and
+        // the parameter is signed arc length along it, so only
+        // sign-preserving rescales leave the parameterization fixed. A
+        // real kind cannot hand the host a sign-violating parent (the
+        // w-positive contract, pinned by
+        // point_representative_sign_test.dart), and tracing's chart
+        // evaluator builds w = 1 by hand (Phase 132c).
         if (ProjPoint.lift(p).closeTo(ProjPoint.lift(q))) return;
         final plain = PointOnObject(
           id: 'p1',
@@ -354,7 +362,7 @@ void main() {
           id: 'p2',
           curve: LineThroughTwoPoints(
             id: 'l2',
-            point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(k)),
+            point1: StubProjectivePoint(ProjPoint.lift(p).scaledBy(Complex(k))),
             point2: StubProjectivePoint(ProjPoint.lift(q)),
           ),
           parameter: 1.5,

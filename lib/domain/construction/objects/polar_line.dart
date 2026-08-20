@@ -1,5 +1,4 @@
 import '../../math/line_eq.dart';
-import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/conic_matrix.dart';
@@ -59,7 +58,7 @@ class PolarLine extends GeoLine {
     }
     final polar = a.polarLine(p);
     _carrier = polar.isZero ? null : _oriented(polar, a, p);
-    _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());
+    _line = _carrier?.toOrientedLineEq();
   }
 
   /// [polar] with its representative sign carrying the V1 orientation
@@ -73,18 +72,5 @@ class PolarLine extends GeoLine {
   static ProjLine _oriented(ProjLine polar, ConicMatrix a, ProjPoint p) {
     final sign = (a.xx.re + a.yy.re) * p.w.re;
     return sign < 0 ? polar.scaledBy(const Complex(-1)) : polar;
-  }
-
-  /// The V1 orientation: `polarLine`'s normal is the center→pole offset,
-  /// so its direction is that offset rotated clockwise. Null without an
-  /// affine view of both parents (no V1 precedent).
-  Vec2? _v1Direction() {
-    final pole = point.position;
-    final c = circle.circle;
-    if (pole == null || c == null) {
-      return null;
-    }
-    final n = pole - c.center;
-    return n == Vec2.zero ? null : Vec2(n.y, -n.x);
   }
 }

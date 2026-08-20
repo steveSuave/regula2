@@ -78,8 +78,6 @@ class Ray extends GeoLine {
     _carrier = carrierThrough(origin, through);
     final p1 = origin.position;
     final p2 = through.position;
-    _line = (p1 == null || p2 == null)
-        ? null
-        : orientedAlong(_carrier?.toLineEq(), p2 - p1);
+    _line = (p1 == null || p2 == null) ? null : _carrier?.toOrientedLineEq();
   }
 }

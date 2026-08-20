@@ -200,24 +200,4 @@ void main() {
       expect(degeneratePoint.projPoint, isNull);
     });
   });
-
-  group('orientedAlong (Phase 107)', () {
-    test('flips the projection when its direction opposes the anchor', () {
-      final l = LineEq.throughPoints(Vec2.zero, const Vec2(1, 1));
-      final flipped = orientedAlong(l, const Vec2(-1, -1))!;
-      expect(flipped.closeTo(l), isTrue, reason: 'same geometric line');
-      expect(flipped.direction.dot(const Vec2(-1, -1)), greaterThan(0));
-      expect(
-        orientedAlong(l, const Vec2(1, 1)),
-        same(l),
-        reason: 'already aligned: unchanged',
-      );
-    });
-
-    test('passes null projections and null anchors through', () {
-      expect(orientedAlong(null, const Vec2(1, 0)), isNull);
-      final l = LineEq(1, 0, -2);
-      expect(orientedAlong(l, null), same(l));
-    });
-  });
 }

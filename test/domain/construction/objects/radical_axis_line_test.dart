@@ -169,10 +169,18 @@ void main() {
         );
         expect(scaled.projLine!.closeTo(baseline.projLine!), isTrue);
         expect(scaled.line!.closeTo(baseline.line!), isTrue);
+        // The *geometric* axis is scale-invariant. The orientation is the
+        // representative's sign (Phase 137), pinned under sign-preserving
+        // rescales; a complex phase legitimately carries into the
+        // representative (see the polar's twin test).
+        final positively = RadicalAxisLine(
+          id: 'z',
+          circle1: StubProjectiveCircle(a.scaledBy(Complex(k.abs))),
+          circle2: StubProjectiveCircle(b.scaledBy(Complex(k.abs))),
+        );
         expect(
-          scaled.line!.direction.dot(baseline.line!.direction),
+          positively.line!.direction.dot(baseline.line!.direction),
           greaterThan(0),
-          reason: 'orientation is anchored affinely, not to the carrier',
         );
       },
     );

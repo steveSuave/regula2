@@ -103,11 +103,9 @@ class TwoLineBisectorLine extends GeoLine {
       _line = null;
       return;
     }
-    final a1 = _anchored(l1, line1.line);
-    final a2 = _anchored(l2, line2.line);
-    final carrier = twoLineBisectorOf(a1, a2, branch, absolute);
-    _carrier = carrier.isZero ? null : _oriented(carrier, a1, a2, absolute);
-    _line = orientedAlong(_carrier?.toLineEq(), _v1Direction());
+    final carrier = twoLineBisectorOf(l1, l2, branch, absolute);
+    _carrier = carrier.isZero ? null : _oriented(carrier, l1, l2, absolute);
+    _line = _carrier?.toOrientedLineEq();
   }
 
   /// [carrier] with its representative sign carrying the V1 orientation
@@ -130,32 +128,5 @@ class TwoLineBisectorLine extends GeoLine {
     }
     final wMeet = l1.meet(l2).w.re;
     return wMeet < 0 ? carrier.scaledBy(const Complex(-1)) : carrier;
-  }
-
-  /// [l] with its representative sign anchored to [affine]'s oriented
-  /// direction — the branch semantics live on the affine orientations.
-  /// Unchanged without an affine view (no V1 precedent to anchor to).
-  static ProjLine _anchored(ProjLine l, LineEq? affine) {
-    if (affine == null) {
-      return l;
-    }
-    final d = affine.direction;
-    return (d.x * l.b.re - d.y * l.a.re) < 0
-        ? l.scaledBy(const Complex(-1))
-        : l;
-  }
-
-  /// V1's orientation: along `d̂1 ± d̂2` of the affine oriented
-  /// directions. Null without both affine views (no V1 precedent).
-  Vec2? _v1Direction() {
-    final l1 = line1.line;
-    final l2 = line2.line;
-    if (l1 == null || l2 == null) {
-      return null;
-    }
-    final d = branch == 0
-        ? l1.direction + l2.direction
-        : l1.direction - l2.direction;
-    return d == Vec2.zero ? null : d;
   }
 }

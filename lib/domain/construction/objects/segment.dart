@@ -90,8 +90,8 @@ class Segment extends GeoLine {
     // endpoint that has no real finite position has no drawable extent,
     // so it stays undefined ([isDefined] reads [line]) and the painter,
     // hit tester and [parameterExtent] see exactly what they saw before.
-    _line = (p1 == null || p2 == null)
-        ? null
-        : orientedAlong(_carrier?.toLineEq(), p2 - p1);
+    // The orientation is the carrier's own (Phase 137): the join of
+    // w-positive representatives runs p1 → p2 by itself.
+    _line = (p1 == null || p2 == null) ? null : _carrier?.toOrientedLineEq();
   }
 }

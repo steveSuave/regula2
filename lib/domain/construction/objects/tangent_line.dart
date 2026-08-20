@@ -1,5 +1,4 @@
 import '../../math/line_eq.dart';
-import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
 import '../../projective/conic_matrix.dart';
@@ -84,7 +83,7 @@ class TangentLine extends GeoLine {
     final touch = _v1Ordered(touches)[branch];
     final tangent = a.polarLine(touch);
     _carrier = tangent.isZero ? null : _oriented(tangent, a, touch);
-    _line = orientedAlong(_carrier?.toLineEq(), _v1Direction(touch));
+    _line = _carrier?.toOrientedLineEq();
   }
 
   /// [tangent] with its representative sign carrying the V1 orientation
@@ -118,18 +117,5 @@ class TangentLine extends GeoLine {
       return [touches[1], touches[0]];
     }
     return touches;
-  }
-
-  /// The V1 orientation: the tangent runs along the touch-point radius
-  /// rotated counter-clockwise (`LineEq.pointDirection` of V1). Null
-  /// without an affine picture (no V1 precedent).
-  Vec2? _v1Direction(ProjPoint touch) {
-    final t = touch.toVec2();
-    final c = circle.circle;
-    if (t == null || c == null) {
-      return null;
-    }
-    final r = t - c.center;
-    return r == Vec2.zero ? null : r.perpendicular;
   }
 }

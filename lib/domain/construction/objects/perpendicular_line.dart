@@ -1,5 +1,3 @@
-import '../../math/line_eq.dart';
-import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/metric.dart';
 import '../../projective/proj_line.dart';
@@ -24,7 +22,4 @@ class PerpendicularLine extends RelativeLine {
     ProjLine reference,
     Absolute absolute,
   ) => perpendicularThrough(through, reference, absolute);
-
-  @override
-  Vec2 directionFrom(LineEq referenceLine) => referenceLine.normal;
 }

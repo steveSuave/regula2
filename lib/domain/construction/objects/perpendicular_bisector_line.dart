@@ -52,11 +52,9 @@ class PerpendicularBisectorLine extends GeoLine {
     }
     final carrier = perpendicularBisectorOf(p1, p2, absolute);
     _carrier = carrier.isZero ? null : carrier;
-    final a1 = point1.position;
-    final a2 = point2.position;
-    _line = orientedAlong(
-      _carrier?.toLineEq(),
-      (a1 == null || a2 == null) ? null : (a2 - a1).perpendicular,
-    );
+    // The orientation is the carrier's own (Phase 137): the kernel's
+    // representative runs along `(p2 − p1).perpendicular` for w-positive
+    // parents by itself.
+    _line = _carrier?.toOrientedLineEq();
   }
 }

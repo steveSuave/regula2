@@ -1,5 +1,4 @@
 import '../../math/line_eq.dart';
-import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/proj_point.dart';
@@ -56,11 +55,6 @@ abstract class RelativeLine extends GeoLine {
     Absolute absolute,
   );
 
-  /// The V1 orientation of the derived line, given the reference's affine
-  /// view ([LineEq.normal] and [LineEq.direction] are unit length, so
-  /// implementations built on them never yield zero).
-  Vec2 directionFrom(LineEq referenceLine);
-
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = through.projPoint;
@@ -72,10 +66,9 @@ abstract class RelativeLine extends GeoLine {
     }
     final carrier = carrierFrom(p, ref, absolute);
     _carrier = carrier.isZero ? null : carrier;
-    final refLine = reference.line;
-    _line = orientedAlong(
-      _carrier?.toLineEq(),
-      refLine == null ? null : directionFrom(refLine),
-    );
+    // The orientation is the carrier's own (Phase 137): the join of a
+    // w-positive through-point with the reference's direction point picks
+    // up the reference representative's orientation covariantly.
+    _line = _carrier?.toOrientedLineEq();
   }
 }

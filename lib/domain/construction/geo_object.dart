@@ -261,26 +261,6 @@ abstract class GeoCircle extends GeoObject {
   }
 }
 
-/// Orients [projected] — the affine projection of a migrated line's
-/// carrier — so its [LineEq.direction] points along [direction].
-///
-/// A projective line has no orientation, but the V1 affine views do
-/// (`throughPoints` runs p1→p2, `pointDirection` runs along its argument),
-/// and downstream consumers are load-bearing on them until Phase 116:
-/// `intersections.dart` branch orderings, bisector sign conventions,
-/// ray/segment parameter extents. Migrated kinds re-anchor the V1
-/// convention here when projecting. A null [direction] (no V1 precedent —
-/// e.g. a parent at infinity, where V1 had no line at all) returns
-/// [projected] unchanged.
-LineEq? orientedAlong(LineEq? projected, Vec2? direction) {
-  if (projected == null || direction == null) {
-    return projected;
-  }
-  return projected.direction.dot(direction) >= 0
-      ? projected
-      : LineEq(-projected.a, -projected.b, -projected.c);
-}
-
 /// An angle-valued object: a marker at a vertex plus a readable measure
 /// ([AngleGeometry.measure]). Angles take part in no intersection math —
 /// they are decorations over existing geometry. [angle] is null while
