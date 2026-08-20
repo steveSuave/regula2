@@ -14,19 +14,19 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 140 — M-P0: the threading decision (open)
+## Phase 140 — M-P0: the threading decision
 
-The milestone gate PLAN puts before any prover code: "No isolates on web. The prover engine is written as a resumable state machine with an explicit work queue from day one — cooperatively chunked on web, `Isolate.run`-wrapped on native, Worker-portable later. A straight-line fixpoint loop cannot be retrofitted."
+The milestone gate PLAN puts before any prover code. Scoped as a **spike**, like Phase 101: the deliverable is a measurement and a pinned decision, not an engine — there is no prover to drive yet, and an abstraction with no consumer is what this project keeps deciding not to build on spec. Decision recorded in PLAN §"The prover yields with a MessageChannel, not a timer".
 
-Scoped as a **spike**, exactly like Phase 101 (SPIKE 1): the deliverable is a measurement and a pinned decision, not an engine. There is no prover to drive yet, and an abstraction with no consumer is what this project keeps deciding not to build on spec. What must exist before M-P1 is the *shape*, chosen against numbers.
-
-- [ ] **The premise, checked rather than assumed.** `Isolate.run` **compiles cleanly** for both web targets and fails at *runtime* — `UnsupportedError: new RawReceivePort` (dart2js), a trap (dart2wasm). So the compiler will not catch an isolate smuggled into shared code; only a web test run will. Recorded because the failure mode is worse than a build error
-- [ ] **A representative synthetic fixpoint** (`benchmark/threading_bench.dart`): a fact database plus a rule loop deriving new facts in rounds to quiescence — DD forward chaining's shape, not a real prover
-- [ ] **Measure cooperative chunking** against the straight-line loop: throughput cost of yielding at a range of granularities, on VM / AOT / dart2js / dart2wasm. The output that matters is the chunk size that keeps a step under the frame budget while costing acceptable throughput
-- [ ] **Measure `Isolate.run` on native**: round trip plus the cost of getting the fact database in and the proof out
-- [ ] **Answer the Web Worker question with evidence**, on the target that actually ships (dart2wasm), rather than deferring it as folklore
-- [ ] **Record the decision in PLAN**, replacing the M-P0 bullet in the milestone outline with what was measured
-- [ ] Gates: analyze clean, suite green (a spike adds no `lib/` code, so the suite is a no-regression check)
+- [x] **The premise, checked rather than assumed.** `Isolate.run` **compiles cleanly** for both web targets and fails at *runtime* — `UnsupportedError: new RawReceivePort` (dart2js), a trap (dart2wasm). The compiler will not catch an isolate smuggled into shared code; only a browser run will, so the native path must be reached by conditional import rather than by a capability check
+- [x] **A representative synthetic fixpoint** (`benchmark/threading_bench.dart`): a fact database plus rules deriving new facts in rounds to quiescence — DD forward chaining's *cost profile* (a growing set scanned against itself, hash-set membership on the inner loop, a queue that drains and refills), not its geometry
+- [x] **The resumable shape is cheap and its cost is budget-independent**: 10% VM, 2% AOT, 11% dart2js, 4% dart2wasm against the straight-line loop, flat from 1 000 to 500 000 rule applications per step. So it is what the prover should be *everywhere*, not a web compromise — and the budget is counted in rule applications rather than milliseconds, the same argument as Phase 139's step budget
+- [x] **The decisive measurement, and it had to be taken in a browser.** `await Future.delayed(Duration.zero)` is `setTimeout`, which the HTML spec clamps to 4 ms once five timeouts have nested: **5.07 ms/yield** measured in Chrome, against **0.048 ms** for a `MessageChannel` macrotask — 105×. On the fixpoint that is 16.8 s vs 109 ms on dart2wasm, and dart2js does not finish. Through the channel, sixty 4 ms chunks showed no measurable scheduling overhead. `test/web/yield_cost_web_test.dart`, pinned as properties (the timer shows a clamp; the channel is not clamped like one) rather than as machine-specific numbers
+- [x] **The microtask is rejected for the opposite reason** — cheapest of the three (0.036 ms) and worth nothing, because the microtask queue drains *before* the browser renders. Cost is not the property being bought
+- [x] **`Isolate.run` on native, measured**: round trip 0.05–0.09 ms, ~4 ns/int to bring a fact database home, 1.00× on a 75–91 ms job (0.16–0.22 ms of boundary). The rule the numbers give: export a job only when it is longer than the round trip; below that the chunked engine already there wins
+- [x] **The Web Worker question, answered honestly and only as far as it was measured.** Not needed: chunking cleared the bar a Worker would have been introduced to clear. **Not verified** to work under dart2wasm — that was not measured, and the write-up says so rather than deferring it as folklore. The resumable shape is what keeps the option open
+- [x] Gates: analyze clean, suite green, browser gate green (now carrying the yield test). No `lib/` code — a spike
+- [ ] **Carried into M-P1**: the `MessageChannel` yield needs a real home (`dart:js_interop`, behind a conditional import beside an `Isolate.run` native path) the first time an engine actually chunks. It is pinned here as a measurement, not shipped as an API
 
 ## Phase 139 — the step budget is an amount of work, not a number of trials
 
