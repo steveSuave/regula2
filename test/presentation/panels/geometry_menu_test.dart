@@ -68,12 +68,21 @@ void main() {
   double radius() =>
       container.read(constructionProvider).construction.kernel.radius;
 
+  /// Taps the menu *item*, not its label: `CheckedPopupMenuItem` wraps its
+  /// child in an `IgnorePointer`, so the label is never a hit-test target
+  /// and tapping it warns even though the tap lands correctly on the item
+  /// underneath.
   Future<void> choose(WidgetTester tester, String label) async {
     await tester.tap(
       find.byTooltip('Geometry: Euclidean, hyperbolic or elliptic'),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(label).last);
+    await tester.tap(
+      find.ancestor(
+        of: find.text(label).last,
+        matching: find.byType(CheckedPopupMenuItem<VoidCallback>),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
