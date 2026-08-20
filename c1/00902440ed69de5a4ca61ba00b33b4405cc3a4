@@ -1,0 +1,51 @@
+lib/domain/construction/objects/relative_line.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 69-72
+lib/domain/construction/objects/ray.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 81
+lib/domain/construction/objects/line_through_two_points.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 42-44
+lib/domain/construction/objects/polar_line.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 61
+lib/domain/construction/objects/point_on_object.dart
+  s_c8a0cef1da7985::t_b7f7e0fa4720fe 21-23
+lib/domain/construction/objects/perpendicular_bisector_line.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 55-58
+lib/domain/construction/objects/segment.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 93-95
+lib/domain/construction/objects/line_angle.dart
+  s_c8a0cef1da7985::t_b7f7e0fa4720fe 35-38
+lib/domain/construction/objects/angle_bisector_line.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 61-62
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_c8a0cef1da7985::t_6721cd1ddaa2de 194-201,205
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 106-108
+test/domain/construction/objects/radical_axis_line_test.dart
+  s_c8a0cef1da7985::t_6721cd1ddaa2de 172-180,182
+test/domain/construction/objects/point_on_object_test.dart
+  s_c8a0cef1da7985::t_6721cd1ddaa2de 339-341,343-350,365
+test/domain/construction/objects/polar_line_test.dart
+  s_c8a0cef1da7985::t_6721cd1ddaa2de 161-171,173
+lib/domain/construction/objects/radical_axis_line.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 69
+lib/domain/construction/objects/tangent_line.dart
+  s_c8a0cef1da7985::t_ea93a43aab7047 86
+test/domain/construction/objects/intersection_point_test.dart
+  s_c8a0cef1da7985::t_6721cd1ddaa2de 575-576,578-583,587,601-602
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c100902440ed69de5a4ca61ba00b33b4405cc3a4",
+  "prompts": {},
+  "sessions": {
+    "s_c8a0cef1da7985": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31dbc4d2-5990-4bdc-a1f8-38c2ef6fb3fc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
