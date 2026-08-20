@@ -1,0 +1,23 @@
+docs/PLAN.md
+  s_d3d11928d3ca96::t_b8e22b7b62f77f 34,204-221,496
+docs/TODO.md
+  s_d3d11928d3ca96::t_8a932828722ac1 17-29
+docs/STATUS.md
+  s_d3d11928d3ca96::t_e8a7f74eb9d55d 11-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "4b1d4685e5fdf791bf27967efbbbb5c6d12f377b",
+  "prompts": {},
+  "sessions": {
+    "s_d3d11928d3ca96": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bfdafdcd-2755-4d46-a48a-5460a04a864b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
