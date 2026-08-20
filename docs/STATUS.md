@@ -8,6 +8,29 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 149 (V2 Session 51) — 2026-08-20
+
+**Done — Phase 137: orientation is the representative's sign, and the half-of-configurations disagreement 136c measured turns out to be `ThreePointCircle`'s winding.** On `phase-137-line-orientation`, unmerged, ten commits. Suite **2731** green (2713 + 18), analyze clean, 32 goldens byte-identical, browser gate green, wasm build compiles, perf gate PASS (1% / 19%, checksums identical).
+
+- **Phase 132d is merged and deployed** — `8341d8a` on `main`, Deploy and Benchmarks green, CI green (checked mid-session). STATUS 148's "Next: merge, check `gh run list`" is done.
+- **The design**: every line kind's stored representative sign now carries its orientation; `ProjLine.toOrientedLineEq` projects it sign-preservingly (`toLineEq` scrambles the sign through `normalized` — that is what the per-kind `orientedAlong` re-anchors were compensating for); `orientedAlong` and every `_v1Direction()` are deleted. Underneath sits a new **point-representative contract: `w.re > 0` when exactly real and finite** (`ProjPoint.wPositive`), because a join's chart direction is `w₁w₂·(p₂ − p₁)` — orientation flows covariantly, so it is well-founded exactly when the roots of the flow are. Kernels stay multilinear; the signs live at the kind level, computed from projective data. Recorded in PLAN §"Orientation is the representative's sign", with where the sign discontinuities now live (states where the object degenerates or V1 never spoke, instead of chart events grid snapping lands on).
+- **Measured before believed, twice.** The w-contract gate over both corpora × three absolutes found eight offender kinds; a 5000-pair probe found **41% of real finite line∩conic candidates arrive with `w < 0`**. And the four kinds' σ fixes looked like dead code against every fixture — `CircleEq.lift` always emits a positive trace — until the real source surfaced: **`ThreePointCircle`'s circumcircle determinant emits `tr Q < 0` for clockwise-wound points**, the same circle with the opposite representative. That is what 136c's "roughly half of configurations" was. Each σ fix is mutation-checked against a clockwise circumcircle.
+- **A lesson worth keeping: deriving the chart from the representative makes rep-chart agreement gates tautological.** The inverted 136c eleven-kind gate passed with a σ fix removed, because chart and rep can no longer disagree *by construction*. Every pin that matters is against independent data: the v1 oracle's oriented lines, parent positions (the join's p1→p2 promise, pinned through an `IntersectionPoint` parent — the config the w-contract exists for), and circumcircle windings.
+- **Branch addressing is chart-free**: the Phase 110 ordering re-anchor in `intersectionCandidates` deleted as a provable identity; `TangentLine`'s touch order is `det[adj(A)·ℓ∞, p, t]` scaled to be exactly the chart cross product, so the comparison is V1's and not merely its sign — and it now orders tangents to a chartless carrier (ellipse from an outside pole, pinned), where solver order previously stood.
+- The five tests pinning the old doctrine ("representative signs are no kind's contract") updated to state the new one; complex-rescaling invariance of chart *orientation* narrowed to sign-preserving rescales (a complex phase legitimately carries into the representative; tracing is unaffected because the chart evaluator builds `w = 1` by hand, Phase 132c).
+- `StubProjectiveLine.line` is oriented now, like every real kind. `dart format` also caught `conic_shape_test.dart` shipped unformatted in 132d (own commit).
+
+**Next.** Merge `phase-137-line-orientation` — a **deploy**, so check `gh run list` after. Then the rhombus macro un-refusal (Phase 129/132's last box, a small tool change: `RhombusMacroTool.availableUnder` + the Euclid I.1 route for corner D + the toolbar row). Carried over: the two 136b boxes, the `dragStepBudget` decision in Phase 134, M-P0, the Android/iOS smokes. Standing and deferred: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **The compat edge is narrow and stated in the phase**: a v2 document with a `TangentLine` on a chartless carrier, or a point glued to a polar/radical-axis/tangent of a general conic, had its branch/orientation decided by a solver artifact or `normalized`'s largest-coefficient sign; both are now specified and may settle differently on one reload. Euclidean documents are unaffected — every orientation V1 spoke is preserved, oracle-pinned.
+- **`flutter build web` failed locally on a stale `.dart_tool/flutter_build`** (the generated plugin registrant referenced `file_picker`'s pre-federation layout). `rm -rf .dart_tool/flutter_build && flutter pub get` fixes it; nothing to do with the phase, and CI never saw it.
+- The tangent's `_leftness` divides the determinant by the rows' `w`s rather than multiplying by their signs — the *comparison* between the two touches must be V1's (each touch has a different `|w|` factor), not just each sign.
+- `TwoLineBisectorLine`'s `sign(w_meet)` fix applies on the Euclidean route only: the CK route combines representatives directly with no crossing factor, and V1 never spoke there — the raw sign stands, so CK behaviour is untouched.
+
+---
+
 ## Session 148 (V2 Session 50) — 2026-08-20
 
 **Done — Phase 132d: the pencil angle is an address, and the settlement is `branchIndex`'s, not the one the phase was opened with.** On `phase-132d-pencil-angle-stability`, unmerged, three commits. Suite **2713** green (2701 + 12), analyze clean, 32 goldens byte-identical, browser gate green.
