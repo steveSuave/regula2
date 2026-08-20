@@ -68,8 +68,7 @@ class MutableRoots {
       final base = _savedPositions[root]!;
       final radius = probeScale * math.max(1.0, base.norm);
       final angle = random.nextDouble() * 2 * math.pi;
-      root.position =
-          base + Vec2(math.cos(angle), math.sin(angle)) * radius;
+      root.position = base + Vec2(math.cos(angle), math.sin(angle)) * radius;
     }
     for (final root in gluedPoints) {
       final base = _savedParameters[root]!;
