@@ -14,6 +14,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 141 — M-P1: predicates + the numeric filter (open)
+
+The prover milestone's first code phase (PLAN §M-P1). The vocabulary DD forward chaining will range over, and the model filter that keeps it tractable: never attempt a deduction that is not numerically true in the diagram. The filter generalizes `point_coincidence.dart`'s perturbation probe from "same position" to "predicate survives perturbation" — V1 already built Cinderella's randomized theorem test; this is that test given the prover's vocabulary.
+
+- [ ] **The predicate vocabulary** in `lib/domain/prover/`: `coll / para / perp / cong / cyclic / eqangle / eqratio / midp / simtri / contri` — a kind with a fixed arity plus `GeoPoint` arguments, arity enforced as a programmer-error contract. Canonical forms (the eqangle/eqratio keying) are deliberately **not** here — they are M-P2's fact-database concern
+- [ ] **Numeric evaluators as pure functions over chart positions** (`numeric_checks.dart`), dimensionless residuals against one shared tolerance, sitting between a true predicate's float noise and the smallest violation a probe leaves — the `point_coincidence.dart` argument. Degenerate arguments answer conservatively (a zero direction has no parallel, a degenerate triangle is similar to nothing); an undefined point makes every predicate false
+- [ ] **The filter samples configurations once, not once per predicate.** `DiagramFilter.probe` perturbs every mutable root, recomputes, snapshots every point's position, restores bit-exactly — `probeCount` times, up front. `holds(predicate)` then answers from the stored configurations, so M-P2 can screen thousands of candidate deductions against one sampling at no recompute cost
+- [ ] **The root machinery extracted, not duplicated**: `lib/domain/construction/mutable_roots.dart` (collect `FreePoint`/`PointOnObject` roots, perturb from a saved base, restore bit-exactly), re-pointing `point_coincidence.dart` at it with its behaviour unchanged
+- [ ] **Euclidean-only, refused rather than approximated**: the vocabulary measures in the Euclidean chart (parallelism, congruence, angle equality), so a proper absolute is refused at `probe` — a CK prover re-founds the predicates at this boundary, the same place M-CK re-founded measurement
+- [ ] Tests mirroring under `test/domain/prover/`: per-predicate exact-true / perturbed-false / degenerate / scale cases with glados properties; the filter keeping structural truth (Varignon parallels, a glued point's collinearity, equal radii on one circle) and killing accidental truth (a free point placed exactly on a midpoint); bit-exact restore; both refusals
+- [ ] Gates: analyze clean, suite green, browser gate green
+
 ## Phase 140 — M-P0: the threading decision
 
 The milestone gate PLAN puts before any prover code. Scoped as a **spike**, like Phase 101: the deliverable is a measurement and a pinned decision, not an engine — there is no prover to drive yet, and an abstraction with no consumer is what this project keeps deciding not to build on spec. Decision recorded in PLAN §"The prover yields with a MessageChannel, not a timer".
