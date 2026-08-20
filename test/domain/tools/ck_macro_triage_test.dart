@@ -219,16 +219,18 @@ void main() {
       ),
     };
 
-    /// The five that stand on something a Cayley–Klein plane has not got.
+    /// The four that stand on something a Cayley–Klein plane has not
+    /// got. The rhombus was a fifth until Phase 138: its figure was
+    /// never impossible, only unbuildable while nothing could glue a
+    /// point to a curved circle.
     const refusing = {
       'parallelogram',
       'rectangle',
-      'rhombus',
       'trapezium',
       'rightTrapezium',
     };
 
-    test('the five refuse their very first tap under a proper absolute', () {
+    test('the four refuse their very first tap under a proper absolute', () {
       for (final metric in proper) {
         final absolute = Absolute.of(metric);
         for (final entry in macros().entries) {
@@ -437,6 +439,86 @@ void main() {
           v[k].position!.distanceTo(v[(k + 1) % 4].position!),
           closeTo(2, 1e-12),
           reason: 'side $k',
+        );
+      }
+    });
+  });
+
+  group('the gap that closed: the rhombus (Phase 138)', () {
+    /// Two corners and a direction, well off the world origin — the polar
+    /// of a line *through* it is the same point under all three
+    /// absolutes, so a figure centred there would pass whatever the
+    /// reflection did.
+    const taps = [Vec2(0.05, 0.05), Vec2(0.45, 0.05), Vec2(0.45, 0.55)];
+
+    RhombusMacroTool freshTool() => RhombusMacroTool(newId: () => 'n${_id++}');
+
+    test('it accepts its taps and builds a whole figure everywhere', () {
+      for (final metric in FundamentalConic.values) {
+        final c = stamped(freshTool(), Absolute.of(metric), taps);
+        expectWholeFigure(c, corners_: 4);
+      }
+    });
+
+    test('all four sides are equal under every absolute', () {
+      for (final metric in FundamentalConic.values) {
+        final absolute = Absolute.of(metric);
+        final v = corners(stamped(freshTool(), absolute, taps));
+        final (a, b, cc, d) = (v[0], v[1], v[2], v[3]);
+        final side = span(absolute, a, b);
+        for (final pair in [(b, cc), (cc, d), (d, a)]) {
+          expect(
+            span(absolute, pair.$1, pair.$2),
+            closeTo(side, 1e-9),
+            reason: '$metric: every side is |AB|',
+          );
+        }
+      }
+    });
+
+    test('and it is a rhombus rather than a parallelogram', () {
+      // What the CK route drops along with the parallels. Opposite sides
+      // of a Euclidean rhombus are parallel — they meet at infinity, so
+      // the diagonals' crossing is not on the join of AB with CD. Under a
+      // proper absolute AB and CD genuinely meet, which is the fact the
+      // Euclidean construction assumed and this one does not.
+      double gap(FundamentalConic metric) {
+        final absolute = Absolute.of(metric);
+        final v = corners(stamped(freshTool(), absolute, taps));
+        return angleAt(absolute, v[1], v[0], v[2]) +
+            angleAt(absolute, v[3], v[0], v[2]);
+      }
+
+      // The two half-angles the diagonal AC cuts are equal in every
+      // geometry (it is the axis of the reflection), so their sum is the
+      // whole corner angle at A — and *that* is what the geometry moves.
+      expect(
+        gap(FundamentalConic.hyperbolic),
+        isNot(closeTo(gap(FundamentalConic.euclidean), 1e-6)),
+      );
+      expect(
+        gap(FundamentalConic.elliptic),
+        isNot(closeTo(gap(FundamentalConic.euclidean), 1e-6)),
+      );
+    });
+
+    test('the diagonal AC bisects the corners it joins, in every geometry', () {
+      // The reflection's own signature, and the reason the figure is
+      // equilateral: AC is an axis of symmetry, so it splits the angles
+      // at A and at C into equal halves.
+      for (final metric in FundamentalConic.values) {
+        final absolute = Absolute.of(metric);
+        final v = corners(stamped(freshTool(), absolute, taps));
+        final (a, b, cc, d) = (v[0], v[1], v[2], v[3]);
+        expect(
+          angleAt(absolute, a, b, cc),
+          closeTo(angleAt(absolute, a, d, cc), 1e-9),
+          reason: '$metric: AC halves the angle at A',
+        );
+        expect(
+          angleAt(absolute, cc, b, a),
+          closeTo(angleAt(absolute, cc, d, a), 1e-9),
+          reason: '$metric: AC halves the angle at C',
         );
       }
     });

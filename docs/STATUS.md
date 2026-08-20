@@ -8,6 +8,30 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 150 (V2 Session 52) — 2026-08-20
+
+**Done — Phase 138: the rhombus builds under a proper absolute, and the fourth corner PLAN specified is the one that jumps.** On `phase-138-rhombus-macro`, unmerged, two commits. Suite **2740** green (2731 + 9), analyze clean, browser gate green.
+
+- **Phase 137 is merged and deployed** — `a19116d` on `main` (a fast-forward, so the branch and `main` are the same commit), CI / Benchmarks / Deploy all green. STATUS 149's "Next: merge, check `gh run list`" is closed.
+- **The refusal goes because the capability landed.** `RhombusMacroTool.availableUnder` and the toolbar row's "needs a point on a curved circle — not yet" both deleted: Phases 132/132d built gluing a point to a general conic, which is the whole of what the rhombus was refused for. Corner C now glues to the CK compass circle about B by `ConicShape`'s pencil angle. The triage test's refusing set drops five → four, and `toolbar_test` keeps checking the row against the tool's own answer.
+- **The phase's content was somewhere else: corner D.** PLAN §"The macro triage" recorded Euclid I.1 — the crossing of the compass circles about A and about C other than B — and it is a correct construction with an unstable *address*. B lies on both circles by construction, so the two crossings are B and D, mirror images across the diagonal AC; they coincide and swap as B crosses that diagonal, and a `branchIndex` is fixed at creation. **Sliding C once around its own circle passes through collinear A, B, C twice, so an ordinary drag reaches it.** Built it as PLAN said, then measured: D jumps **0.80 world units** onto B at the crossing and stays pinned there for the rest of the sweep — the figure folded flat onto triangle ABC, uncompletable by any drag.
+- **What D actually is, is B reflected across the diagonal AC**: the harmonic homology already shipping as `ReflectedPoint`, single-valued and branch-free, with no scaffolding at all under a proper absolute. The reflection fixes A and C so |AD| = |AB| and |CD| = |CB|, and |CB| = |AB| already because C rides the compass circle about B. **The argument was in the repo a phase early** — `mirrorPointAcross`'s own doc says circle-crossing reflections swap when the mirrored point crosses the axis, and it applies here verbatim.
+- **An equilateral check cannot see this defect, which is the finding worth keeping.** D ≡ B satisfies every side equality — a folded rhombus is still a rhombus by measurement — so the entire CK macro suite passes with the jumping route in place. Mutation-checked against a committed baseline: restoring I.1 fails exactly the three continuity/kind pins and nothing else, the four-equal-sides sweep included.
+- **The Euclidean route is untouched, and that was measured too**: the parallelogram trick is what every stored rhombus contains, and it is continuous through the crossing, undefined only where C ≡ A exactly (the diagonal is a point there and every route is undefined).
+- Session-level coverage per the standing rule: three taps in a hyperbolic document build four corners through the command path, the glued corner drags, one undo unit. Said at the site that it does *not* pin D's continuity — mutation-checked, and it passes with I.1 in place.
+
+**Next.** Merge `phase-138-rhombus-macro` — a **deploy**, so check `gh run list` after. Then the two 136b boxes, the `dragStepBudget` decision in Phase 134, M-P0, the Android/iOS smokes. Standing and deferred: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **The obvious property test was the wrong pin, twice over.** "All four sides equal" passes under the defect, and so does the whole triage group written this phase (four-equal-sides under three absolutes, the diagonal bisecting both corners). Only continuity across the flat configuration separates the routes. When a degenerate answer satisfies the invariant, the invariant is not the test.
+- **A widget drag is not a substitute for a parameter sweep.** The session-level test passes under the I.1 mutation once its kind assertion is removed — a screen-length drag never reaches the crossing. It pins reachability and the command path, which is what the standing rule asks of it; the 600-sample sweep pins the geometry. Both are needed and they pin different things.
+- The hyperbolic canvas test sets `DocumentKernel(radius: 1000)` explicitly: the radius is a chart scale (Phase 131) and an empty document has no figure to fit one to, so the default unit disc leaves every screen-coordinate tap outside the plane and `distanceBetween` answers null.
+- `PointOnObject` on a general conic is swept by the **pencil** angle, period π, not the circle's polar angle, period 2π. A sweep written for the circle case covers half the curve.
+- Corner C ≡ A exactly is a genuine degeneracy under both routes (the diagonal collapses to a point / the two circles coincide). It is reachable — A is on C's own compass circle — and both routes answer undefined there, recovering on the next step.
+
+---
+
 ## Session 149 (V2 Session 51) — 2026-08-20
 
 **Done — Phase 137: orientation is the representative's sign, and the half-of-configurations disagreement 136c measured turns out to be `ThreePointCircle`'s winding.** On `phase-137-line-orientation`, unmerged, ten commits. Suite **2731** green (2713 + 18), analyze clean, 32 goldens byte-identical, browser gate green, wasm build compiles, perf gate PASS (1% / 19%, checksums identical).
