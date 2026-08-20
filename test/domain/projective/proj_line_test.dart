@@ -133,6 +133,67 @@ void main() {
     });
   });
 
+  group('toOrientedLineEq (Phase 137)', () {
+    test('the implicit form is a positive multiple of a real '
+        'representative', () {
+      final l = ProjLine.real(3, -4, 7);
+      final chart = l.toOrientedLineEq()!;
+      // LineEq normalizes the normal to unit length, so a positive
+      // multiple means (0.6, −0.8, 1.4).
+      expect(chart.a, closeTo(0.6, 1e-15));
+      expect(chart.b, closeTo(-0.8, 1e-15));
+      expect(chart.c, closeTo(1.4, 1e-15));
+    });
+
+    test('negating the representative negates the chart orientation', () {
+      final l = ProjLine.real(3, -4, 7);
+      final flipped = l.scaledBy(const Complex(-1));
+      final chart = l.toOrientedLineEq()!;
+      final flippedChart = flipped.toOrientedLineEq()!;
+      expect(flippedChart.a, -chart.a);
+      expect(flippedChart.b, -chart.b);
+      expect(flippedChart.c, -chart.c);
+    });
+
+    test('an i-scaled real representative keeps its orientation', () {
+      // The phase carries the sign: i·(3, −4, 7) dephases back to the
+      // same oriented line, via the imaginary-parts fallback.
+      final l = ProjLine.real(3, -4, 7).scaledBy(Complex.i);
+      final chart = l.toOrientedLineEq()!;
+      expect(chart.a, closeTo(0.6, 1e-15));
+      expect(chart.b, closeTo(-0.8, 1e-15));
+    });
+
+    Glados(any.projLine).test('null exactly where toLineEq is', (l) {
+      expect(l.toOrientedLineEq() == null, l.toLineEq() == null);
+    });
+
+    Glados(any.projLine).test(
+      'the chart direction points along the representative',
+      (l) {
+        final chart = l.toOrientedLineEq();
+        if (chart == null || !l.isReal(1e-12)) return;
+        final reNorm = l.a.re * l.a.re + l.b.re * l.b.re;
+        final imNorm = l.a.im * l.a.im + l.b.im * l.b.im;
+        final along = reNorm >= imNorm
+            ? chart.direction.x * l.b.re - chart.direction.y * l.a.re
+            : chart.direction.x * l.b.im - chart.direction.y * l.a.im;
+        expect(along, greaterThanOrEqualTo(0));
+      },
+    );
+
+    Glados2(any.projLine, any.positiveDouble).test(
+      'orientation is invariant under positive real rescaling',
+      (l, k) {
+        final chart = l.toOrientedLineEq();
+        final scaled = l.scaledBy(Complex(k)).toOrientedLineEq();
+        if (chart == null || scaled == null) return;
+        expect(scaled.a, closeTo(chart.a, 1e-9));
+        expect(scaled.b, closeTo(chart.b, 1e-9));
+      },
+    );
+  });
+
   group('invariance under complex rescaling (glados)', () {
     Glados2(any.projLine, any.nonZeroComplex).test(
       'closeTo: a scaled copy is the same line',

@@ -114,6 +114,34 @@ class ProjLine {
     return LineEq(na, nb, n.c.re);
   }
 
+  /// [toLineEq] with the orientation carried by the representative: the
+  /// implicit form is a *positive* multiple of the triple, so
+  /// `LineEq.direction` points along `(b, −a)` of the representative.
+  /// Null exactly where [toLineEq] is.
+  ///
+  /// This is what makes the representative's sign the single source of
+  /// orientation (PLAN §"Orientation is the representative's sign"):
+  /// every line kind projects through this, so a consumer reading the
+  /// representative where the chart is missing sees the same orientation
+  /// the chart would have carried. The direction is taken from the real
+  /// parts, falling back to the imaginary parts for a complex-phase
+  /// representative — the kernel's own rule (`intersectionCandidates`
+  /// used the same one to re-anchor orderings before Phase 137 made the
+  /// re-anchor a no-op).
+  LineEq? toOrientedLineEq([double eps = projectiveEpsilon]) {
+    final projected = toLineEq(eps);
+    if (projected == null) return null;
+    final d = projected.direction;
+    final reNorm = a.re * a.re + b.re * b.re;
+    final imNorm = a.im * a.im + b.im * b.im;
+    final along = reNorm >= imNorm
+        ? d.x * b.re - d.y * a.re
+        : d.x * b.im - d.y * a.im;
+    return along < 0
+        ? LineEq(-projected.a, -projected.b, -projected.c)
+        : projected;
+  }
+
   @override
   bool operator ==(Object other) =>
       other is ProjLine && other.a == a && other.b == b && other.c == c;
