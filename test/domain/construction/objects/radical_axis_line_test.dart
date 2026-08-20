@@ -3,6 +3,7 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/radical_axis_line.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -184,5 +185,44 @@ void main() {
         );
       },
     );
+  });
+
+  group('representative-founded orientation (Phase 137)', () {
+    test('a negatively-oriented circumcircle parent keeps the V1 axis '
+        'orientation — the σ fix has real work', () {
+      // ThreePointCircle emits a negative quadratic trace for clockwise
+      // winding, and `radicalAxisOf`'s linear part carries the product of
+      // both parents' traces — the `sign(tr Q₁ · tr Q₂)` fix keeps the
+      // chart on V1's centre₁→centre₂ convention for every winding pair.
+      final a = FreePoint(id: 'a', position: const Vec2(3, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(-3, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+      final d = FreePoint(id: 'd', position: const Vec2(7, 1));
+      final e = FreePoint(id: 'e', position: const Vec2(9, -1));
+      final f = FreePoint(id: 'f', position: const Vec2(8, 3));
+      for (final (p1, p2) in [(a, b), (b, a)]) {
+        for (final (q1, q2) in [(d, e), (e, d)]) {
+          final k1 = ThreePointCircle(
+            id: 'k1',
+            point1: p1,
+            point2: p2,
+            point3: c,
+          );
+          final k2 = ThreePointCircle(
+            id: 'k2',
+            point1: q1,
+            point2: q2,
+            point3: f,
+          );
+          final axis = RadicalAxisLine(id: 'ra', circle1: k1, circle2: k2);
+          final offset = k2.circle!.center - k1.circle!.center;
+          expect(
+            axis.line!.direction.dot(Vec2(offset.y, -offset.x)),
+            greaterThan(0),
+            reason: 'windings ${p1.id}${p2.id}/${q1.id}${q2.id}',
+          );
+        }
+      }
+    });
   });
 }

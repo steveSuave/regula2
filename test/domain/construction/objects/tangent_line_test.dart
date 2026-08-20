@@ -4,6 +4,7 @@ import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -320,6 +321,36 @@ void main() {
       expect(branch0.projLine!.contains(upper, 1e-9), isTrue);
       expect(branch1.projLine!.contains(lower, 1e-9), isTrue);
       expect(branch0.projLine!.closeTo(branch1.projLine!), isFalse);
+    });
+
+    test('a negatively-oriented circumcircle keeps the V1 tangent '
+        'orientation — the σ fix has real work', () {
+      // ThreePointCircle emits a negative quadratic trace for clockwise
+      // winding and the raw `A·t` flips with it; the `−sign(tr Q · w_t)`
+      // fix keeps every tangent's chart on V1's convention — along the
+      // touch radius rotated counter-clockwise — for both windings.
+      final a = FreePoint(id: 'a', position: const Vec2(3, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(-3, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+      final pole = FreePoint(id: 'p', position: const Vec2(9, 1));
+      for (final (p1, p2) in [(a, b), (b, a)]) {
+        final k = ThreePointCircle(id: 'k', point1: p1, point2: p2, point3: c);
+        for (final branch in [0, 1]) {
+          final tangent = TangentLine(
+            id: 't$branch',
+            point: pole,
+            circle: k,
+            branch: branch,
+          );
+          final touch = tangent.line!.project(k.circle!.center);
+          final radius = touch - k.circle!.center;
+          expect(
+            tangent.line!.direction.dot(radius.perpendicular),
+            greaterThan(0),
+            reason: 'winding ${p1.id}${p2.id}, branch $branch',
+          );
+        }
+      }
     });
 
     Glados2(any.vec2, any.vec2).test(

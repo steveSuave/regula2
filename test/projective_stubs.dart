@@ -40,8 +40,11 @@ class StubProjectiveLine extends GeoLine {
   @override
   ProjLine? get projLine => value;
 
+  // Oriented, like every real line kind since Phase 137: the stub's chart
+  // must agree with its representative or it models a state no kind can
+  // reach (use [ChartlessLine] for the no-chart state).
   @override
-  LineEq? get line => value?.toLineEq();
+  LineEq? get line => value?.toOrientedLineEq();
 
   @override
   List<GeoObject> get parents => const [];

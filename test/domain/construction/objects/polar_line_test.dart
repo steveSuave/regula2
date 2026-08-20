@@ -5,6 +5,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polar_line.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/line_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -201,6 +202,39 @@ void main() {
         expect(dot, greaterThan(0), reason: 'sign jump at t = $t');
         prev = cur;
       }
+    });
+
+    test('a negatively-oriented circumcircle polarizes with the V1 '
+        'orientation — the σ fix has real work', () {
+      // ThreePointCircle's determinant emits a *negative* quadratic trace
+      // when its points wind clockwise — the same circle, the opposite
+      // representative — and the raw polar `A·p` flips with it. The
+      // `sign(tr Q · w_p)` fix keeps the chart on V1's centre→pole
+      // convention for both windings.
+      final a = FreePoint(id: 'a', position: const Vec2(3, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(-3, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+      final pole = FreePoint(id: 'p', position: const Vec2(1, 2));
+      for (final (p1, p2) in [(a, b), (b, a)]) {
+        final k = ThreePointCircle(id: 'k', point1: p1, point2: p2, point3: c);
+        final polar = PolarLine(id: 'pl', point: pole, circle: k);
+        final n = pole.position - k.circle!.center;
+        expect(
+          polar.line!.direction.dot(Vec2(n.y, -n.x)),
+          greaterThan(0),
+          reason:
+              'winding ${p1.id}${p2.id}: V1 runs the polar along the '
+              'clockwise-rotated centre→pole offset',
+        );
+      }
+      // The two windings really do produce opposite representatives —
+      // otherwise this test stops covering the fix without failing.
+      final ccw = ThreePointCircle(id: 'w1', point1: a, point2: b, point3: c);
+      final cw = ThreePointCircle(id: 'w2', point1: b, point2: a, point3: c);
+      expect(
+        (ccw.conic!.xx.re + ccw.conic!.yy.re).sign,
+        -(cw.conic!.xx.re + cw.conic!.yy.re).sign,
+      );
     });
 
     test('a chartless carrier polarizes with a specified orientation', () {

@@ -366,6 +366,33 @@ void main() {
       }
     });
 
+    test('a crossing with negative w keeps the V1 branch orientation — '
+        'the σ fix has real work', () {
+      // The Euclidean kernel builds `crossing.join(direction)`, so the
+      // carrier's sign rides `w` of the parents' meet — which is negative
+      // for these representatives. The `sign(w_meet)` fix keeps the chart
+      // on V1's `d̂1 ± d̂2` convention regardless.
+      final l1 = StubProjectiveLine(ProjLine.real(1, 0, 0));
+      final l2 = StubProjectiveLine(ProjLine.real(0, -1, 0));
+      expect(l1.projLine!.meet(l2.projLine!).w.re, lessThan(0));
+      for (final branch in [0, 1]) {
+        final bisector = TwoLineBisectorLine(
+          id: 'b$branch',
+          line1: l1,
+          line2: l2,
+          branch: branch,
+        );
+        final expected = branch == 0
+            ? l1.line!.direction + l2.line!.direction
+            : l1.line!.direction - l2.line!.direction;
+        expect(
+          bisector.line!.direction.dot(expected),
+          greaterThan(0),
+          reason: 'branch $branch',
+        );
+      }
+    });
+
     test('a PolarLine really does lose its chart, so the fallback is '
         'reachable', () {
       // Pole exactly on the centre: the polar is the line at infinity,
