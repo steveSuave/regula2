@@ -127,7 +127,7 @@ void main() {
 
   tearDown(() {
     TracingFlags.dragTracing = true;
-    TracingFlags.dragStepBudget = 128;
+    TracingFlags.dragStepBudget = null;
   });
 
   group('a frame boundary on the degeneracy (Phase 134)', () {
@@ -166,16 +166,32 @@ void main() {
       session.end();
     });
 
-    test('the crossing at B is carried too, given the trials to do it', () {
+    test('the crossing at B is carried at the budget this rig derives', () {
       // The transversal at t = −8 is not a carrier collapse and needs no
       // coasting — what it needs is budget: the creep in, the detour arc
-      // and the exit together outrun 128 trials on a coarse frame. Pinned
-      // at a budget that affords it, so the day `dragStepBudget` moves
-      // this test says what moved with it.
-      TracingFlags.dragStepBudget = 512;
+      // and the exit together outrun the 128 trials that shipped as a
+      // constant, on a coarse frame. This is Phase 139's payoff, so the
+      // budget is deliberately *not* set here: four objects hang off the
+      // driver, so the derivation hands the gesture its ceiling, and the
+      // crossing is carried with nothing hand-tuned.
+      expect(TracingFlags.dragStepBudget, isNull, reason: 'derived, not set');
       final (:construction, :f, :g) = rig();
       slide(construction, f, from: -6, to: -12, step: 0.25);
       expect(g.position!.distanceTo(otherCrossing(-12)), lessThan(1e-9));
+    });
+
+    test('and it does not, at the constant this rig used to get', () {
+      // The control for the test above: the same sweep, pinned back to
+      // the shipped 128, still loses G to the driver's own root. What
+      // changed is the budget and nothing else.
+      TracingFlags.dragStepBudget = 128;
+      final (:construction, :f, :g) = rig();
+      slide(construction, f, from: -6, to: -12, step: 0.25);
+      expect(
+        g.position!.distanceTo(otherCrossing(-12)),
+        greaterThan(1e-9),
+        reason: 'if 128 now suffices, the payoff test proves nothing',
+      );
     });
   });
 
@@ -187,6 +203,13 @@ void main() {
       // would continue from a state identity was never carried through.
       // The proof is the recovery: the following frames put G back on
       // its own branch, which they can only do from the held anchor.
+      //
+      // The budget is pinned back to the constant this rig used to get
+      // because Phase 139's derivation *crosses* this frame rather than
+      // bailing on it — a real improvement, and it would leave the bail
+      // path with no coverage. Forcing the starvation is what the pin is
+      // for. The improvement itself is pinned just below.
+      TracingFlags.dragStepBudget = 128;
       final (:construction, :f, :g) = rig();
       final session = DragSession.start(construction, f, f.position!)!;
       session.update(const Vec2(-0.1, 0));
@@ -195,6 +218,24 @@ void main() {
       // The static solve is still what the user sees: the driver follows
       // the pointer while the frame is being given up on.
       expect(f.parameter, closeTo(0, 1e-12));
+      session.update(const Vec2(0.1, 0));
+      expect(g.position!.distanceTo(otherCrossing(0.1)), lessThan(1e-9));
+      session.end();
+    });
+
+    test('and at the derived budget it is crossed instead of bailed on '
+        '(Phase 139)', () {
+      // The same two frames, with nothing pinned: this rig recomputes
+      // four objects per trial, so the derivation hands it the ceiling
+      // and the walk gets across the carrier collapse at t = 0 inside
+      // the frame. The user-visible difference is one fewer frame
+      // resolved statically mid-gesture.
+      expect(TracingFlags.dragStepBudget, isNull, reason: 'derived, not set');
+      final (:construction, :f, :g) = rig();
+      final session = DragSession.start(construction, f, f.position!)!;
+      session.update(const Vec2(-0.1, 0));
+      session.update(Vec2.zero);
+      expect(session.traceStats!.bailed, isFalse);
       session.update(const Vec2(0.1, 0));
       expect(g.position!.distanceTo(otherCrossing(0.1)), lessThan(1e-9));
       session.end();

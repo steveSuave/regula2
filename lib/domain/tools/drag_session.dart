@@ -13,6 +13,7 @@ import '../construction/objects/compass_circle.dart';
 import '../construction/objects/expression_text.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/intersection_point.dart';
+import '../construction/objects/locus.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/circle_eq.dart';
 import '../math/grid_snap.dart';
@@ -143,6 +144,32 @@ abstract class DragSession {
 /// and [diff] turns the net adoptions into the gesture command's
 /// [BranchChange]s. Objects that vanished under the session (an undo
 /// mid-drag) are skipped everywhere.
+/// How many objects a traced pass recomputes on every trial: the
+/// dragged point's transitive dependents, less any `Locus` among them.
+///
+/// A locus is *not* per-trial work — Phase 117b holds loci out of the
+/// walk and settles them once in the pass's `finally` — so counting one
+/// would shrink the budget for work no trial does. This is what
+/// [TracingFlags.dragStepBudgetFor] divides the work quota by, taken
+/// once per gesture (Phase 139).
+int _perTrialWork(Construction construction, String pointId) {
+  var objects = 0;
+  for (final id in construction.transitiveDependentsOf(pointId)) {
+    if (construction.byId(id) is! Locus) objects++;
+  }
+  return objects;
+}
+
+/// The trial budget one gesture on [pointId] derives from its graph.
+///
+/// Taken at session start rather than per frame because the graph is
+/// what it divides and a drag cannot change the graph. The *pin*
+/// ([TracingFlags.dragStepBudget]) is read per frame instead — it is a
+/// debug override, and a caller that sets it mid-gesture means it to
+/// take effect now.
+int _derivedStepBudget(Construction construction, String pointId) =>
+    TracingFlags.dragStepBudgetFor(_perTrialWork(construction, pointId));
+
 class _BranchSnapshot {
   _BranchSnapshot(this._construction, String pointId) {
     for (final id in _construction.transitiveDependentsOf(pointId)) {
@@ -380,6 +407,9 @@ class _TranslateDragSession implements DragSession {
     _branches = _isFreePoint && _traceDrags
         ? _BranchSnapshot(_construction, _pointIds.single)
         : _BranchSnapshot.empty(_construction);
+    _derivedBudget = _isFreePoint && _traceDrags
+        ? _derivedStepBudget(_construction, _pointIds.single)
+        : 0;
     // Conic-glued points re-anchor per frame, whatever moves their host —
     // a single dragged point and a rigid translation both carry a host
     // across a parameterization-frame switch (an argmax tie crosses under
@@ -410,6 +440,17 @@ class _TranslateDragSession implements DragSession {
   /// rigid translations move several roots at once, which the naive
   /// single-path walk cannot continue yet.
   final bool _traceDrags = TracingFlags.dragTracing;
+
+  /// Trials this gesture's traced frames may spend before bailing,
+  /// derived from the graph once at session start (Phase 139; see
+  /// [_derivedStepBudget]). Zero for untraced sessions, which never read
+  /// it.
+  late final int _derivedBudget;
+
+  /// What a frame actually spends: the pin if one is set, else the
+  /// derivation. See [_derivedStepBudget] for why only one of the two is
+  /// captured.
+  int get _stepBudget => TracingFlags.dragStepBudget ?? _derivedBudget;
 
   /// The last position a traced preview actually carried identity to —
   /// where the next preview path starts, so branch matching is
@@ -533,7 +574,7 @@ class _TranslateDragSession implements DragSession {
       final result = _construction.recomputeAlongPath(
         id,
         DragPath(from, target),
-        stepBudget: TracingFlags.dragStepBudget,
+        stepBudget: _stepBudget,
         startStep: _startStep,
         seedMemory: _seedMemory,
       );
@@ -708,6 +749,9 @@ class _SlideDragSession implements DragSession {
     _branches = _traceDrags
         ? _BranchSnapshot(_construction, _pointId)
         : _BranchSnapshot.empty(_construction);
+    _derivedBudget = _traceDrags
+        ? _derivedStepBudget(_construction, _pointId)
+        : 0;
   }
 
   /// Null when the host curve is undefined — nothing to slide on (the hit
@@ -781,6 +825,12 @@ class _SlideDragSession implements DragSession {
   /// session's tracing. Captured once per gesture, like there.
   final bool _traceDrags = TracingFlags.dragTracing;
 
+  /// The free-point session's twins: the budget derived from the graph
+  /// once at session start, and what a frame spends (Phase 139).
+  late final int _derivedBudget;
+
+  int get _stepBudget => TracingFlags.dragStepBudget ?? _derivedBudget;
+
   /// Pre-drag branch indices — populated only when tracing (see the
   /// constructor).
   late final _BranchSnapshot _branches;
@@ -847,7 +897,7 @@ class _SlideDragSession implements DragSession {
         _pointId,
         from,
         _parameter,
-        stepBudget: TracingFlags.dragStepBudget,
+        stepBudget: _stepBudget,
         startStep: _startStep,
         seedMemory: _seedMemory,
       );

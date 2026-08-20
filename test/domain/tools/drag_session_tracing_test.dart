@@ -56,7 +56,7 @@ void main() {
 
   tearDown(() {
     TracingFlags.dragTracing = true;
-    TracingFlags.dragStepBudget = 128;
+    TracingFlags.dragStepBudget = null;
   });
 
   double imSide(IntersectionPoint p) =>
