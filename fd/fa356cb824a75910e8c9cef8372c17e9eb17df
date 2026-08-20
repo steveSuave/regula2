@@ -1,0 +1,25 @@
+test/domain/construction/mutable_roots_test.dart
+  s_3c4efc67427960::t_b9fc40fa3e0100 1-91
+lib/domain/construction/mutable_roots.dart
+  s_3c4efc67427960::t_ffa0a32989fd70 1-106
+lib/domain/tools/point_coincidence.dart
+  s_3c4efc67427960::t_3a93978f402d83 4,14
+  s_3c4efc67427960::t_ebff3ffad692a9 102,106,118
+  s_3c4efc67427960::t_b701a24bf2f4a7 142-144,150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fdfa356cb824a75910e8c9cef8372c17e9eb17df",
+  "prompts": {},
+  "sessions": {
+    "s_3c4efc67427960": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "de7ed9d2-f31e-42a7-a4a5-2645a7e193ad",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
