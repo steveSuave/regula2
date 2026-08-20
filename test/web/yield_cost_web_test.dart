@@ -122,10 +122,15 @@ void main() {
       reason: 'MessageChannel must not be clamped like a timer',
     );
 
-    // And the microtask is the cheapest of the three, which is exactly
-    // why it is the wrong answer: it never returns to the event loop, so
-    // nothing renders between chunks. Cost is not the property wanted.
-    expect(microtaskMs, lessThan(channelMs));
+    // And the microtask shows no clamp either — it is comparably cheap,
+    // which is exactly why cost is not what disqualifies it: it never
+    // returns to the event loop, so nothing renders between chunks.
+    // Deliberately *not* ordered against the channel: both sit at a few
+    // hundredths of a millisecond, inside scheduling noise of each other
+    // on a shared runner, and no decision rests on which photo-finishes
+    // first (a CI run measured 0.039 vs 0.037 and failed the strict
+    // ordering this assertion used to state).
+    expect(microtaskMs, lessThan(timerMs / 2));
   });
 
   test('a chunked run yields often enough to stay interactive', () async {
