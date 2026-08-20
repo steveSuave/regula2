@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
@@ -327,8 +328,19 @@ void main() {
         final l2 = LineThroughTwoPoints(id: 'l2', point1: c, point2: d);
         final k1 = ThreePointCircle(id: 'k1', point1: a, point2: b, point3: c);
         final k2 = ThreePointCircle(id: 'k2', point1: c, point2: d, point3: e);
+        // A join through an IntersectionPoint exercises the w-positive
+        // candidate contract: solver output carries either sign, and a
+        // negative w would flip this join against its V1 direction.
+        final crossing = IntersectionPoint(
+          id: 'ip',
+          curve1: l2,
+          curve2: k1,
+          branchIndex: 0,
+        );
         [
           l1,
+          if (crossing.position != null)
+            LineThroughTwoPoints(id: 'lip', point1: crossing, point2: e),
           Segment(id: 's', point1: a, point2: b),
           Ray(id: 'r', origin: a, through: b),
           ParallelLine(id: 'pa', through: c, reference: l1),

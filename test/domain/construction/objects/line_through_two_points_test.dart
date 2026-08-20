@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/complex.dart';
 import 'package:regula/domain/projective/proj_line.dart';
@@ -105,5 +109,42 @@ void main() {
         expect(scaled.line!.closeTo(plain.line!), isTrue);
       },
     );
+  });
+
+  group('the p1 → p2 direction promise (Phase 137)', () {
+    Glados(
+      any.positiveDouble,
+    ).test('a join through an IntersectionPoint parent runs p1 → p2', (seed) {
+      // The join's chart direction is `w₁w₂·(p₂ − p₁)`, and solver
+      // output carries either representative sign — measured, 41% of
+      // real finite line∩conic candidates come back with `w < 0` — so
+      // this is the property the w-positive candidate contract exists
+      // for. Before Phase 137 a position-derived re-anchor hid the
+      // sign; now the representative must carry it itself.
+      final rnd = math.Random((seed * 1e9).floor());
+      Vec2 v() => Vec2(rnd.nextDouble() * 8 - 4, rnd.nextDouble() * 8 - 4);
+      final a = FreePoint(id: 'a', position: v());
+      final b = FreePoint(id: 'b', position: v());
+      final c = FreePoint(id: 'c', position: v());
+      final d = FreePoint(id: 'd', position: v());
+      final e = FreePoint(id: 'e', position: v());
+      final line = LineThroughTwoPoints(id: 'l', point1: c, point2: d);
+      final circle = ThreePointCircle(id: 'k', point1: a, point2: b, point3: c);
+      final crossing = IntersectionPoint(
+        id: 'ip',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      if (crossing.position == null) return;
+      final join = LineThroughTwoPoints(id: 'j', point1: crossing, point2: e);
+      final delta = e.position - crossing.position!;
+      if (join.line == null || delta.norm < 1e-6) return;
+      expect(
+        join.line!.direction.dot(delta),
+        greaterThan(0),
+        reason: 'crossing at ${crossing.position}, e at ${e.position}',
+      );
+    });
   });
 }
