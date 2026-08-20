@@ -1,0 +1,45 @@
+lib/domain/construction/objects/homothetic_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 68
+lib/domain/construction/objects/translated_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 62
+lib/domain/construction/objects/rotated_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 76
+lib/domain/construction/objects/intersection_point.dart
+  s_c8a0cef1da7985::t_db01eff1034aca 495,511-512,542-543
+lib/domain/construction/objects/harmonic_conjugate_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 59
+lib/domain/projective/proj_point.dart
+  s_c8a0cef1da7985::t_4cd10fc6a53119 87-103
+lib/domain/construction/objects/reflected_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 51
+lib/domain/construction/objects/central_reflection_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 50
+lib/domain/construction/objects/segment_ratio_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 65
+lib/domain/construction/objects/triangle_center_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 61
+test/domain/construction/point_representative_sign_test.dart
+  s_c8a0cef1da7985::t_580a0266bf3bf0 1-72
+lib/domain/construction/objects/midpoint.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 48
+lib/domain/construction/objects/projection_point.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 54
+lib/domain/construction/objects/circle_center.dart
+  s_c8a0cef1da7985::t_dc12f283584a74 49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "11000fbe3f20b2172ba29b1c25f61584b1d009a1",
+  "prompts": {},
+  "sessions": {
+    "s_c8a0cef1da7985": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31dbc4d2-5990-4bdc-a1f8-38c2ef6fb3fc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
