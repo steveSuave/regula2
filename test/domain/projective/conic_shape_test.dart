@@ -1091,4 +1091,126 @@ void main() {
       expect(empty.pointAtComplex(Complex.zero).isZero, isTrue);
     });
   });
+
+  group('chartLiftAt: the pencil value a tracing consumer can take '
+      '(Phase 132c)', () {
+    // `PointOnObject.tracedPosition` takes a homogeneous value whose `w`
+    // is exactly one or exactly zero, because `position` reads x and y
+    // straight back without dividing. `pointAtComplex` is polynomial and
+    // homogeneous, so it cannot serve that — this is the lift that can.
+
+    test('the raw pencil value is not in the chart, and not by a little', () {
+      // Why the method exists. The scale is arbitrary and the *sign* is
+      // too, which is the half that bites: a consumer reading the chart
+      // back would get the point reflected through the origin.
+      final shape = ConicShape.of(conic(1 / 16, 0, 1 / 4, 0, 0, -1));
+      final raw = shape.pointAtComplex(const Complex(0.3));
+      expect(raw.w.re, closeTo(-0.0788, 1e-3));
+      expect(raw.x.re, isNot(closeTo(shape.chartPointAt(0.3)!.x, 1)));
+    });
+
+    test('a real angle lifts to the chart point, bit for bit', () {
+      for (final matrix in [unitCircle, ellipse, hyperbola, parabola]) {
+        final shape = ConicShape.of(matrix);
+        for (var i = 0; i < 64; i++) {
+          final phi = math.pi * i / 64;
+          final lifted = shape.chartLiftAt(Complex(phi));
+          final chart = shape.chartPointAt(phi);
+          if (chart == null) {
+            expect(lifted.w, Complex.zero, reason: 'the point at infinity');
+            expect(lifted.isZero, isFalse, reason: 'a direction, not nothing');
+            continue;
+          }
+          expect(lifted.w, Complex.one);
+          expect(lifted.x.re, chart.x);
+          expect(lifted.y.re, chart.y);
+        }
+      }
+    });
+
+    test('a complex angle lifts to the same projective point', () {
+      // The lift is a rescaling, so nothing about the geometry moves —
+      // only the representative the chart readers see.
+      final shape = ConicShape.of(ellipse);
+      for (final phi in [
+        const Complex(0.4, 0.2),
+        const Complex(1.9, -0.7),
+        const Complex(2.8, 0.05),
+      ]) {
+        final lifted = shape.chartLiftAt(phi);
+        expect(lifted.w, Complex.one);
+        expect(lifted.closeTo(shape.pointAtComplex(phi)), isTrue);
+      }
+    });
+
+    test('the crossing at infinity gives the direction, not a huge point', () {
+      // `x² − y² = 1` meets the line at infinity at (1 : ±1 : 0), and the
+      // lift says so exactly rather than dividing by a `w` the projection
+      // has already called negligible.
+      final shape = ConicShape.of(hyperbola);
+      final phi = shape.parameterOf(
+        const ProjPoint(Complex.one, Complex.one, Complex.zero),
+      )!;
+      final lifted = shape.chartLiftAt(Complex(phi));
+      expect(shape.chartPointAt(phi), isNull);
+      expect(lifted.w, Complex.zero);
+      expect((lifted.y / lifted.x).re.abs(), closeTo(1, 1e-6));
+    });
+
+    test('a shape with no parameterization lifts to nothing', () {
+      for (final matrix in [imaginaryEllipse, crossingLines, originPoint]) {
+        expect(ConicShape.of(matrix).chartLiftAt(Complex.zero).isZero, isTrue);
+      }
+    });
+  });
+
+  group('infinityParameters: where the curve leaves the chart '
+      '(Phase 132c)', () {
+    test('the count is the class: none, one, two', () {
+      expect(ConicShape.of(ellipse).infinityParameters, isEmpty);
+      expect(ConicShape.of(unitCircle).infinityParameters, isEmpty);
+      // A parabola's tangency at infinity is a double root and counts
+      // once — it is one cut, not two coincident ones.
+      expect(ConicShape.of(parabola).infinityParameters, hasLength(1));
+      expect(ConicShape.of(hyperbola).infinityParameters, hasLength(2));
+      for (final matrix in [imaginaryEllipse, crossingLines, originPoint]) {
+        expect(ConicShape.of(matrix).infinityParameters, isEmpty);
+      }
+    });
+
+    test('the curve really has no chart point there, and does '
+        'on either side', () {
+      for (final matrix in [parabola, hyperbola]) {
+        final shape = ConicShape.of(matrix);
+        for (final phi in shape.infinityParameters) {
+          expect(shape.chartPointAt(phi), isNull);
+          expect(shape.chartLiftAt(Complex(phi)).w, Complex.zero);
+          expect(shape.chartPointAt(phi + 0.05), isNotNull);
+          expect(shape.chartPointAt(phi - 0.05), isNotNull);
+        }
+      }
+    });
+
+    test('sorted, inside one period, and they move with the conic', () {
+      // One of a hyperbola's two cuts always sits at 0 or π/2 — its base
+      // point *is* one of its points at infinity — and the other lands
+      // wherever the matrix puts it. That is why a locus grid has to be
+      // cut on them rather than hoping a uniform one lands there.
+      final seen = <double>{};
+      for (var i = 0; i < 20; i++) {
+        final shape = ConicShape.of(
+          conic(1, 0.2 + i * 0.05, -0.3, 0.2, -1.1, -2),
+        );
+        expect(shape.kind, ConicClass.hyperbola);
+        final cuts = shape.infinityParameters;
+        expect(cuts, hasLength(2));
+        expect(cuts.first, lessThan(cuts.last));
+        for (final phi in cuts) {
+          expect(phi, inInclusiveRange(0, math.pi));
+        }
+        seen.add((cuts.first * 1000).roundToDouble());
+      }
+      expect(seen.length, greaterThan(10), reason: 'they are not pinned');
+    });
+  });
 }
