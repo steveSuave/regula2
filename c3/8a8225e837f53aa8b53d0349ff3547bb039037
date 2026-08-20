@@ -1,0 +1,25 @@
+lib/domain/construction/objects/locus.dart
+  s_caaae016b70c24::t_9b676508b99e9f 609-613,623-624
+lib/domain/projective/conic_shape.dart
+  s_caaae016b70c24::t_3c8d693a27ab80 449-477
+test/domain/projective/conic_shape_test.dart
+  s_caaae016b70c24::t_7da28dec31a537 1094-1165
+lib/domain/construction/construction.dart
+  s_caaae016b70c24::t_9b676508b99e9f 344-350,354
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c38a8225e837f53aa8b53d0349ff3547bb039037",
+  "prompts": {},
+  "sessions": {
+    "s_caaae016b70c24": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a066cc1-4013-47c6-8013-3da00ad7dfb3",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
