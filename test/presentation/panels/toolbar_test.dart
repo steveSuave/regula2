@@ -620,9 +620,11 @@ void main() {
       reason: 'the row still names its tool, and says why it is out',
     );
     expect(
-      hyperbolic['Rhombus (needs a point on a curved circle — not yet)'],
-      isFalse,
-      reason: 'a gap rather than an impossibility, and it says which',
+      hyperbolic['Rhombus (two corners, then direction)'],
+      isTrue,
+      reason:
+          'a gap rather than an impossibility, and Phase 138 closed it — '
+          'the row keeps its ordinary label',
     );
     expect(
       hyperbolic['Kite (apex, side corner, apex)'],

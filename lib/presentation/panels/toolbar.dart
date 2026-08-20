@@ -169,7 +169,6 @@ const _twoPointCircleBuilders = {buildCircle, buildDiameterCircle};
 const euclideanOnlyMacros = <AppAction, String>{
   AppAction.parallelogramMacroTool: 'no unique parallel outside Euclid',
   AppAction.rectangleMacroTool: 'no four right angles outside Euclid',
-  AppAction.rhombusMacroTool: 'needs a point on a curved circle — not yet',
   AppAction.trapeziumMacroTool: 'no unique parallel outside Euclid',
   AppAction.rightTrapeziumMacroTool: 'no unique parallel outside Euclid',
 };
