@@ -80,7 +80,7 @@ class TangentLine extends GeoLine {
       _line = null;
       return;
     }
-    final touch = _v1Ordered(touches)[branch];
+    final touch = _v1Ordered(touches, a, p)[branch];
     final tangent = a.polarLine(touch);
     _carrier = tangent.isZero ? null : _oriented(tangent, a, touch);
     _line = _carrier?.toOrientedLineEq();
@@ -100,22 +100,53 @@ class TangentLine extends GeoLine {
   }
 
   /// Reorders the two touch points into V1's branch order — the point to
-  /// the left of the directed center→pole line first. Solver order stands
-  /// when the V1 rule cannot classify (no affine views, complex or
-  /// infinite touches, collapsed tangency — where the order is moot).
-  List<ProjPoint> _v1Ordered(List<ProjPoint> touches) {
-    final pole = point.position;
-    final c = circle.circle;
-    final t0 = touches[0].toVec2();
-    final t1 = touches[1].toVec2();
-    if (pole == null || c == null || t0 == null || t1 == null) {
+  /// the left of the directed center→pole line first — decided
+  /// projectively (Phase 137): leftness is the sign of
+  /// `det[centre, pole, touch]` with each row's sign normalized by its
+  /// `w`, which for chart-normalized rows is exactly the chart cross
+  /// product `cross(pole − c, touch − c)` the V1 rule compared. The
+  /// centre row is `adj(A)·ℓ∞`, whose own `w` is `det Q` — positive for
+  /// every circle-shaped conic, and independent of the representative's
+  /// sign either way, since the adjugate is even. Solver order stands
+  /// when a row is complex or at infinity (collapsed tangency, isotropic
+  /// touches — where the order is moot, and where V1's chart rule could
+  /// not classify either). Unlike the chart rule, this one also orders
+  /// the tangents to a chartless carrier — a conic with no `CircleEq` —
+  /// where solver order previously stood.
+  List<ProjPoint> _v1Ordered(
+    List<ProjPoint> touches,
+    ConicMatrix a,
+    ProjPoint pole,
+  ) {
+    final c = a.poleOf(ProjLine.infinity);
+    final d0 = _leftness(c, pole, touches[0]);
+    final d1 = _leftness(c, pole, touches[1]);
+    if (d0 == null || d1 == null) {
       return touches;
     }
-    final d = pole - c.center;
-    // Left of the directed line = positive cross product.
-    if (d.cross(t1 - c.center) > d.cross(t0 - c.center)) {
+    if (d1 > d0) {
       return [touches[1], touches[0]];
     }
     return touches;
+  }
+
+  /// `det[c, p, t] / (w_c·w_p·w_t)` on the real parts — the projective
+  /// leftness of [t] against the directed line [c]→[p], equal to the
+  /// chart cross product `cross(p − c, t − c)` exactly, so comparing two
+  /// touches' values is V1's comparison and not merely V1's sign. Null
+  /// when a row is not real within the projective tolerance or has
+  /// `w.re == 0` (no finite chart point to speak of).
+  static double? _leftness(ProjPoint c, ProjPoint p, ProjPoint t) {
+    if (!c.isReal() || !p.isReal() || !t.isReal()) {
+      return null;
+    }
+    if (c.w.re == 0 || p.w.re == 0 || t.w.re == 0) {
+      return null;
+    }
+    final det =
+        c.x.re * (p.y.re * t.w.re - p.w.re * t.y.re) -
+        c.y.re * (p.x.re * t.w.re - p.w.re * t.x.re) +
+        c.w.re * (p.x.re * t.y.re - p.y.re * t.x.re);
+    return det / (c.w.re * p.w.re * t.w.re);
   }
 }

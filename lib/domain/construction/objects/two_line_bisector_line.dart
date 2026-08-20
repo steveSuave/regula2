@@ -11,20 +11,23 @@ import '../object_attributes.dart';
 ///
 /// Two crossing lines have two bisectors — a perpendicular pair through
 /// their intersection. [branch] picks one relative to the carriers'
-/// *affine oriented* directions (0 → along `d̂1 + d̂2`, 1 → along
-/// `d̂1 − d̂2`, the V1 guarantee); [TwoLineBisectorLine.near] bakes it
-/// from the two tap positions so the created line bisects the wedge the
-/// user pointed at. Like `IntersectionPoint`'s branch index, the choice
-/// is deterministic but not continuous: a drag that rotates one carrier
+/// *oriented* directions (0 → along `d̂1 + d̂2`, 1 → along `d̂1 − d̂2`,
+/// the V1 guarantee); [TwoLineBisectorLine.near] bakes it from the two
+/// tap positions so the created line bisects the wedge the user pointed
+/// at. Like `IntersectionPoint`'s branch index, the choice is
+/// deterministic but not continuous: a drag that rotates one carrier
 /// through parallel swaps the branches' geometric meaning.
 ///
 /// Migrated (Phase 110): the carrier is [twoLineBisectorOf] on the
-/// parents' projective views, their representatives first anchored to
-/// the affine orientations (representative signs are no kind's
-/// contract). Parallel and coincident carriers degenerate to the zero
-/// line — undefined, as in V1, though V1's epsilon band around
-/// parallelism is gone: nearly parallel lines now bisect to the genuine
-/// faraway-crossing bisector (≈ their mid-parallel).
+/// parents' projective views. Since Phase 137 the branch semantics live
+/// on the parents' *representatives* directly — every line kind's
+/// representative sign carries its orientation (PLAN §"Orientation is
+/// the representative's sign"), so the chart re-anchoring that stood
+/// here is gone, and a parent with a carrier but no chart names the same
+/// branch it names with one. Parallel and coincident carriers degenerate
+/// to the zero line — undefined, as in V1, though V1's epsilon band
+/// around parallelism is gone: nearly parallel lines now bisect to the
+/// genuine faraway-crossing bisector (≈ their mid-parallel).
 class TwoLineBisectorLine extends GeoLine {
   TwoLineBisectorLine({
     required super.id,
