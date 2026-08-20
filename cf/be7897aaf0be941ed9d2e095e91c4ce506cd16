@@ -1,0 +1,19 @@
+README.md
+  s_8d773ae0624b0f::t_5987892cee20a8 3-43,47-84,94,99,102-104,107-118,120-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "cfbe7897aaf0be941ed9d2e095e91c4ce506cd16",
+  "prompts": {},
+  "sessions": {
+    "s_8d773ae0624b0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df77c121-11c7-4dac-a0ec-f219ac333bb3",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
