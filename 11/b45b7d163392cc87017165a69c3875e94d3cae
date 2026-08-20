@@ -1,0 +1,25 @@
+test/domain/projective/conic_shape_test.dart
+  s_a80d22329e56cb::t_071b2e94deedff 1216-1217,1228-1229,1233,1243-1371,1376,1378-1427
+  s_a80d22329e56cb::t_0e6385aa36b32f 1218-1225,1227,1230-1232,1234-1242
+  s_a80d22329e56cb::t_c76df9d6bcdd06 1372-1375,1377
+  s_a80d22329e56cb::t_709ecad90a16ce 1226
+lib/domain/projective/conic_shape.dart
+  s_a80d22329e56cb::t_80dd6300418827 498-632
+  s_a80d22329e56cb::t_80a1adaf2a2837 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "11b45b7d163392cc87017165a69c3875e94d3cae",
+  "prompts": {},
+  "sessions": {
+    "s_a80d22329e56cb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e484460-0fff-4299-8860-8599034f94f3",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
