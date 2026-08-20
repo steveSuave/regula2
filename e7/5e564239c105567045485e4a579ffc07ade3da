@@ -1,0 +1,32 @@
+test/domain/construction/objects/tangent_line_test.dart
+  s_c8a0cef1da7985::t_7a44e8dc3ab982 7,326-353
+  s_c8a0cef1da7985::t_a18afd3a7d6efa 354-355
+test/projective_stubs.dart
+  s_c8a0cef1da7985::t_24e8d21430292d 43-45,47
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_c8a0cef1da7985::t_7a44e8dc3ab982 369-395
+test/domain/construction/objects/radical_axis_line_test.dart
+  s_c8a0cef1da7985::t_34008a29ecf9cf 6,189-226
+  s_c8a0cef1da7985::t_3a97c367db6b6b 227
+test/domain/construction/objects/polar_line_test.dart
+  s_c8a0cef1da7985::t_160141a360f299 207-220,222-224,227-239
+  s_c8a0cef1da7985::t_4826759731d745 225-226
+  s_c8a0cef1da7985::t_ea03b7d418c13c 221
+  s_c8a0cef1da7985::t_3cac7862c812b2 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e75e564239c105567045485e4a579ffc07ade3da",
+  "prompts": {},
+  "sessions": {
+    "s_c8a0cef1da7985": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31dbc4d2-5990-4bdc-a1f8-38c2ef6fb3fc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
