@@ -8,6 +8,26 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 151 (V2 Session 53) — 2026-08-20
+
+**Done — Phase 138 merged and deployed, and Phase 136b's two open boxes closed by measurement.** Phase 138 on `main` at `cb71c1c`; 136b's boxes on `phase-136b-four-candidate-pin`, unmerged, two commits. Suite **2745** green (2740 + 5), analyze clean, 32 goldens byte-identical, browser gate green.
+
+- **Phase 138 is merged and pushed** (`cb71c1c`). `gh run list` not checked this session at the user's direction.
+- **The four-candidate box is answered, and the answer is that it already worked.** Deflation names the left-over root only when exactly one is left over, so a conic pair with four candidates and one shared point cannot use it — the box asked whether naming the *shared* role alone is worth it there. It is, and `_structuralIndex`'s shared-role path never depended on how many roots remain; there was simply no test. Rig: two ellipses, `x²/9 + y²/4 = 1` and `x²/4 + y²/9 = 1`, crossing at (±s, ±s) with P = (s, s) a defining point of both. Wiggling P: the named crossing is P at **0 of 720** samples; the same geometry with the incidence hidden behind a ratio-1 homothety (the Phase 135/136b technique) loses it at **359 of 720**, arriving by a **3.4**-unit jump. **Mutation-checked**: refusing the shared role above one leftover degrades the named point to exactly 359 of 720 — the two numbers meet, which is the cleanest form this evidence could take.
+- **And the refusal is right and not free.** With three roots left over there is nothing unique to divide out, so the refusal stands; each of the three then exchanges by the same ~3.4 over the same wiggle. That is now pinned as the baseline any future widening has to beat, rather than left as "untested either way".
+- **The widening box is worked to the edge of its own policy.** `onCarrierDefiningPoints` lists a curve's defining points that lie on its own carrier, and **`DiameterCircle` was the one curve kind with that property missing from it** — a gap in the switch's stated remit, not speculative widening, since every sibling with the property was already there. Added, and pinned on the Thales configuration: a chord through one end of the diameter has that end as a crossing at every position of its other parent, so the two roles split cleanly. Audited the rest: compass / fixed-radius / Apollonius / triangle circles, the polar and radical-axis lines and the focal conic are all correctly absent. What is left is genuinely new `_derivedIncident` theorems — a `Midpoint` or `SegmentRatioPoint` on the line through its own parents, a `ProjectionPoint` on its reference line — which is exactly what "as real documents call for it" defers, and none was added on spec.
+
+**Next.** Merge `phase-136b-four-candidate-pin` — a **deploy**, so check `gh run list` after; Phase 138's deploy is also unverified. Then the `dragStepBudget` decision in Phase 134 (measurements already in hand: ~90 trials to classify starvation, ~20 for the arc, ~40 for the exit against a budget of 128, and one trial is ~0.08 ms on the stress rig — the open question is a budget that scales with the graph rather than a constant). Then M-P0 and the Android/iOS smokes. Standing and deferred: the user's preferred **pure** route for deflation.
+
+**Gotchas.**
+
+- **The STATUS 148 "commit before mutation-testing" gotcha caught this session, exactly as written.** `git checkout lib/domain/construction/incidence.dart` after a mutation reverted to HEAD — which predated the *uncommitted* `DiameterCircle` addition — and silently clobbered it. Cheap to redo here; the rule is to commit the implementation before mutating, not merely to have *a* baseline.
+- **A probe path can degenerate the rig rather than exercise it.** Swinging P a full circle of radius s about the origin drove it through the other defining points, so the conics left general position and both probes went null for stretches — noise, not evidence. A local wiggle (radius 0.35) keeps all five points in general position and moves only the crossings, which is what the question was about.
+- Deflation's branch numbering is not "0 is the leftover": on the Thales rig branch 0 *is* the shared point. Tests here find the two roles by `tracksDeflatedRoot` rather than assuming an index — the first draft assumed and failed.
+- The 720-sample sweeps in `deflation_test.dart` are each a full construction recompute per step; the group runs in well under a second at present scale, but it is the most expensive group in that file by an order of magnitude.
+
+---
+
 ## Session 150 (V2 Session 52) — 2026-08-20
 
 **Done — Phase 138: the rhombus builds under a proper absolute, and the fourth corner PLAN specified is the one that jumps.** On `phase-138-rhombus-macro`, unmerged, two commits. Suite **2740** green (2731 + 9), analyze clean, browser gate green.
