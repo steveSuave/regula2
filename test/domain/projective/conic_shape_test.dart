@@ -1279,7 +1279,7 @@ void main() {
       // return the angle *identically* wherever no switch happened.
       const steps = 600;
       var phi = 0.9;
-      var fixedPhi = 0.9;
+      const fixedPhi = 0.9;
       var previous = ConicShape.of(rotatedEllipse(4, 1, 0));
       var carriedPoint = previous.chartPointAt(phi)!;
       var fixedPoint = previous.chartPointAt(fixedPhi)!;
