@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
@@ -16,8 +18,16 @@ import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/absolute.dart';
+import 'package:regula/domain/projective/complex.dart';
+import 'package:regula/domain/projective/conic_matrix.dart';
+import 'package:regula/domain/projective/conic_shape.dart';
+import 'package:regula/domain/projective/proj_point.dart';
 import 'package:regula/domain/projective/tracing/trace_diagnostics.dart';
+
+import '../../../projective_stubs.dart';
 
 void main() {
   group('Locus chain', () {
@@ -964,6 +974,301 @@ void main() {
       );
     });
   });
+
+  group('Locus: a point on a general conic drives one (Phase 132c)', () {
+    // Phase 132 made a general conic a curve a point can be glued to, and
+    // left `_SweepDomain.of` behind: it asked a `GeoCircle` host for its
+    // `CircleEq` and gave up when there was none, so a locus driven by
+    // such a point had no samples at all — silently absent rather than
+    // wrong, which is the harder kind to notice. The domain is now the
+    // pencil circle the point is glued on: `φ = π·x`, cyclic with period
+    // 1, and the ellipse is the class that is swept (see the arm's own
+    // comment for the two refusals).
+
+    /// `x²/16 + y²/4 = 1` — an ellipse and emphatically not a circle, so
+    /// [GeoCircle.circle] is null and the circle arm cannot take it.
+    ConicMatrix ellipse(double a, double b) => ConicMatrix(
+      Complex(1 / (a * a)),
+      Complex.zero,
+      Complex(1 / (b * b)),
+      Complex.zero,
+      Complex.zero,
+      const Complex(-1),
+    );
+
+    /// The midpoint of the driver and `(10, 0)`: the same ellipse at half
+    /// scale about `(5, 0)`, so every sample is checkable in closed form.
+    ({Locus locus, PointOnObject driver, GeoCircle host}) midpointLocus({
+      double parameter = 0.3,
+      int sampleCount = 128,
+      ConicMatrix? conic,
+    }) {
+      final host = StubProjectiveConic(conic ?? ellipse(4, 2));
+      final driver = PointOnObject(
+        id: 'drv',
+        curve: host,
+        parameter: parameter,
+      );
+      final p = FreePoint(id: 'p', position: const Vec2(10, 0));
+      final traced = Midpoint(id: 'm', point1: driver, point2: p);
+      return (
+        locus: Locus(
+          id: 'loc',
+          driver: driver,
+          traced: traced,
+          sampleCount: sampleCount,
+        ),
+        driver: driver,
+        host: host,
+      );
+    }
+
+    test(
+      'the sweep exists at all, and every sample is on the traced curve',
+      () {
+        final rig = midpointLocus();
+        expect(
+          rig.host.circle,
+          isNull,
+          reason: 'the case the circle arm drops',
+        );
+        final samples = rig.locus.samples;
+        expect(samples, isNotNull);
+        expect(samples!, hasLength(128));
+        expect(
+          samples.contains(null),
+          isFalse,
+          reason: 'an ellipse is bounded',
+        );
+        for (final s in samples) {
+          final dx = (s!.x - 5) / 2;
+          final dy = s.y;
+          expect(dx * dx + dy * dy, closeTo(1, 1e-9));
+        }
+      },
+    );
+
+    test('the domain is the pencil circle: one full period, no closing '
+        'duplicate, and the whole curve covered', () {
+      final samples = midpointLocus(sampleCount: 64).locus.samples!;
+      expect(
+        samples.first!.closeTo(samples.last!),
+        isFalse,
+        reason: 'cyclic domains do not repeat their first sample',
+      );
+      // A bijection from [0, π) onto the whole curve: the traced ellipse
+      // is swept end to end, not half of it. The four extremes are
+      // approached rather than hit — the grid is uniform in the pencil
+      // angle and lands where it lands.
+      final xs = [for (final s in samples) s!.x];
+      final ys = [for (final s in samples) s!.y];
+      expect(xs.reduce(math.min), closeTo(3, 0.01));
+      expect(xs.reduce(math.max), closeTo(7, 0.01));
+      expect(ys.reduce(math.min), closeTo(-1, 0.01));
+      expect(ys.reduce(math.max), closeTo(1, 0.01));
+    });
+
+    test('every chain member sees the driver *on the conic* — the '
+        'homogeneous pencil value is normalized before the walk drives it', () {
+      // `ConicShape.pointAt` is polynomial and homogeneous, so it answers
+      // at whatever scale the algebra leaves — `w = -0.079` at φ = 0.3 on
+      // this ellipse, not 1. `PointOnObject.tracedPosition`'s contract is
+      // `w` exactly one or exactly zero, because `position` reads x and y
+      // back *without* dividing; hand the sweep a raw pencil value and
+      // every chain member that reads the driver's chart position gets
+      // that position divided by a number nobody wrote down. The spy is
+      // an ordinary chain member and asks the only question that
+      // matters: is the driver, at every sample, a point of its host?
+      final host = StubProjectiveConic(ellipse(4, 2));
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0.3);
+      final spy = _PositionSpy(driver);
+      Locus(id: 'loc', driver: driver, traced: spy, sampleCount: 64);
+      expect(spy.seen, hasLength(greaterThan(64)));
+      expect(spy.seen.contains(null), isFalse);
+      for (final p in spy.seen) {
+        expect(
+          host.conic!.containsPoint(ProjPoint.lift(p!), 1e-9),
+          isTrue,
+          reason: '$p is not on the host conic',
+        );
+      }
+    });
+
+    test('a sample is the driver`s own chart evaluation, bit for bit', () {
+      // `ConicShape.pointAt` is polynomial and homogeneous: at φ = 0.3 on
+      // this ellipse it answers `w = -0.0788`, not 1. `tracedPosition`'s
+      // contract is `w` exactly one, because `PointOnObject.position`
+      // reads x and y back *without* dividing — so the sweep normalizes,
+      // and this is the property that says it did.
+      final host = StubProjectiveConic(ellipse(4, 2));
+      final shape = ConicShape.of(host.conic!);
+      expect(
+        shape.pointAtComplex(const Complex(0.3)).w.re,
+        isNot(closeTo(1, 0.5)),
+      );
+      const n = 64;
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final p = FreePoint(id: 'p', position: const Vec2(10, 0));
+      final traced = Midpoint(id: 'm', point1: driver, point2: p);
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: n,
+      );
+      for (var i = 0; i < n; i++) {
+        final chart = shape.chartPointAt(math.pi * i / n)!;
+        final expected = Vec2((chart.x + 10) / 2, chart.y / 2);
+        expect(locus.samples![i]!.x, expected.x);
+        expect(locus.samples![i]!.y, expected.y);
+      }
+    });
+
+    test('the driver`s stored parameter and the chain survive the sweep', () {
+      final rig = midpointLocus(parameter: 1.7);
+      expect(rig.driver.parameter, 1.7);
+      final shape = ConicShape.of(rig.host.conic!);
+      expect(rig.driver.position!.closeTo(shape.chartPointAt(1.7)!), isTrue);
+    });
+
+    test('branch identity is held across the sweep: a chain with an '
+        'intersection traces one sheet', () {
+      // The scan alone would re-solve canonically at every sample; this
+      // rig has an `IntersectionPoint` in the chain, so the walk runs.
+      final host = StubProjectiveConic(ellipse(4, 2));
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0.4);
+      final far = FreePoint(id: 'f', position: const Vec2(0, 12));
+      final ray = LineThroughTwoPoints(id: 'l', point1: far, point2: driver);
+      final centre = FreePoint(id: 'c', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(9, 0));
+      final circle = CircleCenterPoint(id: 'k', center: centre, onCircle: rim);
+      final traced = IntersectionPoint(
+        id: 'tr',
+        curve1: ray,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final locus = Locus(id: 'loc', driver: driver, traced: traced);
+      final samples = locus.samples!.whereType<Vec2>().toList();
+      expect(samples, isNotEmpty);
+      for (final s in samples) {
+        expect(s.norm, closeTo(9, 1e-6), reason: 'every sample on the circle');
+      }
+      // One sheet, walked: consecutive samples stay close on a curve whose
+      // two roots are nine units apart at their nearest.
+      for (var i = 1; i < samples.length; i++) {
+        expect(
+          samples[i].distanceTo(samples[i - 1]),
+          lessThan(4),
+          reason: 'a re-sorted canonical solve would jump between roots',
+        );
+      }
+    });
+
+    test(
+      'an unbounded or curveless conic host gets no locus — and no throw',
+      () {
+        // The arms below `case GeoCircle(:final circle?)` are reachable now
+        // that the circle arm stopped matching every `GeoCircle`; each of
+        // these used to be `return null` from inside it. A hyperbola and a
+        // parabola *have* a curve and are refused for the other reason: it
+        // runs through infinity at pencil angles the grid does not know.
+        final hyperbola = ConicMatrix(
+          const Complex(1 / 16),
+          Complex.zero,
+          const Complex(-1 / 4),
+          Complex.zero,
+          Complex.zero,
+          const Complex(-1),
+        );
+        final parabola = ConicMatrix(
+          Complex.one,
+          Complex.zero,
+          Complex.zero,
+          Complex.zero,
+          const Complex(-0.5),
+          Complex.zero,
+        );
+        final imaginary = ConicMatrix(
+          const Complex(1 / 16),
+          Complex.zero,
+          const Complex(1 / 4),
+          Complex.zero,
+          Complex.zero,
+          Complex.one,
+        );
+        final linePair = ConicMatrix(
+          Complex.one,
+          Complex.zero,
+          const Complex(-1),
+          Complex.zero,
+          Complex.zero,
+          Complex.zero,
+        );
+        for (final entry in {
+          'hyperbola': hyperbola,
+          'parabola': parabola,
+          'imaginary ellipse': imaginary,
+          'line pair': linePair,
+        }.entries) {
+          final rig = midpointLocus(conic: entry.value);
+          expect(
+            rig.locus.samples,
+            isNull,
+            reason: '${entry.key}: no sweep domain, and nothing thrown',
+          );
+        }
+      },
+    );
+
+    test('a conic host that claims an angular extent is refused', () {
+      // An `angularExtent` is a *circle*'s angular span and stands in no
+      // relation to a pencil angle, so there is no extent to honour. No
+      // real object is in that state — `Arc` and `Sector` null their
+      // extent with their `CircleEq` — and this pins the guard that says
+      // so rather than trusting it stays true.
+      final host = _ExtentClaimingConic(ellipse(4, 2));
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0.3);
+      final p = FreePoint(id: 'p', position: const Vec2(10, 0));
+      final traced = Midpoint(id: 'm', point1: driver, point2: p);
+      expect(Locus(id: 'loc', driver: driver, traced: traced).samples, isNull);
+    });
+
+    test(
+      'the whole path from the toolbar: five points, a glued tap, a locus',
+      () {
+        // The same construction a user builds — a `FivePointConic`, a point
+        // glued by `.near` where the tap landed, and a locus of a point
+        // derived from it. Nothing stubbed.
+        final pts = [
+          FreePoint(id: 'p0', position: const Vec2(4, 0)),
+          FreePoint(id: 'p1', position: const Vec2(0, 3)),
+          FreePoint(id: 'p2', position: const Vec2(-4, 0)),
+          FreePoint(id: 'p3', position: const Vec2(0, -3)),
+          FreePoint(id: 'p4', position: const Vec2(2.4, 2.4)),
+        ];
+        final k = FivePointConic(id: 'k', points: pts);
+        expect(k.circle, isNull);
+        final driver = PointOnObject.near(
+          id: 'drv',
+          curve: k,
+          position: const Vec2(3.6, 1.3),
+        );
+        final hub = FreePoint(id: 'hub', position: const Vec2(0, 8));
+        final traced = Midpoint(id: 'm', point1: driver, point2: hub);
+        final locus = Locus(id: 'loc', driver: driver, traced: traced);
+        final samples = locus.samples!;
+        expect(samples.contains(null), isFalse);
+        for (final s in samples) {
+          // The midpoint of a conic point and a fixed point is on the
+          // conic scaled by 1/2 about that point: undo it and land back on
+          // the original.
+          final back = ProjPoint.lift(Vec2(2 * s!.x - 0, 2 * s.y - 8));
+          expect(k.conic!.containsPoint(back, 1e-9), isTrue);
+        }
+      },
+    );
+  });
 }
 
 /// Line-host tangency fixture: driver sweeps the x-axis, traced is the
@@ -1050,4 +1355,61 @@ Map<TraceCounter, int> _countersFor(void Function() body) {
     TraceDiagnostics.enabled = false;
   }
   return TraceDiagnostics.history.single.counts;
+}
+
+/// A conic-valued host that claims an angular extent — the state the
+/// conic sweep arm refuses. No real object reaches it (`Arc` and `Sector`
+/// null their extent together with their `CircleEq`), which is exactly
+/// why the guard needs a stub to stand in front of it.
+class _ExtentClaimingConic extends GeoCircle {
+  _ExtentClaimingConic(this.value, {super.id = 'extent-conic'});
+
+  final ConicMatrix value;
+
+  @override
+  ConicMatrix? get conic => value;
+
+  @override
+  CircleEq? get circle => null;
+
+  @override
+  (double, double)? get angularExtent => (0, math.pi);
+
+  @override
+  bool get isDefined => ConicShape.of(value).isDrawable;
+
+  @override
+  List<GeoObject> get parents => const [];
+
+  @override
+  void recompute([Absolute absolute = Absolute.euclidean]) {}
+}
+
+/// An ordinary chain member that records what the driver's chart
+/// [GeoPoint.position] looked like at every sample of a sweep — the
+/// question `PointOnObject.tracedPosition`'s `w` contract is about.
+class _PositionSpy extends GeoPoint {
+  _PositionSpy(this.source, {super.id = 'spy'}) {
+    recompute();
+  }
+
+  final PointOnObject source;
+  final List<Vec2?> seen = [];
+
+  ProjPoint? _value;
+
+  @override
+  ProjPoint? get projPoint => _value;
+
+  @override
+  Vec2? get position => _value?.toVec2();
+
+  @override
+  List<GeoObject> get parents => [source];
+
+  @override
+  void recompute([Absolute absolute = Absolute.euclidean]) {
+    seen.add(source.position);
+    _value = source.projPoint;
+  }
 }

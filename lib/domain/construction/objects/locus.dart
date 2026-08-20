@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import '../../math/vec2.dart';
 import '../../projective/absolute.dart';
 import '../../projective/complex.dart';
+import '../../projective/conic_shape.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/tolerances.dart';
 import '../../projective/tracing/singularity.dart';
@@ -542,11 +543,8 @@ class _SweepDomain {
   }) {
     final n = sampleCount;
     switch (driver.curve) {
-      case GeoCircle(:final circle, :final angularExtent) &&
+      case GeoCircle(:final circle?, :final angularExtent) &&
           final GeoCircle host:
-        if (circle == null) {
-          return null;
-        }
         final c = circle.center;
         final r = circle.radius;
         // A bounded host (Arc, Sector) sweeps only its drawn extent,
@@ -579,6 +577,77 @@ class _SweepDomain {
           },
           isCore: (_) => true,
         );
+      // A general conic host — a five-point conic, a Cayley-Klein circle
+      // (Phase 132c). Swept by the very parameter the point is glued at:
+      // `ConicShape`'s pencil angle, exactly π-periodic and a bijection
+      // from `[0, π)` onto the whole curve, so the domain is the pencil
+      // circle — cyclic with period 1 in `x`, and `φ = π·x`.
+      //
+      // **The ellipse is the class that is swept**, and the gate is the
+      // one [ConicShape.extentAlong] already states: an ellipse is the
+      // only conic whose curve is bounded. A hyperbola or a parabola runs
+      // through infinity at pencil angles that fall wherever the matrix
+      // puts them, so a grid cell can land arbitrarily close to one and
+      // carry an arbitrarily large chart coordinate into the walk's
+      // metric and the painter's path — the Phase 136 hazard. Aligning
+      // the grid on those crossings (`ConicShape` already finds them, for
+      // `polylines`) is the fix, and it is a phase of its own; see
+      // `docs/TODO.md` Phase 132c.
+      //
+      // A bounded conic host is refused for a different reason: an
+      // `angularExtent` is a *circle's* angular span, in no relation to a
+      // pencil angle, so there is no extent to honour. No such object
+      // exists today — `Arc` and `Sector` null their extent whenever
+      // their carrier stops projecting to a `CircleEq` — and the pattern
+      // says so rather than trusting that it stays true.
+      case GeoCircle(:final conic?, angularExtent: null)
+          when ConicShape.of(conic).kind == ConicClass.ellipse:
+        final shape = ConicShape.of(conic);
+        // One expression for both evaluations, because `pointAt` *is*
+        // `pointAtComplex` at a real angle (Phase 132): a real-valued `x`
+        // reproduces [evalReal] bitwise with nothing kept in step by hand.
+        //
+        // The division is the part that is not free. The pencil form is
+        // homogeneous and polynomial, so it answers at whatever scale the
+        // algebra leaves — `w` is not 1 and is not close to it — while
+        // [PointOnObject.tracedPosition]'s contract is `w` exactly one or
+        // exactly zero, because `position` reads `x` and `y` back without
+        // dividing. Normalizing here is what makes `evalReal(x).position`
+        // the driver's own `chartPointAt(π·x)`, bit for bit.
+        ProjPoint atPhi(Complex phi) {
+          final p = shape.pointAtComplex(phi);
+          if (!p.isFinite()) {
+            // No chart point at this parameter, at the projection's own
+            // relative tolerance: hand the walk the driver *at infinity*,
+            // as a ray host's open edge does, so `position` answers null
+            // and the run breaks rather than carrying a coordinate no
+            // consumer can use. An ellipse has no real point at infinity,
+            // so this is a far-degenerate matrix, not a crossing.
+            return ProjPoint(p.x, p.y, Complex.zero);
+          }
+          return ProjPoint(p.x / p.w, p.y / p.w, Complex.one);
+        }
+
+        return _SweepDomain._(
+          cyclic: true,
+          grid: [for (var i = 0; i < n; i++) i / n],
+          cell: 1 / n,
+          // The stored parameter is a pencil angle and the host does not
+          // clamp it (there is no extent), exactly as
+          // `PointOnObject.recompute` reads it — wrapped onto the period
+          // the sweep covers.
+          seedX: (driver.parameter / math.pi) % 1.0,
+          evalReal: (x) => atPhi(Complex(math.pi * x)),
+          evalComplex: (x) => atPhi(x.scale(math.pi)),
+          // Bounded, like a circle host: every defined sample is core.
+          isCore: (_) => true,
+        );
+      // A conic host with no curve to sweep, or one whose curve is
+      // unbounded: no domain. Reached rather than unreachable — the
+      // circle arm above stopped covering every [GeoCircle] the moment
+      // its `circle` became a null-check pattern.
+      case GeoCircle():
+        return null;
       case GeoLine(:final line, :final parameterExtent) && final GeoLine host:
         if (line == null) {
           return null;
