@@ -1,0 +1,23 @@
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_c8a0cef1da7985::t_0a476331fec24f 7,331-339,342-343
+test/domain/construction/objects/line_through_two_points_test.dart
+  s_c8a0cef1da7985::t_3659f4020f82b7 1-2,5,7,113-114
+  s_c8a0cef1da7985::t_241c7a99e6f77e 115-148
+  s_c8a0cef1da7985::t_a31bd314b2d128 149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3a26137baad92ae1eb2b9e4ef8562111df12d3f8",
+  "prompts": {},
+  "sessions": {
+    "s_c8a0cef1da7985": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31dbc4d2-5990-4bdc-a1f8-38c2ef6fb3fc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
