@@ -1163,4 +1163,54 @@ void main() {
       }
     });
   });
+
+  group('infinityParameters: where the curve leaves the chart '
+      '(Phase 132c)', () {
+    test('the count is the class: none, one, two', () {
+      expect(ConicShape.of(ellipse).infinityParameters, isEmpty);
+      expect(ConicShape.of(unitCircle).infinityParameters, isEmpty);
+      // A parabola's tangency at infinity is a double root and counts
+      // once — it is one cut, not two coincident ones.
+      expect(ConicShape.of(parabola).infinityParameters, hasLength(1));
+      expect(ConicShape.of(hyperbola).infinityParameters, hasLength(2));
+      for (final matrix in [imaginaryEllipse, crossingLines, originPoint]) {
+        expect(ConicShape.of(matrix).infinityParameters, isEmpty);
+      }
+    });
+
+    test('the curve really has no chart point there, and does '
+        'on either side', () {
+      for (final matrix in [parabola, hyperbola]) {
+        final shape = ConicShape.of(matrix);
+        for (final phi in shape.infinityParameters) {
+          expect(shape.chartPointAt(phi), isNull);
+          expect(shape.chartLiftAt(Complex(phi)).w, Complex.zero);
+          expect(shape.chartPointAt(phi + 0.05), isNotNull);
+          expect(shape.chartPointAt(phi - 0.05), isNotNull);
+        }
+      }
+    });
+
+    test('sorted, inside one period, and they move with the conic', () {
+      // One of a hyperbola's two cuts always sits at 0 or π/2 — its base
+      // point *is* one of its points at infinity — and the other lands
+      // wherever the matrix puts it. That is why a locus grid has to be
+      // cut on them rather than hoping a uniform one lands there.
+      final seen = <double>{};
+      for (var i = 0; i < 20; i++) {
+        final shape = ConicShape.of(
+          conic(1, 0.2 + i * 0.05, -0.3, 0.2, -1.1, -2),
+        );
+        expect(shape.kind, ConicClass.hyperbola);
+        final cuts = shape.infinityParameters;
+        expect(cuts, hasLength(2));
+        expect(cuts.first, lessThan(cuts.last));
+        for (final phi in cuts) {
+          expect(phi, inInclusiveRange(0, math.pi));
+        }
+        seen.add((cuts.first * 1000).roundToDouble());
+      }
+      expect(seen.length, greaterThan(10), reason: 'they are not pinned');
+    });
+  });
 }

@@ -581,18 +581,23 @@ class _SweepDomain {
       // (Phase 132c). Swept by the very parameter the point is glued at:
       // `ConicShape`'s pencil angle, exactly π-periodic and a bijection
       // from `[0, π)` onto the whole curve, so the domain is the pencil
-      // circle — cyclic with period 1 in `x`, and `φ = π·x`.
+      // circle — cyclic with period 1 in `x`.
       //
-      // **The ellipse is the class that is swept**, and the gate is the
-      // one [ConicShape.extentAlong] already states: an ellipse is the
-      // only conic whose curve is bounded. A hyperbola or a parabola runs
-      // through infinity at pencil angles that fall wherever the matrix
-      // puts them, so a grid cell can land arbitrarily close to one and
-      // carry an arbitrarily large chart coordinate into the walk's
-      // metric and the painter's path — the Phase 136 hazard. Aligning
-      // the grid on those crossings (`ConicShape` already finds them, for
-      // `polylines`) is the fix, and it is a phase of its own; see
-      // `docs/TODO.md` Phase 132c.
+      // **The grid is cut on the crossings at infinity.** An ellipse has
+      // none and sweeps `φ = π·x` uniformly, the way a circle host sweeps
+      // its turn. A parabola passes through infinity once and a hyperbola
+      // twice, and those are exactly the cuts that divide the curve into
+      // its *arcs* — a hyperbola's two branches, a parabola's single arm.
+      // Each arc takes an equal share of the domain, so every crossing
+      // lands **on** a grid sample rather than between two: the driver is
+      // then at infinity *exactly* there and finite everywhere else, and
+      // no cell can fall arbitrarily close to a crossing and carry an
+      // unbounded chart coordinate into the walk's metric or the
+      // painter's path (the Phase 136 hazard). Nothing further is needed
+      // for the split: the crossing sample either leaves the traced point
+      // undefined, and `_runs` breaks the branches apart there, or it does
+      // not, and the chain genuinely continues through driver-infinity —
+      // which is the full-line host's rule, unchanged.
       //
       // A bounded conic host is refused for a different reason: an
       // `angularExtent` is a *circle's* angular span, in no relation to a
@@ -601,34 +606,87 @@ class _SweepDomain {
       // their carrier stops projecting to a `CircleEq` — and the pattern
       // says so rather than trusting that it stays true.
       case GeoCircle(:final conic?, angularExtent: null)
-          when ConicShape.of(conic).kind == ConicClass.ellipse:
+          when ConicShape.of(conic).isParameterized:
         final shape = ConicShape.of(conic);
+        final cuts = shape.infinityParameters;
+        // Arc `j` runs from one crossing to the next, the last wrapping
+        // through `φ ≡ φ + π`. With no crossings there is one arc, and it
+        // is the whole pencil circle from 0 — an ellipse, swept exactly
+        // as before.
+        final arcs = cuts.isEmpty ? 1 : cuts.length;
+        final from = [
+          for (var j = 0; j < arcs; j++) cuts.isEmpty ? 0.0 : cuts[j],
+        ];
+        final span = [
+          for (var j = 0; j < arcs; j++)
+            (j + 1 < arcs ? cuts[j + 1] : from[0] + math.pi) - from[j],
+        ];
+        // Rounded *up* to a multiple of the arc count, so a crossing is a
+        // grid sample and a caller never gets fewer samples than it asked
+        // for.
+        final cells = arcs * ((n + arcs - 1) ~/ arcs);
+        int arcAt(double x) => (arcs * x).floor().clamp(0, arcs - 1);
         // One expression for both evaluations, because `pointAt` *is*
         // `pointAtComplex` at a real angle (Phase 132): a real-valued `x`
         // reproduces [evalReal] bitwise with nothing kept in step by hand.
         // [ConicShape.chartLiftAt] is that evaluation with `w` brought to
         // exactly one, which is what [PointOnObject.tracedPosition] takes
         // and what makes `evalReal(x).position` the driver's own
-        // `chartPointAt(π·x)`, bit for bit — see its doc for why the
+        // `chartPointAt(φ)`, bit for bit — see its doc for why the
         // homogeneous value cannot be handed over raw.
+        double phiOf(double x) {
+          final j = arcAt(x);
+          return from[j] + span[j] * (arcs * x - j);
+        }
+
+        // The focus window, and only an unbounded host needs one. An
+        // ellipse is bounded, so every defined sample is core exactly as
+        // on a circle host. On the other two the far reaches of an arm
+        // would otherwise set the walk's metric and the viewport fitter's
+        // box, and the rule is the line host's said chart-side: the
+        // driver within [halfSpan] of where it stood when the locus was
+        // made (`LocusTool` passes `driver.parameter` as [center], and on
+        // a line `|t − center| ≤ halfSpan` *is* this, because `t` is arc
+        // length). A [center] whose own point is at infinity falls back
+        // to the conic's [ConicShape.anchorPoint] — the finite point of
+        // the ink that exists for exactly this — and then to no window.
+        final focus = shape.kind == ConicClass.ellipse
+            ? null
+            : shape.chartPointAt(center % math.pi) ?? shape.anchorPoint;
         return _SweepDomain._(
           cyclic: true,
-          grid: [for (var i = 0; i < n; i++) i / n],
-          cell: 1 / n,
+          // Arc 0 begins at a crossing whenever there is one, so the wrap
+          // is driver-infinity and the sweep probes it, exactly as it does
+          // on a full-line host.
+          hasInfinityWrap: cuts.isNotEmpty,
+          grid: [for (var i = 0; i < cells; i++) i / cells],
+          cell: 1 / cells,
           // The stored parameter is a pencil angle and the host does not
           // clamp it (there is no extent), exactly as
           // `PointOnObject.recompute` reads it — wrapped onto the period
-          // the sweep covers.
-          seedX: (driver.parameter / math.pi) % 1.0,
-          evalReal: (x) => shape.chartLiftAt(Complex(math.pi * x)),
-          evalComplex: (x) => shape.chartLiftAt(x.scale(math.pi)),
-          // Bounded, like a circle host: every defined sample is core.
-          isCore: (_) => true,
+          // the sweep covers and inverted through the same arc shares.
+          seedX: _seedOnArcs(driver.parameter, from, span, arcs),
+          evalReal: (x) => shape.chartLiftAt(Complex(phiOf(x))),
+          evalComplex: (x) {
+            final j = arcAt(x.re);
+            return shape.chartLiftAt(
+              Complex(from[j]) +
+                  (x.scale(arcs.toDouble()) - Complex(j.toDouble())).scale(
+                    span[j],
+                  ),
+            );
+          },
+          isCore: focus == null
+              ? (_) => true
+              : (x) {
+                  final p = shape.chartPointAt(phiOf(x));
+                  return p != null && p.distanceTo(focus) <= halfSpan;
+                },
         );
-      // A conic host with no curve to sweep, or one whose curve is
-      // unbounded: no domain. Reached rather than unreachable — the
-      // circle arm above stopped covering every [GeoCircle] the moment
-      // its `circle` became a null-check pattern.
+      // A conic host with no curve at all — an imaginary ellipse, a line
+      // pair, an isolated point: no domain. Reached rather than
+      // unreachable, since the circle arm above stopped covering every
+      // [GeoCircle] the moment its `circle` became a null-check pattern.
       case GeoCircle():
         return null;
       case GeoLine(:final line, :final parameterExtent) && final GeoLine host:
@@ -729,6 +787,29 @@ class _SweepDomain {
         // Unreachable: PointOnObject only hosts on lines and circles.
         throw StateError('Locus driver must be hosted on a line or circle');
     }
+  }
+
+  /// A conic host's [seedX]: the driver's stored pencil angle, wrapped
+  /// onto `[from[0], from[0] + π)` and inverted through the arc shares
+  /// [of] built — arc `j` occupying `[j/arcs, (j+1)/arcs)`.
+  static double _seedOnArcs(
+    double parameter,
+    List<double> from,
+    List<double> span,
+    int arcs,
+  ) {
+    var phi = parameter % math.pi;
+    if (phi < from[0]) {
+      phi += math.pi;
+    }
+    var j = arcs - 1;
+    for (var i = 0; i < arcs; i++) {
+      if (phi < from[i] + span[i]) {
+        j = i;
+        break;
+      }
+    }
+    return ((j + (phi - from[j]) / span[j]) / arcs) % 1.0;
   }
 }
 

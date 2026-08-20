@@ -1165,61 +1165,43 @@ void main() {
       }
     });
 
-    test(
-      'an unbounded or curveless conic host gets no locus — and no throw',
-      () {
-        // The arms below `case GeoCircle(:final circle?)` are reachable now
-        // that the circle arm stopped matching every `GeoCircle`; each of
-        // these used to be `return null` from inside it. A hyperbola and a
-        // parabola *have* a curve and are refused for the other reason: it
-        // runs through infinity at pencil angles the grid does not know.
-        final hyperbola = ConicMatrix(
-          const Complex(1 / 16),
-          Complex.zero,
-          const Complex(-1 / 4),
-          Complex.zero,
-          Complex.zero,
-          const Complex(-1),
+    test('a conic with no curve gets no locus — and no throw', () {
+      // The arms below `case GeoCircle(:final circle?)` are reachable now
+      // that the circle arm stopped matching every `GeoCircle`; each of
+      // these used to be `return null` from inside it. What is refused
+      // here is only what has no curve at all: all three parameterized
+      // classes are swept.
+      final imaginary = ConicMatrix(
+        const Complex(1 / 16),
+        Complex.zero,
+        const Complex(1 / 4),
+        Complex.zero,
+        Complex.zero,
+        Complex.one,
+      );
+      final linePair = ConicMatrix(
+        Complex.one,
+        Complex.zero,
+        const Complex(-1),
+        Complex.zero,
+        Complex.zero,
+        Complex.zero,
+      );
+      // An isolated point (`x² + y² = 0`) is deliberately absent: it
+      // projects to a `CircleEq` of radius zero, so the circle arm takes
+      // it before any of this is reached.
+      for (final entry in {
+        'imaginary ellipse': imaginary,
+        'line pair': linePair,
+      }.entries) {
+        final rig = midpointLocus(conic: entry.value);
+        expect(
+          rig.locus.samples,
+          isNull,
+          reason: '${entry.key}: no sweep domain, and nothing thrown',
         );
-        final parabola = ConicMatrix(
-          Complex.one,
-          Complex.zero,
-          Complex.zero,
-          Complex.zero,
-          const Complex(-0.5),
-          Complex.zero,
-        );
-        final imaginary = ConicMatrix(
-          const Complex(1 / 16),
-          Complex.zero,
-          const Complex(1 / 4),
-          Complex.zero,
-          Complex.zero,
-          Complex.one,
-        );
-        final linePair = ConicMatrix(
-          Complex.one,
-          Complex.zero,
-          const Complex(-1),
-          Complex.zero,
-          Complex.zero,
-          Complex.zero,
-        );
-        for (final entry in {
-          'hyperbola': hyperbola,
-          'parabola': parabola,
-          'imaginary ellipse': imaginary,
-          'line pair': linePair,
-        }.entries) {
-          final rig = midpointLocus(conic: entry.value);
-          expect(
-            rig.locus.samples,
-            isNull,
-            reason: '${entry.key}: no sweep domain, and nothing thrown',
-          );
-        }
-      },
-    );
+      }
+    });
 
     test('a conic host that claims an angular extent is refused', () {
       // An `angularExtent` is a *circle*'s angular span and stands in no
@@ -1268,6 +1250,180 @@ void main() {
         }
       },
     );
+
+    // --- the unbounded classes -------------------------------------
+
+    /// `x² + 0.7xy − 0.3y² + 0.2x − 1.1y − 2 = 0`: a hyperbola skewed
+    /// enough that its crossings at infinity land at no nice pencil
+    /// angle at all (0.215π and 0.5π) — which is the whole point, since
+    /// one of the two always sits at 0 or π/2 (the base point of a
+    /// hyperbola *is* one of its points at infinity) and would be hit by
+    /// a uniform grid by luck.
+    ConicMatrix skewHyperbola([double xy = 0.7]) =>
+        ConicMatrix.coefficients(1, xy, -0.3, 0.2, -1.1, -2);
+
+    test('a hyperbola host sweeps each branch as its own polyline', () {
+      final rig = midpointLocus(conic: skewHyperbola(), parameter: 0.9);
+      final samples = rig.locus.samples!;
+      expect(
+        samples.where((s) => s == null),
+        hasLength(1),
+        reason: 'two branches, so one break — not one polyline across the sky',
+      );
+      final before = samples.takeWhile((s) => s != null).whereType<Vec2>();
+      final after = samples.skipWhile((s) => s != null).whereType<Vec2>();
+      expect(before, isNotEmpty);
+      expect(after, isNotEmpty);
+      for (final s in [...before, ...after]) {
+        // Undo the midpoint and land back on the host conic.
+        final back = ProjPoint.lift(Vec2(2 * s.x - 10, 2 * s.y));
+        expect(rig.host.conic!.containsPoint(back, 1e-9), isTrue);
+      }
+      // The two runs are the two branches: a hyperbola's branches are
+      // separated by the strip between its asymptotes, so no sample of
+      // one is near any sample of the other.
+      var nearest = double.infinity;
+      for (final a in before) {
+        for (final b in after) {
+          nearest = math.min(nearest, a.distanceTo(b));
+        }
+      }
+      expect(nearest, greaterThan(1));
+    });
+
+    test('the crossings land on grid samples whatever angles they fall at, '
+        'and without that the branches are one polyline', () {
+      // The measurement this phase exists for. Over 40 hyperbolas whose
+      // first crossing sweeps 0.13π to 0.23π, the aligned grid splits
+      // every one and holds the worst sample to ~45 world units; a plain
+      // uniform grid in the pencil angle splits **none** of them — a
+      // sample landing exactly on a crossing is measure-zero — and joins
+      // the two branches with a chord across the figure, worst sample
+      // 3384.
+      final cuts = <double>[];
+      for (var i = 0; i < 40; i++) {
+        final conic = skewHyperbola(0.2 + i * 0.05);
+        final shape = ConicShape.of(conic);
+        expect(shape.kind, ConicClass.hyperbola);
+        cuts.add(shape.infinityParameters.first / math.pi);
+        final samples = midpointLocus(
+          conic: conic,
+          parameter: 0.9,
+        ).locus.samples!;
+        expect(
+          samples.where((s) => s == null),
+          hasLength(1),
+          reason: 'branches joined at xy = ${0.2 + i * 0.05}',
+        );
+        final worst = samples
+            .whereType<Vec2>()
+            .map((s) => s.norm)
+            .reduce(math.max);
+        expect(worst, lessThan(200));
+      }
+      expect(
+        cuts.reduce(math.max) - cuts.reduce(math.min),
+        greaterThan(0.05),
+        reason: 'the crossings really do move across the family',
+      );
+    });
+
+    test('a parabola host sweeps its single arm, unbroken', () {
+      // One crossing, so one arc — and a parabola is connected in the
+      // affine plane, so there is nothing for the sweep to break.
+      final rig = midpointLocus(
+        conic: ConicMatrix.coefficients(1, 2, 1, 3, -1, 0.5),
+        parameter: 0.9,
+      );
+      expect(ConicShape.of(rig.host.conic!).kind, ConicClass.parabola);
+      final samples = rig.locus.samples!;
+      expect(samples.contains(null), isFalse);
+      expect(samples.length, greaterThan(100));
+      for (final s in samples) {
+        final back = ProjPoint.lift(Vec2(2 * s!.x - 10, 2 * s.y));
+        expect(rig.host.conic!.containsPoint(back, 1e-9), isTrue);
+      }
+    });
+
+    test('the sample count rounds up to a multiple of the arc count', () {
+      // 127 samples over two arcs would leave the second crossing
+      // between two cells, and then it is not a sample at all: the
+      // driver never reaches infinity, the run never breaks, and the
+      // branches are joined again. 128 cells put both crossings on the
+      // grid, and a caller never gets fewer samples than it asked for.
+      for (final count in [127, 128]) {
+        final samples = midpointLocus(
+          conic: skewHyperbola(),
+          parameter: 0.9,
+          sampleCount: count,
+        ).locus.samples!;
+        expect(samples.where((s) => s == null), hasLength(1));
+        expect(samples.whereType<Vec2>(), hasLength(126));
+      }
+    });
+
+    test('the walk runs on an unbounded host too, not only the scan', () {
+      // A chain with an `IntersectionPoint` is walked rather than
+      // re-solved per sample, and the walk meets driver-infinity twice on
+      // the way round. Every sample still lands exactly on the circle its
+      // traced point is an intersection with.
+      final host = StubProjectiveConic(skewHyperbola());
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0.9);
+      final far = FreePoint(id: 'f', position: const Vec2(0, 12));
+      final ray = LineThroughTwoPoints(id: 'l', point1: far, point2: driver);
+      final centre = FreePoint(id: 'c', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(9, 0));
+      final circle = CircleCenterPoint(id: 'k', center: centre, onCircle: rim);
+      final traced = IntersectionPoint(
+        id: 'tr',
+        curve1: ray,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        center: 0.9,
+      );
+      final samples = locus.samples!;
+      expect(samples.whereType<Vec2>(), hasLength(greaterThan(200)));
+      for (final s in samples.whereType<Vec2>()) {
+        expect(s.norm, closeTo(9, 1e-6));
+      }
+      expect(samples.where((s) => s == null), hasLength(1));
+    });
+
+    test('an unbounded host focuses its core on the window; a bounded one '
+        'has no window to apply', () {
+      // The line host's rule said chart-side: the driver within
+      // `halfSpan` of where it stood when the locus was made. An ellipse
+      // is bounded and takes every defined sample, exactly as a circle
+      // host does — `halfSpan` does not touch it.
+      final wide = midpointLocus(conic: skewHyperbola(), parameter: 0.9);
+      final narrow = Locus(
+        id: 'loc2',
+        driver: wide.driver,
+        traced: wide.locus.traced,
+        center: 0.9,
+        halfSpan: 3,
+      );
+      expect(narrow.coreSamples!, isNotEmpty);
+      expect(
+        narrow.coreSamples!.length,
+        lessThan(wide.locus.coreSamples!.length),
+      );
+
+      final ellipseRig = midpointLocus(parameter: 0.9);
+      final pinched = Locus(
+        id: 'loc3',
+        driver: ellipseRig.driver,
+        traced: ellipseRig.locus.traced,
+        center: 0.9,
+        halfSpan: 0.001,
+      );
+      expect(pinched.coreSamples!.length, pinched.samples!.length);
+    });
   });
 }
 

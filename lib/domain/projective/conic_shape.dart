@@ -783,17 +783,33 @@ class ConicShape {
     return out;
   }
 
+  /// The sorted pencil angles at which the curve **passes through
+  /// infinity** — none for an ellipse, one for a parabola (its tangency
+  /// is a double root and counts once), two for a hyperbola. Empty for a
+  /// conic with no curve.
+  ///
+  /// These are what cut the pencil circle into the curve's *arcs*: each
+  /// one is a connected, wholly finite piece — a hyperbola branch, a
+  /// parabola's single arm — which is why [polylines] finds them by
+  /// meeting the line at infinity rather than by classifying, and why a
+  /// locus sweep aligns its grid on them (Phase 132c).
+  List<double> get infinityParameters => _cutsAlong(const [ProjLine.infinity]);
+
   /// The sorted pencil angles at which the curve crosses a box edge line or
   /// the line at infinity — the cut points that make every arc between them
   /// wholly visible or wholly hidden, and wholly finite.
-  List<double> _breakParameters(Vec2 min, Vec2 max) {
-    final cutters = <ProjLine>[
-      ProjLine.real(1, 0, -min.x),
-      ProjLine.real(1, 0, -max.x),
-      ProjLine.real(0, 1, -min.y),
-      ProjLine.real(0, 1, -max.y),
-      ProjLine.infinity,
-    ];
+  List<double> _breakParameters(Vec2 min, Vec2 max) => _cutsAlong([
+    ProjLine.real(1, 0, -min.x),
+    ProjLine.real(1, 0, -max.x),
+    ProjLine.real(0, 1, -min.y),
+    ProjLine.real(0, 1, -max.y),
+    ProjLine.infinity,
+  ]);
+
+  /// The pencil angles where the curve meets any of [cutters], sorted and
+  /// deduplicated — on the wrap as well, since `φ` and `φ + π` are one
+  /// parameter.
+  List<double> _cutsAlong(List<ProjLine> cutters) {
     final found = <double>[];
     for (final cutter in cutters) {
       for (final root in intersectLineConic(cutter, conic, _eps)) {
