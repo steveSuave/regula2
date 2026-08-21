@@ -8,6 +8,29 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 157 (V2 Session 59) — 2026-08-21
+
+**Done — Phase 143 merged and deployed; Phase 144 / M-P2c: the proof walk, and the derivation check that closes last session's gotcha.** `phase-143-mp2b-dd-rules` merged to `main` (`67fef60`) and pushed. Phase 144 lives on `phase-144-mp2c-proof-dag`, unmerged, two commits. Suite **2913** green (2893 + 20), analyze clean, browser gate green (6).
+
+- **The walk is small because Phase 142 paid for it in advance** (`proof.dart`). `Proof.of(goal, database)` takes the backward closure of one goal over the stored derivations — the sub-DAG that actually supports it, not everything the run happened to derive (pinned: the closure is strictly smaller than the database on the Varignon rig, and equals a support set computed independently of the walk). **Post-order, each fact once**: every citation points upwards, and a fact reached by two routes is stated once and cited twice. Iterative with an explicit stack — a 20 000-link chain is a test, not a stack overflow — and a cycle guard that throws, which needed a `FactDatabase` subclass to test at all, since the real store *cannot* be made to hold a cycle (premises-must-be-present plus first-insert-wins).
+- **It reads like a proof.** `render()` is a numbered statement/reason list with points named the way the figure names them (`attributes.name`, id as fallback): `[3] para(A, C, M, N)  midline_para from [1], [2]`, seven lines for Varignon.
+- **The phase's real content is `derivation_check.dart`, and it closes the gotcha Session 156 recorded.** The filter screens a *conclusion's truth* and structurally cannot say whether the premises recorded beside it entail it — so a mis-joining unifier that emitted a true, correctly-shaped conclusion passed "fact present", "derivation names the rule", and the screen, and would print as a proof of something it does not prove. `checkDerivation` re-matches a derivation against its own rule: recorded premises against premise patterns **in slot order**, bound over `orbitArguments` (the full orbit, because `cong(o,a,o,b)`'s repetition is exactly what canonical order sorts apart — `[a,o,b,o]`), under one binding whose conclusion canonicalizes to the recorded fact. `Proof.verify()` runs it over every deduction and answers the reasons, empty exactly when the proof is a certificate.
+- **The unifier is restated, not shared.** A checker built on `rule_engine.dart`'s `_bind` would inherit the matcher's bugs instead of catching them; the duplication is the point and is said at the site.
+- **A given is valid with nothing checked** — a hypothesis's warrant is the construction's parent ties, established one boundary earlier by `hypotheses()` and screened by the filter. This function adjudicates rule applications, and a given is not one.
+- **PLAN's M-P2c bullet was amended first**, since "checked, not just printed" is a soundness claim and that is where soundness claims live.
+- **Mutation-checked**: binding to the canonical spelling instead of the full orbit fails exactly three tests (the orbit pin, the sweep over a real fixpoint's derivations, the certificate test); dropping the conclusion-canonicalizes-to-the-record check fails exactly the two rejection tests that turn on it plus `verify`'s.
+
+**Next.** Merge `phase-144-mp2c-proof-dag` — a **deploy**, so check `gh run list` after. That closes M-P2. Then M-P3 (the full-angle engine, a peer behind one `Prover` facade) or M-P4 (the proof panel — the first UI consumer, and the one that would finally make `Isolate.run` wrapping and an id-based fact transfer real). Carried: Phase 139's open box (decline an unaffordable detour); the Android/iOS smokes. Standing and deferred: the user's preferred **pure** route for deflation; the direct/reflected `simtri` split.
+
+**Gotchas.**
+
+- **`Proof.verify()` checks instantiation, not the rule table.** It answers "this step is a correct application of the rule it names" — if a *rule* in `ddCoreRules` is not a theorem, every proof using it verifies happily. That soundness rests on the per-rule numeric rigs in `rule_engine_test.dart`, which is the right place for it; the two checks are complements and neither subsumes the other.
+- The walk's post-order is a reading choice, not the insertion order. Insertion order is also a valid topological order (premises are strictly older) but interleaves unrelated branches; post-order keeps a sub-proof contiguous. M-P4 should render from `steps`, not re-sort.
+- Nothing in `lib/main.dart`'s import graph reaches the prover yet, so the wasm smoke still does not exercise any of it — unchanged from Session 156, and it stays true until M-P4.
+- `checkDerivation`'s search is bounded by the rule table (three premises at most, orbit branching), not by the database — but it is exponential in premise count by shape, so a future rule with many `eqangle` premises would want a pruning order rather than the straight backtrack.
+
+---
+
 ## Session 156 (V2 Session 58) — 2026-08-21
 
 **Done — Phase 143 / M-P2b: hypotheses, the DD rule core, and the fixpoint that chunks through the channel.** On `phase-143-mp2b-dd-rules`, unmerged, six commits. Suite **2893** green (2842 + 51), analyze clean, browser gate green (+2), wasm build compiles.
