@@ -14,6 +14,32 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 151 — M-P2d: the incidence closure (open)
+
+The first of the two structural gaps Phase 150 found behind its three rules (PLAN §"Two closures the rule table is standing in for"). Ahead of M-P3 in value, and the cheapest of the three open prover phases.
+
+- [ ] **Lines and circles as objects carrying their point sets**, merged by union-find, so "which points name this line" is a lookup rather than a derivation. A `Fact` keeps its point-tuple form (the vocabulary and the save format do not move); what changes is that the *matcher* resolves a pair to its carrier before joining
+- [ ] **Deletes rules rather than adding them**: `coll_transitive` and `perp_coll` go, and `para_coll` — already written, measured and rejected in Phase 150 — never comes back. Their rigs become tests of the closure
+- [ ] **Deletes the all-spellings search** in `questions.dart`: a question is one statement about carriers, so `ProverQuestion.spellings` collapses to one. The Phase 148 tests that turn on the multi-spelling scan will need to change character, exactly as Phase 150 already made one of them do
+- [ ] Cost: measure before and after on the five fixtures, especially `provoleas2.json` — the closure should *reduce* the fact count as well as the rule count
+
+## Phase 152 — M-P3: the angle and ratio algebra (open)
+
+The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a second rule engine — a linear system.
+
+- [ ] **θ per line, mod π; every angle fact a linear equation.** `para` is a zero difference, `perp` is π/2, Chasles is addition, closure is elimination. Log-lengths give the same for `cong` and `eqratio`
+- [ ] **The point is the cost profile, not only the power.** `eqangle`/`eqratio` carry 128-form orbits against 8 for `perp` and 6 for `coll` — they are why `provoleas2.json` never reaches quiescence. Moving angles out of the fact set removes the cost centre instead of feeding it
+- [ ] **A peer of DD behind one `Prover` facade**, sharing the fact database and the numeric filter, exchanging facts at the boundary. Roughly thirty of JGEX's seventy-two rules fall out of this plus Phase 151 for free
+- [ ] **Not in scope until the algebra exists**: Pythagoras (squared lengths), the `2·∠`/`3·∠` family and the 180° angle sum (a coefficient ring). Named here so they are not mistaken for rule-table work
+
+## Phase 153 — auxiliary construction (open)
+
+What JGEX calls A2, and the thing that decides whether the app can answer a user's question unaided. Phase 150's regression needs the midpoint of BC drawn *by hand*; JGEX constructs it and says so in a dialog.
+
+- [ ] **When the fixpoint stalls without the goal, propose points and re-run**: midpoints of named pairs first (that is what the motivating document needed), then feet of perpendiculars, then intersections. A search, so it needs a budget and an order, both measured rather than chosen
+- [ ] **The proof has to stay readable when the prover invented a point.** JGEX's answer is a modal saying what it built; ours should name the point in the step list and offer to add it to the construction, since a proof citing a point the figure does not contain is not a proof the user can follow
+- [ ] **`perp-true-unproved.rgl` stops being the *unproved* rig** the day this lands, so Phase 148's three-verdict tests need a genuinely unreachable statement instead. Named now because it will be easy to miss
+
 ## Phase 150 — the three rules a JGEX trace found
 
 A user brought a JGEX screenshot proving `perp(C,D,D,F)` on `test/fixtures/perp-true-unproved.rgl` — the theorem Phase 148 had shipped as the *unproved* rig. Two sessions' worth of claims were wrong, and the screenshot said why: **JGEX constructed an auxiliary point** ("H is midpoint of DA" — the midpoint of our BC) before reasoning. Translating its trace step by step showed where ours could not follow.
