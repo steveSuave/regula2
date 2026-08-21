@@ -14,6 +14,16 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 149 — the panels open when the user opens them
+
+Two UI corrections, both user requests, and they turn out to be the same correction.
+
+- [x] **The proof button moves beside the geometry menu.** Both answer questions *about* the document rather than editing it, and the pairing is not only visual: the prover's vocabulary is Euclidean, so which geometry the globe names decides whether it can speak at all
+- [x] **Style & properties is opened by its button, not by the selection.** It used to appear the moment anything was picked, which meant a tap on the canvas *resized the canvas under the pointer* mid-gesture. Now it is a docked panel behind an app-bar toggle, exactly like the object tree, and a bottom-sheet-free drawer on compact — the path that was already there for phones, promoted to being the only path
+- [x] **The button is always shown, and the empty panel says what to do.** The alternative — showing it only with a selection — was rejected for the reason the object tree already records: a toolbar whose buttons come and go is a toolbar you cannot aim at, and a panel the user opened and that then vanished on a deselect reads as broken. So `AttributesInspector` no longer collapses to `SizedBox.shrink()`; with nothing selected it renders "Select an object to style it."
+- [x] Tests updated where the behaviour genuinely changed rather than worked around: the inspector harness opens the panel the way the user does; the two collapse tests become "opened by its button, not by the selection" and "clearing the selection leaves the panel open and empty"; both `app_bar_layout_test` cases; the object-tree hand-off; the three shortcut tests that reach the name field
+- [x] Gates: analyze clean, suite **2980** green, 32 goldens byte-identical, browser gate green (6)
+
 ## Phase 148 — M-P4d: asking, and the three answers
 
 The panel derives everything and lists what it found — "what follows from this figure". What it cannot do is take a question. JGEX's model is the other way round: state a conclusion, get a proof. This phase adds the question, and it is cheap because DD is *already* not goal-directed — DDAR runs forward to quiescence and then checks membership, so `proofOf` is the second half and only the asking is missing.

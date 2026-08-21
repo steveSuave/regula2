@@ -259,7 +259,7 @@ void main() {
     );
   });
 
-  testWidgets('selecting a hidden object from the tree opens the inspector', (
+  testWidgets('a hidden object selected from the tree reaches the inspector', (
     tester,
   ) async {
     await pumpEditor(tester);
@@ -277,6 +277,10 @@ void main() {
     await tester.pump();
 
     expect(container.read(selectionProvider), {'h'});
+    // The inspector is opened by its own button now — the tree selects,
+    // it does not restyle.
+    await tester.tap(find.byTooltip('Style & properties'));
+    await tester.pump();
     // The inspector's name field only exists while something is selected.
     // (Scoped to the inspector — the tree's own search field is always
     // there.)

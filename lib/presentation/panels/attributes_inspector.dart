@@ -16,8 +16,14 @@ import '../../domain/construction/objects/segment.dart';
 import '../canvas/measure_format.dart';
 import 'object_kind_label.dart';
 
-/// Side panel showing the current selection's attributes; collapses to
-/// nothing while the selection is empty.
+/// Side panel showing the current selection's attributes.
+///
+/// Shown and hidden by its own app-bar button, like the object tree —
+/// *not* by the selection. It used to appear the moment anything was
+/// picked, which meant a tap on the canvas resized the canvas under the
+/// pointer. With an empty selection it says what to do instead of
+/// collapsing: a panel the user opened and that then vanished reads as
+/// broken.
 ///
 /// A single selected object gets its kind as the header plus editable
 /// fields (name, visibility, label visibility, color, width). A
@@ -55,7 +61,26 @@ class AttributesInspector extends ConsumerWidget {
         if (construction.byId(id) case final GeoObject object) object,
     ];
     if (objects.isEmpty) {
-      return const SizedBox.shrink();
+      // The panel is opened by its app-bar button now, not by the
+      // selection, so an empty selection has to say what to do rather
+      // than collapse to nothing — the object tree's behaviour, and for
+      // its reason: a panel the user opened and that then vanished
+      // reads as broken.
+      return SizedBox(
+        width: panelWidth,
+        child: Material(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Select an object to style it.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     final theme = Theme.of(context);

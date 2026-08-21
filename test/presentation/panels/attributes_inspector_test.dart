@@ -28,9 +28,11 @@ import '../../wide_window.dart';
 void main() {
   late ProviderContainer container;
 
-  /// The full editor, so the inspector's undo interplay is tested through
-  /// the same app bar the user has.
-  Future<void> pumpEditor(WidgetTester tester) async {
+  /// The full editor with the inspector opened the way the user opens
+  /// it — through the app-bar button. It no longer appears with the
+  /// selection (a tap on the canvas used to resize the canvas), so every
+  /// test about its *contents* has to open it first.
+  Future<void> pumpEditor(WidgetTester tester, {bool open = true}) async {
     useWideTestWindow(tester);
     container = ProviderContainer();
     addTearDown(container.dispose);
@@ -40,6 +42,10 @@ void main() {
         child: const MaterialApp(home: EditorScreen()),
       ),
     );
+    if (open) {
+      await tester.tap(find.byTooltip('Style & properties'));
+      await tester.pump();
+    }
   }
 
   FreePoint addPoint(String id, Vec2 position) {
@@ -104,12 +110,38 @@ void main() {
     expect(find.byKey(const ValueKey('stroke-width')), findsOneWidget);
   });
 
-  testWidgets('collapsed while the selection is empty', (tester) async {
+  testWidgets('the panel is opened by its button, not by the selection', (
+    tester,
+  ) async {
+    await pumpEditor(tester, open: false);
+    addPoint('a', Vec2.zero);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    expect(
+      find.byType(AttributesInspector),
+      findsNothing,
+      reason: 'selecting something is not asking to restyle it',
+    );
+
+    await tester.tap(find.byTooltip('Style & properties'));
+    await tester.pump();
+    expect(find.text('Point'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Hide style & properties'));
+    await tester.pump();
+    expect(find.byType(AttributesInspector), findsNothing);
+  });
+
+  testWidgets('with nothing selected it says what to do', (tester) async {
+    // A panel the user opened and that then vanished reads as broken, so
+    // an empty selection gets a hint rather than a collapse.
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     await tester.pump();
 
     expect(find.byType(AttributesInspector), findsOneWidget);
+    expect(find.text('Select an object to style it.'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     expect(find.text('Point'), findsNothing);
   });
@@ -978,7 +1010,7 @@ void main() {
     expect(find.byKey(const ValueKey('delete-button')), findsNothing);
   });
 
-  testWidgets('clearing the selection collapses the panel again', (
+  testWidgets('clearing the selection leaves the panel open and empty', (
     tester,
   ) async {
     await pumpEditor(tester);
@@ -992,6 +1024,11 @@ void main() {
     await tester.pump();
     expect(find.text('Point'), findsNothing);
     expect(find.byType(TextField), findsNothing);
+    expect(
+      find.text('Select an object to style it.'),
+      findsOneWidget,
+      reason: 'the panel stays where the user put it',
+    );
   });
 
   testWidgets('an object deleted out from under the selection drops out '
