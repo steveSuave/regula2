@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/proof_highlight_provider.dart';
 import 'package:regula/application/providers/prover_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -15,6 +16,8 @@ import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/main.dart';
+import 'package:regula/presentation/canvas/geometry_canvas.dart';
+import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/panels/proof_panel.dart';
 
 import '../../wide_window.dart';
@@ -309,6 +312,158 @@ void main() {
       for (final goal in narrowed) {
         expect(find.text(describeFact(goal)), findsOneWidget);
       }
+    });
+
+    testWidgets('tapping a step points at what it is about', (tester) async {
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(describeFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.pump();
+      expect(container.read(proofHighlightProvider), isEmpty);
+
+      final proof = (container.read(proverProvider) as ProverReady).proofOf(
+        rig.goal,
+      )!;
+      final step = proof.steps.first;
+      await tester.tap(find.text(describeFact(step.fact)).first);
+      await tester.pump();
+
+      expect(
+        container.read(proofHighlightProvider),
+        step.fact.points.map((point) => point.id).toSet(),
+      );
+      // The emphasis is not the selection: what a proof step is about
+      // must not become what the next tool acts on.
+      expect(container.read(selectionProvider), isEmpty);
+
+      // Tapping the same step again turns it off — a highlight the user
+      // cannot dismiss is one they have to close the panel to escape.
+      await tester.tap(find.text(describeFact(step.fact)).first);
+      await tester.pump();
+      expect(container.read(proofHighlightProvider), isEmpty);
+    });
+
+    testWidgets('the canvas pulses only while a step is being read', (
+      tester,
+    ) async {
+      // An always-ticking controller would repaint the app's most
+      // expensive paint forever for no visible reason, so the pulse is a
+      // function of the highlight set. Read straight off the painter:
+      // the value moving *is* the animation.
+      double pulse() =>
+          (tester
+                      .widget<CustomPaint>(
+                        find.descendant(
+                          of: find.byType(GeometryCanvas),
+                          matching: find.byType(CustomPaint),
+                        ),
+                      )
+                      .painter!
+                  as GeometryPainter)
+              .highlightPulse!
+              .value;
+
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(describeFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.pump();
+      final proof = (container.read(proverProvider) as ProverReady).proofOf(
+        rig.goal,
+      )!;
+      final stepText = describeFact(proof.steps.first.fact);
+
+      // Nothing highlighted: the pulse is parked.
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(pulse(), 0);
+
+      await tester.tap(find.text(stepText).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      final moving = pulse();
+      expect(moving, greaterThan(0));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(pulse(), isNot(moving));
+
+      await tester.tap(find.text(stepText).first);
+      await tester.pump();
+      final parked = pulse();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(
+        pulse(),
+        parked,
+        reason: 'the pulse must stop when nothing is being read',
+      );
+    });
+
+    testWidgets('going back to the list drops the emphasis', (tester) async {
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(describeFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.pump();
+      final proof = (container.read(proverProvider) as ProverReady).proofOf(
+        rig.goal,
+      )!;
+      await tester.tap(find.text(describeFact(proof.steps.first.fact)).first);
+      await tester.pump();
+      expect(container.read(proofHighlightProvider), isNotEmpty);
+
+      await tester.tap(find.byTooltip('Back to the list'));
+      await tester.pump();
+
+      expect(container.read(proofHighlightProvider), isEmpty);
+    });
+
+    testWidgets('closing the panel drops the emphasis', (tester) async {
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(describeFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.pump();
+      final proof = (container.read(proverProvider) as ProverReady).proofOf(
+        rig.goal,
+      )!;
+      await tester.tap(find.text(describeFact(proof.steps.first.fact)).first);
+      await tester.pump();
+      expect(container.read(proofHighlightProvider), isNotEmpty);
+
+      // The canvas outlives the panel; it must not be left pulsing at a
+      // step nobody is looking at. The clear is post-frame (a provider
+      // may not be modified inside `dispose`), so settle for it.
+      await tester.tap(find.byTooltip('Proof'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(proofHighlightProvider), isEmpty);
     });
 
     testWidgets('a non-Euclidean document says so instead of a list', (

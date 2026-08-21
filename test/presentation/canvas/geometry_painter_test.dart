@@ -1,4 +1,6 @@
 import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -32,6 +34,8 @@ void main() {
     Construction construction, {
     int revision = 0,
     Set<String> selectedIds = const {},
+    Set<String> highlightedIds = const {},
+    ValueListenable<double>? highlightPulse,
     Set<String> previewObjectIds = const {},
     bool showHidden = false,
     bool showAxes = false,
@@ -44,6 +48,8 @@ void main() {
     defaultColor: const Color(0xFF000000),
     selectionColor: const Color(0xFF0000FF),
     selectedIds: selectedIds,
+    highlightedIds: highlightedIds,
+    highlightPulse: highlightPulse,
     previewObjectIds: previewObjectIds,
     showHidden: showHidden,
     showAxes: showAxes,
@@ -304,6 +310,65 @@ void main() {
           ),
         );
       }
+    });
+
+    test('the proof emphasis paints, at any pulse and with no pulse', () {
+      // The emphasis is a halo pass over the same geometry as the
+      // selection's, so what is worth pinning is that it survives every
+      // kind and every pulse value — including the null listenable a
+      // theme-less host or an un-pumped test hands it.
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero))
+        ..add(FreePoint(id: 'b', position: const Vec2(4, 0)));
+      construction.add(
+        Segment(
+          id: 's',
+          point1: construction.byId('a')! as GeoPoint,
+          point2: construction.byId('b')! as GeoPoint,
+        ),
+      );
+
+      paintOnce(painterFor(construction, highlightedIds: {'a', 's'}));
+      for (final value in [0.0, 0.5, 1.0]) {
+        paintOnce(
+          painterFor(
+            construction,
+            highlightedIds: {'a', 's'},
+            highlightPulse: ValueNotifier<double>(value),
+          ),
+        );
+      }
+      // Highlighted *and* selected: both rings, neither swallowed.
+      paintOnce(
+        painterFor(construction, highlightedIds: {'a'}, selectedIds: {'a'}),
+      );
+    });
+
+    test('shouldRepaint keys on the proof emphasis', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+
+      final base = painterFor(construction);
+      expect(
+        painterFor(construction, highlightedIds: {'a'}).shouldRepaint(base),
+        isTrue,
+      );
+      final pulse = ValueNotifier<double>(0);
+      expect(
+        painterFor(construction, highlightPulse: pulse).shouldRepaint(base),
+        isTrue,
+      );
+      expect(painterFor(construction).shouldRepaint(base), isFalse);
+      // A pulse *tick* is not a shouldRepaint question: the listenable
+      // is the painter's `repaint`, so the value moving repaints without
+      // a new delegate.
+      expect(
+        painterFor(
+          construction,
+          highlightPulse: pulse,
+        ).shouldRepaint(painterFor(construction, highlightPulse: pulse)),
+        isFalse,
+      );
     });
 
     test('shouldRepaint keys on showAxes and showGrid', () {

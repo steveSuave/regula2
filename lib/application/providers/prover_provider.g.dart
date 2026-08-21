@@ -34,10 +34,16 @@ part of 'prover_provider.dart';
 /// strictly less than a revision bump says. Acting on that needs a
 /// structural revision counter, which does not exist.
 ///
-/// **`Isolate.run` is not here, and the reason is a measurement.** PLAN
-/// §"The prover yields with a MessageChannel" states the rule: export a
-/// job only when it is longer than the round trip. See the Phase 145
-/// notes for the figure a real document's fixpoint actually costs.
+/// **`Isolate.run` is not here yet, and the measurement says it should
+/// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+/// — export a job only when it is longer than the round trip
+/// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
+/// well past 13 s (Phase 145 notes). So the native arm clears that bar
+/// by orders of magnitude, and chunking, which keeps frames alive, does
+/// not make a 13-second answer arrive sooner. What stands between here
+/// and there is the id-based fact transfer that keying facts by point
+/// *identity* forces — the deferral M-P2b named for this consumer — and
+/// it is a slice of its own, not a line in this provider.
 
 @ProviderFor(ProverNotifier)
 final proverProvider = ProverNotifierProvider._();
@@ -68,10 +74,16 @@ final proverProvider = ProverNotifierProvider._();
 /// strictly less than a revision bump says. Acting on that needs a
 /// structural revision counter, which does not exist.
 ///
-/// **`Isolate.run` is not here, and the reason is a measurement.** PLAN
-/// §"The prover yields with a MessageChannel" states the rule: export a
-/// job only when it is longer than the round trip. See the Phase 145
-/// notes for the figure a real document's fixpoint actually costs.
+/// **`Isolate.run` is not here yet, and the measurement says it should
+/// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+/// — export a job only when it is longer than the round trip
+/// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
+/// well past 13 s (Phase 145 notes). So the native arm clears that bar
+/// by orders of magnitude, and chunking, which keeps frames alive, does
+/// not make a 13-second answer arrive sooner. What stands between here
+/// and there is the id-based fact transfer that keying facts by point
+/// *identity* forces — the deferral M-P2b named for this consumer — and
+/// it is a slice of its own, not a line in this provider.
 final class ProverNotifierProvider
     extends $NotifierProvider<ProverNotifier, ProverState> {
   /// Runs the DD prover over the live construction, and holds what it
@@ -100,10 +112,16 @@ final class ProverNotifierProvider
   /// strictly less than a revision bump says. Acting on that needs a
   /// structural revision counter, which does not exist.
   ///
-  /// **`Isolate.run` is not here, and the reason is a measurement.** PLAN
-  /// §"The prover yields with a MessageChannel" states the rule: export a
-  /// job only when it is longer than the round trip. See the Phase 145
-  /// notes for the figure a real document's fixpoint actually costs.
+  /// **`Isolate.run` is not here yet, and the measurement says it should
+  /// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+  /// — export a job only when it is longer than the round trip
+  /// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
+  /// well past 13 s (Phase 145 notes). So the native arm clears that bar
+  /// by orders of magnitude, and chunking, which keeps frames alive, does
+  /// not make a 13-second answer arrive sooner. What stands between here
+  /// and there is the id-based fact transfer that keying facts by point
+  /// *identity* forces — the deferral M-P2b named for this consumer — and
+  /// it is a slice of its own, not a line in this provider.
   ProverNotifierProvider._()
     : super(
         from: null,
@@ -131,7 +149,7 @@ final class ProverNotifierProvider
   }
 }
 
-String _$proverNotifierHash() => r'e2660113883ab185add29c2770678227cac3f2af';
+String _$proverNotifierHash() => r'56dd9d39d59fd1c4b5d834d5e2f57be50b60717e';
 
 /// Runs the DD prover over the live construction, and holds what it
 /// derived (PLAN §M-P4).
@@ -159,10 +177,16 @@ String _$proverNotifierHash() => r'e2660113883ab185add29c2770678227cac3f2af';
 /// strictly less than a revision bump says. Acting on that needs a
 /// structural revision counter, which does not exist.
 ///
-/// **`Isolate.run` is not here, and the reason is a measurement.** PLAN
-/// §"The prover yields with a MessageChannel" states the rule: export a
-/// job only when it is longer than the round trip. See the Phase 145
-/// notes for the figure a real document's fixpoint actually costs.
+/// **`Isolate.run` is not here yet, and the measurement says it should
+/// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+/// — export a job only when it is longer than the round trip
+/// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
+/// well past 13 s (Phase 145 notes). So the native arm clears that bar
+/// by orders of magnitude, and chunking, which keeps frames alive, does
+/// not make a 13-second answer arrive sooner. What stands between here
+/// and there is the id-based fact transfer that keying facts by point
+/// *identity* forces — the deferral M-P2b named for this consumer — and
+/// it is a slice of its own, not a line in this provider.
 
 abstract class _$ProverNotifier extends $Notifier<ProverState> {
   ProverState build();

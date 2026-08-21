@@ -14,6 +14,17 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 147 — M-P4c: the step, pointed at on the figure
+
+M-P4's last third, and the milestone's actual payoff: reading a step and seeing what it is about. PLAN §M-P4 asks for on-figure animated highlighting per step, reusing the painter's selection styling.
+
+- [x] **`proofHighlightProvider`** (`lib/application/providers/`): the ids one step is about. A provider because it crosses two widgets with no useful common ancestor — the panel says which step is being read, the canvas draws it — which is `selectionProvider`'s shape and reason. **Deliberately not the selection**: one is what a command would act on, the other is what a sentence is about, and folding them together would let a proof step silently retarget the next tool
+- [x] **The painter draws it as the selection halo's geometry at twice the width** (`_highlightExtra` 11 against the halo's 5), under the selection pass, so an object that is both shows both rings. Reusing the styling is not the same as being indistinguishable from a selection
+- [x] **The pulse is an `Animation` handed to `CustomPainter`'s `repaint`**, so a tick repaints without rebuilding the canvas — an animation frame changes nothing the build method reads. It runs *exactly* while something is highlighted, driven from the watched state rather than a listener so the controller and the painter cannot disagree; an always-ticking controller would repaint the app's most expensive paint forever. Alpha floors at 45% of peak: an emphasis that blinks out reads as a redraw glitch, not as attention
+- [x] **Tapping a step points at it; tapping it again stops** — a highlight the user cannot dismiss is one they have to close the panel to escape. Leaving the proof, picking another goal, re-proving and closing the panel all drop it, the last post-frame because a provider may not be modified inside `dispose`
+- [x] Tests: the painter's emphasis at three pulse values and with the null listenable, both rings when highlighted *and* selected, `shouldRepaint` keyed on the set and the listenable but **not** on a tick; the panel's tap/untap, the three ways it drops, and the pulse read straight off the painter — the value moving *is* the animation, and `hasRunningAnimations` is not a usable probe here (the editor always has a ticker somewhere)
+- [x] Gates: analyze clean, suite **2950** green (2944 + 6), 32 goldens byte-identical, browser gate green (6), `flutter build web --wasm --release` compiles
+
 ## Phase 146 — M-P4b: the proof panel
 
 M-P4's second third: the surface that makes Phase 145's provider a product. A step list rendered from `Proof.steps` — never from `render()`, per Session 157 — with a goal list in front of it, because a proof needs a goal before it can be a proof.

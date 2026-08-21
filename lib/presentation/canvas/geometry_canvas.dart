@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/document_settings_provider.dart';
+import '../../application/providers/proof_highlight_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
@@ -92,7 +93,21 @@ class GeometryCanvas extends ConsumerStatefulWidget {
   ConsumerState<GeometryCanvas> createState() => _GeometryCanvasState();
 }
 
-class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
+class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
+    with SingleTickerProviderStateMixin {
+  /// Drives the proof-step emphasis's pulse (M-P4). Handed to the
+  /// painter as its `repaint` listenable, so a tick repaints the canvas
+  /// without rebuilding this widget — an animation frame changes
+  /// nothing the build method reads.
+  ///
+  /// Runs only while something is highlighted: an always-ticking
+  /// controller would repaint the canvas forever for no visible reason,
+  /// and this canvas is the app's most expensive paint.
+  late final AnimationController _highlightPulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+
   /// Whether [tool] is the Show/Hide visibility variant, which turns on
   /// the hidden-object view: the painter dims them in and the tap hit
   /// test includes them. Tool-scoped state — it vanishes with the tool.
@@ -161,6 +176,16 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     // The tool revision bumps on every accepted input, so in-progress
     // markers rebuild as the user collects.
     final tool = ref.watch(toolProvider).tool;
+    // The pulse runs exactly while a proof step is being read. Driving
+    // it here rather than in a listener keeps it a function of the
+    // watched state — there is no order in which the controller and the
+    // painter can disagree about whether anything is highlighted.
+    final highlightedIds = ref.watch(proofHighlightProvider);
+    if (highlightedIds.isEmpty) {
+      _highlightPulse.stop();
+    } else if (!_highlightPulse.isAnimating) {
+      _highlightPulse.repeat(reverse: true);
+    }
 
     return Listener(
       onPointerDown: _handlePointerDown,
@@ -197,6 +222,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             defaultColor: Theme.of(context).colorScheme.primary,
             selectionColor: Theme.of(context).colorScheme.tertiary,
             selectedIds: ref.watch(selectionProvider),
+            highlightedIds: highlightedIds,
+            highlightColor:
+                Theme.of(context).extension<CanvasColors>()?.absolute ??
+                const Color(0xFFB26A00),
+            highlightPulse: _highlightPulse,
             previewMarkers: tool is ToolInputPreview
                 ? tool.previewPositions
                 : const [],
@@ -307,6 +337,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   @override
   void dispose() {
     _wheelRotateSettle?.cancel();
+    _highlightPulse.dispose();
     super.dispose();
   }
 

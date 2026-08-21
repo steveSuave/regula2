@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/construction_provider.dart';
+import '../../application/providers/proof_highlight_provider.dart';
 import '../../application/providers/prover_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../domain/prover/fact.dart';
@@ -95,6 +96,56 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   /// selection, and an index would silently retarget when it did.
   Fact? _goal;
 
+  /// The step number whose objects are emphasized on the figure, or null
+  /// when none is. Local state, mirrored into `proofHighlightProvider`
+  /// for the canvas to read — the number is this panel's business, the
+  /// ids are the canvas's.
+  int? _readingStep;
+
+  /// Captured at init because `dispose` may not touch `ref` — the same
+  /// constraint `ConstructionNotifier` records for its own life-cycle.
+  /// Read eagerly in [initState]: a `late final` initializer would run
+  /// for the first time inside `dispose` on a panel nobody touched,
+  /// which is the very moment `ref` is unavailable.
+  late final ProofHighlightNotifier _highlight;
+
+  @override
+  void initState() {
+    super.initState();
+    _highlight = ref.read(proofHighlightProvider.notifier);
+  }
+
+  @override
+  void dispose() {
+    // The emphasis belongs to a panel that is being read; the canvas
+    // outlives this one and must not be left pulsing at a step nobody
+    // is looking at. Scheduled rather than called: a provider may not be
+    // modified inside a life-cycle, and this *is* one.
+    final highlight = _highlight;
+    WidgetsBinding.instance.addPostFrameCallback((_) => highlight.clear());
+    super.dispose();
+  }
+
+  /// Emphasizes [step]'s objects on the figure, or clears the emphasis
+  /// when the step already being read is tapped again — a highlight the
+  /// user cannot turn off is one they have to close the panel to escape.
+  void _readStep(ProofStep step) {
+    if (_readingStep == step.number) {
+      setState(() => _readingStep = null);
+      _highlight.clear();
+      return;
+    }
+    setState(() => _readingStep = step.number);
+    _highlight.show(step.fact.points.map((point) => point.id));
+  }
+
+  /// Back to the goal list, or to a different goal: either way no step
+  /// is being read any more.
+  void _stopReading() {
+    _readingStep = null;
+    _highlight.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Watched for the staleness comparison the provider does not make.
@@ -135,7 +186,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
             IconButton(
               tooltip: 'Back to the list',
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => setState(() => _goal = null),
+              onPressed: () => setState(() {
+                _goal = null;
+                _stopReading();
+              }),
             ),
           IconButton(
             tooltip: isStale(state, revision)
@@ -157,7 +211,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   }
 
   Future<void> _prove() async {
-    setState(() => _goal = null);
+    setState(() {
+      _goal = null;
+      _stopReading();
+    });
     await ref.read(proverProvider.notifier).prove();
   }
 
@@ -207,7 +264,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
             dense: true,
             title: Text(describeFact(goal), style: theme.textTheme.bodyMedium),
             trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: () => setState(() => _goal = goal),
+            onTap: () => setState(() {
+              _goal = goal;
+              _stopReading();
+            }),
           ),
         if (!state.reachedFixpoint) _continueTile(theme, state),
       ],
@@ -241,38 +301,48 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         ),
       ),
       for (final step in proof.steps)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 28,
-                child: Text(
-                  '[${step.number}]',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+        InkWell(
+          // Tapping a step points at what it is about. The row keeps the
+          // panel's plain look rather than becoming a ListTile: a proof
+          // is read as a numbered list, and rows that look tappable read
+          // as a menu.
+          onTap: () => _readStep(step),
+          child: Container(
+            color: _readingStep == step.number
+                ? theme.colorScheme.secondaryContainer
+                : null,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Text(
+                    '[${step.number}]',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      describeFact(step.fact),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    Text(
-                      stepReason(step),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        describeFact(step.fact),
+                        style: theme.textTheme.bodyMedium,
                       ),
-                    ),
-                  ],
+                      Text(
+                        stepReason(step),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
     ],

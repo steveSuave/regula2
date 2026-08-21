@@ -98,6 +98,9 @@ class GeometryPainter extends CustomPainter {
     required this.defaultColor,
     required this.selectionColor,
     this.selectedIds = const {},
+    this.highlightedIds = const {},
+    this.highlightColor = const Color(0xFFB26A00),
+    this.highlightPulse,
     this.previewMarkers = const [],
     this.previewObjectIds = const {},
     this.labelDragPreview,
@@ -108,7 +111,7 @@ class GeometryPainter extends CustomPainter {
     this.gridColor = const Color(0xFFE3E6EA),
     this.absoluteColor = const Color(0xFFB26A00),
     this.absoluteOutsideColor = const Color(0x40B26A00),
-  });
+  }) : super(repaint: highlightPulse);
 
   /// Stroke widths of the background layer (logical px) and the font size
   /// of its tick labels.
@@ -131,6 +134,20 @@ class GeometryPainter extends CustomPainter {
   static const double _haloExtra = 5;
 
   static const double _haloAlpha = 0.4;
+
+  /// The proof-step emphasis is the selection halo's geometry at twice
+  /// the width, so a highlighted object that is *also* selected shows
+  /// both rings rather than one swallowing the other. PLAN §M-P4 says to
+  /// reuse the selection styling; it does not say to be indistinguishable
+  /// from a selection, which would make a proof step look like something
+  /// the next tool would act on.
+  static const double _highlightExtra = 11;
+
+  /// Alpha at the pulse's peak. The trough is [_highlightPulseFloor] of
+  /// it, so the emphasis never blinks out — a highlight that vanishes
+  /// reads as a redraw glitch, not as attention.
+  static const double _highlightAlpha = 0.55;
+  static const double _highlightPulseFloor = 0.45;
 
   /// Opacity factor for hidden objects while [showHidden] is on.
   static const double _hiddenAlpha = 0.35;
@@ -161,6 +178,22 @@ class GeometryPainter extends CustomPainter {
 
   /// Base color of the selection halo (alpha is the painter's business).
   final Color selectionColor;
+
+  /// Ids of the objects the proof step being read is about, drawn with a
+  /// wider halo *under* the selection's so both stay legible.
+  final Set<String> highlightedIds;
+
+  /// Base color of that halo.
+  final Color highlightColor;
+
+  /// Drives the emphasis's alpha between [_highlightPulseFloor] and 1.
+  ///
+  /// Passed to `CustomPainter`'s `repaint`, so a tick repaints without
+  /// rebuilding the canvas widget — the construction, viewport and
+  /// selection are all untouched by an animation frame. Null means a
+  /// still highlight at full alpha, which is what a theme-less host or a
+  /// test that has not pumped an animation gets.
+  final ValueListenable<double>? highlightPulse;
 
   /// World positions of the active tool's in-progress inputs (see
   /// `ToolInputPreview`), drawn as markers on top of the construction.
@@ -226,6 +259,24 @@ class GeometryPainter extends CustomPainter {
       // A hidden object drawn through [showHidden] dims everything it
       // paints — halo, fill, stroke and label — by the same factor.
       final dim = hidden ? _hiddenAlpha : 1.0;
+      if (highlightedIds.contains(object.id)) {
+        final pulse = highlightPulse?.value ?? 1.0;
+        final alpha =
+            _highlightAlpha *
+            (_highlightPulseFloor + (1 - _highlightPulseFloor) * pulse) *
+            dim;
+        final emphasis = Paint()
+          ..color = highlightColor.withValues(alpha: alpha)
+          ..strokeWidth = object.attributes.strokeWidth + _highlightExtra
+          ..style = PaintingStyle.stroke;
+        _drawObject(
+          canvas,
+          size,
+          object,
+          emphasis,
+          pointRadiusExtra: _highlightExtra,
+        );
+      }
       if (selectedIds.contains(object.id) ||
           previewObjectIds.contains(object.id)) {
         final halo = Paint()
@@ -1239,6 +1290,9 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.defaultColor != defaultColor ||
       oldDelegate.selectionColor != selectionColor ||
       !setEquals(oldDelegate.selectedIds, selectedIds) ||
+      !setEquals(oldDelegate.highlightedIds, highlightedIds) ||
+      oldDelegate.highlightColor != highlightColor ||
+      oldDelegate.highlightPulse != highlightPulse ||
       !listEquals(oldDelegate.previewMarkers, previewMarkers) ||
       !setEquals(oldDelegate.previewObjectIds, previewObjectIds) ||
       oldDelegate.labelDragPreview != labelDragPreview ||
