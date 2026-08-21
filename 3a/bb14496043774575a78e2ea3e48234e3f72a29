@@ -1,0 +1,31 @@
+test/domain/prover/rule_test.dart
+  s_d7c9fcdc96e705::t_5bb4f973a9d094 8-10
+  s_d7c9fcdc96e705::t_6110a94727d7ea 1-7,11-47
+lib/domain/prover/rule.dart
+  s_d7c9fcdc96e705::t_5bb4f973a9d094 47-49,105-116,119-122,152,178-181
+  s_d7c9fcdc96e705::t_015067dd5e6626 1-46,50-104,117-118,123-151,153-177,182-188
+test/domain/prover/fact_test.dart
+  s_d7c9fcdc96e705::t_cd1b538ae087d4 363,368-373
+  s_d7c9fcdc96e705::t_0a85af16b42491 318-362,364-367,374-376
+  s_d7c9fcdc96e705::t_b16146bc9eb94b 4
+  s_d7c9fcdc96e705::t_b7cea89bcc757f 377
+lib/domain/prover/fact.dart
+  s_d7c9fcdc96e705::t_0bf10a5c697e0b 73-108,124-138,146-163
+  s_d7c9fcdc96e705::t_5bb4f973a9d094 109-123,139-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "3abb14496043774575a78e2ea3e48234e3f72a29",
+  "prompts": {},
+  "sessions": {
+    "s_d7c9fcdc96e705": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eec55026-ff95-4965-ba93-55f9e8f5c09a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
