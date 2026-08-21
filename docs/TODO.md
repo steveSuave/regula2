@@ -14,6 +14,20 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 146 — M-P4b: the proof panel
+
+M-P4's second third: the surface that makes Phase 145's provider a product. A step list rendered from `Proof.steps` — never from `render()`, per Session 157 — with a goal list in front of it, because a proof needs a goal before it can be a proof.
+
+- [x] **`lib/presentation/panels/proof_panel.dart`**, two levels. The list offers what the run *derived* and never a given: a hypothesis is what the figure was built to be, and thirty of them would bury the three statements the prover actually found. They are still in the proofs, above the steps that use them. Picking one shows the numbered steps, statement and reason, citations pointing upwards
+- [x] **The selection narrows the list — to statements mentioning *at least one* selected object**, not all of them: a user who selects two points is asking what relates them, and the interesting answer usually names a third
+- [x] **Every one of the four `ProverState`s has a rendering**, including the two that are easy to leave as blanks: a non-Euclidean document says *why* rather than showing an empty list, and an exhausted run says it stopped and offers **Keep going** (`proveMore`) — "nothing more was found" would be a different claim, and Phase 145 measured a real document that outruns the budget
+- [x] **Staleness is this panel's comparison**, since the provider deliberately does not watch the construction. An edit leaves the findings on screen — they were true of a figure the user recognizes — and turns the run button into *the figure changed, prove again*
+- [x] **The pure parts are pure**, the `intersection_report.dart` precedent: `provableGoals`, `stepReason`, `isStale` take no `BuildContext`, because what the panel *says* should not need a widget tree to read. `stepReason` keeps the rule's own name with underscores spaced out — a display-name table for 23 rules is a second spelling that drifts and then lies about which rule ran
+- [x] **Docked where there is room, a bottom sheet where there is not** — the object tree's gate. Both drawers are already spoken for, and the panel is read *alongside* the figure, so the compact path takes half the height. The two lists carry distinct `PageStorageKey`s so opening a proof starts at step [1] and coming back lands where the reader left off
+- [x] **The wasm smoke now reaches the prover** — `lib/main.dart`'s import graph gets there through this panel, `event_loop_yield.dart`'s conditional import included. That closes the gotcha Sessions 156 and 157 both carried
+- [x] Tests (`test/presentation/panels/proof_panel_test.dart`, 12): the three pure functions directly; the app-bar toggle; prove → list → tap → step list checked against `Proof.steps`; an edit that marks stale without clearing; a live selection narrowing; the refusal; the exhausted run's **Keep going** reaching quiescence
+- [x] Gates: analyze clean, suite **2944** green (2932 + 12), browser gate green (6), `flutter build web --wasm --release` compiles
+
 ## Phase 145 — M-P4a: the prover at the application boundary
 
 M-P4 (PLAN §M-P4) is the milestone's *product* and is worth splitting, per Session 157: the boundary, the step list, the on-figure highlighting. This is the first third — the provider that runs the prover off the live construction — and it is where the things deferred with "the first UI consumer decides" come due.
