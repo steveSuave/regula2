@@ -89,6 +89,7 @@ import 'presentation/panels/export_dialog.dart';
 import 'presentation/panels/geometry_menu.dart';
 import 'presentation/panels/intersection_report.dart';
 import 'presentation/panels/object_tree_panel.dart';
+import 'presentation/panels/proof_panel.dart';
 import 'presentation/panels/toolbar.dart';
 import 'presentation/shortcuts/app_shortcuts.dart';
 import 'presentation/shortcuts/cheat_sheet.dart';
@@ -212,6 +213,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// Whether the tracing debug overlay (Phase 116: per-drag-frame step
   /// counts) is up. Same ephemeral-UI reasoning as [_showObjectTree].
   bool _showTraceOverlay = false;
+
+  /// Whether the proof panel is docked (M-P4). Ephemeral UI state like
+  /// [_showObjectTree], and hidden by default for the same reason: the
+  /// prover is the on-demand path, and a panel that opened itself would
+  /// be the always-on one.
+  bool _showProofPanel = false;
 
   /// The last drag-selected export region (canvas screen coordinates) and
   /// the last-used export options — kept so the dialog reopens where the
@@ -1068,6 +1075,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   child: Text('regula'),
                 ),
                 const Spacer(),
+                // The proof panel follows the same gate as the object
+                // tree: docked where there is room, a sheet where there
+                // is not. Both drawers are already spoken for (tree and
+                // inspector), so the compact path is a bottom sheet
+                // rather than a third drawer.
+                IconButton(
+                  tooltip: 'Proof',
+                  isSelected: !compactPanels && _showProofPanel,
+                  icon: const Icon(Icons.fact_check_outlined),
+                  onPressed: () => compactPanels
+                      ? _openProofSheet()
+                      : setState(() => _showProofPanel = !_showProofPanel),
+                ),
                 if (hasSelection)
                   IconButton(
                     tooltip: 'Style & properties',
@@ -1399,6 +1419,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 
+  /// The proof panel where there is no room to dock it. A sheet rather
+  /// than a third drawer: the drawers are the object tree and the
+  /// inspector, and the panel is read alongside the figure, not instead
+  /// of it — so it takes half the height and leaves the canvas visible.
+  void _openProofSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) =>
+          FractionallySizedBox(heightFactor: 0.5, child: const ProofPanel()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final undoRedo = ref.watch(commandStackProvider);
@@ -1517,6 +1550,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       ),
                     ),
                   ),
+                  if (!compactPanels && _showProofPanel)
+                    const SizedBox(
+                      width: ProofPanel.panelWidth,
+                      child: ProofPanel(),
+                    ),
                   if (!compactPanels) const AttributesInspector(),
                 ],
               ),

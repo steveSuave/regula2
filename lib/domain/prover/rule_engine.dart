@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../construction/geo_object.dart';
 import 'diagram_filter.dart';
 import 'event_loop_yield.dart';
@@ -137,13 +139,38 @@ class ProverEngine {
   /// MessageChannel on web, a zero timer natively), so a long fixpoint
   /// never holds a frame hostage. Same machinery, same result: chunking
   /// changes when the work happens, never what it derives (pinned).
-  Future<int> runChunked({required int chunkBudget}) async {
+  ///
+  /// [maxApplications] caps *this call*, answering early with
+  /// [isComplete] still false — quiescence is not something an arbitrary
+  /// document owes, and a caller with a frame to keep needs a ceiling
+  /// rather than a promise. Everything derived up to the cap stands: the
+  /// database is a fixpoint prefix, not a partial result to discard, and
+  /// a further call resumes exactly where this one stopped (the Phase
+  /// 140 resumable shape, used for what it is for).
+  Future<int> runChunked({
+    required int chunkBudget,
+    int? maxApplications,
+  }) async {
+    if (chunkBudget <= 0) {
+      throw ArgumentError.value(chunkBudget, 'chunkBudget', 'must be positive');
+    }
+    if (maxApplications != null && maxApplications < 0) {
+      throw ArgumentError.value(
+        maxApplications,
+        'maxApplications',
+        'must be non-negative',
+      );
+    }
     var total = 0;
     while (!isComplete) {
-      total += step(chunkBudget);
-      if (!isComplete) {
-        await yieldToEventLoop();
-      }
+      final budget = maxApplications == null
+          ? chunkBudget
+          : math.min(chunkBudget, maxApplications - total);
+      if (budget <= 0) break;
+      total += step(budget);
+      if (isComplete) break;
+      if (maxApplications != null && total >= maxApplications) break;
+      await yieldToEventLoop();
     }
     return total;
   }

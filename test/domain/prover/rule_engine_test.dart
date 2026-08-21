@@ -552,6 +552,66 @@ void main() {
       );
     });
 
+    test('runChunked caps this call, and resumes where it stopped', () async {
+      // Quiescence is not something an arbitrary document owes, so a
+      // caller with a frame to keep needs a ceiling. What the cap must
+      // not do is cost anything: the database it leaves is a fixpoint
+      // *prefix*, and resuming reaches the straight run exactly.
+      final construction = build(midlineRig());
+      final straight = engineOver(construction);
+      straight.run();
+      expect(
+        straight.applications,
+        greaterThan(5),
+        reason: 'the rig must be long enough for the cap to bind',
+      );
+
+      final capped = engineOver(construction);
+      final performed = await capped.runChunked(
+        chunkBudget: 1000,
+        maxApplications: 5,
+      );
+      expect(performed, 5);
+      expect(capped.isComplete, isFalse);
+
+      final rest = await capped.runChunked(chunkBudget: 1000);
+      expect(capped.isComplete, isTrue);
+      expect(performed + rest, straight.applications);
+      expect(
+        [for (final fact in capped.database.facts) '$fact'],
+        [for (final fact in straight.database.facts) '$fact'],
+      );
+    });
+
+    test('a cap finer than the chunk still yields between chunks', () async {
+      // The cap narrows the chunk rather than replacing it, so a run
+      // capped below `chunkBudget` performs exactly the cap.
+      final capped = engineOver(build(midlineRig()));
+      expect(await capped.runChunked(chunkBudget: 2, maxApplications: 5), 5);
+      expect(capped.applications, 5);
+    });
+
+    test('runChunked rejects a non-positive chunk and a negative cap', () {
+      final engine = engineOver(build(midlineRig()));
+      expect(
+        () => engine.runChunked(chunkBudget: 0),
+        throwsArgumentError,
+        reason: 'a zero chunk would spin without ever performing work',
+      );
+      expect(
+        () => engine.runChunked(chunkBudget: 1, maxApplications: -1),
+        throwsArgumentError,
+      );
+    });
+
+    test('a zero cap performs nothing and derives nothing new', () async {
+      final engine = engineOver(build(midlineRig()));
+      final before = engine.database.length;
+      expect(await engine.runChunked(chunkBudget: 10, maxApplications: 0), 0);
+      expect(engine.isComplete, isFalse);
+      expect(engine.database.length, before);
+    });
+
     test('step respects its budget', () {
       final engine = engineOver(build(midlineRig()));
       expect(engine.step(5), lessThanOrEqualTo(5));
