@@ -1,0 +1,23 @@
+lib/main.dart
+  s_9b22af0b84dec3::t_0cb7144e2db514 1158-1179
+test/presentation/app_bar_layout_test.dart
+  s_9b22af0b84dec3::t_c5825cc58a4b0b 171-174,240-243
+docs/TODO.md
+  s_9b22af0b84dec3::t_014fce66bc2b25 39-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "54a675fb4163b0a02e0a3eafef9a5c4ff79bb738",
+  "prompts": {},
+  "sessions": {
+    "s_9b22af0b84dec3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2f81ecbb-3d6b-4459-aa79-8ef85981ebd0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
