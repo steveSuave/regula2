@@ -16,7 +16,16 @@ void main() {
   // adding an entry is an architectural decision, not a chore.
   // `dart:typed_data` entered with Phase 113: the tracing engine's SoA
   // `Float64List` buffers are the Phase 101 benchmark decision.
-  const allowedDartLibs = {'dart:math', 'dart:collection', 'dart:typed_data'};
+  // `dart:async` entered with Phase 143: the prover's chunked fixpoint
+  // yields to the event loop between steps (PLAN §"The prover yields
+  // with a MessageChannel"), and Completer/Future-returning APIs are as
+  // portable as dart:core.
+  const allowedDartLibs = {
+    'dart:math',
+    'dart:collection',
+    'dart:typed_data',
+    'dart:async',
+  };
   const allowedPackages = {
     'package:freezed_annotation/',
     'package:json_annotation/',
@@ -36,6 +45,16 @@ void main() {
     final domainPrefix = domainDir.absolute.uri.toFilePath();
 
     bool isAllowed(File file, String uri) {
+      // `dart:js_interop` is web-only, so it is allowed exactly where the
+      // Phase 140 decision put it: in the web arm of a conditional
+      // import (a `*_web.dart` file), which no VM compilation ever
+      // reaches. The seam itself is proved by the browser gate
+      // (`test/web/prover_yield_web_test.dart`) — this rule only keeps
+      // the library from leaking into shared domain code, where it
+      // would compile for the VM and throw at runtime.
+      if (uri == 'dart:js_interop') {
+        return file.path.endsWith('_web.dart');
+      }
       if (uri.startsWith('dart:')) {
         return allowedDartLibs.contains(uri);
       }
