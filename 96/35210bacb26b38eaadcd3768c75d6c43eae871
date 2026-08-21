@@ -1,0 +1,25 @@
+test/domain/prover/rule_engine_test.dart
+  s_d7c9fcdc96e705::t_ca3d0995eb4167 1-12,14-417,428-456,458-478,487-554,556-562,564-577,579-585,587-591
+  s_d7c9fcdc96e705::t_4a54342df04ef8 13
+  s_d7c9fcdc96e705::t_5bb4f973a9d094 418-427,457,479-486,555,563,586
+  s_d7c9fcdc96e705::t_541c480976e00d 578
+lib/domain/prover/rule_engine.dart
+  s_d7c9fcdc96e705::t_3ad29b090656d7 1-156,160-177,181-201,206-287
+  s_d7c9fcdc96e705::t_5bb4f973a9d094 157-159,178-180,202-205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "9635210bacb26b38eaadcd3768c75d6c43eae871",
+  "prompts": {},
+  "sessions": {
+    "s_d7c9fcdc96e705": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eec55026-ff95-4965-ba93-55f9e8f5c09a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
