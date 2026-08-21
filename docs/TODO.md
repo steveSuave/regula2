@@ -14,6 +14,15 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 144 — M-P2c: the proof DAG, read out and checked
+
+The last third of M-P2 (PLAN §M-P2). Phase 142 stored a `Derivation` with every fact precisely so this walk would be free, and Phase 143 pinned premises-strictly-older-than-conclusion as the walk's contract. So the reading-out is small; the phase's real content is the second half — **a derivation checked against its own rule**, which is the soundness argument the `DiagramFilter` structurally cannot make. The screen says a conclusion is true in the diagram, never that its premises entail it, and Phase 143's STATUS named that hole as the one M-P2c's printed proofs would make visible.
+
+- [ ] **The proof walk** (`lib/domain/prover/proof.dart`): a `Proof` extracted for a goal fact — the backward closure over derivations, emitted in post-order so every premise stands above the step that uses it, each fact appearing exactly once so a shared sub-proof is stated once and referenced by number. Iterative, with a cycle guard that throws rather than trusts: acyclicity is structural, and this is the same insurance `FactDatabase.add`'s premise check is. Readable rendering — a numbered step list naming each point by `attributes.name` where it has one and its id otherwise
+- [ ] **The instantiation check** (`derivation_check.dart`): a derivation re-matched against the rule it names — the recorded premises against the rule's premise patterns *in slot order*, under one binding whose conclusion canonicalizes to the recorded fact. Premise spellings come from `orbitArguments`, the same full orbit the matcher binds against. The engine's slot-order convention is pinned by being relied on. `Proof.verify()` checks every deduction in a proof
+- [ ] Tests under `test/domain/prover/`: the walk on the Varignon and midline fixpoints (post-order, dedup, the given/deduction split, rendering); a goal that is itself a hypothesis; the cycle guard on a hand-built database; **the pin Phase 143's gotcha named** — a hand-built derivation whose conclusion is true and whose rule name is right but whose premises do not entail it is *rejected*, and every derivation a real fixpoint produces is accepted
+- [ ] Gates: analyze clean, full suite green, browser gate green
+
 ## Phase 143 — M-P2b: the DD rule core and the resumable fixpoint
 
 The second third of M-P2 (PLAN §M-P2): the rules and the engine that runs them, built on Phase 142's fact database and Phase 141's filter. Hypotheses are read off the construction, the ~20-rule DD core comes from the open DDAR/Newclid sources (rules, not code), every candidate deduction is screened through `DiagramFilter` before insertion, and the whole thing runs to quiescence in Phase 140's resumable shape with a rule-application budget. This is also the phase where the `MessageChannel` yield stops being a measurement and becomes an API, because an engine that actually chunks is its first consumer.
