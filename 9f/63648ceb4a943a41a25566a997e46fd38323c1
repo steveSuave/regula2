@@ -1,0 +1,48 @@
+lib/application/providers/proof_highlight_provider.dart
+  s_9b22af0b84dec3::t_0fe8728b200173 1-38
+lib/presentation/panels/proof_panel.dart
+  s_9b22af0b84dec3::t_e3a5f9d710414c 105-106,117,120-121,135,139,146
+  s_9b22af0b84dec3::t_0546ccb799924b 122-125
+  s_9b22af0b84dec3::t_437c57f2fab1cd 107-116
+  s_9b22af0b84dec3::t_b8f1394097a3ef 23,99-104,118-119,126-134,136-138,140-145,147-148,189-192,214-217,267-270
+  s_9b22af0b84dec3::t_6cfac742760fe5 304-324,327-333,335-342,344-345
+test/presentation/canvas/geometry_painter_test.dart
+  s_9b22af0b84dec3::t_a7f9ff48ab210c 2-3,37-38,51-52,315-372
+  s_9b22af0b84dec3::t_d41cb2d02a7338 373
+lib/application/providers/proof_highlight_provider.g.dart
+  s_9b22af0b84dec3::t_012892c488996c 1-128
+lib/application/providers/prover_provider.g.dart
+  s_9b22af0b84dec3::t_012892c488996c 37-46,77-86,115-124,152,180-189
+lib/presentation/canvas/geometry_painter.dart
+  s_9b22af0b84dec3::t_845d4446188444 196
+  s_9b22af0b84dec3::t_4ed1c4f46c5188 101-103,114,138-151,182-195,262-279,1293-1295
+  s_9b22af0b84dec3::t_bad93e20aff6cb 197
+test/presentation/panels/proof_panel_test.dart
+  s_9b22af0b84dec3::t_2e12cebb0a8011 19-20,359-373,389,391-393,395,397-411
+  s_9b22af0b84dec3::t_544a7ec2beb3f1 5,317-353,414-460,463,465-467
+  s_9b22af0b84dec3::t_c762a16dc0be1b 354-358,374-388,390,394,396,412-413
+  s_9b22af0b84dec3::t_0546ccb799924b 461-462,464
+  s_9b22af0b84dec3::t_d50031cc230184 468
+lib/presentation/canvas/geometry_canvas.dart
+  s_9b22af0b84dec3::t_012892c488996c 12,179-186,188
+  s_9b22af0b84dec3::t_426da88e2ac267 96-110,225-229,340
+  s_9b22af0b84dec3::t_11fbd965bcbc7d 187
+docs/TODO.md
+  s_9b22af0b84dec3::t_4841703200a25a 17-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "9f63648ceb4a943a41a25566a997e46fd38323c1",
+  "prompts": {},
+  "sessions": {
+    "s_9b22af0b84dec3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2f81ecbb-3d6b-4459-aa79-8ef85981ebd0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
