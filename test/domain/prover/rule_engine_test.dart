@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
@@ -7,6 +11,7 @@ import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/orthocenter.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
@@ -18,6 +23,7 @@ import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/rule.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
@@ -75,6 +81,73 @@ void main() {
   }
 
   group('each rule fires on a rig where it is a theorem', () {
+    test('coll_transitive', () {
+      // Four points on one line: two colls sharing a pair force the
+      // third. The rule that makes a *derived* line-fact re-spellable —
+      // `hypotheses` emits every witness pair, but nothing else could.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 1));
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final c = PointOnObject(id: 'c', curve: ab, parameter: 2);
+      final d = PointOnObject(id: 'd', curve: ab, parameter: -3);
+      expectRuleFires(
+        ruleName: 'coll_transitive',
+        objects: [a, b, ab, c, d],
+        seeds: [
+          Predicate(PredicateKind.coll, [a, b, c]),
+          Predicate(PredicateKind.coll, [a, b, d]),
+        ],
+        conclusion: Predicate(PredicateKind.coll, [a, c, d]),
+      );
+    });
+
+    test('perp_coll', () {
+      // A relation about a *line* survives being renamed by two other
+      // points on it. Without this the run stalls holding the statement
+      // it needs under the wrong name.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 1));
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final e = PointOnObject(id: 'e', curve: ab, parameter: 2);
+      final f = PointOnObject(id: 'f', curve: ab, parameter: -3);
+      final g = FreePoint(id: 'g', position: const Vec2(1, 6));
+      final perp = PerpendicularLine(id: 'perp', through: g, reference: ab);
+      final c = PointOnObject(id: 'c', curve: perp, parameter: 0);
+      final d = PointOnObject(id: 'd', curve: perp, parameter: 3);
+      expectRuleFires(
+        ruleName: 'perp_coll',
+        objects: [a, b, ab, e, f, g, perp, c, d],
+        seeds: [
+          Predicate(PredicateKind.perp, [a, b, c, d]),
+          Predicate(PredicateKind.coll, [a, b, e]),
+          Predicate(PredicateKind.coll, [a, b, f]),
+        ],
+        conclusion: Predicate(PredicateKind.perp, [e, f, c, d]),
+      );
+    });
+
+    test('orthocentre', () {
+      // Two of a triangle's altitudes force the third. Stated on four
+      // points because that is what it is — an orthocentric system, in
+      // which each point is the orthocentre of the other three. The
+      // `Orthocenter` object is here only to make the rig's geometry
+      // real; the seeds are two of its three perpendicularities and the
+      // conclusion is the one held back.
+      final b = FreePoint(id: 'b', position: const Vec2(0, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(6, 1));
+      final d = FreePoint(id: 'd', position: const Vec2(2, 5));
+      final a = Orthocenter(id: 'a', vertex1: b, vertex2: c, vertex3: d);
+      expectRuleFires(
+        ruleName: 'orthocentre',
+        objects: [b, c, d, a],
+        seeds: [
+          Predicate(PredicateKind.perp, [a, b, c, d]),
+          Predicate(PredicateKind.perp, [a, c, b, d]),
+        ],
+        conclusion: Predicate(PredicateKind.perp, [a, d, b, c]),
+      );
+    });
+
     test('para_transitive', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 1));
@@ -672,6 +745,67 @@ void main() {
       final engine = engineOver(build(midlineRig()));
       expect(engine.step(5), lessThanOrEqualTo(5));
       expect(() => engine.step(-1), throwsArgumentError);
+    });
+
+    test('the JGEX document, once its auxiliary point is there', () async {
+      // `test/fixtures/perp-true-unproved.rgl`: right angle at B, D the
+      // midpoint of AB, E the midpoint of DB, the perpendicular to CA
+      // through E meeting BC at F. `perp(C,D,D,F)` is a theorem.
+      //
+      // JGEX proves it and says how: it *constructs an auxiliary point*,
+      // the midpoint of BC, and reasons from the midlines that appear.
+      // Phase 150 followed that trace and found four rules missing here,
+      // three of which this proof needs. Both halves are necessary — the
+      // rules alone stall, and so does the point alone — and this test
+      // pins both directions.
+      final construction = decodeDocument(
+        jsonDecode(
+              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ).construction;
+      GeoPoint named(String name) => construction.objects
+          .whereType<GeoPoint>()
+          .firstWhere((point) => point.attributes.name == name);
+      final goal = Fact(PredicateKind.perp, [
+        named('C'),
+        named('D'),
+        named('D'),
+        named('F'),
+      ]);
+
+      final without = engineOver(construction);
+      without.run();
+      expect(
+        without.database.contains(goal),
+        isFalse,
+        reason: 'the auxiliary point is not optional',
+      );
+
+      construction.add(
+        Midpoint(id: 'aux', point1: named('B'), point2: named('C')),
+      );
+      final with_ = engineOver(construction);
+      with_.run();
+
+      expect(with_.database.contains(goal), isTrue);
+      final proof = Proof.of(goal, with_.database);
+      expect(
+        proof.verify(),
+        isEmpty,
+        reason: 'a proof of a user theorem had better be a certificate',
+      );
+      expect(
+        {for (final step in proof.deductions) step.rule},
+        containsAll(<String>[
+          'midline_para',
+          'perp_coll',
+          'coll_transitive',
+          'orthocentre',
+          'para_perp_perp',
+        ]),
+        reason: 'the four Phase 150 rules are what closed it',
+      );
     });
 
     test('the Varignon parallelogram, via the transitive chain', () {

@@ -4,7 +4,7 @@ import 'package:regula/domain/prover/rule.dart';
 void main() {
   group('the rule table', () {
     test('parses in full, with unique names', () {
-      expect(ddCoreRules, hasLength(23));
+      expect(ddCoreRules, hasLength(26));
       expect({
         for (final rule in ddCoreRules) rule.name,
       }, hasLength(ddCoreRules.length));

@@ -14,6 +14,20 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 150 — the three rules a JGEX trace found
+
+A user brought a JGEX screenshot proving `perp(C,D,D,F)` on `test/fixtures/perp-true-unproved.rgl` — the theorem Phase 148 had shipped as the *unproved* rig. Two sessions' worth of claims were wrong, and the screenshot said why: **JGEX constructed an auxiliary point** ("H is midpoint of DA" — the midpoint of our BC) before reasoning. Translating its trace step by step showed where ours could not follow.
+
+- [x] **The gap is one Session 156 named and only half-fixed.** The vocabulary is point-tuples, so a *line* is named by a pair of points on it and one line has many names. `hypotheses` emits every witness pair for that reason; a fact a **rule** derives gets no such help, so the run stalls holding the statement it needs under the wrong name. `questions.dart`'s all-spellings search (Phase 148) was the same hole seen from the consumer side
+- [x] **Three rules** (`rule.dart`): `coll_transitive` (`coll(a,b,c) & coll(a,b,d) => coll(a,c,d)`), `perp_coll` (`perp(a,b,c,d) & coll(a,b,e) & coll(a,b,f) => perp(e,f,c,d)`), and `orthocentre` (`perp(a,b,c,d) & perp(a,c,b,d) => perp(a,d,b,c)`) — the last stated on four points because that is what it is, an orthocentric system in which each point is the orthocentre of the other three. It is what JGEX reached with full angles, available here without them
+- [x] **`para_coll` was written, rigged, measured and dropped.** The exact analogue for parallels derives *nothing new* on any fixture, including the one that motivated the family. The hole it closes is real in principle and it is one line the day a document needs it; a rule with no consumer pays its cost on every pivot for nothing. Recorded at the site so the next reader does not re-derive it
+- [x] **Both halves are necessary, and the regression pins both directions** (`rule_engine_test.dart`): the rules alone leave the document at 23 facts and no goal; the auxiliary point alone leaves it at 22. Together the fixpoint reaches it, `Proof.verify()` comes back empty — a certificate, not a transcript — and the proof cites `midline_para`, `perp_coll`, `coll_transitive`, `orthocentre` and `para_perp_perp`, mirroring JGEX's own structure
+- [x] **Cost measured before adding, not after**: `locus3` unchanged, `apatitos-topos` +2 facts, the motivating fixture 13 → 23, `provoleas2` 49 → 75 facts for the same 30 000 applications, and no wall-clock regression on any of them
+- [x] **What this corrects, said plainly.** Session 158's claim that no auxiliary construction could help was an over-generalization from a fact-seeding experiment, and the claim that the theorem needs M-P3's angle arithmetic was wrong too — it needs neither. The structural half of the argument survives: with the core *as it was*, and the objects *as they were*, it was unreachable
+- [x] Tests: a numeric rig per new rule (the per-rule convention — a rule that is not a theorem would let the filter's screen mask an unsound step); the document regression above; `rule_test`'s table count 23 → 26. Mutation-checked: dropping any of the three fails exactly its own rig plus the document regression; dropping `para_coll` failed only its own rig, which is why it is gone
+- [x] **One test changed character, and that is the phase working**: the provider's "any spelling counts" pin used to rest on `coll(A,E,B)` being *unreachable*. It is now derivable, so the test moved to a budget too small to reach it — the scan past the first spelling is still what is pinned
+- [x] Gates: analyze clean, suite **2984** green, 32 goldens byte-identical, browser gate green (6)
+
 ## Phase 149 — the panels open when the user opens them
 
 Two UI corrections, both user requests, and they turn out to be the same correction.

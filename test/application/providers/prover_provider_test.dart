@@ -360,11 +360,16 @@ void main() {
     );
 
     test('any spelling counts — a question is a statement', () async {
-      // The real spelling problem, on the document that exposed it: the
-      // core derives `coll(A,D,B)` but never re-spells it as
-      // `coll(A,E,B)`, though E is on AB too — there are no
-      // coll-propagation rules. Both are true, so the filter passes
-      // both; only scanning past the first finds the proof.
+      // The scan must reach past the first spelling. `coll(A,D,B)` is
+      // one `midp_coll` away from a given; `coll(A,E,B)` needs
+      // `coll_transitive` on top of that. Under a budget that reaches
+      // the first and not the second, a question listing them in the
+      // unhelpful order must still come back proved — which is only
+      // true if every spelling is tried.
+      //
+      // Phase 150 note: before the coll-propagation rules landed, the
+      // second of these was simply unreachable and this test needed no
+      // budget. That it now needs one is the phase working.
       final construction = loadUnprovable();
       container.read(constructionProvider.notifier).replace(construction);
       final a = named(construction, 'A');
@@ -373,11 +378,14 @@ void main() {
       final e = named(construction, 'E');
       final notifier = container.read(proverProvider.notifier);
 
-      await notifier.ask(questionOf(PredicateKind.coll, [a, e, b]));
+      await notifier.ask(
+        questionOf(PredicateKind.coll, [a, e, b]),
+        applicationBudget: 2,
+      );
       expect(
         (container.read(proverProvider) as ProverAnswered).answer.verdict,
-        ProverVerdict.unproved,
-        reason: 'that spelling alone is genuinely not in the database',
+        ProverVerdict.undecided,
+        reason: 'that spelling alone is not reached inside the budget',
       );
 
       await notifier.ask(
@@ -385,6 +393,7 @@ void main() {
           Predicate(PredicateKind.coll, [a, e, b]),
           Predicate(PredicateKind.coll, [a, d, b]),
         ]),
+        applicationBudget: 2,
       );
 
       final state = container.read(proverProvider) as ProverAnswered;
