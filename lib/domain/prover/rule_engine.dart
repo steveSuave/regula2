@@ -1,5 +1,6 @@
 import '../construction/geo_object.dart';
 import 'diagram_filter.dart';
+import 'event_loop_yield.dart';
 import 'fact.dart';
 import 'fact_database.dart';
 import 'predicate.dart';
@@ -127,6 +128,22 @@ class ProverEngine {
     var total = 0;
     while (!isComplete) {
       total += step(1 << 30);
+    }
+    return total;
+  }
+
+  /// Drives to quiescence [chunkBudget] applications at a time, yielding
+  /// to the event loop between chunks ([yieldToEventLoop] — the
+  /// MessageChannel on web, a zero timer natively), so a long fixpoint
+  /// never holds a frame hostage. Same machinery, same result: chunking
+  /// changes when the work happens, never what it derives (pinned).
+  Future<int> runChunked({required int chunkBudget}) async {
+    var total = 0;
+    while (!isComplete) {
+      total += step(chunkBudget);
+      if (!isComplete) {
+        await yieldToEventLoop();
+      }
     }
     return total;
   }

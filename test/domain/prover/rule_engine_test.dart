@@ -534,6 +534,24 @@ void main() {
       );
     });
 
+    test('runChunked derives the straight result through the yield', () async {
+      // On the VM the yield is the native arm (a zero timer); the
+      // browser gate's prover_yield_web_test pins the web arm. Either
+      // way the property is the same: chunking changes when the work
+      // happens, never what it derives.
+      final construction = build(midlineRig());
+      final straight = engineOver(construction);
+      straight.run();
+      final chunked = engineOver(construction);
+      final total = await chunked.runChunked(chunkBudget: 7);
+      expect(chunked.isComplete, isTrue);
+      expect(total, straight.applications);
+      expect(
+        [for (final fact in chunked.database.facts) '$fact'],
+        [for (final fact in straight.database.facts) '$fact'],
+      );
+    });
+
     test('step respects its budget', () {
       final engine = engineOver(build(midlineRig()));
       expect(engine.step(5), lessThanOrEqualTo(5));
