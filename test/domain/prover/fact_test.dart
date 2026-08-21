@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/fact.dart';
@@ -313,5 +314,65 @@ void main() {
       Fact(PredicateKind.coll, [first, second, c]),
       isNot(Fact(PredicateKind.coll, [first, first, c])),
     );
+  });
+
+  group('orbitArguments — the matcher-facing full orbit', () {
+    const sizes = {
+      PredicateKind.coll: 6,
+      PredicateKind.cyclic: 24,
+      PredicateKind.para: 8,
+      PredicateKind.perp: 8,
+      PredicateKind.cong: 8,
+      PredicateKind.midp: 2,
+      PredicateKind.eqangle: 128,
+      PredicateKind.eqratio: 128,
+      PredicateKind.simtri: 12,
+      PredicateKind.contri: 12,
+    };
+
+    test('the orbit sizes are the groups\' orders', () {
+      for (final kind in PredicateKind.values) {
+        expect(
+          orbitArguments(kind, rigFor(kind)).length,
+          sizes[kind],
+          reason: kind.name,
+        );
+      }
+    });
+
+    test('every form keys to the same fact and evaluates true', () {
+      for (final kind in PredicateKind.values) {
+        final rig = rigFor(kind);
+        final fact = Fact(kind, rig);
+        for (final form in orbitArguments(kind, rig)) {
+          expect(Fact(kind, form), fact, reason: '$kind $form');
+          expect(
+            Predicate(kind, form).holdsNow,
+            isTrue,
+            reason: '${kind.name} orbit form must be the same statement',
+          );
+        }
+      }
+    });
+
+    test('the canonical form is the least element of the full orbit', () {
+      // The canonicalizer enumerates a reduced set (segments pre-sorted);
+      // this pins that reduction against the full orbit the matcher
+      // sees, so the two can never disagree about which spelling is
+      // canonical.
+      String key(List<GeoPoint> form) => form.map((p) => p.id).join(',');
+      final random = math.Random(7);
+      for (final kind in PredicateKind.values) {
+        final rig = rigFor(kind);
+        for (var round = 0; round < 5; round++) {
+          final tuple = List<GeoPoint>.of(rig)..shuffle(random);
+          final least = orbitArguments(
+            kind,
+            tuple,
+          ).map(key).reduce((a, b) => a.compareTo(b) <= 0 ? a : b);
+          expect(key(Fact(kind, tuple).points), least, reason: kind.name);
+        }
+      }
+    });
   });
 }

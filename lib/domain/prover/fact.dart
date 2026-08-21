@@ -70,6 +70,97 @@ class Fact {
   String toString() => '${kind.name}(${points.map((p) => p.id).join(', ')})';
 }
 
+/// Every argument order that names the same statement as [points] under
+/// [kind]'s symmetry group — the **full** orbit, within-segment swaps
+/// included, unlike the canonicalizer's internal enumeration (which
+/// sorts within segments first because it only needs the least element).
+///
+/// The consumer is M-P2b's rule matcher: a stored fact is one canonical
+/// spelling, and a rule premise must be allowed to bind any spelling —
+/// `cong(o,a,o,b)`'s pattern requires slot 1 and slot 3 to be the same
+/// point, which the canonical order may well have sorted away. Orbit
+/// sizes: 6 (`coll`), 24 (`cyclic`), 8 (`para`/`perp`/`cong`), 2
+/// (`midp`), 12 (`simtri`/`contri`), 128 (`eqangle`/`eqratio` — the
+/// eight arrangements times sixteen within-segment swaps).
+///
+/// Forms may repeat when [points] repeats; the matcher deduplicates by
+/// what it binds, not by form. Throws [ArgumentError] on the wrong
+/// number of points, like [Fact].
+List<List<GeoPoint>> orbitArguments(PredicateKind kind, List<GeoPoint> points) {
+  if (points.length != kind.arity) {
+    throw ArgumentError.value(
+      points,
+      'points',
+      '${kind.name} takes ${kind.arity} points, got ${points.length}',
+    );
+  }
+  return switch (kind) {
+    PredicateKind.coll || PredicateKind.cyclic => _permutations(points),
+    PredicateKind.para ||
+    PredicateKind.perp ||
+    PredicateKind.cong => _segmentOrbit(points, const [
+      [0, 1],
+      [1, 0],
+    ]),
+    PredicateKind.midp => [
+      points,
+      [points[0], points[2], points[1]],
+    ],
+    PredicateKind.eqangle || PredicateKind.eqratio => _segmentOrbit(
+      points,
+      const [
+        [0, 1, 2, 3],
+        [2, 3, 0, 1],
+        [1, 0, 3, 2],
+        [3, 2, 1, 0],
+        [0, 2, 1, 3],
+        [3, 1, 2, 0],
+        [1, 3, 0, 2],
+        [2, 0, 3, 1],
+      ],
+    ),
+    PredicateKind.simtri ||
+    PredicateKind.contri => [for (final form in _triangleForms(points)) form],
+  };
+}
+
+/// Segment arrangements crossed with every within-segment swap: the
+/// pair points of each two-point segment commute independently of how
+/// the segments are arranged.
+List<List<GeoPoint>> _segmentOrbit(
+  List<GeoPoint> points,
+  List<List<int>> arrangements,
+) {
+  final segmentCount = points.length ~/ 2;
+  final out = <List<GeoPoint>>[];
+  for (final arrangement in arrangements) {
+    for (var swaps = 0; swaps < (1 << segmentCount); swaps++) {
+      out.add([
+        for (var cell = 0; cell < segmentCount; cell++)
+          ...() {
+            final segment = arrangement[cell];
+            final a = points[2 * segment];
+            final b = points[2 * segment + 1];
+            return (swaps >> cell) & 1 == 0 ? [a, b] : [b, a];
+          }(),
+      ]);
+    }
+  }
+  return out;
+}
+
+List<List<GeoPoint>> _permutations(List<GeoPoint> points) {
+  if (points.length <= 1) return [points];
+  final out = <List<GeoPoint>>[];
+  for (var i = 0; i < points.length; i++) {
+    final rest = [...points.sublist(0, i), ...points.sublist(i + 1)];
+    for (final tail in _permutations(rest)) {
+      out.add([points[i], ...tail]);
+    }
+  }
+  return out;
+}
+
 /// The symmetry group of each kind, applied.
 ///
 /// Every case below is a claim that the listed rewrites leave the
