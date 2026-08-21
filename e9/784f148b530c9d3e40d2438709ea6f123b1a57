@@ -1,0 +1,28 @@
+test/domain/prover/derivation_check_test.dart
+  s_603bf4695a5ff5::t_885e9b59658120 1-36,38-175
+  s_603bf4695a5ff5::t_7a34545255749b 37
+test/domain/prover/proof_test.dart
+  s_603bf4695a5ff5::t_c3fcc74283056a 155
+  s_603bf4695a5ff5::t_23df88155f52f6 1-154,156-292
+lib/domain/prover/proof.dart
+  s_603bf4695a5ff5::t_e9ec79f42543a6 105-107,142-144,160
+  s_603bf4695a5ff5::t_9fdc97f9fae462 1-104,108-141,145-159,161-191
+lib/domain/prover/derivation_check.dart
+  s_603bf4695a5ff5::t_e9ec79f42543a6 1-138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "e9784f148b530c9d3e40d2438709ea6f123b1a57",
+  "prompts": {},
+  "sessions": {
+    "s_603bf4695a5ff5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35a9a082-02bf-4792-a48f-75d9e88080cd",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    }
+  }
+}
