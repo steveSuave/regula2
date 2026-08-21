@@ -1,0 +1,34 @@
+test/presentation/panels/proof_panel_test.dart
+  s_9b22af0b84dec3::t_ce2a4487e22f1c 572-576
+  s_9b22af0b84dec3::t_e1e2ee3a852d7e 500-501
+  s_9b22af0b84dec3::t_39d24cb481f822 610
+  s_9b22af0b84dec3::t_ca0dfc38da9b95 1-3,7,18,475-499,502-571,577-609,611-614
+  s_9b22af0b84dec3::t_03d406b327fde3 14
+  s_9b22af0b84dec3::t_aa947cf367c5f2 615
+lib/application/providers/prover_provider.dart
+  s_9b22af0b84dec3::t_bec5f2124dd407 507-518
+lib/presentation/panels/proof_panel.dart
+  s_9b22af0b84dec3::t_39d24cb481f822 265-268,275,279,283-291
+  s_9b22af0b84dec3::t_a359c5495fc4de 362-366,464-494,497-509,511-512,514-515,518-519
+  s_9b22af0b84dec3::t_b34f2cba0f3171 28,345-350,352-361,367-395,398-411
+  s_9b22af0b84dec3::t_4359a56a84632e 30,72-90,200-203,215,222-260
+  s_9b22af0b84dec3::t_0da566412f4a83 261-262,412
+docs/TODO.md
+  s_9b22af0b84dec3::t_f20d2ec9ec1e70 31-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "5a17a092f9e88cb2f23edc0d0c28704b79b8760f",
+  "prompts": {},
+  "sessions": {
+    "s_9b22af0b84dec3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2f81ecbb-3d6b-4459-aa79-8ef85981ebd0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
