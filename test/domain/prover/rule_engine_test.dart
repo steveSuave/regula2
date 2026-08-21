@@ -612,6 +612,62 @@ void main() {
       expect(engine.database.length, before);
     });
 
+    test('stopWhen ends the run as soon as the goal is there', () async {
+      // A goal-directed caller wants one fact, not quiescence — which is
+      // what makes asking *cheaper* than deriving rather than more
+      // expensive.
+      final construction = build(midlineRig());
+      final straight = engineOver(construction);
+      straight.run();
+      final goal = straight.database.facts.firstWhere(
+        (fact) => !straight.database.derivationOf(fact)!.isHypothesis,
+      );
+
+      final asked = engineOver(construction);
+      await asked.runChunked(
+        chunkBudget: 1,
+        stopWhen: () => asked.database.contains(goal),
+      );
+
+      expect(asked.database.contains(goal), isTrue);
+      expect(asked.isComplete, isFalse);
+      expect(
+        asked.applications,
+        lessThan(straight.applications),
+        reason: 'stopping at the goal must actually save work',
+      );
+    });
+
+    test('a goal already present costs no applications at all', () async {
+      final engine = engineOver(build(midlineRig()));
+      final hypothesis = engine.database.facts.first;
+
+      expect(
+        await engine.runChunked(
+          chunkBudget: 1000,
+          stopWhen: () => engine.database.contains(hypothesis),
+        ),
+        0,
+      );
+      expect(engine.applications, 0);
+    });
+
+    test('stopWhen never changes what a completed run derives', () async {
+      final construction = build(midlineRig());
+      final straight = engineOver(construction);
+      straight.run();
+
+      // A condition that never fires runs to quiescence unchanged.
+      final asked = engineOver(construction);
+      await asked.runChunked(chunkBudget: 3, stopWhen: () => false);
+
+      expect(asked.isComplete, isTrue);
+      expect(
+        [for (final fact in asked.database.facts) '$fact'],
+        [for (final fact in straight.database.facts) '$fact'],
+      );
+    });
+
     test('step respects its budget', () {
       final engine = engineOver(build(midlineRig()));
       expect(engine.step(5), lessThanOrEqualTo(5));

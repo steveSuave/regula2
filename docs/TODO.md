@@ -14,6 +14,28 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 148 — M-P4d: asking, and the three answers
+
+The panel derives everything and lists what it found — "what follows from this figure". What it cannot do is take a question. JGEX's model is the other way round: state a conclusion, get a proof. This phase adds the question, and it is cheap because DD is *already* not goal-directed — DDAR runs forward to quiescence and then checks membership, so `proofOf` is the second half and only the asking is missing.
+
+**The answer is three-way, and that is the phase's point.** The numeric filter sits beside the prover, so "false" and "unprovable" are separable, and they are very different news:
+
+| answer | means | who says so |
+|---|---|---|
+| refuted | not a theorem — a perturbation breaks it | `DiagramFilter`, with no run at all |
+| unproved | true in the model, past the DD core's reach | membership miss on a *complete* run |
+| proved | here is the proof, and `verify()` says certificate | `Proof.of` |
+
+`test/fixtures/perp-true-unproved.rgl` is the middle row, from a user document: right angle at B, D = mid AB, E = mid DB, the perpendicular to CA through E meeting BC at F. `perp(C,D,D,F)` holds in every perturbation and the 44-application fixpoint cannot reach it — **structurally**, since only two of the 23 rules conclude a `perp` (`para_perp_perp` needs a parallel that does not exist here, `perp_bisector` degenerates). The human proof ends in `∠CDF = ∠BDF + ∠BDC`, which *adds* two angles; `eqangle` can only say two angles are equal. That is the AR half of DDAR — **M-P3** — and this fixture is now the thing asking for it.
+
+- [ ] **What a selection can phrase** (`lib/domain/prover/questions.dart`, pure): selected objects → point pairs (a selected pair of points is one; a carrier contributes every pair of points `structurallyIncident` on it, as `hypotheses.dart` already does) → the askable questions. Two pairs give `para` / `perp`, plus `cong` when both pairs actually bound a length rather than merely witnessing a direction. Three points give `coll` and the three `midp` readings; four points give `cyclic` and the three pairings of `para` / `perp` / `cong`. `eqangle` / `eqratio` / `simtri` / `contri` are **not** selection-shaped (eight points, or a correspondence a selection cannot express) and are left out, said rather than silently missing. A carrier with fewer than two known points phrases nothing — honest, since DD could do nothing with an unnamed line either
+- [ ] **A question is a statement, not a spelling — and this is the part that is easy to get wrong.** `para(A,B,C,D)` and `para(A,X,C,D)` are *different facts* even with `A`, `B`, `X` collinear, because the core has no coll-propagation rules (Session 156's note, and the same gap that blocks `perp-true-unproved.rgl`). So a question asked with one witness pair would miss a proof spelled with another. A `ProverQuestion` therefore carries **every** equivalent spelling, and is proved when *any* of them is in the database: which points name a line is the prover's business, not the user's
+- [ ] **Early exit** (`ProverEngine.runChunked`'s `stopWhen`): with a goal there is no need for quiescence, only for one fact. Checked between chunks, so a run overshoots by less than `chunkBudget` — and this is what makes asking *cheaper* than deriving, not more expensive: the blowup document that never reaches quiescence can still answer a question in one chunk
+- [ ] **`ProverNotifier.ask(Predicate)`**: refuted straight from the filter with no run; otherwise run with the goal as the stop condition, reusing a held run when one is already complete at this revision. The answer distinguishes *unproved* from *not yet*: a budget-exhausted run has not shown anything about reachability, and saying "unprovable" there would be a lie
+- [ ] **Selection-driven UI** in `proof_panel.dart`: with a selection that phrases something, the panel offers those questions above the derived list; tapping asks, and the answer renders in the three shapes — the refutation, the honest "true here, not provable by these rules", and the proof, which drops into the existing step list with its existing on-figure emphasis
+- [ ] Tests: `questions.dart` over selections of points, segments, lines and mixtures (including what it refuses to phrase); the early exit reaching the same answer as a full run and costing less on the blowup fixture; the three answers on rigs that produce each — Varignon for *proved*, `perp-true-unproved.rgl` for *unproved*, a false claim for *refuted*; the panel's chips and the three renderings
+- [ ] Gates: analyze clean, suite green, goldens byte-identical, browser gate green, wasm build compiles
+
 ## Phase 147 — M-P4c: the step, pointed at on the figure
 
 M-P4's last third, and the milestone's actual payoff: reading a step and seeing what it is about. PLAN §M-P4 asks for on-figure animated highlighting per step, reusing the painter's selection styling.

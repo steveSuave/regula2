@@ -140,6 +140,16 @@ class ProverEngine {
   /// never holds a frame hostage. Same machinery, same result: chunking
   /// changes when the work happens, never what it derives (pinned).
   ///
+  /// [stopWhen] is checked between chunks and ends the call early when
+  /// it answers true — a goal-directed caller wants one fact, not
+  /// quiescence, and asking is therefore *cheaper* than deriving rather
+  /// than more expensive: a document whose fixpoint never lands can
+  /// still answer a question in the first chunk. The check granularity
+  /// is the chunk, so a stopped run has overshot by less than
+  /// [chunkBudget] — the answer is unaffected (the engine only ever adds
+  /// facts) and the overshoot is what buys one predicate evaluation per
+  /// chunk instead of per application.
+  ///
   /// [maxApplications] caps *this call*, answering early with
   /// [isComplete] still false — quiescence is not something an arbitrary
   /// document owes, and a caller with a frame to keep needs a ceiling
@@ -150,6 +160,7 @@ class ProverEngine {
   Future<int> runChunked({
     required int chunkBudget,
     int? maxApplications,
+    bool Function()? stopWhen,
   }) async {
     if (chunkBudget <= 0) {
       throw ArgumentError.value(chunkBudget, 'chunkBudget', 'must be positive');
@@ -162,6 +173,7 @@ class ProverEngine {
       );
     }
     var total = 0;
+    if (stopWhen != null && stopWhen()) return 0;
     while (!isComplete) {
       final budget = maxApplications == null
           ? chunkBudget
@@ -169,6 +181,7 @@ class ProverEngine {
       if (budget <= 0) break;
       total += step(budget);
       if (isComplete) break;
+      if (stopWhen != null && stopWhen()) break;
       if (maxApplications != null && total >= maxApplications) break;
       await yieldToEventLoop();
     }

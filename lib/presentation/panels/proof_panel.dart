@@ -67,6 +67,29 @@ String stepReason(ProofStep step) => step.isGiven
     : '${step.rule!.replaceAll('_', ' ')} '
           'from ${step.premiseSteps.map((n) => '[$n]').join(', ')}';
 
+/// What a verdict says, in words the reader can act on.
+///
+/// The middle case is the one that has to be said carefully: the prover
+/// failing to find a proof is *not* the statement being false, and a
+/// message that blurred them would tell a user their correct theorem was
+/// wrong.
+String verdictMessage(ProverAnswer answer) {
+  final statement = describeFact(Fact.of(answer.question.canonical));
+  return switch (answer.verdict) {
+    ProverVerdict.refuted =>
+      '$statement is not true of this construction — it breaks when the '
+          'figure is perturbed.',
+    ProverVerdict.proved => '$statement — proved.',
+    ProverVerdict.unproved =>
+      '$statement holds in the figure, but these rules cannot prove it. '
+          'That is a limit of the rule set, not evidence against the '
+          'statement.',
+    ProverVerdict.undecided =>
+      '$statement holds in the figure. The prover ran out of budget '
+          'before settling whether it follows — keep going to spend more.',
+  };
+}
+
 /// Whether a finished run still describes the construction in front of
 /// the user.
 ///
@@ -230,6 +253,8 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         return _note(theme, 'Deriving…');
       case ProverRefused(:final reason):
         return _note(theme, reason);
+      case ProverAnswered():
+        return _answer(theme, state);
       case ProverReady():
         // A held goal outlives a re-run only if the new run reached it
         // too; otherwise the list is the honest place to be.
@@ -239,6 +264,14 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         }
         return _goals(theme, state, selectedIds);
     }
+  }
+
+  /// The verdict on an asked question. Filled in properly by the chips
+  /// commit; this renders the three shapes plainly.
+  Widget _answer(ThemeData theme, ProverAnswered state) {
+    final proof = state.answer.proof;
+    if (proof != null) return _proof(theme, proof);
+    return _note(theme, verdictMessage(state.answer));
   }
 
   Widget _goals(ThemeData theme, ProverReady state, Set<String> selectedIds) {

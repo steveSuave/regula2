@@ -1,0 +1,370 @@
+{
+  "version": 1,
+  "viewport": {
+    "pan": [
+      -241,
+      3
+    ],
+    "scale": 1,
+    "rotation": 0
+  },
+  "showAxes": false,
+  "showGrid": false,
+  "snapToGrid": false,
+  "objects": [
+    {
+      "id": "58002b61-a7bf-42d5-82a7-34fc732e1804",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 349.14453125,
+        "y": -551.1484375
+      },
+      "attributes": {
+        "name": "A",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": -5.2187500000000036,
+        "labelDy": -31,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "f6b5d015-9a84-4f93-8b9e-5ec712c4a7b3",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 715.82421875,
+        "y": -549.30859375
+      },
+      "attributes": {
+        "name": "B",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "d6739eb9-4389-408d-ab7e-fa1e49078816",
+      "type": "Segment",
+      "parents": [
+        "58002b61-a7bf-42d5-82a7-34fc732e1804",
+        "f6b5d015-9a84-4f93-8b9e-5ec712c4a7b3"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "a",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "44844fa4-8c1f-447d-ad51-d328e90f9b1e",
+      "type": "PerpendicularLine",
+      "parents": [
+        "f6b5d015-9a84-4f93-8b9e-5ec712c4a7b3",
+        "d6739eb9-4389-408d-ab7e-fa1e49078816"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": false,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "9a531c0f-63cc-43c6-8b38-d9d21b26d946",
+      "type": "PointOnObject",
+      "parents": [
+        "44844fa4-8c1f-447d-ad51-d328e90f9b1e"
+      ],
+      "params": {
+        "parameter": -311.39611461320214
+      },
+      "attributes": {
+        "name": "C",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "34a1b49e-70c6-49b9-95ee-800c744f43d9",
+      "type": "Segment",
+      "parents": [
+        "f6b5d015-9a84-4f93-8b9e-5ec712c4a7b3",
+        "9a531c0f-63cc-43c6-8b38-d9d21b26d946"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "b",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "3c8073c6-456a-4751-8160-3bddbdd6f06e",
+      "type": "Segment",
+      "parents": [
+        "9a531c0f-63cc-43c6-8b38-d9d21b26d946",
+        "58002b61-a7bf-42d5-82a7-34fc732e1804"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "c",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "82f8712c-fc8f-437f-9f7e-bead22d9b65c",
+      "type": "Midpoint",
+      "parents": [
+        "f6b5d015-9a84-4f93-8b9e-5ec712c4a7b3",
+        "58002b61-a7bf-42d5-82a7-34fc732e1804"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "D",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": -5.2460937500000036,
+        "labelDy": -31,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "12409141-7c91-473b-816d-d9bdd0ade0ab",
+      "type": "Midpoint",
+      "parents": [
+        "82f8712c-fc8f-437f-9f7e-bead22d9b65c",
+        "f6b5d015-9a84-4f93-8b9e-5ec712c4a7b3"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "E",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 10.961843874238566,
+        "labelDy": -25.008718874238575,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "b1c3165a-5f22-44c8-9daf-9a721549dc42",
+      "type": "PerpendicularLine",
+      "parents": [
+        "12409141-7c91-473b-816d-d9bdd0ade0ab",
+        "3c8073c6-456a-4751-8160-3bddbdd6f06e"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "d",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "388afdbf-b7b5-40ef-bd27-02a5fe6a85cd",
+      "type": "IntersectionPoint",
+      "parents": [
+        "34a1b49e-70c6-49b9-95ee-800c744f43d9",
+        "b1c3165a-5f22-44c8-9daf-9a721549dc42"
+      ],
+      "params": {
+        "branchIndex": 0
+      },
+      "attributes": {
+        "name": "F",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "5229116d-f7f2-490a-99c3-71ee7f2f489e",
+      "type": "Segment",
+      "parents": [
+        "388afdbf-b7b5-40ef-bd27-02a5fe6a85cd",
+        "82f8712c-fc8f-437f-9f7e-bead22d9b65c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "e",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ae9f072b-8dee-415a-83b4-f3818f84811c",
+      "type": "Segment",
+      "parents": [
+        "82f8712c-fc8f-437f-9f7e-bead22d9b65c",
+        "9a531c0f-63cc-43c6-8b38-d9d21b26d946"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "f",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    }
+  ]
+}
