@@ -14,6 +14,79 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 151 — M-P2d: the incidence closure (open)
+
+The first of the two structural gaps Phase 150 found behind its three rules (PLAN §"Two closures the rule table is standing in for"). Ahead of M-P3 in value, and the cheapest of the three open prover phases.
+
+- [ ] **Lines and circles as objects carrying their point sets**, merged by union-find, so "which points name this line" is a lookup rather than a derivation. A `Fact` keeps its point-tuple form (the vocabulary and the save format do not move); what changes is that the *matcher* resolves a pair to its carrier before joining
+- [ ] **Deletes rules rather than adding them**: `coll_transitive` and `perp_coll` go, and `para_coll` — already written, measured and rejected in Phase 150 — never comes back. Their rigs become tests of the closure
+- [ ] **Deletes the all-spellings search** in `questions.dart`: a question is one statement about carriers, so `ProverQuestion.spellings` collapses to one. The Phase 148 tests that turn on the multi-spelling scan will need to change character, exactly as Phase 150 already made one of them do
+- [ ] Cost: measure before and after on the five fixtures, especially `provoleas2.json` — the closure should *reduce* the fact count as well as the rule count
+
+## Phase 152 — M-P3: the angle and ratio algebra (open)
+
+The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a second rule engine — a linear system.
+
+- [ ] **θ per line, mod π; every angle fact a linear equation.** `para` is a zero difference, `perp` is π/2, Chasles is addition, closure is elimination. Log-lengths give the same for `cong` and `eqratio`
+- [ ] **The point is the cost profile, not only the power.** `eqangle`/`eqratio` carry 128-form orbits against 8 for `perp` and 6 for `coll` — they are why `provoleas2.json` never reaches quiescence. Moving angles out of the fact set removes the cost centre instead of feeding it
+- [ ] **A peer of DD behind one `Prover` facade**, sharing the fact database and the numeric filter, exchanging facts at the boundary. Roughly thirty of JGEX's seventy-two rules fall out of this plus Phase 151 for free
+- [ ] **Not in scope until the algebra exists**: Pythagoras (squared lengths), the `2·∠`/`3·∠` family and the 180° angle sum (a coefficient ring). Named here so they are not mistaken for rule-table work
+
+## Phase 153 — auxiliary construction (open)
+
+What JGEX calls A2, and the thing that decides whether the app can answer a user's question unaided. Phase 150's regression needs the midpoint of BC drawn *by hand*; JGEX constructs it and says so in a dialog.
+
+- [ ] **When the fixpoint stalls without the goal, propose points and re-run**: midpoints of named pairs first (that is what the motivating document needed), then feet of perpendiculars, then intersections. A search, so it needs a budget and an order, both measured rather than chosen
+- [ ] **The proof has to stay readable when the prover invented a point.** JGEX's answer is a modal saying what it built; ours should name the point in the step list and offer to add it to the construction, since a proof citing a point the figure does not contain is not a proof the user can follow
+- [ ] **`perp-true-unproved.rgl` stops being the *unproved* rig** the day this lands, so Phase 148's three-verdict tests need a genuinely unreachable statement instead. Named now because it will be easy to miss
+
+## Phase 150 — the three rules a JGEX trace found
+
+A user brought a JGEX screenshot proving `perp(C,D,D,F)` on `test/fixtures/perp-true-unproved.rgl` — the theorem Phase 148 had shipped as the *unproved* rig. Two sessions' worth of claims were wrong, and the screenshot said why: **JGEX constructed an auxiliary point** ("H is midpoint of DA" — the midpoint of our BC) before reasoning. Translating its trace step by step showed where ours could not follow.
+
+- [x] **The gap is one Session 156 named and only half-fixed.** The vocabulary is point-tuples, so a *line* is named by a pair of points on it and one line has many names. `hypotheses` emits every witness pair for that reason; a fact a **rule** derives gets no such help, so the run stalls holding the statement it needs under the wrong name. `questions.dart`'s all-spellings search (Phase 148) was the same hole seen from the consumer side
+- [x] **Three rules** (`rule.dart`): `coll_transitive` (`coll(a,b,c) & coll(a,b,d) => coll(a,c,d)`), `perp_coll` (`perp(a,b,c,d) & coll(a,b,e) & coll(a,b,f) => perp(e,f,c,d)`), and `orthocentre` (`perp(a,b,c,d) & perp(a,c,b,d) => perp(a,d,b,c)`) — the last stated on four points because that is what it is, an orthocentric system in which each point is the orthocentre of the other three. It is what JGEX reached with full angles, available here without them
+- [x] **`para_coll` was written, rigged, measured and dropped.** The exact analogue for parallels derives *nothing new* on any fixture, including the one that motivated the family. The hole it closes is real in principle and it is one line the day a document needs it; a rule with no consumer pays its cost on every pivot for nothing. Recorded at the site so the next reader does not re-derive it
+- [x] **Both halves are necessary, and the regression pins both directions** (`rule_engine_test.dart`): the rules alone leave the document at 23 facts and no goal; the auxiliary point alone leaves it at 22. Together the fixpoint reaches it, `Proof.verify()` comes back empty — a certificate, not a transcript — and the proof cites `midline_para`, `perp_coll`, `coll_transitive`, `orthocentre` and `para_perp_perp`, mirroring JGEX's own structure
+- [x] **Cost measured before adding, not after**: `locus3` unchanged, `apatitos-topos` +2 facts, the motivating fixture 13 → 23, `provoleas2` 49 → 75 facts for the same 30 000 applications, and no wall-clock regression on any of them
+- [x] **What this corrects, said plainly.** Session 158's claim that no auxiliary construction could help was an over-generalization from a fact-seeding experiment, and the claim that the theorem needs M-P3's angle arithmetic was wrong too — it needs neither. The structural half of the argument survives: with the core *as it was*, and the objects *as they were*, it was unreachable
+- [x] Tests: a numeric rig per new rule (the per-rule convention — a rule that is not a theorem would let the filter's screen mask an unsound step); the document regression above; `rule_test`'s table count 23 → 26. Mutation-checked: dropping any of the three fails exactly its own rig plus the document regression; dropping `para_coll` failed only its own rig, which is why it is gone
+- [x] **One test changed character, and that is the phase working**: the provider's "any spelling counts" pin used to rest on `coll(A,E,B)` being *unreachable*. It is now derivable, so the test moved to a budget too small to reach it — the scan past the first spelling is still what is pinned
+- [x] Gates: analyze clean, suite **2984** green, 32 goldens byte-identical, browser gate green (6)
+
+## Phase 149 — the panels open when the user opens them
+
+Two UI corrections, both user requests, and they turn out to be the same correction.
+
+- [x] **The proof button moves beside the geometry menu.** Both answer questions *about* the document rather than editing it, and the pairing is not only visual: the prover's vocabulary is Euclidean, so which geometry the globe names decides whether it can speak at all
+- [x] **Style & properties is opened by its button, not by the selection.** It used to appear the moment anything was picked, which meant a tap on the canvas *resized the canvas under the pointer* mid-gesture. Now it is a docked panel behind an app-bar toggle, exactly like the object tree, and a bottom-sheet-free drawer on compact — the path that was already there for phones, promoted to being the only path
+- [x] **The button is always shown, and the empty panel says what to do.** The alternative — showing it only with a selection — was rejected for the reason the object tree already records: a toolbar whose buttons come and go is a toolbar you cannot aim at, and a panel the user opened and that then vanished on a deselect reads as broken. So `AttributesInspector` no longer collapses to `SizedBox.shrink()`; with nothing selected it renders "Select an object to style it."
+- [x] Tests updated where the behaviour genuinely changed rather than worked around: the inspector harness opens the panel the way the user does; the two collapse tests become "opened by its button, not by the selection" and "clearing the selection leaves the panel open and empty"; both `app_bar_layout_test` cases; the object-tree hand-off; the three shortcut tests that reach the name field
+- [x] **Follow-up (user request): the style button sits between hide/delete and undo**, which puts it with the buttons that act on the selection rather than with the view chrome. It is now far enough right that the app bar scrolls to it on a phone — consistent with undo/redo, which are in the same position, and with Phase 47's decision that narrow windows scroll the bar rather than re-arrange it
+- [x] Gates: analyze clean, suite **2984** green, 32 goldens byte-identical, browser gate green (6)
+
+## Phase 148 — M-P4d: asking, and the three answers
+
+The panel derives everything and lists what it found — "what follows from this figure". What it cannot do is take a question. JGEX's model is the other way round: state a conclusion, get a proof. This phase adds the question, and it is cheap because DD is *already* not goal-directed — DDAR runs forward to quiescence and then checks membership, so `proofOf` is the second half and only the asking is missing.
+
+**The answer is three-way, and that is the phase's point.** The numeric filter sits beside the prover, so "false" and "unprovable" are separable, and they are very different news:
+
+| answer | means | who says so |
+|---|---|---|
+| refuted | not a theorem — a perturbation breaks it | `DiagramFilter`, with no run at all |
+| unproved | true in the model, past the DD core's reach | membership miss on a *complete* run |
+| proved | here is the proof, and `verify()` says certificate | `Proof.of` |
+
+`test/fixtures/perp-true-unproved.rgl` is the middle row, from a user document: right angle at B, D = mid AB, E = mid DB, the perpendicular to CA through E meeting BC at F. `perp(C,D,D,F)` holds in every perturbation and the 44-application fixpoint cannot reach it — **structurally**, since only two of the 23 rules conclude a `perp` (`para_perp_perp` needs a parallel that does not exist here, `perp_bisector` degenerates). The human proof ends in `∠CDF = ∠BDF + ∠BDC`, which *adds* two angles; `eqangle` can only say two angles are equal. That is the AR half of DDAR — **M-P3** — and this fixture is now the thing asking for it.
+
+- [x] **What a selection can phrase** (`lib/domain/prover/questions.dart`, pure): selected objects → point pairs (a selected pair of points is one; a carrier contributes every pair of points `structurallyIncident` on it, as `hypotheses.dart` already does) → the askable questions. Two pairs give `para` / `perp`, plus `cong` when both pairs actually bound a length rather than merely witnessing a direction. Three points give `coll` and the three `midp` readings; four points give `cyclic` and the three pairings of `para` / `perp` / `cong`. `eqangle` / `eqratio` / `simtri` / `contri` are **not** selection-shaped (eight points, or a correspondence a selection cannot express) and are left out, said rather than silently missing. A carrier with fewer than two known points phrases nothing — honest, since DD could do nothing with an unnamed line either
+- [x] **A question is a statement, not a spelling — and this is the part that is easy to get wrong.** `para(A,B,C,D)` and `para(A,X,C,D)` are *different facts* even with `A`, `B`, `X` collinear, because the core has no coll-propagation rules (Session 156's note, and the same gap that blocks `perp-true-unproved.rgl`). So a question asked with one witness pair would miss a proof spelled with another. A `ProverQuestion` therefore carries **every** equivalent spelling, and is proved when *any* of them is in the database: which points name a line is the prover's business, not the user's
+- [x] **Early exit** (`ProverEngine.runChunked`'s `stopWhen`): with a goal there is no need for quiescence, only for one fact. Checked between chunks, so a run overshoots by less than `chunkBudget`. **Measured on `provoleas2.json`, the document that never reaches quiescence: 1 000 applications and 17.7 ms to answer, against 30 000 and 776.6 ms that still answers nothing** — asking is 44× cheaper than deriving *and* it terminates, which is the whole argument for doing this before the isolate work
+- [x] **`ProverNotifier.ask(Predicate)`**: refuted straight from the filter with no run; otherwise run with the goal as the stop condition, reusing a held run when one is already complete at this revision. The answer distinguishes *unproved* from *not yet*: a budget-exhausted run has not shown anything about reachability, and saying "unprovable" there would be a lie
+- [x] **Selection-driven UI** in `proof_panel.dart`: with a selection that phrases something, the panel offers those questions as chips *above* the derived list — "what follows from this figure" and "does this hold?" are both useful, and a selection does not say which one the reader wants. Chips name their points, because four selected points phrase three different perpendicularity questions and a row all reading "perpendicular?" would be a coin toss. A proved answer drops into the existing step rows with the existing on-figure emphasis: the proof of an asked question is not a different kind of object from the proof of a listed one. One back affordance, in the header — not at the foot of a proof the reader would have to scroll past
+- [x] Tests: `questions.dart` over selections of points, segments, lines and mixtures (including what it refuses to phrase); the early exit reaching the same answer as a full run and costing less on the blowup fixture; the three answers on rigs that produce each — Varignon for *proved*, `perp-true-unproved.rgl` for *unproved*, a false claim for *refuted*; the panel's chips and the three renderings
+- [x] Gates: analyze clean, suite **2979** green (2950 + 29), 32 goldens byte-identical, browser gate green (6), `flutter build web --wasm --release` compiles
+
 ## Phase 147 — M-P4c: the step, pointed at on the figure
 
 M-P4's last third, and the milestone's actual payoff: reading a step and seeing what it is about. PLAN §M-P4 asks for on-figure animated highlighting per step, reusing the painter's selection styling.

@@ -1,0 +1,246 @@
+import '../construction/geo_object.dart';
+import '../construction/incidence.dart';
+import '../construction/objects/ray.dart';
+import '../construction/objects/segment.dart';
+import 'predicate.dart';
+
+/// A question about the figure, and every point-tuple spelling of it
+/// (PLAN §M-P4).
+///
+/// **A question is a statement, not a spelling, and that distinction is
+/// load-bearing.** `para(A,B,C,D)` and `para(A,X,C,D)` are *different*
+/// facts even when `A`, `B` and `X` are collinear, because the DD core
+/// has no coll-propagation rules to re-spell a derived fact — the same
+/// gap that makes `test/fixtures/perp-true-unproved.rgl` unreachable. A
+/// question asked with one witness pair would therefore miss a proof the
+/// run found under another. So a question carries all of them and is
+/// answered *proved* when any one is in the database: which points name
+/// a line is the prover's business, not the user's.
+///
+/// Every spelling is the same statement numerically, so refuting one
+/// refutes all — which is why [canonical] is enough to ask the
+/// `DiagramFilter`.
+class ProverQuestion {
+  ProverQuestion(this.kind, List<Predicate> spellings)
+    : spellings = List.unmodifiable(spellings) {
+    if (spellings.isEmpty) {
+      throw ArgumentError.value(spellings, 'spellings', 'must be non-empty');
+    }
+  }
+
+  final PredicateKind kind;
+
+  /// Every equivalent phrasing, first-listed first. Non-empty.
+  final List<Predicate> spellings;
+
+  /// The spelling to show the user and to ask the numeric filter.
+  Predicate get canonical => spellings.first;
+
+  @override
+  String toString() =>
+      'ProverQuestion(${kind.name}, ${spellings.length} spellings)';
+}
+
+/// A pair of points, and whether it bounds a length.
+///
+/// The distinction is what keeps `cong` from being offered about two
+/// *lines*: "are these the same length?" is a question about segments and
+/// about points the user picked, never about a line, which has no length
+/// to compare. Direction and perpendicularity are fine either way.
+class _Pair {
+  _Pair(this.a, this.b, {required this.boundsLength});
+
+  final GeoPoint a;
+  final GeoPoint b;
+  final bool boundsLength;
+}
+
+/// A group of equivalent pairs — every way the selection can name one
+/// line — carrying whether the *group* stands for something with a
+/// length.
+class _Group {
+  _Group(this.pairs, {required this.boundsLength});
+
+  final List<_Pair> pairs;
+  final bool boundsLength;
+}
+
+/// What [selectedIds] lets the user ask, over the points of [objects].
+///
+/// Empty when the selection phrases nothing, which is the usual answer
+/// and deliberately so: a lone point, a circle, five objects at once and
+/// a carrier with fewer than two named points on it are all selections
+/// with no statement in the DD vocabulary behind them. Offering a
+/// question the prover cannot even be handed would be worse than
+/// offering none.
+///
+/// **`eqangle` / `eqratio` / `simtri` / `contri` are absent on purpose.**
+/// They take eight points, or a triangle *correspondence* — neither is
+/// something a set of selected objects expresses, and guessing the
+/// correspondence would ask a different question from the user's.
+///
+/// Order is the order the questions should be offered in: the relation
+/// most selections mean first.
+List<ProverQuestion> askableQuestions(
+  Iterable<GeoObject> objects, {
+  required Set<String> selectedIds,
+}) {
+  final all = List.of(objects);
+  final points = [
+    for (final object in all)
+      if (object is GeoPoint) object,
+  ];
+  final selected = [
+    for (final object in all)
+      if (selectedIds.contains(object.id)) object,
+  ];
+  final selectedPoints = [
+    for (final object in selected)
+      if (object is GeoPoint) object,
+  ];
+  final carriers = [
+    for (final object in selected)
+      if (object is GeoLine) object,
+  ];
+
+  List<GeoPoint> onCarrier(GeoObject carrier) => [
+    for (final point in points)
+      if (structurallyIncident(carrier, point)) point,
+  ];
+
+  // A segment or a ray bounds a length between its own two defining
+  // points; any other pair on it merely witnesses the direction. A
+  // general line bounds nothing.
+  _Group? groupFor(GeoLine carrier) {
+    final on = onCarrier(carrier);
+    final pairs = <_Pair>[];
+    final defining = switch (carrier) {
+      Segment(:final point1, :final point2) => (point1, point2),
+      Ray(:final origin, :final through) => (origin, through),
+      _ => null,
+    };
+    if (defining != null) {
+      pairs.add(_Pair(defining.$1, defining.$2, boundsLength: true));
+    }
+    for (var i = 0; i < on.length; i++) {
+      for (var j = i + 1; j < on.length; j++) {
+        if (defining != null &&
+            ((identical(on[i], defining.$1) && identical(on[j], defining.$2)) ||
+                (identical(on[i], defining.$2) &&
+                    identical(on[j], defining.$1)))) {
+          continue;
+        }
+        pairs.add(_Pair(on[i], on[j], boundsLength: false));
+      }
+    }
+    if (pairs.isEmpty) return null;
+    return _Group(pairs, boundsLength: defining != null);
+  }
+
+  // Every selected object must be *consumed* by the question, or there
+  // is no question. A selection with something left over — two segments
+  // and a stray point, a circle alongside — would have to be read by
+  // ignoring part of what the user picked, and silently ignoring half a
+  // selection is how a tool answers a question nobody asked.
+  if (selected.length != selectedPoints.length + carriers.length) {
+    return const [];
+  }
+
+  final out = <ProverQuestion>[];
+  void relate(_Group first, _Group second) {
+    for (final kind in [
+      PredicateKind.perp,
+      PredicateKind.para,
+      if (first.boundsLength && second.boundsLength) PredicateKind.cong,
+    ]) {
+      final spellings = [
+        for (final p in first.pairs)
+          for (final q in second.pairs)
+            if (!_degenerate(p, q)) Predicate(kind, [p.a, p.b, q.a, q.b]),
+      ];
+      if (spellings.isEmpty) continue;
+      out.add(ProverQuestion(kind, spellings));
+    }
+  }
+
+  _Group? groupOfSelectedPoints() => selectedPoints.length == 2
+      ? _Group([
+          _Pair(selectedPoints[0], selectedPoints[1], boundsLength: true),
+        ], boundsLength: true)
+      : null;
+
+  // Two line-shaped things, however the selection named them.
+  if (carriers.length == 2 && selectedPoints.isEmpty) {
+    final first = groupFor(carriers[0]);
+    final second = groupFor(carriers[1]);
+    if (first == null || second == null) return const [];
+    relate(first, second);
+    return out;
+  }
+  if (carriers.length == 1 && selectedPoints.length == 2) {
+    final first = groupFor(carriers.single);
+    if (first == null) return const [];
+    relate(first, groupOfSelectedPoints()!);
+    return out;
+  }
+  if (carriers.isNotEmpty) return const [];
+
+  // Point-only selections.
+  if (selectedPoints.length == 3) {
+    final [a, b, c] = selectedPoints;
+    return [
+      ProverQuestion(PredicateKind.coll, [
+        Predicate(PredicateKind.coll, [a, b, c]),
+      ]),
+      ProverQuestion(PredicateKind.midp, [
+        Predicate(PredicateKind.midp, [a, b, c]),
+      ]),
+      ProverQuestion(PredicateKind.midp, [
+        Predicate(PredicateKind.midp, [b, a, c]),
+      ]),
+      ProverQuestion(PredicateKind.midp, [
+        Predicate(PredicateKind.midp, [c, a, b]),
+      ]),
+    ];
+  }
+  if (selectedPoints.length == 4) {
+    final [a, b, c, d] = selectedPoints;
+    // The three ways four points pair off into two lines. Which pairing
+    // the user means is genuinely ambiguous, so all three are offered
+    // and each names its own points.
+    const pairings = [
+      [0, 1, 2, 3],
+      [0, 2, 1, 3],
+      [0, 3, 1, 2],
+    ];
+    final quad = [a, b, c, d];
+    return [
+      ProverQuestion(PredicateKind.cyclic, [
+        Predicate(PredicateKind.cyclic, quad),
+      ]),
+      for (final kind in [
+        PredicateKind.perp,
+        PredicateKind.para,
+        PredicateKind.cong,
+      ])
+        for (final pairing in pairings)
+          ProverQuestion(kind, [
+            Predicate(kind, [for (final i in pairing) quad[i]]),
+          ]),
+    ];
+  }
+  return const [];
+}
+
+/// Whether relating [first] to [second] is structurally degenerate: a
+/// pair with both endpoints the same point names no line at all, and two
+/// pairs naming the *same* two points relate a line to itself.
+///
+/// Refused here rather than left to the filter: it is a property of the
+/// tuple, not of any configuration, which is the same line the rule
+/// engine draws at binding time.
+bool _degenerate(_Pair first, _Pair second) {
+  if (identical(first.a, first.b) || identical(second.a, second.b)) return true;
+  return (identical(first.a, second.a) && identical(first.b, second.b)) ||
+      (identical(first.a, second.b) && identical(first.b, second.a));
+}

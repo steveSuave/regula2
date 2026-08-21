@@ -25,7 +25,9 @@ import '../../application/providers/prover_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
+import '../../domain/prover/predicate.dart';
 import '../../domain/prover/proof.dart';
+import '../../domain/prover/questions.dart';
 
 /// The statements worth offering as goals: what the run *derived*.
 ///
@@ -66,6 +68,48 @@ String stepReason(ProofStep step) => step.isGiven
     ? 'given'
     : '${step.rule!.replaceAll('_', ' ')} '
           'from ${step.premiseSteps.map((n) => '[$n]').join(', ')}';
+
+/// The chip's wording for a question — the relation, then the points it
+/// is about.
+///
+/// The points are named because they disambiguate: four selected points
+/// phrase three different perpendicularity questions, and a row of
+/// chips all reading "perpendicular?" would be a coin toss.
+String questionLabel(ProverQuestion question) {
+  final points = question.canonical.points.map(describePoint).toList();
+  return switch (question.kind) {
+    PredicateKind.perp => '${points[0]}${points[1]} ⟂ ${points[2]}${points[3]}',
+    PredicateKind.para => '${points[0]}${points[1]} ∥ ${points[2]}${points[3]}',
+    PredicateKind.cong => '${points[0]}${points[1]} = ${points[2]}${points[3]}',
+    PredicateKind.coll => '${points.join('')} collinear',
+    PredicateKind.cyclic => '${points.join('')} concyclic',
+    PredicateKind.midp => '${points[0]} bisects ${points[1]}${points[2]}',
+    _ => describeFact(Fact.of(question.canonical)),
+  };
+}
+
+/// What a verdict says, in words the reader can act on.
+///
+/// The middle case is the one that has to be said carefully: the prover
+/// failing to find a proof is *not* the statement being false, and a
+/// message that blurred them would tell a user their correct theorem was
+/// wrong.
+String verdictMessage(ProverAnswer answer) {
+  final statement = describeFact(Fact.of(answer.question.canonical));
+  return switch (answer.verdict) {
+    ProverVerdict.refuted =>
+      '$statement is not true of this construction — it breaks when the '
+          'figure is perturbed.',
+    ProverVerdict.proved => '$statement — proved.',
+    ProverVerdict.unproved =>
+      '$statement holds in the figure, but these rules cannot prove it. '
+          'That is a limit of the rule set, not evidence against the '
+          'statement.',
+    ProverVerdict.undecided =>
+      '$statement holds in the figure. The prover ran out of budget '
+          'before settling whether it follows — keep going to spend more.',
+  };
+}
 
 /// Whether a finished run still describes the construction in front of
 /// the user.
@@ -153,6 +197,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
     final state = ref.watch(proverProvider);
     final selectedIds = ref.watch(selectionProvider);
     final theme = Theme.of(context);
+    final questions = askableQuestions(
+      ref.watch(constructionProvider).construction.objects,
+      selectedIds: selectedIds,
+    );
 
     // No width of its own: the docked call site sizes it to
     // [ProofPanel.panelWidth] and the compact one puts it in a sheet, as
@@ -164,32 +212,83 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         children: [
           _header(theme, state, revision),
           const Divider(height: 1),
+          if (questions.isNotEmpty) _questions(theme, questions),
           Expanded(child: _body(theme, state, selectedIds)),
         ],
       ),
     );
   }
 
+  /// What the current selection can be asked, offered as chips.
+  ///
+  /// Above the derived list rather than replacing it: "what follows from
+  /// this figure" and "does this hold?" are both useful, and which one
+  /// the reader wants is not something a selection tells us.
+  Widget _questions(ThemeData theme, List<ProverQuestion> questions) => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ask about the selection',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final question in questions)
+              ActionChip(
+                label: Text(questionLabel(question)),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => _ask(question),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Future<void> _ask(ProverQuestion question) async {
+    setState(() {
+      _goal = null;
+      _stopReading();
+    });
+    await ref.read(proverProvider.notifier).ask(question);
+  }
+
   Widget _header(ThemeData theme, ProverState state, int revision) {
     final running = state is ProverRunning;
+    // One back affordance, in the header where a reader looks for it —
+    // not at the foot of a proof they would have to scroll past.
+    final answered = state is ProverAnswered ? state : null;
+    final canGoBack = _goal != null || answered?.run != null;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              _goal == null ? 'Proof' : 'Why',
+              _goal == null && answered == null ? 'Proof' : 'Why',
               style: theme.textTheme.titleSmall,
             ),
           ),
-          if (_goal != null)
+          if (canGoBack)
             IconButton(
               tooltip: 'Back to the list',
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => setState(() {
-                _goal = null;
-                _stopReading();
-              }),
+              onPressed: () {
+                setState(() {
+                  _goal = null;
+                  _stopReading();
+                });
+                if (answered?.run case final run?) {
+                  ref.read(proverProvider.notifier).showRun(run);
+                }
+              },
             ),
           IconButton(
             tooltip: isStale(state, revision)
@@ -230,6 +329,8 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         return _note(theme, 'Deriving…');
       case ProverRefused(:final reason):
         return _note(theme, reason);
+      case ProverAnswered():
+        return _answer(theme, state);
       case ProverReady():
         // A held goal outlives a re-run only if the new run reached it
         // too; otherwise the list is the honest place to be.
@@ -240,6 +341,74 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         return _goals(theme, state, selectedIds);
     }
   }
+
+  /// The verdict on an asked question.
+  ///
+  /// A proved question drops straight into the step list, which already
+  /// knows how to be read and how to point at the figure — the proof of
+  /// an asked question is not a different kind of object from the proof
+  /// of a listed one.
+  Widget _answer(ThemeData theme, ProverAnswered state) {
+    final answer = state.answer;
+    final proof = answer.proof;
+    return ListView(
+      key: const PageStorageKey<String>('proof-answer'),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Row(
+            children: [
+              Icon(
+                _verdictIcon(answer.verdict),
+                size: 18,
+                color: _verdictColor(theme, answer.verdict),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  questionLabel(answer.question),
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Text(
+            verdictMessage(answer),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        if (answer.verdict == ProverVerdict.undecided)
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.more_horiz, size: 18),
+            title: const Text('Keep going'),
+            onTap: () => ref.read(proverProvider.notifier).askMore(),
+          ),
+        if (proof != null) ..._proofRows(theme, proof),
+      ],
+    );
+  }
+
+  IconData _verdictIcon(ProverVerdict verdict) => switch (verdict) {
+    ProverVerdict.proved => Icons.check_circle_outline,
+    ProverVerdict.refuted => Icons.cancel_outlined,
+    ProverVerdict.unproved => Icons.help_outline,
+    ProverVerdict.undecided => Icons.hourglass_empty,
+  };
+
+  Color _verdictColor(ThemeData theme, ProverVerdict verdict) =>
+      switch (verdict) {
+        ProverVerdict.proved => theme.colorScheme.primary,
+        ProverVerdict.refuted => theme.colorScheme.error,
+        ProverVerdict.unproved ||
+        ProverVerdict.undecided => theme.colorScheme.onSurfaceVariant,
+      };
 
   Widget _goals(ThemeData theme, ProverReady state, Set<String> selectedIds) {
     final goals = provableGoals(state.database, selectedIds: selectedIds);
@@ -292,61 +461,62 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   Widget _proof(ThemeData theme, Proof proof) => ListView(
     key: const PageStorageKey<String>('proof-steps'),
     padding: const EdgeInsets.symmetric(vertical: 8),
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-        child: Text(
-          describeFact(proof.goal),
-          style: theme.textTheme.titleSmall,
-        ),
-      ),
-      for (final step in proof.steps)
-        InkWell(
-          // Tapping a step points at what it is about. The row keeps the
-          // panel's plain look rather than becoming a ListTile: a proof
-          // is read as a numbered list, and rows that look tappable read
-          // as a menu.
-          onTap: () => _readStep(step),
-          child: Container(
-            color: _readingStep == step.number
-                ? theme.colorScheme.secondaryContainer
-                : null,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 28,
-                  child: Text(
-                    '[${step.number}]',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+    children: _proofRows(theme, proof),
+  );
+
+  /// The numbered steps as rows, so an asked question's proof and a
+  /// listed goal's proof read identically — they are the same object.
+  List<Widget> _proofRows(ThemeData theme, Proof proof) => [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Text(describeFact(proof.goal), style: theme.textTheme.titleSmall),
+    ),
+    for (final step in proof.steps)
+      InkWell(
+        // Tapping a step points at what it is about. The row keeps the
+        // panel's plain look rather than becoming a ListTile: a proof
+        // is read as a numbered list, and rows that look tappable read
+        // as a menu.
+        onTap: () => _readStep(step),
+        child: Container(
+          color: _readingStep == step.number
+              ? theme.colorScheme.secondaryContainer
+              : null,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 28,
+                child: Text(
+                  '[${step.number}]',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      describeFact(step.fact),
+                      style: theme.textTheme.bodyMedium,
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        describeFact(step.fact),
-                        style: theme.textTheme.bodyMedium,
+                    Text(
+                      stepReason(step),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      Text(
-                        stepReason(step),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-    ],
-  );
+      ),
+  ];
 
   Widget _note(ThemeData theme, String text) => Padding(
     padding: const EdgeInsets.all(16),

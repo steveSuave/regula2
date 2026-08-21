@@ -101,6 +101,34 @@ class RulePattern {
 /// pinned — a rule that is not actually a theorem would let the filter's
 /// screen mask an unsound proof step.
 final List<Rule> ddCoreRules = List.unmodifiable([
+  // Collinearity propagates, and this is the family Phase 143 left out.
+  //
+  // The vocabulary is point-tuples, so a *line* is named by a pair of
+  // points on it — and one line has many such names. `hypotheses` was
+  // built to emit every witness pair for that reason, but a fact a
+  // *rule* derives gets no such help: without these, `perp(A,B,C,D)` and
+  // a `coll` putting E on line CD can never yield `perp(A,B,C,E)`, and
+  // the run stalls holding the statement it needs under the wrong name.
+  // Phase 150 found this by translating a JGEX proof of a user document
+  // (`test/fixtures/perp-true-unproved.rgl`) step by step and watching
+  // where ours could not follow.
+  //
+  // `para_coll`, the exact analogue for parallels, is deliberately
+  // *not* here. It was written, rigged and measured: it derives nothing
+  // new on any fixture, including the one that motivated the family.
+  // The hole it would close is real in principle and it is one line the
+  // day a document needs it — but a rule with no consumer is a rule
+  // whose cost is paid on every pivot for nothing.
+  Rule.parse('coll_transitive', 'coll(a,b,c) & coll(a,b,d) => coll(a,c,d)'),
+  Rule.parse(
+    'perp_coll',
+    'perp(a,b,c,d) & coll(a,b,e) & coll(a,b,f) => perp(e,f,c,d)',
+  ),
+  // The orthocentre, as a closure property rather than as a point: two
+  // of a triangle's altitudes force the third. Written on four points
+  // because that is what it is — the orthocentric system, in which each
+  // point is the orthocentre of the other three.
+  Rule.parse('orthocentre', 'perp(a,b,c,d) & perp(a,c,b,d) => perp(a,d,b,c)'),
   // Direction algebra: parallelism and perpendicularity compose.
   Rule.parse(
     'para_transitive',

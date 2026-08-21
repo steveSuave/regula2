@@ -214,6 +214,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// counts) is up. Same ephemeral-UI reasoning as [_showObjectTree].
   bool _showTraceOverlay = false;
 
+  /// Whether the style & properties panel is docked. Ephemeral UI state
+  /// like [_showObjectTree], and hidden by default: it used to appear
+  /// and disappear with the selection, which made a tap on the canvas
+  /// resize the canvas.
+  bool _showInspector = false;
+
   /// Whether the proof panel is docked (M-P4). Ephemeral UI state like
   /// [_showObjectTree], and hidden by default for the same reason: the
   /// prover is the on-demand path, and a panel that opened itself would
@@ -1075,25 +1081,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   child: Text('regula'),
                 ),
                 const Spacer(),
-                // The proof panel follows the same gate as the object
-                // tree: docked where there is room, a sheet where there
-                // is not. Both drawers are already spoken for (tree and
-                // inspector), so the compact path is a bottom sheet
-                // rather than a third drawer.
-                IconButton(
-                  tooltip: 'Proof',
-                  isSelected: !compactPanels && _showProofPanel,
-                  icon: const Icon(Icons.fact_check_outlined),
-                  onPressed: () => compactPanels
-                      ? _openProofSheet()
-                      : setState(() => _showProofPanel = !_showProofPanel),
-                ),
-                if (hasSelection)
-                  IconButton(
-                    tooltip: 'Style & properties',
-                    icon: const Icon(Icons.palette_outlined),
-                    onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-                  ),
                 PopupMenuButton<Future<void> Function()>(
                   tooltip: 'File: new, open, save',
                   popUpAnimationStyle: AnimationStyle.noAnimation,
@@ -1132,6 +1119,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 ),
                 _gridMenu(),
                 GeometryMenu(onFrameAbsolute: _frameAbsolute),
+                // Beside the geometry menu (user request): both answer
+                // questions *about* the document rather than editing it,
+                // and the prover's vocabulary is Euclidean, so which
+                // geometry is selected decides whether it can speak at
+                // all. The panel follows the object tree's gate — docked
+                // where there is room, a sheet where there is not, since
+                // both drawers are already spoken for.
+                IconButton(
+                  tooltip: 'Proof',
+                  isSelected: !compactPanels && _showProofPanel,
+                  icon: const Icon(Icons.fact_check_outlined),
+                  onPressed: () => compactPanels
+                      ? _openProofSheet()
+                      : setState(() => _showProofPanel = !_showProofPanel),
+                ),
                 IconButton(
                   tooltip: 'Keyboard shortcuts (?)',
                   isSelected: _showCheatSheet,
@@ -1153,6 +1155,28 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       .toggle(Theme.of(context).brightness),
                 ),
                 _hideDeleteGroup(active: hideDeleteActive),
+                // Between delete and undo (user request), which puts it
+                // with the buttons that act on the selection rather than
+                // with the view chrome.
+                //
+                // Style & properties is a panel the user opens, not one
+                // the selection opens for them: selecting something is
+                // not asking to restyle it, and a panel that appeared on
+                // every tap moved the canvas under the pointer
+                // mid-gesture. The button is always here, for the same
+                // reason the object tree's is — a toolbar whose buttons
+                // come and go is a toolbar you cannot aim at — and the
+                // panel says what to do when nothing is picked.
+                IconButton(
+                  tooltip: _showInspector
+                      ? 'Hide style & properties'
+                      : 'Style & properties',
+                  isSelected: !compactPanels && _showInspector,
+                  icon: const Icon(Icons.palette_outlined),
+                  onPressed: () => compactPanels
+                      ? _scaffoldKey.currentState?.openEndDrawer()
+                      : setState(() => _showInspector = !_showInspector),
+                ),
                 IconButton(
                   tooltip: 'Undo',
                   icon: const Icon(Icons.undo),
@@ -1555,7 +1579,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       width: ProofPanel.panelWidth,
                       child: ProofPanel(),
                     ),
-                  if (!compactPanels) const AttributesInspector(),
+                  if (!compactPanels && _showInspector)
+                    const AttributesInspector(),
                 ],
               ),
               if (_showCheatSheet)

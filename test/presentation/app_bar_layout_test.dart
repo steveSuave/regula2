@@ -150,10 +150,13 @@ void main() {
       );
     });
 
-    testWidgets('style button appears with the selection and opens the '
-        'inspector drawer — never auto-opens', (tester) async {
+    testWidgets('the style button is always there and opens the drawer — '
+        'never auto-opens', (tester) async {
       await pumpEditor(tester, screen: phone);
-      expect(find.byIcon(Icons.palette_outlined), findsNothing);
+      // Always present, selection or not: a toolbar whose buttons come
+      // and go is a toolbar you cannot aim at.
+      expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
+      expect(find.byType(Drawer), findsNothing);
 
       container
           .read(constructionProvider)
@@ -162,10 +165,13 @@ void main() {
       container.read(selectionProvider.notifier).select('a');
       await tester.pump();
 
-      // Selection made: the button is there, but no drawer opened itself.
-      expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
+      // Selection made, and still nothing opened itself.
       expect(find.byType(Drawer), findsNothing);
 
+      // The bar scrolls horizontally at these widths and the style
+      // button now sits out by undo, so reach it the way a user does.
+      await tester.ensureVisible(find.byIcon(Icons.palette_outlined));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.palette_outlined));
       await tester.pumpAndSettle();
       expect(
@@ -213,8 +219,8 @@ void main() {
       expect(find.byType(ObjectTreePanel), findsNothing);
     });
 
-    testWidgets('no style button with a selection — the docked inspector '
-        'is already visible', (tester) async {
+    testWidgets('the style button docks the inspector rather than '
+        'drawering it', (tester) async {
       await pumpEditor(tester, screen: tabletPortrait);
 
       container
@@ -224,8 +230,22 @@ void main() {
       container.read(selectionProvider.notifier).select('a');
       await tester.pump();
 
-      expect(find.byIcon(Icons.palette_outlined), findsNothing);
+      expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
+      expect(
+        find.byType(AttributesInspector),
+        findsNothing,
+        reason: 'the selection no longer opens it',
+      );
+
+      // The bar scrolls horizontally at these widths and the style
+      // button now sits out by undo, so reach it the way a user does.
+      await tester.ensureVisible(find.byIcon(Icons.palette_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.palette_outlined));
+      await tester.pump();
+
       expect(find.byType(AttributesInspector), findsOneWidget);
+      expect(find.byType(Drawer), findsNothing);
     });
   });
 

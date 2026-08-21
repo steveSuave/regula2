@@ -97,6 +97,13 @@ void main() {
     );
   }
 
+  /// The inspector's name field is behind its app-bar button now — the
+  /// selection no longer opens the panel.
+  Future<void> openInspector(WidgetTester tester) async {
+    await tester.tap(find.byTooltip('Style & properties'));
+    await tester.pumpAndSettle();
+  }
+
   Tool? activeTool() => container.read(toolProvider).tool;
 
   /// Feeds the active tool a canvas input directly — the canvas→tool
@@ -1503,6 +1510,7 @@ void main() {
     container.read(selectionProvider.notifier).select(a.id);
     await tester.pumpAndSettle();
 
+    await openInspector(tester);
     await tester.tap(find.byType(TextField));
     await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
@@ -1522,6 +1530,7 @@ void main() {
     final (a, _, _) = buildSmallConstruction();
     container.read(selectionProvider.notifier).select(a.id);
     await tester.pumpAndSettle();
+    await openInspector(tester);
 
     await tester.enterText(find.byType(TextField), 'Q');
     await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -1546,6 +1555,7 @@ void main() {
     container.read(selectionProvider.notifier).select(a.id);
     await tester.pumpAndSettle();
 
+    await openInspector(tester);
     await tester.tap(find.byType(TextField));
     await tester.pumpAndSettle();
     await tester.testTextInput.receiveAction(TextInputAction.done);

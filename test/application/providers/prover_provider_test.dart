@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/prover_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -14,6 +18,7 @@ import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/questions.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
 void main() {
@@ -239,6 +244,221 @@ void main() {
         container.read(constructionProvider).construction.objects,
       );
       expect(state.database.facts.toSet(), control.facts.toSet());
+    });
+  });
+
+  group('asking', () {
+    /// The user document Phase 148 opened on: right angle at B, D the
+    /// midpoint of AB, E the midpoint of DB, the perpendicular to CA
+    /// through E meeting BC at F. `perp(C,D,D,F)` is a theorem — the
+    /// filter confirms it in every perturbation — and the 44-application
+    /// fixpoint cannot reach it, because only two of the 23 rules
+    /// conclude a `perp` and neither has a route here.
+    Construction loadUnprovable() => decodeDocument(
+      jsonDecode(
+            File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+          )
+          as Map<String, dynamic>,
+    ).construction;
+
+    GeoPoint named(Construction construction, String name) => construction
+        .objects
+        .whereType<GeoPoint>()
+        .firstWhere((point) => point.attributes.name == name);
+
+    ProverQuestion questionOf(PredicateKind kind, List<GeoPoint> points) =>
+        ProverQuestion(kind, [Predicate(kind, points)]);
+
+    test('a proved question comes back with its certificate', () async {
+      final rig = seedVarignon();
+      final notifier = container.read(proverProvider.notifier);
+
+      await notifier.ask(
+        ProverQuestion(PredicateKind.para, [rig.goal.statement]),
+      );
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(state.answer.proof, isNotNull);
+      expect(state.answer.proof!.verify(), isEmpty);
+      expect(state.answer.proof!.steps.last.fact, rig.goal);
+    });
+
+    test('a false claim is refuted without the prover running', () async {
+      seedVarignon();
+      final construction = container.read(constructionProvider).construction;
+      final a = named(construction, 'A');
+      final b = named(construction, 'B');
+      final c = named(construction, 'C');
+      final d = named(construction, 'D');
+      final notifier = container.read(proverProvider.notifier);
+
+      // AB ⟂ CD is false of a generic quadrilateral.
+      await notifier.ask(questionOf(PredicateKind.perp, [a, b, c, d]));
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.refuted);
+      expect(state.answer.proof, isNull);
+      expect(
+        state.run,
+        isNull,
+        reason: 'a refutation is the filter\'s answer; no run happened',
+      );
+    });
+
+    test('true but out of reach is its own verdict, not a refusal', () async {
+      final construction = loadUnprovable();
+      container.read(constructionProvider.notifier).replace(construction);
+      final question = questionOf(PredicateKind.perp, [
+        named(construction, 'C'),
+        named(construction, 'D'),
+        named(construction, 'D'),
+        named(construction, 'F'),
+      ]);
+
+      await container.read(proverProvider.notifier).ask(question);
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(
+        state.answer.verdict,
+        ProverVerdict.unproved,
+        reason:
+            'the run finished and could not get there — that is not '
+            'the statement being false',
+      );
+      expect(state.answer.proof, isNull);
+      expect(state.run!.reachedFixpoint, isTrue);
+    });
+
+    test(
+      'a budget too small to settle it says undecided, not unproved',
+      () async {
+        final construction = loadUnprovable();
+        container.read(constructionProvider.notifier).replace(construction);
+        final question = questionOf(PredicateKind.perp, [
+          named(construction, 'C'),
+          named(construction, 'D'),
+          named(construction, 'D'),
+          named(construction, 'F'),
+        ]);
+        final notifier = container.read(proverProvider.notifier);
+
+        await notifier.ask(question, applicationBudget: 3);
+
+        var state = container.read(proverProvider) as ProverAnswered;
+        expect(
+          state.answer.verdict,
+          ProverVerdict.undecided,
+          reason: 'an unfinished run has shown nothing about reachability',
+        );
+
+        await notifier.askMore();
+
+        state = container.read(proverProvider) as ProverAnswered;
+        expect(state.answer.verdict, ProverVerdict.unproved);
+      },
+    );
+
+    test('any spelling counts — a question is a statement', () async {
+      // The scan must reach past the first spelling. `coll(A,D,B)` is
+      // one `midp_coll` away from a given; `coll(A,E,B)` needs
+      // `coll_transitive` on top of that. Under a budget that reaches
+      // the first and not the second, a question listing them in the
+      // unhelpful order must still come back proved — which is only
+      // true if every spelling is tried.
+      //
+      // Phase 150 note: before the coll-propagation rules landed, the
+      // second of these was simply unreachable and this test needed no
+      // budget. That it now needs one is the phase working.
+      final construction = loadUnprovable();
+      container.read(constructionProvider.notifier).replace(construction);
+      final a = named(construction, 'A');
+      final b = named(construction, 'B');
+      final d = named(construction, 'D');
+      final e = named(construction, 'E');
+      final notifier = container.read(proverProvider.notifier);
+
+      await notifier.ask(
+        questionOf(PredicateKind.coll, [a, e, b]),
+        applicationBudget: 2,
+      );
+      expect(
+        (container.read(proverProvider) as ProverAnswered).answer.verdict,
+        ProverVerdict.undecided,
+        reason: 'that spelling alone is not reached inside the budget',
+      );
+
+      await notifier.ask(
+        ProverQuestion(PredicateKind.coll, [
+          Predicate(PredicateKind.coll, [a, e, b]),
+          Predicate(PredicateKind.coll, [a, d, b]),
+        ]),
+        applicationBudget: 2,
+      );
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(
+        state.answer.verdict,
+        ProverVerdict.proved,
+        reason:
+            'the second spelling is derived, and it is the same '
+            'question — which points name a line is the prover\'s business',
+      );
+      expect(state.answer.proof!.verify(), isEmpty);
+    });
+
+    test('asking reuses a complete run instead of starting another', () async {
+      final rig = seedVarignon();
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.prove();
+      final firstRun = container.read(proverProvider) as ProverReady;
+
+      await notifier.ask(
+        ProverQuestion(PredicateKind.para, [rig.goal.statement]),
+      );
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(
+        identical(state.run!.database, firstRun.database),
+        isTrue,
+        reason: 'the held run is consulted, not repeated',
+      );
+      expect(state.run!.applications, firstRun.applications);
+    });
+
+    test('askMore does nothing on a settled verdict', () async {
+      final rig = seedVarignon();
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.ask(
+        ProverQuestion(PredicateKind.para, [rig.goal.statement]),
+      );
+      final settled = container.read(proverProvider);
+
+      await notifier.askMore();
+
+      expect(container.read(proverProvider), settled);
+    });
+
+    test('a non-Euclidean document refuses the question too', () async {
+      final euclidean = container.read(constructionProvider).construction;
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 1));
+      for (final o in [a, b, c]) {
+        euclidean.add(o);
+      }
+      final question = questionOf(PredicateKind.coll, [a, b, c]);
+      container
+          .read(constructionProvider.notifier)
+          .replace(
+            Construction(
+              kernel: const DocumentKernel(metric: FundamentalConic.hyperbolic),
+            ),
+          );
+
+      await container.read(proverProvider.notifier).ask(question);
+
+      expect(container.read(proverProvider), isA<ProverRefused>());
     });
   });
 

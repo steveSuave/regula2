@@ -5,6 +5,7 @@ import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
 import '../../domain/prover/hypotheses.dart';
 import '../../domain/prover/proof.dart';
+import '../../domain/prover/questions.dart';
 import '../../domain/prover/rule_engine.dart';
 import 'construction_provider.dart';
 
@@ -43,6 +44,62 @@ const int proverChunkBudget = 1000;
 /// bounds work in the engine's own unit; the wall-clock it buys is
 /// document-dependent.
 const int proverApplicationBudget = 30000;
+
+/// What the prover has to say about one asked question (PLAN §M-P4).
+///
+/// **Three answers, not two, and the middle one is the point.** The
+/// numeric filter sits beside the prover, so "false" and "true but out
+/// of reach" are separable — and they are entirely different news. A
+/// tool that collapsed them into "no" would tell a user their correct
+/// theorem was wrong.
+enum ProverVerdict {
+  /// A perturbation breaks it, so it is not a theorem of the
+  /// construction — answered by the filter alone, with no run at all.
+  refuted,
+
+  /// True in every sampled configuration, and the run finished without
+  /// deriving it: past the DD core's reach. `perp-true-unproved.rgl` is
+  /// the fixture, and closing this gap is what M-P3 is for.
+  unproved,
+
+  /// True, and derived: [ProverAnswer.proof] is the certificate.
+  proved,
+
+  /// True, and the run ran out of budget before settling it. Says
+  /// nothing about reachability — which is exactly why it is not
+  /// [unproved]. [ProverNotifier.askMore] spends more.
+  undecided,
+}
+
+/// A question and the verdict on it.
+class ProverAnswer {
+  const ProverAnswer({
+    required this.question,
+    required this.verdict,
+    this.proof,
+  });
+
+  final ProverQuestion question;
+  final ProverVerdict verdict;
+
+  /// The proof, exactly when [verdict] is [ProverVerdict.proved] — under
+  /// whichever spelling the run happened to derive.
+  final Proof? proof;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProverAnswer &&
+      identical(other.question, question) &&
+      other.verdict == verdict &&
+      identical(other.proof, proof);
+
+  @override
+  int get hashCode =>
+      Object.hash(identityHashCode(question), verdict, identityHashCode(proof));
+
+  @override
+  String toString() => 'ProverAnswer(${question.kind.name}, ${verdict.name})';
+}
 
 /// What the prover has to say about the document (PLAN §M-P4).
 sealed class ProverState {
@@ -164,6 +221,41 @@ class ProverRefused extends ProverState {
   String toString() => 'ProverRefused($reason)';
 }
 
+/// A question was asked, and here is the verdict.
+///
+/// [run] is the run the verdict came out of, when there was one — a
+/// refutation needs none, because the filter settles it without the
+/// prover being started at all. Carrying it means going back from an
+/// answer to the derived list does not throw the run away.
+class ProverAnswered extends ProverState {
+  const ProverAnswered({
+    required this.answer,
+    required this.revision,
+    this.run,
+  });
+
+  final ProverAnswer answer;
+
+  /// The construction revision the verdict was reached at — the same
+  /// staleness comparison [ProverReady.revision] carries.
+  final int revision;
+
+  final ProverReady? run;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProverAnswered &&
+      other.answer == answer &&
+      other.revision == revision &&
+      other.run == run;
+
+  @override
+  int get hashCode => Object.hash(ProverAnswered, answer, revision, run);
+
+  @override
+  String toString() => 'ProverAnswered($answer, revision: $revision)';
+}
+
 /// Runs the DD prover over the live construction, and holds what it
 /// derived (PLAN §M-P4).
 ///
@@ -270,12 +362,159 @@ class ProverNotifier extends _$ProverNotifier {
     state = _readyFrom(engine, held.revision);
   }
 
+  /// Asks whether [question] holds, and answers in the three shapes
+  /// [ProverVerdict] names.
+  ///
+  /// **A refutation costs no run at all.** The filter settles it from
+  /// the sampled configurations, so a false claim is answered before the
+  /// engine starts — which matters most on exactly the documents where
+  /// starting it is expensive.
+  ///
+  /// Otherwise the run is *goal-directed in its stopping, not in its
+  /// search*: DD chains forward either way, but with a goal there is no
+  /// need for quiescence, only for one fact. A held run at this revision
+  /// is continued rather than restarted, and a run already complete is
+  /// simply consulted.
+  Future<void> ask(ProverQuestion question, {int? applicationBudget}) async {
+    final generation = ++_generation;
+    final snapshot = ref.read(constructionProvider);
+    final objects = List.of(snapshot.construction.objects);
+    final absolute = snapshot.construction.kernel.absolute;
+    if (!absolute.isEuclidean) {
+      state = const ProverRefused(
+        'the predicate vocabulary is Euclidean; a document under a proper '
+        'absolute needs the CK re-founding',
+      );
+      return;
+    }
+
+    final held = state;
+    final reusable =
+        _engine != null &&
+        held is ProverReady &&
+        held.revision == snapshot.revision;
+    // Synchronous, and deliberately before the first yield: `probe`
+    // perturbs the live construction's roots and restores them
+    // bit-exactly, so nothing may interleave with it.
+    final engine = reusable
+        ? _engine!
+        : () {
+            final filter = DiagramFilter.probe(objects, absolute: absolute);
+            final database = FactDatabase();
+            seedHypotheses(
+              database,
+              hypotheses(objects, absolute: absolute),
+              filter,
+            );
+            return ProverEngine(database: database, filter: filter);
+          }();
+
+    if (!engine.filter.holds(question.canonical)) {
+      _engine = engine;
+      state = ProverAnswered(
+        answer: ProverAnswer(
+          question: question,
+          verdict: ProverVerdict.refuted,
+        ),
+        revision: snapshot.revision,
+        run: reusable ? held : null,
+      );
+      return;
+    }
+
+    state = ProverRunning(snapshot.revision);
+    await engine.runChunked(
+      chunkBudget: proverChunkBudget,
+      maxApplications: applicationBudget ?? proverApplicationBudget,
+      stopWhen: () => _derived(engine, question) != null,
+    );
+    if (generation != _generation) return;
+    _engine = engine;
+    state = ProverAnswered(
+      answer: _answerFrom(engine, question),
+      revision: snapshot.revision,
+      run: _readyFrom(engine, snapshot.revision),
+    );
+  }
+
+  /// Spends another budget on an [ProverVerdict.undecided] question.
+  /// A no-op on any other state — the other three verdicts are settled.
+  Future<void> askMore({int? applicationBudget}) async {
+    final held = state;
+    final engine = _engine;
+    if (held is! ProverAnswered ||
+        held.answer.verdict != ProverVerdict.undecided ||
+        engine == null ||
+        engine.isComplete) {
+      return;
+    }
+    final question = held.answer.question;
+    final generation = ++_generation;
+    state = ProverRunning(held.revision);
+    await engine.runChunked(
+      chunkBudget: proverChunkBudget,
+      maxApplications: applicationBudget ?? proverApplicationBudget,
+      stopWhen: () => _derived(engine, question) != null,
+    );
+    if (generation != _generation) return;
+    state = ProverAnswered(
+      answer: _answerFrom(engine, question),
+      revision: held.revision,
+      run: _readyFrom(engine, held.revision),
+    );
+  }
+
+  /// The spelling of [question] the run derived, or null for none.
+  ///
+  /// Any spelling will do: they are one statement, and which points name
+  /// a line is the prover's business (see [ProverQuestion]).
+  static Fact? _derived(ProverEngine engine, ProverQuestion question) {
+    for (final spelling in question.spellings) {
+      final fact = Fact.of(spelling);
+      if (engine.database.contains(fact)) return fact;
+    }
+    return null;
+  }
+
+  ProverAnswer _answerFrom(ProverEngine engine, ProverQuestion question) {
+    final fact = _derived(engine, question);
+    if (fact != null) {
+      return ProverAnswer(
+        question: question,
+        verdict: ProverVerdict.proved,
+        proof: Proof.of(fact, engine.database),
+      );
+    }
+    return ProverAnswer(
+      question: question,
+      // A finished run that did not reach it has shown something: the
+      // rules cannot get there. An unfinished one has shown nothing at
+      // all about reachability, and saying "unprovable" there would be a
+      // lie about the prover rather than a fact about the figure.
+      verdict: engine.isComplete
+          ? ProverVerdict.unproved
+          : ProverVerdict.undecided,
+    );
+  }
+
   ProverReady _readyFrom(ProverEngine engine, int revision) => ProverReady(
     revision: revision,
     database: engine.database,
     applications: engine.applications,
     reachedFixpoint: engine.isComplete,
   );
+
+  /// Publishes [run] as the current state — how a consumer goes back
+  /// from an answer to the list of everything the run found, without
+  /// re-running anything.
+  ///
+  /// Ignored unless [run] is the run this notifier is actually holding:
+  /// publishing someone else's database would leave [askMore] and
+  /// [proveMore] pointed at a different engine from the one on screen.
+  void showRun(ProverReady run) {
+    if (_engine == null || !identical(_engine!.database, run.database)) return;
+    state = run;
+  }
 
   /// Drops any held run, back to [ProverIdle]. File > New / Open, and
   /// what a consumer calls when a stale answer should stop being shown
