@@ -14,6 +14,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 143 — M-P2b: the DD rule core and the resumable fixpoint
+
+The second third of M-P2 (PLAN §M-P2): the rules and the engine that runs them, built on Phase 142's fact database and Phase 141's filter. Hypotheses are read off the construction, the ~20-rule DD core comes from the open DDAR/Newclid sources (rules, not code), every candidate deduction is screened through `DiagramFilter` before insertion, and the whole thing runs to quiescence in Phase 140's resumable shape with a rule-application budget. This is also the phase where the `MessageChannel` yield stops being a measurement and becomes an API, because an engine that actually chunks is its first consumer.
+
+- [ ] **Hypothesis extraction** (`lib/domain/prover/hypotheses.dart` or similar): read the predicate vocabulary off a `Construction` — a `Midpoint` yields `midp` (and `cong`), a `PerpendicularLine` yields `perp`, a `ParallelLine` yields `para`, a `ThreePointCircle` yields `cyclic`, glued points yield `coll`, … — each inserted as a `Derivation.hypothesis`. The mapping is per kind, stated rather than assumed, and covers only what a kind *guarantees* by construction (the `incidence.dart` discipline: structural truth, not numeric accident)
+- [ ] **The rule core**: the ~20 DD rules from DDAR/Newclid as data the engine matches, not code per rule — each names its premises (predicate kinds with a variable binding pattern) and its conclusion. Matching works against the database's facts; the index by kind that Phase 142 deferred gets built here, by its named consumer
+- [ ] **Every candidate deduction is screened through `DiagramFilter` before insertion** — never derive a fact that is not numerically true in the diagram. A rule application that fails the filter is dropped, not stored
+- [ ] **The engine is resumable per Phase 140**: an explicit work queue, `step(budget)` counted in rule applications, deterministic across targets — same input, same facts, same order. Native wraps it in `Isolate.run` when the job is long enough to pay the round trip; web chunks on the main thread
+- [ ] **The `MessageChannel` yield gets its real home**: `dart:js_interop` implementation behind a conditional import beside the native path — `dart:isolate` compiles for web and throws at runtime, so the browser gate is what proves the split, not the analyzer
+- [ ] Tests mirroring under `test/domain/prover/`: per-kind hypothesis extraction; each rule fired on a minimal true rig and refused on a broken one; quiescence (a run that terminates and a re-run that adds nothing); budget resumability (chunked run bit-identical to straight-through); filter screening (a numerically false candidate never enters); provenance (a derived fact's premises trace to hypotheses); browser-gate coverage for the yield
+- [ ] Gates: suite green, analyze clean, browser gate green, wasm build compiles
+
 ## Phase 142 — M-P2a: canonical forms and the fact database
 
 M-P2 (PLAN §M-P2) split into three, because keying, rules and proof surfacing are three sessions in one box and the first is what the other two are built on: a rule engine written against identity-compared predicates would have to be rewritten. **142 is the keying and the store**; M-P2b is the ~20-rule DD core and the resumable fixpoint; M-P2c is the proof DAG surfaced as a readable derivation. PLAN calls eqangle/eqratio canonicalization "the fiddly part" and it is the whole of this phase's difficulty.
