@@ -1,0 +1,20 @@
+test/domain/layer_rule_test.dart
+  s_d7c9fcdc96e705::t_a69b2c5a46195d 19-28
+  s_d7c9fcdc96e705::t_bd2dd292d7f432 48-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "dfea2a7d0f6bbfe8eece73526cb6c2e60a8dc1d8",
+  "prompts": {},
+  "sessions": {
+    "s_d7c9fcdc96e705": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eec55026-ff95-4965-ba93-55f9e8f5c09a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
