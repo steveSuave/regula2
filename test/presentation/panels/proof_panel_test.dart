@@ -1,15 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/proof_highlight_provider.dart';
 import 'package:regula/application/providers/prover_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
@@ -464,6 +470,147 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(container.read(proofHighlightProvider), isEmpty);
+    });
+
+    testWidgets('a selection offers what it can phrase, and asking works', (
+      tester,
+    ) async {
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      expect(find.text('Ask about the selection'), findsNothing);
+
+      // Four points: cyclic plus the three pairings of perp/para/cong.
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(rig.goal.points.map((point) => point.id));
+      await tester.pump();
+      expect(find.text('Ask about the selection'), findsOneWidget);
+      final names = rig.goal.points.map(describePoint).toList();
+      final chip = '${names[0]}${names[1]} ∥ ${names[2]}${names[3]}';
+      expect(find.text(chip), findsOneWidget);
+
+      await tester.tap(find.text(chip));
+      await tester.pumpAndSettle();
+
+      // Proved, and the proof reads as the step list already does.
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(find.textContaining('proved'), findsOneWidget);
+      // The numbered steps, read from the top (the list virtualizes).
+      expect(find.text('[1]'), findsOneWidget);
+      // And it still points at the figure.
+      await tester.tap(
+        find.text(describeFact(state.answer.proof!.steps.first.fact)).first,
+      );
+      await tester.pump();
+      expect(container.read(proofHighlightProvider), isNotEmpty);
+    });
+
+    testWidgets('a refuted question says false, not unprovable', (
+      tester,
+    ) async {
+      final rig = seedVarignon();
+      final construction = container.read(constructionProvider).construction;
+      await pumpEditor(tester);
+      await openPanel(tester);
+      // The four *free* points: AB ⟂ CD is false of this quadrilateral.
+      final free = construction.objects
+          .whereType<FreePoint>()
+          .map((point) => point.id)
+          .toList();
+      expect(free, hasLength(4));
+      container.read(selectionProvider.notifier).selectMany(free);
+      await tester.pump();
+
+      final names = [
+        for (final id in free)
+          describePoint(construction.byId(id)! as GeoPoint),
+      ];
+      await tester.tap(
+        find.text('${names[0]}${names[1]} ⟂ ${names[2]}${names[3]}'),
+      );
+      await tester.pumpAndSettle();
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.refuted);
+      expect(
+        find.textContaining('is not true of this construction'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('cannot prove'),
+        findsNothing,
+        reason: 'false and unprovable must never read the same',
+      );
+      expect(rig.goal, isNotNull);
+    });
+
+    testWidgets('the user document answers "true, but not provable"', (
+      tester,
+    ) async {
+      // perp-true-unproved.rgl end to end: select the two segments the
+      // question is about and ask. The honest answer is the middle one.
+      final construction = decodeDocument(
+        jsonDecode(
+              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+      await pumpEditor(tester);
+      await openPanel(tester);
+
+      // Segments DC and FD — the two the theorem relates.
+      final segments = construction.objects.whereType<Segment>().toList();
+      GeoPoint named(String name) => construction.objects
+          .whereType<GeoPoint>()
+          .firstWhere((point) => point.attributes.name == name);
+      final d = named('D');
+      final c = named('C');
+      final f = named('F');
+      bool joins(Segment s, GeoPoint x, GeoPoint y) =>
+          (s.point1.id == x.id && s.point2.id == y.id) ||
+          (s.point1.id == y.id && s.point2.id == x.id);
+      final dc = segments.firstWhere((s) => joins(s, d, c));
+      final fd = segments.firstWhere((s) => joins(s, f, d));
+      container.read(selectionProvider.notifier).selectMany([dc.id, fd.id]);
+      await tester.pump();
+
+      await tester.tap(find.textContaining('⟂').first);
+      await tester.pumpAndSettle();
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.unproved);
+      expect(find.textContaining('cannot prove it'), findsOneWidget);
+      expect(
+        find.textContaining('limit of the rule set'),
+        findsOneWidget,
+        reason: 'the reader must not read this as their theorem being wrong',
+      );
+    });
+
+    testWidgets('an answer can go back to everything the run found', (
+      tester,
+    ) async {
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(rig.goal.points.map((point) => point.id));
+      await tester.pump();
+      final names = rig.goal.points.map(describePoint).toList();
+      await tester.tap(
+        find.text('${names[0]}${names[1]} ∥ ${names[2]}${names[3]}'),
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(proverProvider), isA<ProverAnswered>());
+
+      await tester.tap(find.byTooltip('Back to the list'));
+      await tester.pump();
+
+      expect(container.read(proverProvider), isA<ProverReady>());
     });
 
     testWidgets('a non-Euclidean document says so instead of a list', (

@@ -504,6 +504,18 @@ class ProverNotifier extends _$ProverNotifier {
     reachedFixpoint: engine.isComplete,
   );
 
+  /// Publishes [run] as the current state — how a consumer goes back
+  /// from an answer to the list of everything the run found, without
+  /// re-running anything.
+  ///
+  /// Ignored unless [run] is the run this notifier is actually holding:
+  /// publishing someone else's database would leave [askMore] and
+  /// [proveMore] pointed at a different engine from the one on screen.
+  void showRun(ProverReady run) {
+    if (_engine == null || !identical(_engine!.database, run.database)) return;
+    state = run;
+  }
+
   /// Drops any held run, back to [ProverIdle]. File > New / Open, and
   /// what a consumer calls when a stale answer should stop being shown
   /// at all rather than being shown as stale.
