@@ -167,15 +167,26 @@ List<Predicate> hypotheses(
           i.vertex1, i, i.vertex1, i.vertex3, // ∠(AI, AC)
         ]);
         emit(PredicateKind.eqangle, [
-          i.vertex2, i.vertex1, i.vertex2, i,
-          i.vertex2, i, i.vertex2, i.vertex3,
+          i.vertex2,
+          i.vertex1,
+          i.vertex2,
+          i,
+          i.vertex2,
+          i,
+          i.vertex2,
+          i.vertex3,
         ]);
         emit(PredicateKind.eqangle, [
-          i.vertex3, i.vertex1, i.vertex3, i,
-          i.vertex3, i, i.vertex3, i.vertex2,
+          i.vertex3,
+          i.vertex1,
+          i.vertex3,
+          i,
+          i.vertex3,
+          i,
+          i.vertex3,
+          i.vertex2,
         ]);
-      case final CircleCenter o
-          when _isCircleByConstruction(o.circle):
+      case final CircleCenter o when _isCircleByConstruction(o.circle):
         for (final pair in pairsOn(o.circle)) {
           emit(PredicateKind.cong, [o, pair[0], o, pair[1]]);
         }
@@ -202,8 +213,14 @@ List<Predicate> hypotheses(
         for (final point in onCurve(b)) {
           if (identical(point, b.vertex)) continue;
           emit(PredicateKind.eqangle, [
-            b.vertex, b.arm1, b.vertex, point,
-            b.vertex, point, b.vertex, b.arm2,
+            b.vertex,
+            b.arm1,
+            b.vertex,
+            point,
+            b.vertex,
+            point,
+            b.vertex,
+            b.arm2,
           ]);
         }
       case final TwoLineBisectorLine b:
@@ -214,8 +231,10 @@ List<Predicate> hypotheses(
           for (final pair1 in pairsOn(b.line1)) {
             for (final pair2 in pairsOn(b.line2)) {
               emit(PredicateKind.eqangle, [
-                ...pair1, ...ownPair,
-                ...ownPair, ...pair2,
+                ...pair1,
+                ...ownPair,
+                ...ownPair,
+                ...pair2,
               ]);
             }
           }
@@ -231,7 +250,10 @@ List<Predicate> hypotheses(
       case final CompassCircle c:
         for (final point in onCurve(c)) {
           emit(PredicateKind.cong, [
-            c.center, point, c.radiusPoint1, c.radiusPoint2,
+            c.center,
+            point,
+            c.radiusPoint1,
+            c.radiusPoint2,
           ]);
         }
       default:
@@ -267,8 +289,7 @@ List<List<GeoPoint>> _choose(List<GeoPoint> items, int k) {
   while (true) {
     out.add([for (final i in indices) items[i]]);
     var position = k - 1;
-    while (position >= 0 &&
-        indices[position] == items.length - k + position) {
+    while (position >= 0 && indices[position] == items.length - k + position) {
       position--;
     }
     if (position < 0) return out;

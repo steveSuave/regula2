@@ -56,7 +56,8 @@ void main() {
       expect(
         filter.holds(predicate),
         isTrue,
-        reason: '$predicate is emitted as a hypothesis but is not a '
+        reason:
+            '$predicate is emitted as a hypothesis but is not a '
             'theorem of the construction',
       );
     }
@@ -65,9 +66,8 @@ void main() {
 
   /// Spelling-blind membership: the emission and the expectation may
   /// name the same statement in different argument orders.
-  Matcher hasFact(Predicate expected) => contains(
-    predicate((Predicate p) => Fact.of(p) == Fact.of(expected)),
-  );
+  Matcher hasFact(Predicate expected) =>
+      contains(predicate((Predicate p) => Fact.of(p) == Fact.of(expected)));
 
   group('incidence-shaped hypotheses', () {
     test('three points a line kind puts on one line are collinear', () {
@@ -169,7 +169,12 @@ void main() {
       // The third point must be *structurally* on the join, or the
       // conjugate goes undefined the moment a probe perturbs the rig.
       final c = PointOnObject(id: 'c', curve: line, parameter: 1.0);
-      final d = HarmonicConjugatePoint(id: 'd', point1: a, point2: b, point3: c);
+      final d = HarmonicConjugatePoint(
+        id: 'd',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
 
       final emitted = extractAndPin([a, b, line, c, d]);
 
@@ -199,7 +204,17 @@ void main() {
       );
 
       final emitted = extractAndPin([
-        a, b, mirror, s, r, o, central, rotated, from, to, translated,
+        a,
+        b,
+        mirror,
+        s,
+        r,
+        o,
+        central,
+        rotated,
+        from,
+        to,
+        translated,
       ]);
 
       // Mirror reflection: every construction point on the mirror is
@@ -209,10 +224,7 @@ void main() {
       expect(emitted, hasFact(Predicate(PredicateKind.cong, [b, s, b, r])));
       expect(emitted, hasFact(Predicate(PredicateKind.perp, [s, r, a, b])));
       // Central reflection: the center is the midpoint.
-      expect(
-        emitted,
-        hasFact(Predicate(PredicateKind.midp, [o, s, central])),
-      );
+      expect(emitted, hasFact(Predicate(PredicateKind.midp, [o, s, central])));
       // Rotation preserves the distance to the center.
       expect(
         emitted,
@@ -268,12 +280,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(1, 3));
-      final circle = ThreePointCircle(
-        id: 'k',
-        point1: a,
-        point2: b,
-        point3: c,
-      );
+      final circle = ThreePointCircle(id: 'k', point1: a, point2: b, point3: c);
       final o = CircleCenter(id: 'o', circle: circle);
 
       final emitted = extractAndPin([a, b, c, circle, o]);
@@ -294,10 +301,7 @@ void main() {
 
       final emitted = extractAndPin([a, b, ab, c, l, glued]);
 
-      expect(
-        emitted,
-        hasFact(Predicate(PredicateKind.para, [c, glued, a, b])),
-      );
+      expect(emitted, hasFact(Predicate(PredicateKind.para, [c, glued, a, b])));
     });
 
     test('a ParallelLine with one known point emits nothing about it', () {
@@ -326,37 +330,37 @@ void main() {
 
       final emitted = extractAndPin([a, b, ab, c, l, glued]);
 
-      expect(
-        emitted,
-        hasFact(Predicate(PredicateKind.perp, [c, glued, a, b])),
-      );
+      expect(emitted, hasFact(Predicate(PredicateKind.perp, [c, glued, a, b])));
     });
 
-    test('PerpendicularBisectorLine emits cong per point and perp per pair', () {
-      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
-      final b = FreePoint(id: 'b', position: const Vec2(6, 2));
-      final bisector = PerpendicularBisectorLine(
-        id: 'pb',
-        point1: a,
-        point2: b,
-      );
-      // The midpoint of exactly (a, b) is on the bisector by the Phase
-      // 44b derived incidence — it is the second witness point.
-      final m = Midpoint(id: 'm', point1: a, point2: b);
-      final glued = PointOnObject(id: 'p', curve: bisector, parameter: 3.0);
+    test(
+      'PerpendicularBisectorLine emits cong per point and perp per pair',
+      () {
+        final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+        final b = FreePoint(id: 'b', position: const Vec2(6, 2));
+        final bisector = PerpendicularBisectorLine(
+          id: 'pb',
+          point1: a,
+          point2: b,
+        );
+        // The midpoint of exactly (a, b) is on the bisector by the Phase
+        // 44b derived incidence — it is the second witness point.
+        final m = Midpoint(id: 'm', point1: a, point2: b);
+        final glued = PointOnObject(id: 'p', curve: bisector, parameter: 3.0);
 
-      final emitted = extractAndPin([a, b, bisector, m, glued]);
+        final emitted = extractAndPin([a, b, bisector, m, glued]);
 
-      expect(
-        emitted,
-        hasFact(Predicate(PredicateKind.cong, [glued, a, glued, b])),
-      );
-      expect(emitted, hasFact(Predicate(PredicateKind.cong, [m, a, m, b])));
-      expect(
-        emitted,
-        hasFact(Predicate(PredicateKind.perp, [m, glued, a, b])),
-      );
-    });
+        expect(
+          emitted,
+          hasFact(Predicate(PredicateKind.cong, [glued, a, glued, b])),
+        );
+        expect(emitted, hasFact(Predicate(PredicateKind.cong, [m, a, m, b])));
+        expect(
+          emitted,
+          hasFact(Predicate(PredicateKind.perp, [m, glued, a, b])),
+        );
+      },
+    );
 
     test('AngleBisectorLine emits eqangle for each point on it', () {
       final arm1 = FreePoint(id: 'p', position: const Vec2(5, 0));
@@ -376,7 +380,14 @@ void main() {
         emitted,
         hasFact(
           Predicate(PredicateKind.eqangle, [
-            v, arm1, v, glued, v, glued, v, arm2,
+            v,
+            arm1,
+            v,
+            glued,
+            v,
+            glued,
+            v,
+            arm2,
           ]),
         ),
       );
@@ -404,11 +415,10 @@ void main() {
         expect(
           emitted,
           hasFact(
-            Predicate(PredicateKind.eqangle, [
-              a, b, a, glued, a, glued, a, c,
-            ]),
+            Predicate(PredicateKind.eqangle, [a, b, a, glued, a, glued, a, c]),
           ),
-          reason: 'branch $branch — mod π the external bisector satisfies '
+          reason:
+              'branch $branch — mod π the external bisector satisfies '
               'the same eqangle',
         );
       }
