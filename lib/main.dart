@@ -1081,24 +1081,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   child: Text('regula'),
                 ),
                 const Spacer(),
-                // Style & properties is a panel the user opens, not one
-                // the selection opens for them (user request): selecting
-                // something is not asking to restyle it, and a panel
-                // that appeared on every tap moved the canvas under the
-                // pointer mid-gesture. The button is always here, for
-                // the same reason the object tree's is — a toolbar whose
-                // buttons come and go is a toolbar you cannot aim at —
-                // and the panel says what to do when nothing is picked.
-                IconButton(
-                  tooltip: _showInspector
-                      ? 'Hide style & properties'
-                      : 'Style & properties',
-                  isSelected: !compactPanels && _showInspector,
-                  icon: const Icon(Icons.palette_outlined),
-                  onPressed: () => compactPanels
-                      ? _scaffoldKey.currentState?.openEndDrawer()
-                      : setState(() => _showInspector = !_showInspector),
-                ),
                 PopupMenuButton<Future<void> Function()>(
                   tooltip: 'File: new, open, save',
                   popUpAnimationStyle: AnimationStyle.noAnimation,
@@ -1173,6 +1155,28 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       .toggle(Theme.of(context).brightness),
                 ),
                 _hideDeleteGroup(active: hideDeleteActive),
+                // Between delete and undo (user request), which puts it
+                // with the buttons that act on the selection rather than
+                // with the view chrome.
+                //
+                // Style & properties is a panel the user opens, not one
+                // the selection opens for them: selecting something is
+                // not asking to restyle it, and a panel that appeared on
+                // every tap moved the canvas under the pointer
+                // mid-gesture. The button is always here, for the same
+                // reason the object tree's is — a toolbar whose buttons
+                // come and go is a toolbar you cannot aim at — and the
+                // panel says what to do when nothing is picked.
+                IconButton(
+                  tooltip: _showInspector
+                      ? 'Hide style & properties'
+                      : 'Style & properties',
+                  isSelected: !compactPanels && _showInspector,
+                  icon: const Icon(Icons.palette_outlined),
+                  onPressed: () => compactPanels
+                      ? _scaffoldKey.currentState?.openEndDrawer()
+                      : setState(() => _showInspector = !_showInspector),
+                ),
                 IconButton(
                   tooltip: 'Undo',
                   icon: const Icon(Icons.undo),

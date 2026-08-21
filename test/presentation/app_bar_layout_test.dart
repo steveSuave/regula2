@@ -168,6 +168,10 @@ void main() {
       // Selection made, and still nothing opened itself.
       expect(find.byType(Drawer), findsNothing);
 
+      // The bar scrolls horizontally at these widths and the style
+      // button now sits out by undo, so reach it the way a user does.
+      await tester.ensureVisible(find.byIcon(Icons.palette_outlined));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.palette_outlined));
       await tester.pumpAndSettle();
       expect(
@@ -233,6 +237,10 @@ void main() {
         reason: 'the selection no longer opens it',
       );
 
+      // The bar scrolls horizontally at these widths and the style
+      // button now sits out by undo, so reach it the way a user does.
+      await tester.ensureVisible(find.byIcon(Icons.palette_outlined));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.palette_outlined));
       await tester.pump();
 
