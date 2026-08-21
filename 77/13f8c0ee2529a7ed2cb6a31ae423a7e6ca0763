@@ -1,0 +1,48 @@
+lib/presentation/panels/proof_panel.dart
+  s_9b22af0b84dec3::t_1c9c7b3733e585 70-92,256-257,269-274
+  s_9b22af0b84dec3::t_39aa1ea5e2bf13 275-276
+test/fixtures/perp-true-unproved.rgl
+  s_9b22af0b84dec3::t_eea20d581082da 1-370
+lib/domain/prover/rule_engine.dart
+  s_9b22af0b84dec3::t_db2875aacbb099 143-152,163,176,184
+test/domain/prover/rule_engine_test.dart
+  s_9b22af0b84dec3::t_b079630d801fca 615-670
+lib/domain/prover/questions.dart
+  s_9b22af0b84dec3::t_c681f977b76ab6 117
+  s_9b22af0b84dec3::t_e207298282d6a6 1-116,118-127,129-139,147-155,163-164,171,178-179,187,189-191,204-234,238-241,246
+  s_9b22af0b84dec3::t_b6e1e9f7112d39 128,156-158,160-162,192-203
+  s_9b22af0b84dec3::t_be01a2f51f60d1 140-146,159,165-170,172-177,180-186,188,235-237,242-245
+test/domain/prover/questions_test.dart
+  s_9b22af0b84dec3::t_bbaa2e702014c2 91-96,226-229,237-240
+  s_9b22af0b84dec3::t_c09d1e9af6d949 1-6,8-90,97-168,206-225,230-236,241-280
+  s_9b22af0b84dec3::t_46533efd0fe02c 7,169-177,179-205
+  s_9b22af0b84dec3::t_3e0c6eba73240a 178
+docs/TODO.md
+  s_9b22af0b84dec3::t_f0268cf4607894 31-32
+  s_9b22af0b84dec3::t_ab616252add6cc 17-30,33-38
+lib/application/providers/prover_provider.dart
+  s_9b22af0b84dec3::t_27490bb565b2ce 97-98,224-258,365-419,421-498
+  s_9b22af0b84dec3::t_ef725b00c29f1d 420
+  s_9b22af0b84dec3::t_c29ad3354d2a9a 8,48-96,99-102
+  s_9b22af0b84dec3::t_80d6dc57a02ca5 103,499
+test/application/providers/prover_provider_test.dart
+  s_9b22af0b84dec3::t_1a56d0edc1b760 1-3,6,21,250-362,374-375,383,387-390,399-453
+  s_9b22af0b84dec3::t_7d7aaea9a9620e 363-373,376-382,384-386,391-398
+  s_9b22af0b84dec3::t_1ef84baed57223 454-455
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "7713f8c0ee2529a7ed2cb6a31ae423a7e6ca0763",
+  "prompts": {},
+  "sessions": {
+    "s_9b22af0b84dec3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2f81ecbb-3d6b-4459-aa79-8ef85981ebd0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
