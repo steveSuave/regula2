@@ -92,6 +92,24 @@ class ProverEngine {
     _byKind[fact.kind]!.add(fact);
   }
 
+  /// Takes into the pivot queue any fact added to [database] by someone
+  /// else — a peer engine publishing into the same store (PLAN §M-P3's
+  /// facade).
+  ///
+  /// Sound because [_facts] is exactly [database]'s list: the engine is
+  /// seeded from it and appends precisely when [database.add] answers
+  /// true, so what it has not seen is the tail. A fact that arrives this
+  /// way pivots like any other, which is what makes the exchange run
+  /// both ways — an angle conclusion is a premise for the next rule.
+  int absorbExternal() {
+    var taken = 0;
+    for (final fact in database.facts.skip(_facts.length).toList()) {
+      _append(fact);
+      taken++;
+    }
+    return taken;
+  }
+
   /// Performs up to [budget] rule applications, answering how many were
   /// actually performed — fewer exactly when quiescence arrived first.
   /// Resumable at any granularity: `step(1)` many times and one
