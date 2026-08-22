@@ -65,14 +65,26 @@ The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a sec
 - [x] Pure Dart, no geometry — the predicate → equation mapping is 152b. `para`/`perp`/Chasles/`para_transitive`/`perp_perp_para`/`para_perp_perp`/`eqangle_transitive` all fall out as row arithmetic and are pinned as such
 - [x] Gates: analyze clean, suite **3049** green (3008 + 41)
 
-### 152b — the vocabulary mapped onto it (open)
+### 152b — the vocabulary mapped onto it (done)
 
-- [ ] `para` / `perp` / `eqangle` → rows over carrier-indexed θ; `cong` / `eqratio` → rows over log-length variables. **A variable is a carrier, not a point pair**, which is what Phase 151a exists for
-- [ ] Facts out of the closure and back into `FactDatabase`, screened by the same filter DD uses
+- [x] **`angle_translation.dart`**: `para` / `perp` / `eqangle` / `coll` in as rows, `para` / `perp` out as facts with certificates. `cong` / `eqratio` are the length system's and every other kind is DD's, each answering false rather than being silently skipped
+- [x] **A variable is a point *pair*, not a carrier — the plan had this backwards.** Indexing θ by carrier is wrong twice: two pairs on one carrier do have equal θ, but equal θ is *parallel*, not *identical*, so the implication runs one way only; and the carrier moves when carriers merge, which is Phase 151c's mutable-key problem again. So the variable is a stable pair, and `coll` contributes the θ-equalities its own three pairs license — with exact provenance, since one `coll` states each
+- [x] **Incidence does not reduce to the algebra, and the boundary is now pinned.** Given `coll(a,b,c)` and `coll(a,b,d)` the closure holds `θ_ab = θ_ac = θ_bc = θ_ad = θ_bd` and says *nothing* about `θ_cd` — not from weakness but because the pair `cd` names no variable. That `c` and `d` are each on line `ab` is an incidence statement and directions cannot express it; `CarrierIndex` is what knows it. The bridge is applied at **query** time in 152c, not eagerly — eagerly means one variable and one published fact per pair on every line, which is Phase 151b's spelling explosion at a new address
+- [x] **`CarrierIndex`'s job here is sharper than indexing**: it tells a parallel from an identity, so `para` is never published about a line and itself. Pairs sharing a point are skipped for the same reason
+- [x] **`eqangle` is deliberately not enumerated on output** — pairs of variables are quadratic and quadruples quartic, so publishing every entailed `eqangle` would be worse than the blowup AR exists to remove. DD *asks* instead, which is 152c
+- [x] **Measured, and the headline is soundness**: across the five fixtures AR published **51 `para`/`perp` facts and not one failed the numeric screen**. Rules falling out as arithmetic with no rule: `perp_perp_para`, `para_perp_perp`, `para_transitive`, `eqangle_transitive`, Chasles — and **`perp_coll`**, the rule Phase 150 added and Phase 151 could not delete
+- [x] **And the other half: AR alone is nearly useless, so the exchange is where the value is.** From hypotheses only it misses 20 of DD's 21 `para`/`perp` on `perp-true-unproved.rgl` and 26 of 29 on `provoleas2.json` — because those come from `midline_para`, `perp_bisector` and the inscribed pair, whose premises AR does not read. Fed DD's *fixpoint*, it yields **+21 beyond DD's 21 on `perp-true-unproved` in 2 ms**, and **+6 on `provoleas2` in 3 ms** — the document DD cannot finish in 30 000 applications and 778 ms. `apatitos-topos` and `no-locus` gain nothing
+- [x] **AR's output is not a superset of DD's, by design**: fed the fixpoint it still declines 10 of `perp-true-unproved`'s 21, all of them a line against itself or a pair sharing a point. Recorded so the difference is not read as a miss
+- [x] Tests (18) + Gates: analyze clean, suite **3067** green (3049 + 18)
 
 ### 152c — one `Prover` facade (open)
 
-- [ ] AR and DD as peers sharing the fact database and the numeric filter, exchanging facts at the boundary
+**152b's measurement makes this the phase, not the polish.** AR alone reaches almost nothing; fed DD's fixpoint it doubles the angle facts on `perp-true-unproved` in 2 ms. The value is entirely in the exchange, and it runs both ways — AR's new `para`/`perp` are DD pivots, which derive more, which AR reads again.
+
+- [ ] AR and DD as peers sharing the fact database and the numeric filter, exchanging facts at the boundary — interleaved to a joint fixpoint, not one pass each
+- [ ] **DD asks AR rather than AR publishing `eqangle`**: an `eqangle` premise resolves against the closure instead of against a stored fact. Quadruples of variables are quartic, so enumeration is not an option
+- [ ] **The incidence bridge, at query time**: when a query names a pair no fact mentions, `CarrierIndex` says which carrier it is on and the θ-equality is added for that pair alone. Eagerly is the spelling explosion; on demand is one variable
+- [ ] **`Proof` has to render an AR step.** `sourcesOf` gives the facts to cite; what a *reason* reads as is open — "by angle arithmetic from [3], [7]" is honest but thinner than a rule name, and PLAN's objection to Wu was unreadable proofs. `Proof.verify()`'s obligation is `recombine`, which is settled
 - [ ] **What the DD fact set is afterwards**: `coll`, `cyclic`, `cong`, `midp`, `eqratio`, `simtri`, `contri` — every one of them `lineSlots`-empty. `coll_transitive`, `perp_coll` and `questions.dart`'s all-spellings search are re-examined *here*, not before
 - [ ] Roughly thirty of JGEX's seventy-two rules fall out of this plus Phase 151 for free
 - [ ] **Re-measure `provoleas2.json`**, which is the whole cost argument: `eqangle`/`eqratio` carry 128-form orbits against 8 for `perp` and 6 for `coll`, and they are why it never reaches quiescence. Phase 151c measured 24 of its 75 facts as `eqangle` and 53 as line-shaped — all of them AR's. Moving angles out of the fact set removes the cost centre instead of feeding it, and the bar is quiescence
