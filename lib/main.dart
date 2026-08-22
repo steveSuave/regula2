@@ -1030,6 +1030,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// smallest; the row's content is identical at every height.
   static const double _phoneBarHeight = 48;
 
+  /// The proof sheet's three sizes, as fractions of the screen.
+  ///
+  /// Initial keeps the docked-panel intent — the figure stays visible
+  /// and the proof is read alongside it. The minimum is a tuck rather
+  /// than a dismissal: enough sheet left to grab and to read the header,
+  /// so a reader can glance at the figure without losing the proof. The
+  /// maximum stops short of the full screen so the scrim is still
+  /// visible and tappable, which is how the sheet is closed.
+  static const double _proofSheetInitial = 0.5;
+  static const double _proofSheetMin = 0.25;
+  static const double _proofSheetMax = 0.95;
+
   /// The app bar's one row — tree toggle, title, then the full action
   /// cluster through undo/redo. The same chrome shows at every window
   /// width (Phase 47, user feedback on the Phase 42 compact variant):
@@ -1446,13 +1458,39 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// The proof panel where there is no room to dock it. A sheet rather
   /// than a third drawer: the drawers are the object tree and the
   /// inspector, and the panel is read alongside the figure, not instead
-  /// of it — so it takes half the height and leaves the canvas visible.
+  /// of it — so it opens at half the height and leaves the canvas
+  /// visible.
+  ///
+  /// Half is the *initial* size and not the ceiling (Phase 154). The
+  /// original bare [FractionallySizedBox] was right about the first
+  /// impression and wrong about the maximum: a proof of any length was
+  /// unreadable in half a phone, and there was no gesture that said
+  /// "now I want the proof, not the figure".
+  ///
+  /// The two gestures divide cleanly, which is why the drag handle
+  /// stays: dragging the *content* resizes the sheet between
+  /// [_proofSheetMin] and [_proofSheetMax], and the handle or the scrim
+  /// dismisses it. `shouldCloseOnMinExtent: false` is what keeps those
+  /// separate — dragging the list all the way down tucks the sheet away
+  /// rather than closing a proof the reader was in the middle of.
   void _openProofSheet() {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (context) =>
-          FractionallySizedBox(heightFactor: 0.5, child: const ProofPanel()),
+      // Both required for a sheet taller than half: without it the route
+      // constrains itself to half the screen and the maximum is
+      // unreachable however the child is built.
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: _proofSheetInitial,
+        minChildSize: _proofSheetMin,
+        maxChildSize: _proofSheetMax,
+        shouldCloseOnMinExtent: false,
+        builder: (context, controller) =>
+            ProofPanel(scrollController: controller),
+      ),
     );
   }
 

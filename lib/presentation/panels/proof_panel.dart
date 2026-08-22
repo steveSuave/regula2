@@ -139,7 +139,20 @@ bool isStale(ProverState state, int revision) =>
 /// Side panel showing what the prover derived, and the proof of whichever
 /// statement is picked.
 class ProofPanel extends ConsumerStatefulWidget {
-  const ProofPanel({super.key});
+  const ProofPanel({super.key, this.scrollController});
+
+  /// The controller of whatever scrollable is currently the panel's body,
+  /// when the call site owns one.
+  ///
+  /// A [DraggableScrollableSheet] resizes itself from the scroll gestures
+  /// of the scrollable it hands its controller to; a body that ignores the
+  /// controller leaves the sheet stuck at its initial size, which is the
+  /// defect Phase 154 fixes. The docked call site passes none and every
+  /// list makes its own, exactly as before.
+  ///
+  /// The panel shows one scrollable at a time — the body is a switch over
+  /// [ProverState] — so a single controller is never attached twice.
+  final ScrollController? scrollController;
 
   static const double panelWidth = 300;
 
@@ -366,6 +379,7 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
     final answer = state.answer;
     final proof = answer.proof;
     return ListView(
+      controller: widget.scrollController,
       key: const PageStorageKey<String>('proof-answer'),
       padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
@@ -437,6 +451,7 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
       );
     }
     return ListView(
+      controller: widget.scrollController,
       // Distinct storage keys, so the two lists keep their own scroll
       // offsets: opening a proof must start at step [1], and coming back
       // must land where the reader left the list.
@@ -473,6 +488,7 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   );
 
   Widget _proof(ThemeData theme, Proof proof) => ListView(
+    controller: widget.scrollController,
     key: const PageStorageKey<String>('proof-steps'),
     padding: const EdgeInsets.symmetric(vertical: 8),
     children: _proofRows(theme, proof),
@@ -547,12 +563,20 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
       ),
   ];
 
-  Widget _note(ThemeData theme, String text) => Padding(
-    padding: const EdgeInsets.all(16),
-    child: Text(
-      text,
-      style: theme.textTheme.bodySmall?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
+  /// A one-line body — scrollable, which is not about its length.
+  ///
+  /// It is the sheet's only handle on these states: 'Nothing proved yet'
+  /// is what the panel opens on, and a bare [Padding] there would mean
+  /// the very first thing a reader sees cannot be dragged taller.
+  Widget _note(ThemeData theme, String text) => SingleChildScrollView(
+    controller: widget.scrollController,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        text,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
     ),
   );
