@@ -104,10 +104,22 @@ The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a sec
 
 - [ ] **DD asks AR rather than AR publishing `eqangle`.** An `eqangle` premise should resolve against the closure instead of against a stored fact; quadruples of variables are quartic, so enumeration is not an option. This is the half of the exchange that does not exist yet, and it is why `apatitos-topos.rgl` — 13 `eqangle` facts, 1 `perp` — gains nothing from AR today
 - [ ] **The incidence bridge, at query time**: when a query names a pair no fact mentions, `CarrierIndex` says which carrier it is on and the θ-equality is added for that pair alone. Eagerly is Phase 151b's spelling explosion; on demand is one variable. Pinned as a boundary test in 152b
-- [ ] **What an AR step *reads* as** — looked at, on a real proof, and the diagnosis is sharper than the box was. The DD steps read well (`[6] para(E, D, A, D)  midline_para from [3], [5]`); it is the last line that is a black box: `[9] perp(E, A, F, C)  angle_arithmetic from [1], [2], [4], [6], [8]` names its premises and explains nothing. **Per-fact multiples are not the fix** — a `coll` contributes two equations and a certificate may use them differently, so there is no well-defined coefficient per cited *fact*. What would read is the angle chase itself, one line per equation (`θ(EA) = θ(AD)  [8]`, `θ(AB) ⊥ θ(CB)  [1]`), which needs the equations at render time and so needs the certificate carried or re-derived
+- [x] **What an AR step *reads* as — done (`angle_chase.dart`).** The DD steps always read well (`[6] para(E, D, A, D)  midline_para from [3], [5]`); it was the AR line that was a black box: `[9] perp(E, A, F, C)  angle_arithmetic from [1], [2], [4], [6], [8]` names its premises and explains nothing. A step *is* a sum of relations, so the sum is what is shown — one line per equation, in `θ` language, under the step and indented, in the printed proof and in the panel alike:
+
+      [9] perp(E, A, F, C)  angle_arithmetic from [1], [2], [4], [6], [8]
+            θ(AB) = θ(CB) + π/2  [1]
+            θ(CB) = θ(FC)        [2]
+            θ(AD) = θ(AB)        [4]
+            θ(ED) = θ(AD)        [6]
+            θ(EA) = θ(ED)        [8]
+            ⟹ θ(EA) = θ(FC) + π/2
+
+- [x] **Per input, not per premise fact — the box's own warning, honoured.** A multiple beside each cited fact cannot be written down: a `coll` contributes two equations and a certificate may weight them differently. A certificate indexes *equations* and each equation has exactly one source fact, so a chase line is one equation citing one step, and two lines citing the same step is the honest rendering of a `coll` rather than a duplicate
+- [x] **Re-derived, never carried.** The chase is rebuilt from the recorded premises the way `derivation_check.dart` rebuilds the entailment — nothing is stored on the `Derivation`, the save format does not move, and a chase that cannot be re-derived is null rather than a rendering claiming more than it can support
+- [x] **Three decisions that are not formatting.** Lines read out in *citation* order, not certificate order, because a proof's citations point upwards and the eye should not jump back (ties keep certificate order, so a `coll`'s two relations come out in the order it states them). The `θ(AB)`/`θ(A,B)` separator is decided once per chase — with single-letter points the geometric spelling is what a reader expects, and with an id like `aux` in play it would run two names into a third. A doubled row renders as `2θ(AB) = 2θ(CD)`, so the ℤ-module decision is visible in the reading rather than silently halved
+- [x] Tests (24) + Gates: analyze clean, suite **3107** green (3083 + 24), browser gate 12. Mutation-checked both ways: dropping the certificate scaling fails `isSound`, dropping the citation sort fails the ordering test
 - [ ] **The length system**: `cong` / `eqratio` over log-lengths, genuinely ℚ, no modulus, no branch problem. `Rational` is already what it needs
 - [ ] **Then re-examine the rule table.** `perp_coll` is now derivable as arithmetic (pinned in 152b); `coll_transitive`, `para_transitive`, `perp_perp_para`, `para_perp_perp` and `eqangle_transitive` are all row sums. Deleting them is a measurement, not an assumption — Phase 151b is the standing warning
-- [ ] **The prover provider runs `ProverEngine` directly** (`prover_provider.dart`), so none of this reaches the UI yet. Switching it to `Prover` is what makes M-P3 a product
 
 **Not in scope until the algebra exists**: Pythagoras (squared lengths), the `2·∠`/`3·∠` family and the 180° angle sum (a coefficient ring). Named here so they are not mistaken for rule-table work — and note the `2·∠` family is the same coefficient the ℤ-module decision is about, so it arrives as vocabulary, not as a division.
 
