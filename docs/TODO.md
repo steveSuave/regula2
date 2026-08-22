@@ -77,17 +77,27 @@ The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a sec
 - [x] **AR's output is not a superset of DD's, by design**: fed the fixpoint it still declines 10 of `perp-true-unproved`'s 21, all of them a line against itself or a pair sharing a point. Recorded so the difference is not read as a miss
 - [x] Tests (18) + Gates: analyze clean, suite **3067** green (3049 + 18)
 
-### 152c — one `Prover` facade (open)
+### 152c — one `Prover` facade: the interleaved fixpoint (done)
 
-**152b's measurement makes this the phase, not the polish.** AR alone reaches almost nothing; fed DD's fixpoint it doubles the angle facts on `perp-true-unproved` in 2 ms. The value is entirely in the exchange, and it runs both ways — AR's new `para`/`perp` are DD pivots, which derive more, which AR reads again.
+**152b's measurement made this the phase, not the polish.** AR alone reaches almost nothing; fed DD's fixpoint it doubles the angle facts on `perp-true-unproved` in 2 ms. The value is entirely in the exchange, and it runs both ways — AR's new `para`/`perp` are DD pivots, which derive more, which AR reads again.
 
-- [ ] AR and DD as peers sharing the fact database and the numeric filter, exchanging facts at the boundary — interleaved to a joint fixpoint, not one pass each
-- [ ] **DD asks AR rather than AR publishing `eqangle`**: an `eqangle` premise resolves against the closure instead of against a stored fact. Quadruples of variables are quartic, so enumeration is not an option
-- [ ] **The incidence bridge, at query time**: when a query names a pair no fact mentions, `CarrierIndex` says which carrier it is on and the θ-equality is added for that pair alone. Eagerly is the spelling explosion; on demand is one variable
-- [ ] **`Proof` has to render an AR step.** `sourcesOf` gives the facts to cite; what a *reason* reads as is open — "by angle arithmetic from [3], [7]" is honest but thinner than a rule name, and PLAN's objection to Wu was unreadable proofs. `Proof.verify()`'s obligation is `recombine`, which is settled
-- [ ] **What the DD fact set is afterwards**: `coll`, `cyclic`, `cong`, `midp`, `eqratio`, `simtri`, `contri` — every one of them `lineSlots`-empty. `coll_transitive`, `perp_coll` and `questions.dart`'s all-spellings search are re-examined *here*, not before
-- [ ] Roughly thirty of JGEX's seventy-two rules fall out of this plus Phase 151 for free
-- [ ] **Re-measure `provoleas2.json`**, which is the whole cost argument: `eqangle`/`eqratio` carry 128-form orbits against 8 for `perp` and 6 for `coll`, and they are why it never reaches quiescence. Phase 151c measured 24 of its 75 facts as `eqangle` and 53 as line-shaped — all of them AR's. Moving angles out of the fact set removes the cost centre instead of feeding it, and the bar is quiescence
+- [x] **`prover.dart` — DD and AR as peers over one `FactDatabase`.** A pass is: DD steps under the budget, AR reads everything new, AR publishes what it entails, DD takes the publication into its pivot queue. The run ends when DD is quiescent **and** the last pass published nothing, so it is a loop and not a pipeline. `ProverEngine.absorbExternal` is the one addition the engine needed — sound because its `_facts` mirror *is* the database's list, so what it has not seen is the tail
+- [x] **AR's output is screened by the same filter DD screens with**, with no exception made. The algebra is believed; a conclusion that is not numerically true in the diagram means something upstream is wrong, and letting it in would hide that
+- [x] **The budget counts DD applications only.** AR's cost is not in the same currency — a pass is a bounded elimination measured in single-digit milliseconds on every fixture — and putting two incomparable things behind one number would make the cap mean nothing
+- [x] **An AR step is verified by re-derivation, not by re-multiplication** (`derivation_check.dart`). There is no rule to re-match, so the check builds a closure over the recorded premises *alone* and asks whether they entail the conclusion. Checking the stored certificate would be cheaper and would be checking the engine's arithmetic against itself; this is the same choice the file already makes in restating the matcher rather than sharing it. **Mutation-checked**: dropping the entailment test fails exactly the fabricated-step test
+- [x] **Measured against DD alone**, cap 30 000 applications: `perp-true-unproved.rgl` **41 → 93 facts**, still quiescent, 202 → 312 ms, 21 angle steps; `locus3.json` 15 → 24, still quiescent, no slower; `provoleas2.json` 75 → 81 at the cap. `apatitos-topos.rgl` and `no-locus.rgl` unchanged and no slower. **Nothing lost on any fixture** — the exchange's fact set contains DD's
+- [x] **Every proof of every angle step verifies**, across all 31 of them — and `Proof.of` walks the whole sub-DAG, so that is the DD steps underneath as well
+- [x] **The cost is DD applications, and it is real**: `perp-true-unproved` goes 3 906 → 16 034, because AR's conclusions are pivots. It still reaches quiescence. On a document already at the cap (`provoleas2`) AR gets one look instead of several, which is the honest limitation of a budget shared this way
+- [x] Tests (14) + Gates: analyze clean, suite **3081** green (3067 + 14)
+
+### 152d — what the facade still owes (open)
+
+- [ ] **DD asks AR rather than AR publishing `eqangle`.** An `eqangle` premise should resolve against the closure instead of against a stored fact; quadruples of variables are quartic, so enumeration is not an option. This is the half of the exchange that does not exist yet, and it is why `apatitos-topos.rgl` — 13 `eqangle` facts, 1 `perp` — gains nothing from AR today
+- [ ] **The incidence bridge, at query time**: when a query names a pair no fact mentions, `CarrierIndex` says which carrier it is on and the θ-equality is added for that pair alone. Eagerly is Phase 151b's spelling explosion; on demand is one variable. Pinned as a boundary test in 152b
+- [ ] **What an AR step *reads* as.** `Proof.render()` prints `angle_arithmetic from [3], [7]`, which is honest and thinner than a rule name — and unreadable proofs are exactly why PLAN refused Wu. A step that said *which* relations were added, and in what multiples, is what the certificate already holds
+- [ ] **The length system**: `cong` / `eqratio` over log-lengths, genuinely ℚ, no modulus, no branch problem. `Rational` is already what it needs
+- [ ] **Then re-examine the rule table.** `perp_coll` is now derivable as arithmetic (pinned in 152b); `coll_transitive`, `para_transitive`, `perp_perp_para`, `para_perp_perp` and `eqangle_transitive` are all row sums. Deleting them is a measurement, not an assumption — Phase 151b is the standing warning
+- [ ] **The prover provider runs `ProverEngine` directly** (`prover_provider.dart`), so none of this reaches the UI yet. Switching it to `Prover` is what makes M-P3 a product
 
 **Not in scope until the algebra exists**: Pythagoras (squared lengths), the `2·∠`/`3·∠` family and the 180° angle sum (a coefficient ring). Named here so they are not mistaken for rule-table work — and note the `2·∠` family is the same coefficient the ℤ-module decision is about, so it arrives as vocabulary, not as a division.
 

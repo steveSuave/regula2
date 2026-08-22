@@ -5,6 +5,14 @@ import 'fact.dart';
 import 'predicate.dart';
 import 'rational.dart';
 
+/// The name an AR step is recorded under, where DD records a rule's.
+///
+/// One name for the whole algebra rather than one per derived shape: the
+/// step *is* "these relations, added up", and inventing `perp_perp_para`
+/// as a label for a row sum would claim a rule fired that does not
+/// exist.
+const String angleArithmeticRule = 'angle_arithmetic';
+
 /// A fact the angle closure entails, with the certificate that says why.
 ///
 /// The certificate indexes [AngleTranslation.closure]'s inputs;
@@ -202,6 +210,39 @@ class AngleTranslation {
       if (!out.any((held) => held == fact)) out.add(fact);
     }
     return out;
+  }
+
+  /// The row form of [fact], or null when the kind has no angle content
+  /// or the fact is degenerate.
+  ///
+  /// Unlike [absorb] this registers nothing: asking what a fact *would*
+  /// say is not saying it.
+  AngleEquation? equationOf(Fact fact) {
+    if (fact.kind != PredicateKind.para && fact.kind != PredicateKind.perp) {
+      return null;
+    }
+    final points = fact.points;
+    if (points[0].id == points[1].id || points[2].id == points[3].id) {
+      return null;
+    }
+    return AngleEquation.difference(
+      lineVariable(points[0], points[1]),
+      lineVariable(points[2], points[3]),
+      fact.kind == PredicateKind.perp ? rightAngle : Rational.zero,
+    );
+  }
+
+  /// The certificate for [fact] if the closure entails it, else null.
+  ///
+  /// This is [conclusions] asked about one fact instead of enumerated,
+  /// and it deliberately does **not** apply the same-carrier and
+  /// shared-point refusals: those are publication policy — what is worth
+  /// putting in the fact set — and a caller checking a step that already
+  /// exists is asking a different question.
+  Map<int, BigInt>? entailmentOf(Fact fact) {
+    final equation = equationOf(fact);
+    if (equation == null) return null;
+    return closure.entails(equation);
   }
 
   /// Every `para` and `perp` the closure entails between distinct

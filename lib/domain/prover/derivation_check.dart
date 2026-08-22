@@ -1,4 +1,5 @@
 import '../construction/geo_object.dart';
+import 'angle_translation.dart';
 import 'fact.dart';
 import 'fact_database.dart';
 import 'rule.dart';
@@ -59,6 +60,9 @@ DerivationCheck checkDerivation(
   if (derivation.isHypothesis) {
     return const DerivationCheck.valid();
   }
+  if (derivation.rule == angleArithmeticRule) {
+    return _checkAngleArithmetic(conclusion, derivation);
+  }
   final table = rules ?? ddCoreRules;
   final named = table.where((rule) => rule.name == derivation.rule);
   if (named.isEmpty) {
@@ -88,6 +92,54 @@ DerivationCheck checkDerivation(
     '${rule.name} does not instantiate to '
     '${derivation.premises.join(' & ')} => $conclusion',
   );
+}
+
+/// An AR step re-derived from its own record.
+///
+/// There is no rule to re-match: the step is a linear combination, and
+/// what it claims is that the recorded premises *entail* the conclusion
+/// in the angle algebra. So the check builds a closure over those
+/// premises and nothing else, and asks.
+///
+/// **Re-derived rather than re-multiplied, deliberately.** The engine
+/// hands out a certificate — the integer combination it used — and
+/// checking that would be cheaper. It would also be checking the
+/// engine's own arithmetic against itself. Building a fresh closure from
+/// the premises alone answers the stronger question, and answers it
+/// without trusting anything the run recorded beyond which facts were
+/// used; it is the same choice `_bind` makes below, restating the
+/// matcher rather than sharing it.
+///
+/// A premise that says nothing about directions is a defect in the
+/// record, not a harmless extra: it means the step cited something it
+/// cannot have used.
+DerivationCheck _checkAngleArithmetic(Fact conclusion, Derivation derivation) {
+  if (derivation.premises.isEmpty) {
+    return const DerivationCheck.invalid(
+      'an angle_arithmetic step with no premises proves nothing',
+    );
+  }
+  final translation = AngleTranslation();
+  for (final premise in derivation.premises) {
+    if (!translation.absorb(premise)) {
+      return DerivationCheck.invalid(
+        'angle_arithmetic cites $premise, which says nothing about '
+        'directions',
+      );
+    }
+  }
+  if (translation.equationOf(conclusion) == null) {
+    return DerivationCheck.invalid(
+      'angle_arithmetic cannot conclude $conclusion',
+    );
+  }
+  if (translation.entailmentOf(conclusion) == null) {
+    return DerivationCheck.invalid(
+      '${derivation.premises.join(' & ')} does not entail $conclusion '
+      'in the angle algebra',
+    );
+  }
+  return const DerivationCheck.valid();
 }
 
 /// Backtracking join over the premise slots. Depth is the rule's premise
