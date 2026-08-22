@@ -51,14 +51,31 @@ What M-P2d looked like it wanted after 151b: `perp(A,B,C,D)` and `perp(E,F,C,D)`
 
 ## Phase 152 — M-P3: the angle and ratio algebra (open)
 
-The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a second rule engine — a linear system.
+The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a second rule engine — a linear system. After Phase 151 it is also M-P2d's consumer: θ is indexed per *carrier*, so `carriers.dart` is what it is built on.
 
-- [ ] **θ per line, mod π; every angle fact a linear equation.** `para` is a zero difference, `perp` is π/2, Chasles is addition, closure is elimination. Log-lengths give the same for `cong` and `eqratio`
-- [ ] **The point is the cost profile, not only the power.** `eqangle`/`eqratio` carry 128-form orbits against 8 for `perp` and 6 for `coll` — they are why `provoleas2.json` never reaches quiescence. Moving angles out of the fact set removes the cost centre instead of feeding it
-- [ ] **A peer of DD behind one `Prover` facade**, sharing the fact database and the numeric filter, exchanging facts at the boundary. Roughly thirty of JGEX's seventy-two rules fall out of this plus Phase 151 for free
-- [ ] **θ is indexed per carrier, so `carriers.dart` (Phase 151a) is what this is built on** — that is the whole of what M-P2d ended up delivering, and Phase 151b/c is the record of why. The three kinds AR absorbs are exactly the three with non-empty `lineSlots`, so when they leave the fact set the line-spelling problem leaves with them
+**The arithmetic was settled before any code** — PLAN §"AR is a ℤ-module, not a ℚ-vector space". θ is defined mod π, so a linear form is a statement only when its coefficients are **integers**; every equation the vocabulary produces starts at ±1, but elimination does not keep them there. Two ordinary `eqangle` facts — `∠(l₁,l₂) = ∠(l₃,l₄)` and `∠(l₁,l₂) = ∠(l₄,l₃)` — sum to `2θ₂ − 2θ₁ = 0`, which over ℚ pivots to `para(l₁,l₂)` and over ℤ says only `∠(l₁,l₂) ∈ {0, π/2}`: parallel **or** perpendicular. Rational elimination turns a disjunction into a theorem, and the numeric filter would wave it through on any diagram sitting on the parallel branch. So: integer row reduction, entailment is ℤ-span membership, a `2θ` row publishes **nothing**, and log-lengths are a separate genuinely-ℚ system.
+
+### 152a — the arithmetic and the closure, pure (open)
+
+- [ ] **`Rational`** — exact, `BigInt`-backed. `int` is not the same type on the VM and on the web, and a coefficient that overflows differently per target is a correctness difference the browser gate would find late. Needed by both systems (the angle constants live in ℚ/ℤ, the length system is ℚ throughout)
+- [ ] **The angle closure as a ℤ-module**: integer rows, constants in ℚ/ℤ, reduction by gcd combination and never by dividing a row by its own leading coefficient. `entails` answers ℤ-span membership
+- [ ] **Provenance from day one**, the `FactDatabase` precedent: every row carries the integer combination of *input* equations that produced it, so a derived fact can name what it came from and `Proof.verify()` re-checks a multiplication rather than searching. Retrofitting this is a rewrite
+- [ ] **The `2θ` row is retained and never published**, with a test that pins exactly the counterexample above: the two `eqangle`s in, `para` **not** out, and the row still available to combine
+- [ ] Pure Dart, no geometry — the predicate → equation mapping is 152b
+
+### 152b — the vocabulary mapped onto it (open)
+
+- [ ] `para` / `perp` / `eqangle` → rows over carrier-indexed θ; `cong` / `eqratio` → rows over log-length variables. **A variable is a carrier, not a point pair**, which is what Phase 151a exists for
+- [ ] Facts out of the closure and back into `FactDatabase`, screened by the same filter DD uses
+
+### 152c — one `Prover` facade (open)
+
+- [ ] AR and DD as peers sharing the fact database and the numeric filter, exchanging facts at the boundary
 - [ ] **What the DD fact set is afterwards**: `coll`, `cyclic`, `cong`, `midp`, `eqratio`, `simtri`, `contri` — every one of them `lineSlots`-empty. `coll_transitive`, `perp_coll` and `questions.dart`'s all-spellings search are re-examined *here*, not before
-- [ ] **Not in scope until the algebra exists**: Pythagoras (squared lengths), the `2·∠`/`3·∠` family and the 180° angle sum (a coefficient ring). Named here so they are not mistaken for rule-table work
+- [ ] Roughly thirty of JGEX's seventy-two rules fall out of this plus Phase 151 for free
+- [ ] **Re-measure `provoleas2.json`**, which is the whole cost argument: `eqangle`/`eqratio` carry 128-form orbits against 8 for `perp` and 6 for `coll`, and they are why it never reaches quiescence. Phase 151c measured 24 of its 75 facts as `eqangle` and 53 as line-shaped — all of them AR's. Moving angles out of the fact set removes the cost centre instead of feeding it, and the bar is quiescence
+
+**Not in scope until the algebra exists**: Pythagoras (squared lengths), the `2·∠`/`3·∠` family and the 180° angle sum (a coefficient ring). Named here so they are not mistaken for rule-table work — and note the `2·∠` family is the same coefficient the ℤ-module decision is about, so it arrives as vocabulary, not as a division.
 
 ## Phase 153 — auxiliary construction (open)
 
