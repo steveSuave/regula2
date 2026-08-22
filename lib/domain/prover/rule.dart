@@ -213,4 +213,51 @@ final List<Rule> ddCoreRules = List.unmodifiable([
     'simtri_cong_contri',
     'simtri(a,b,c,d,e,f) & cong(a,b,d,e) => contri(a,b,c,d,e,f)',
   ),
+  // Tangent lengths from one external point are equal (Phase 155). Read
+  // it as Pythagoras rather than as a circle theorem, which is why the
+  // premises name no circle: two right angles at `s` and `t` on lines
+  // through `p`, and equal `o`-distances, give
+  // `|ps|² = |op|² − |os|² = |op|² − |ot|² = |pt|²`. The tangency itself
+  // arrives as `perp(o,t,t,p)` from `hypotheses` — a `TangentLine` whose
+  // touch point the figure has named, or a polar meeting its circle.
+  //
+  // Measured on the corpus before keeping, per Phase 151b: **0 new facts
+  // on all five older fixtures**, and on `tangent-chase.rgl` exactly
+  // three — the theorem `cong(p,s,p,t)`, the chord of contact
+  // `perp(s,t,o,p)` that `perp_bisector` then reaches from it, and one
+  // `isosceles_base` angle. A rule with a consumer, which is the bar
+  // `para_coll` failed.
+  Rule.parse(
+    'tangent_lengths',
+    'perp(o,s,s,p) & perp(o,t,t,p) & cong(o,s,o,t) => cong(p,s,p,t)',
+  ),
+  // `tangent_chord` — the alternate-segment theorem, written as
+  // `perp(o,t,t,p) & cong(o,t,o,a) & cong(o,t,o,b)
+  //  => eqangle(t,p,t,a,b,t,b,a)` — is **not here, and was measured
+  // rather than argued about**. It is a genuine theorem (the mod-π
+  // spelling was checked against the filter, and the swapped reading is
+  // false), and it does fire. What it buys is the question:
+  //
+  // - On `tangent-chase.rgl` it reaches the *same* two substantive facts
+  //   `tangent_lengths` reaches — by the longer road through
+  //   `isosceles_converse` — plus **13 eqangles**, at roughly twice the
+  //   run time (its `cong × cong` premise pair is the expensive shape;
+  //   `tangent_lengths` joins on `perp`, of which there are few).
+  // - On `apatitos-topos.rgl` it adds **3 facts, every one an eqangle**;
+  //   no `cong`, `perp`, `para` or `cyclic` moves.
+  // - On the other four fixtures: nothing.
+  //
+  // So its unique contribution corpus-wide is sixteen eqangles that no
+  // consumer acts on — 152e's finding restated, and the `para_coll`
+  // precedent exactly. Written, rigged, measured, deleted; one line the
+  // day a document needs it.
+  //
+  // **Power of the point is not what it was missing**, and the reason is
+  // worth keeping because it is structural rather than a gap in the
+  // table. `|pa|·|pb| = |ps|²` needs the similarity of `psa` and `pbs`,
+  // which is *true* — `simtri(p,s,a,p,b,s)` holds in the figure. But the
+  // two triangles are oppositely oriented, so the shared angle at `p`
+  // that `aa_simtri`'s second premise wants is **false as a mod-π
+  // eqangle** (checked, not assumed). That is the direct/reflected split
+  // M-P1 defers, not a rule anyone can add here.
 ]);

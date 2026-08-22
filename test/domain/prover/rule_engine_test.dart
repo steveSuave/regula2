@@ -9,6 +9,7 @@ import 'package:regula/domain/construction/objects/central_reflection_point.dart
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
@@ -16,6 +17,7 @@ import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
@@ -470,6 +472,42 @@ void main() {
           Predicate(PredicateKind.cong, [a, b, ra, rb]),
         ],
         conclusion: contri,
+      );
+    });
+
+    test('tangent_lengths', () {
+      // Two tangents from one external point. Read as Pythagoras, not as
+      // a circle theorem: the premises name no circle, only two right
+      // angles at the points of contact and equal distances from `o`.
+      // The rig draws the circle anyway so the geometry is real, and the
+      // contacts come from the tangents the way a user would get them.
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(4, 0));
+      final circle = CircleCenterPoint(id: 'c', center: o, onCircle: rim);
+      final p = FreePoint(id: 'p', position: const Vec2(9, 5));
+      final t1 = TangentLine(id: 't1', point: p, circle: circle, branch: 0);
+      final t2 = TangentLine(id: 't2', point: p, circle: circle, branch: 1);
+      final s = IntersectionPoint(
+        id: 's',
+        curve1: t1,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final t = IntersectionPoint(
+        id: 't',
+        curve1: t2,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      expectRuleFires(
+        ruleName: 'tangent_lengths',
+        objects: [o, rim, circle, p, t1, t2, s, t],
+        seeds: [
+          Predicate(PredicateKind.perp, [o, s, s, p]),
+          Predicate(PredicateKind.perp, [o, t, t, p]),
+          Predicate(PredicateKind.cong, [o, s, o, t]),
+        ],
+        conclusion: Predicate(PredicateKind.cong, [p, s, p, t]),
       );
     });
   });

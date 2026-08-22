@@ -1,0 +1,324 @@
+{
+  "version": 1,
+  "viewport": {
+    "pan": [
+      300.0,
+      300.0
+    ],
+    "scale": 1.0,
+    "rotation": 0.0
+  },
+  "showAxes": false,
+  "showGrid": false,
+  "snapToGrid": false,
+  "objects": [
+    {
+      "id": "o",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "attributes": {
+        "name": "O",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "r",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 120.0,
+        "y": 0.0
+      },
+      "attributes": {
+        "name": "R",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "c",
+      "type": "CircleCenterPoint",
+      "parents": [
+        "o",
+        "r"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "c",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "p",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 260.0,
+        "y": 170.0
+      },
+      "attributes": {
+        "name": "P",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "t1",
+      "type": "TangentLine",
+      "parents": [
+        "p",
+        "c"
+      ],
+      "params": {
+        "branch": 0
+      },
+      "attributes": {
+        "name": "t1",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "t2",
+      "type": "TangentLine",
+      "parents": [
+        "p",
+        "c"
+      ],
+      "params": {
+        "branch": 1
+      },
+      "attributes": {
+        "name": "t2",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "k1",
+      "type": "IntersectionPoint",
+      "parents": [
+        "c",
+        "t1"
+      ],
+      "params": {
+        "branchIndex": 0
+      },
+      "attributes": {
+        "name": "S",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "k2",
+      "type": "IntersectionPoint",
+      "parents": [
+        "c",
+        "t2"
+      ],
+      "params": {
+        "branchIndex": 0
+      },
+      "attributes": {
+        "name": "T",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "a",
+      "type": "PointOnObject",
+      "parents": [
+        "c"
+      ],
+      "params": {
+        "parameter": 2.4
+      },
+      "attributes": {
+        "name": "A",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "sec",
+      "type": "LineThroughTwoPoints",
+      "parents": [
+        "p",
+        "a"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "s",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "b",
+      "type": "IntersectionPoint",
+      "parents": [
+        "c",
+        "sec"
+      ],
+      "params": {
+        "branchIndex": 0
+      },
+      "attributes": {
+        "name": "B",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    }
+  ]
+}

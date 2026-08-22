@@ -19,11 +19,14 @@ import '../construction/objects/orthocenter.dart';
 import '../construction/objects/parallel_line.dart';
 import '../construction/objects/perpendicular_bisector_line.dart';
 import '../construction/objects/perpendicular_line.dart';
+import '../construction/objects/polar_line.dart';
 import '../construction/objects/projection_point.dart';
+import '../construction/objects/radical_axis_line.dart';
 import '../construction/objects/reflected_point.dart';
 import '../construction/objects/rotated_point.dart';
 import '../construction/objects/sector.dart';
 import '../construction/objects/segment_ratio_point.dart';
+import '../construction/objects/tangent_line.dart';
 import '../construction/objects/translated_point.dart';
 import '../construction/objects/two_line_bisector_line.dart';
 import '../projective/absolute.dart';
@@ -68,6 +71,14 @@ import 'predicate.dart';
 /// points — except the exact-half `SegmentRatioPoint`, which is `midp`),
 /// the conic-valued kinds (`FivePointConic`, `BifocalConic`,
 /// `FocalConic` — `cyclic` is about circles), and every measurement.
+///
+/// Two silences are conditional rather than per-kind, and are worth
+/// separating from that list: a `TangentLine` whose touch point the
+/// figure has not named says nothing (there is no point to be
+/// perpendicular *at* — naming one is Phase 153's search, not this
+/// function's guess), and a tangent to a conic that is not a circle by
+/// construction says nothing at any time, because the radius theorem is
+/// about circles.
 List<Predicate> hypotheses(
   Iterable<GeoObject> objects, {
   Absolute absolute = Absolute.euclidean,
@@ -95,6 +106,22 @@ List<Predicate> hypotheses(
       if (structurallyIncident(curve, point)) point,
   ];
   List<List<GeoPoint>> pairsOn(GeoObject curve) => _choose(onCurve(curve), 2);
+
+  // The circle's centre as a *named* point: the one its kind stores, or
+  // a `CircleCenter` the user drew on it. Tangency is a statement about
+  // the radius, so without a name for the centre there is nothing to
+  // say — a `ThreePointCircle` has no structural centre and is exactly
+  // the case this second half exists for.
+  GeoPoint? centreOf(GeoCircle circle) {
+    final structural = _structuralCenter(circle);
+    if (structural != null) return structural;
+    for (final object in all) {
+      if (object is CircleCenter && identical(object.circle, circle)) {
+        return object;
+      }
+    }
+    return null;
+  }
 
   for (final object in all) {
     // Incidence-shaped statements, for every carrier at once: points a
@@ -255,6 +282,80 @@ List<Predicate> hypotheses(
             c.radiusPoint1,
             c.radiusPoint2,
           ]);
+        }
+      // The polar is perpendicular to the centre→pole join, at every
+      // position (Phase 155's audit — this kind had never been assessed).
+      // Guarded on a circle by construction for the same reason the
+      // tangent is: for a general conic the polar is *not* perpendicular
+      // to the join of the pole with the centre.
+      //
+      // The second emission is La Hire, and it is the same tangency fact
+      // as the `TangentLine` case reaches by a different road: a named
+      // point on both the polar and the circle is a point of contact, so
+      // the tangent there passes through the pole — which makes the pole
+      // the other point on that tangent, and `perp(O, T, T, pole)` a
+      // theorem. Note the pole and *not* another point of the polar: the
+      // tangent at `T` is the line `T→pole`, while the polar is the chord
+      // of contact, and confusing the two would emit a falsehood.
+      case final PolarLine l when _isCircleByConstruction(l.circle):
+        final centre = centreOf(l.circle);
+        if (centre == null) break;
+        for (final pair in pairsOn(l)) {
+          emit(PredicateKind.perp, [centre, l.point, ...pair]);
+        }
+        for (final touch in onCurve(l)) {
+          if (!structurallyIncident(l.circle, touch)) continue;
+          if (identical(touch, l.point)) continue;
+          emit(PredicateKind.perp, [centre, touch, touch, l.point]);
+        }
+      // The radical axis is perpendicular to the line of centres — the
+      // one pointwise statement the kind guarantees, and the other half
+      // of Phase 155's audit. Its defining property, equal power to both
+      // circles, is not in the vocabulary at all.
+      //
+      // Not emitted: that a point on *both* circles is on the axis. That
+      // is an incidence rather than a metric statement, so its place is
+      // `incidence.dart`, where it would also reach line clipping and hit
+      // testing — a change with consumers well outside the prover.
+      case final RadicalAxisLine l
+          when _isCircleByConstruction(l.circle1) &&
+              _isCircleByConstruction(l.circle2):
+        final centre1 = centreOf(l.circle1);
+        final centre2 = centreOf(l.circle2);
+        if (centre1 == null || centre2 == null) break;
+        for (final pair in pairsOn(l)) {
+          emit(PredicateKind.perp, [centre1, centre2, ...pair]);
+        }
+      // Tangency, when the figure has named the touch point (Phase 155).
+      // The kind computes its touch point inside `recompute` and does not
+      // publish it as a `GeoPoint`, so there is nothing here to point at
+      // — but a point the construction puts on *both* the tangent and its
+      // circle is the touch point, because a tangent meets its circle
+      // exactly once. Drawing the intersection is the natural way to get
+      // one, and JGEX's *Tangent* asks for the same thing.
+      //
+      // No new predicate: the tangent at `t` is perpendicular to the
+      // radius `centre→t`, which is `perp(O, T, T, P)` for every other
+      // named `P` on the line, and the radii `cong` the theorem also
+      // wants is already emitted by the circle case above. When no touch
+      // point is named there is nothing to say, and inventing one is
+      // Phase 153's problem rather than this one's.
+      //
+      // Guarded on the parent being a circle by construction for the
+      // same reason `cyclic` is: the tangent to a general conic at `t`
+      // is *not* perpendicular to the join of `t` with the conic's
+      // centre, so the statement would be false about a `FivePointConic`
+      // that happens to look round.
+      case final TangentLine t when _isCircleByConstruction(t.circle):
+        final centre = centreOf(t.circle);
+        if (centre == null) break;
+        final onTangent = onCurve(t);
+        for (final touch in onTangent) {
+          if (!structurallyIncident(t.circle, touch)) continue;
+          for (final other in onTangent) {
+            if (identical(other, touch)) continue;
+            emit(PredicateKind.perp, [centre, touch, touch, other]);
+          }
         }
       default:
         break;
