@@ -13,6 +13,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
@@ -24,6 +25,7 @@ import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
@@ -452,6 +454,118 @@ void main() {
       final emitted = extractAndPin([p, q, o, circle, x]);
 
       expect(emitted, hasFact(Predicate(PredicateKind.cong, [o, x, p, q])));
+    });
+  });
+
+  /// Phase 155. `TangentLine` contributed nothing and was not on the
+  /// documented list of kinds that contribute nothing deliberately,
+  /// which is how the gap should be read. The touch point is computed
+  /// inside `recompute` and is not a `GeoPoint`, so the emission waits
+  /// for the figure to name one — and a point on both the tangent and
+  /// its circle *is* the touch point, since a tangent meets its circle
+  /// exactly once.
+  group('TangentLine', () {
+    test('the drawn touch point makes the radius perpendicular', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(3, 0));
+      final circle = CircleCenterPoint(id: 'c', center: o, onCircle: rim);
+      final p = FreePoint(id: 'p', position: const Vec2(9, 0));
+      final tangent = TangentLine(id: 't', point: p, circle: circle, branch: 0);
+      final touch = IntersectionPoint(
+        id: 'k',
+        curve1: tangent,
+        curve2: circle,
+        branchIndex: 0,
+      );
+
+      final emitted = extractAndPin([o, rim, circle, p, tangent, touch]);
+
+      expect(
+        emitted,
+        hasFact(Predicate(PredicateKind.perp, [o, touch, touch, p])),
+      );
+    });
+
+    test('no named touch point, nothing said — the silence is the '
+        'honest answer, not the old gap', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(3, 0));
+      final circle = CircleCenterPoint(id: 'c', center: o, onCircle: rim);
+      final p = FreePoint(id: 'p', position: const Vec2(9, 0));
+      final tangent = TangentLine(id: 't', point: p, circle: circle, branch: 0);
+
+      final emitted = extractAndPin([o, rim, circle, p, tangent]);
+
+      // The circle's own radius `cong` is still there; what is absent
+      // is any statement *about the tangent*.
+      expect(
+        emitted.where(
+          (e) =>
+              e.kind == PredicateKind.perp &&
+              e.points.any((GeoPoint a) => identical(a, p)),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('a circle with no centre of its own borrows the drawn one', () {
+      final a = FreePoint(id: 'a', position: const Vec2(3, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(0, 3));
+      final c = FreePoint(id: 'c', position: const Vec2(-3, 0));
+      final circle = ThreePointCircle(id: 'k', point1: a, point2: b, point3: c);
+      final o = CircleCenter(id: 'o', circle: circle);
+      final p = FreePoint(id: 'p', position: const Vec2(9, 4));
+      final tangent = TangentLine(id: 't', point: p, circle: circle, branch: 0);
+      final touch = IntersectionPoint(
+        id: 'j',
+        curve1: tangent,
+        curve2: circle,
+        branchIndex: 0,
+      );
+
+      final emitted = extractAndPin([a, b, c, circle, o, p, tangent, touch]);
+
+      expect(
+        emitted,
+        hasFact(Predicate(PredicateKind.perp, [o, touch, touch, p])),
+      );
+    });
+
+    test('a tangent to a conic says nothing — the theorem is about '
+        'circles', () {
+      final points = [
+        FreePoint(id: 'a', position: const Vec2(-4, 0)),
+        FreePoint(id: 'b', position: const Vec2(4, 0)),
+        FreePoint(id: 'c', position: const Vec2(0, 2)),
+        FreePoint(id: 'd', position: const Vec2(0, -2)),
+        FreePoint(id: 'e', position: const Vec2(3, 1.3228756555)),
+      ];
+      final conic = FivePointConic(id: 'k', points: points);
+      final o = CircleCenter(id: 'o', circle: conic);
+      final p = FreePoint(id: 'p', position: const Vec2(9, 5));
+      final tangent = TangentLine(id: 't', point: p, circle: conic, branch: 0);
+      final touch = IntersectionPoint(
+        id: 'j',
+        curve1: tangent,
+        curve2: conic,
+        branchIndex: 0,
+      );
+
+      final emitted = hypotheses(
+        build([...points, conic, o, p, tangent, touch]).objects,
+      );
+
+      // The tangent to an ellipse at `T` is not perpendicular to the
+      // join of `T` with the centre, so an unguarded emission would be
+      // false about a conic that merely looks round.
+      expect(
+        emitted.where(
+          (e) =>
+              e.kind == PredicateKind.perp &&
+              e.points.any((GeoPoint a) => identical(a, touch)),
+        ),
+        isEmpty,
+      );
     });
   });
 

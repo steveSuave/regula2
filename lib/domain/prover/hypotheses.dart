@@ -24,6 +24,7 @@ import '../construction/objects/reflected_point.dart';
 import '../construction/objects/rotated_point.dart';
 import '../construction/objects/sector.dart';
 import '../construction/objects/segment_ratio_point.dart';
+import '../construction/objects/tangent_line.dart';
 import '../construction/objects/translated_point.dart';
 import '../construction/objects/two_line_bisector_line.dart';
 import '../projective/absolute.dart';
@@ -68,6 +69,14 @@ import 'predicate.dart';
 /// points — except the exact-half `SegmentRatioPoint`, which is `midp`),
 /// the conic-valued kinds (`FivePointConic`, `BifocalConic`,
 /// `FocalConic` — `cyclic` is about circles), and every measurement.
+///
+/// Two silences are conditional rather than per-kind, and are worth
+/// separating from that list: a `TangentLine` whose touch point the
+/// figure has not named says nothing (there is no point to be
+/// perpendicular *at* — naming one is Phase 153's search, not this
+/// function's guess), and a tangent to a conic that is not a circle by
+/// construction says nothing at any time, because the radius theorem is
+/// about circles.
 List<Predicate> hypotheses(
   Iterable<GeoObject> objects, {
   Absolute absolute = Absolute.euclidean,
@@ -95,6 +104,22 @@ List<Predicate> hypotheses(
       if (structurallyIncident(curve, point)) point,
   ];
   List<List<GeoPoint>> pairsOn(GeoObject curve) => _choose(onCurve(curve), 2);
+
+  // The circle's centre as a *named* point: the one its kind stores, or
+  // a `CircleCenter` the user drew on it. Tangency is a statement about
+  // the radius, so without a name for the centre there is nothing to
+  // say — a `ThreePointCircle` has no structural centre and is exactly
+  // the case this second half exists for.
+  GeoPoint? centreOf(GeoCircle circle) {
+    final structural = _structuralCenter(circle);
+    if (structural != null) return structural;
+    for (final object in all) {
+      if (object is CircleCenter && identical(object.circle, circle)) {
+        return object;
+      }
+    }
+    return null;
+  }
 
   for (final object in all) {
     // Incidence-shaped statements, for every carrier at once: points a
@@ -255,6 +280,37 @@ List<Predicate> hypotheses(
             c.radiusPoint1,
             c.radiusPoint2,
           ]);
+        }
+      // Tangency, when the figure has named the touch point (Phase 155).
+      // The kind computes its touch point inside `recompute` and does not
+      // publish it as a `GeoPoint`, so there is nothing here to point at
+      // — but a point the construction puts on *both* the tangent and its
+      // circle is the touch point, because a tangent meets its circle
+      // exactly once. Drawing the intersection is the natural way to get
+      // one, and JGEX's *Tangent* asks for the same thing.
+      //
+      // No new predicate: the tangent at `t` is perpendicular to the
+      // radius `centre→t`, which is `perp(O, T, T, P)` for every other
+      // named `P` on the line, and the radii `cong` the theorem also
+      // wants is already emitted by the circle case above. When no touch
+      // point is named there is nothing to say, and inventing one is
+      // Phase 153's problem rather than this one's.
+      //
+      // Guarded on the parent being a circle by construction for the
+      // same reason `cyclic` is: the tangent to a general conic at `t`
+      // is *not* perpendicular to the join of `t` with the conic's
+      // centre, so the statement would be false about a `FivePointConic`
+      // that happens to look round.
+      case final TangentLine t when _isCircleByConstruction(t.circle):
+        final centre = centreOf(t.circle);
+        if (centre == null) break;
+        final onTangent = onCurve(t);
+        for (final touch in onTangent) {
+          if (!structurallyIncident(t.circle, touch)) continue;
+          for (final other in onTangent) {
+            if (identical(other, touch)) continue;
+            emit(PredicateKind.perp, [centre, touch, touch, other]);
+          }
         }
       default:
         break;
