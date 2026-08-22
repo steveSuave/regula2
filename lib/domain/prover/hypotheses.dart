@@ -19,7 +19,9 @@ import '../construction/objects/orthocenter.dart';
 import '../construction/objects/parallel_line.dart';
 import '../construction/objects/perpendicular_bisector_line.dart';
 import '../construction/objects/perpendicular_line.dart';
+import '../construction/objects/polar_line.dart';
 import '../construction/objects/projection_point.dart';
+import '../construction/objects/radical_axis_line.dart';
 import '../construction/objects/reflected_point.dart';
 import '../construction/objects/rotated_point.dart';
 import '../construction/objects/sector.dart';
@@ -280,6 +282,49 @@ List<Predicate> hypotheses(
             c.radiusPoint1,
             c.radiusPoint2,
           ]);
+        }
+      // The polar is perpendicular to the centre→pole join, at every
+      // position (Phase 155's audit — this kind had never been assessed).
+      // Guarded on a circle by construction for the same reason the
+      // tangent is: for a general conic the polar is *not* perpendicular
+      // to the join of the pole with the centre.
+      //
+      // The second emission is La Hire, and it is the same tangency fact
+      // as the `TangentLine` case reaches by a different road: a named
+      // point on both the polar and the circle is a point of contact, so
+      // the tangent there passes through the pole — which makes the pole
+      // the other point on that tangent, and `perp(O, T, T, pole)` a
+      // theorem. Note the pole and *not* another point of the polar: the
+      // tangent at `T` is the line `T→pole`, while the polar is the chord
+      // of contact, and confusing the two would emit a falsehood.
+      case final PolarLine l when _isCircleByConstruction(l.circle):
+        final centre = centreOf(l.circle);
+        if (centre == null) break;
+        for (final pair in pairsOn(l)) {
+          emit(PredicateKind.perp, [centre, l.point, ...pair]);
+        }
+        for (final touch in onCurve(l)) {
+          if (!structurallyIncident(l.circle, touch)) continue;
+          if (identical(touch, l.point)) continue;
+          emit(PredicateKind.perp, [centre, touch, touch, l.point]);
+        }
+      // The radical axis is perpendicular to the line of centres — the
+      // one pointwise statement the kind guarantees, and the other half
+      // of Phase 155's audit. Its defining property, equal power to both
+      // circles, is not in the vocabulary at all.
+      //
+      // Not emitted: that a point on *both* circles is on the axis. That
+      // is an incidence rather than a metric statement, so its place is
+      // `incidence.dart`, where it would also reach line clipping and hit
+      // testing — a change with consumers well outside the prover.
+      case final RadicalAxisLine l
+          when _isCircleByConstruction(l.circle1) &&
+              _isCircleByConstruction(l.circle2):
+        final centre1 = centreOf(l.circle1);
+        final centre2 = centreOf(l.circle2);
+        if (centre1 == null || centre2 == null) break;
+        for (final pair in pairsOn(l)) {
+          emit(PredicateKind.perp, [centre1, centre2, ...pair]);
         }
       // Tangency, when the figure has named the touch point (Phase 155).
       // The kind computes its touch point inside `recompute` and does not

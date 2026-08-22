@@ -21,7 +21,9 @@ import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/polar_line.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
+import 'package:regula/domain/construction/objects/radical_axis_line.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
@@ -566,6 +568,66 @@ void main() {
         ),
         isEmpty,
       );
+    });
+  });
+
+  /// Phase 155's audit. Neither kind had ever been assessed for
+  /// emissions the way the circle kinds were, and the point of the
+  /// "deliberately nothing" list is that silence is a decision on the
+  /// record. Both turned out to contribute, so neither joins it.
+  group('PolarLine', () {
+    test('the polar is perpendicular to the centre-pole join', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(3, 0));
+      final circle = CircleCenterPoint(id: 'c', center: o, onCircle: rim);
+      final pole = FreePoint(id: 'p', position: const Vec2(7, 2));
+      final polar = PolarLine(id: 'l', point: pole, circle: circle);
+      final x = PointOnObject(id: 'x', curve: polar, parameter: 0.5);
+      final y = PointOnObject(id: 'y', curve: polar, parameter: 2.5);
+
+      final emitted = extractAndPin([o, rim, circle, pole, polar, x, y]);
+
+      expect(emitted, hasFact(Predicate(PredicateKind.perp, [o, pole, x, y])));
+    });
+
+    test('La Hire: a point of contact on the polar is perpendicular to '
+        'the radius, with the *pole* as the tangent\'s other point', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(3, 0));
+      final circle = CircleCenterPoint(id: 'c', center: o, onCircle: rim);
+      final pole = FreePoint(id: 'p', position: const Vec2(8, 0));
+      final polar = PolarLine(id: 'l', point: pole, circle: circle);
+      final touch = IntersectionPoint(
+        id: 'k',
+        curve1: polar,
+        curve2: circle,
+        branchIndex: 0,
+      );
+
+      final emitted = extractAndPin([o, rim, circle, pole, polar, touch]);
+
+      expect(
+        emitted,
+        hasFact(Predicate(PredicateKind.perp, [o, touch, touch, pole])),
+      );
+    });
+  });
+
+  group('RadicalAxisLine', () {
+    test('the axis is perpendicular to the line of centres', () {
+      final o1 = FreePoint(id: 'o1', position: const Vec2(0, 0));
+      final r1 = FreePoint(id: 'r1', position: const Vec2(4, 0));
+      final c1 = CircleCenterPoint(id: 'c1', center: o1, onCircle: r1);
+      final o2 = FreePoint(id: 'o2', position: const Vec2(5, 1));
+      final r2 = FreePoint(id: 'r2', position: const Vec2(8, 1));
+      final c2 = CircleCenterPoint(id: 'c2', center: o2, onCircle: r2);
+      final axis = RadicalAxisLine(id: 'ax', circle1: c1, circle2: c2);
+      final x = PointOnObject(id: 'x', curve: axis, parameter: 0.5);
+      final y = PointOnObject(id: 'y', curve: axis, parameter: 3.0);
+
+      final emitted = extractAndPin([o1, r1, c1, o2, r2, c2, axis, x, y]);
+
+      expect(emitted, hasFact(Predicate(PredicateKind.perp, [o1, o2, x, y])));
     });
   });
 
