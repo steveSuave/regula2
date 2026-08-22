@@ -69,6 +69,20 @@ String stepReason(ProofStep step) => step.isGiven
     : '${step.rule!.replaceAll('_', ' ')} '
           'from ${step.premiseSteps.map((n) => '[$n]').join(', ')}';
 
+/// The angle chase under an `angle_arithmetic` step, cited against
+/// [proof]'s own numbering — empty for every other step.
+///
+/// `angle arithmetic from [1], [2], [4]` names what a step used and
+/// explains nothing, which is the black box PLAN refused Wu over. These
+/// are the relations it added up, one line each. See `AngleChase` for
+/// why the multiple belongs to an equation rather than to a cited fact.
+List<String> chaseLines(ProofStep step, Proof proof) {
+  final chase = step.chase;
+  if (chase == null) return const [];
+  final numbering = proof.numbering;
+  return chase.render(cite: (fact) => numbering[fact]);
+}
+
 /// The chip's wording for a question — the relation, then the points it
 /// is about.
 ///
@@ -509,6 +523,21 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    // An `angle_arithmetic` step's reason is a label for
+                    // a sum, so the sum is shown. Every other step's
+                    // rule name *is* its explanation and gets no
+                    // second line — see `AngleChase`.
+                    for (final line in chaseLines(step, proof))
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Text(
+                          line,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
