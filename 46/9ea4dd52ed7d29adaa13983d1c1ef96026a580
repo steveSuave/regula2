@@ -1,0 +1,22 @@
+test/domain/prover/hypotheses_test.dart
+  s_80297823edc62c::t_e4c255494afeef 24,26,574-632
+  s_80297823edc62c::t_2825817b8b1611 633
+lib/domain/prover/hypotheses.dart
+  s_80297823edc62c::t_2ad6ddb483e237 22,24,286-328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "469ea4dd52ed7d29adaa13983d1c1ef96026a580",
+  "prompts": {},
+  "sessions": {
+    "s_80297823edc62c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f17c183c-f6bb-4b5c-8203-2c30370c55fb",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
