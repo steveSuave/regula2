@@ -191,6 +191,21 @@ class AngleTranslation {
     return variable;
   }
 
+  /// The fact each of `closure.inputs` came from, by the same index a
+  /// certificate uses.
+  ///
+  /// [sourcesOf] answers the deduplicated *set* a proof cites, which is
+  /// the right answer for "what does this step rest on" and the wrong
+  /// one for "what was added up": a `coll` contributes two equations and
+  /// a certificate may weight them differently, so there is no
+  /// well-defined multiple per cited fact. Per *input* there is, and
+  /// that is what an angle chase reads off.
+  List<Fact> get sources => List.unmodifiable(_sources);
+
+  /// The two points naming [variable], or null when nothing registered
+  /// it — a variable exists only because some fact mentioned the pair.
+  (GeoPoint, GeoPoint)? pairFor(String variable) => _pairs[variable];
+
   /// Every variable the closure has heard of, in order.
   Iterable<String> get variables {
     final keys = _pairs.keys.toList()..sort();

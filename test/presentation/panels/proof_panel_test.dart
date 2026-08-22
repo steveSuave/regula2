@@ -17,6 +17,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/prover/angle_translation.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/predicate.dart';
@@ -588,6 +589,83 @@ void main() {
         findsOneWidget,
         reason: 'the reader must not read this as their theorem being wrong',
       );
+    });
+
+    testWidgets('an angle step shows the chase, not just its premises', (
+      tester,
+    ) async {
+      // The panel is where M-P3's readability claim is settled: an
+      // `angle_arithmetic` reason names what a step used and explains
+      // nothing on its own. `perp-true-unproved.rgl` derives ten of
+      // them, so this is the real thing rather than a rig.
+      final construction = decodeDocument(
+        jsonDecode(
+              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+
+      final ready = container.read(proverProvider) as ProverReady;
+      final goal = provableGoals(ready.database).firstWhere(
+        (fact) =>
+            ready.database.derivationOf(fact)!.rule == angleArithmeticRule,
+      );
+      final proof = ready.proofOf(goal)!;
+      final step = proof.steps.last;
+      expect(step.chase, isNotNull);
+
+      final goalRow = find.text(describeFact(goal));
+      await tester.scrollUntilVisible(
+        goalRow,
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.ensureVisible(goalRow);
+      await tester.pumpAndSettle();
+      await tester.tap(goalRow);
+      await tester.pumpAndSettle();
+
+      final lines = chaseLines(step, proof);
+      expect(lines, isNotEmpty);
+      for (final line in lines) {
+        expect(
+          inPanel(find.text(line)),
+          findsAtLeastNWidgets(1),
+          reason: 'the chase line "$line" is not on screen',
+        );
+      }
+      expect(inPanel(find.textContaining('⟹')), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('a DD step is left alone — its rule is the explanation', (
+      tester,
+    ) async {
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(describeFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.pumpAndSettle();
+
+      // Varignon reaches its parallelogram through `midp`, which the
+      // angle algebra cannot read — so this proof is all DD, and adding
+      // a second line to every step would be noise.
+      final proof = (container.read(proverProvider) as ProverReady).proofOf(
+        rig.goal,
+      )!;
+      expect(proof.steps.every((step) => step.chase == null), isTrue);
+      expect(inPanel(find.textContaining('θ(')), findsNothing);
     });
 
     testWidgets('an answer can go back to everything the run found', (
