@@ -1461,7 +1461,7 @@ The look is deferred rather than done, at the user's call. Take Chrome out of fu
 
 ## 2026-08-22 — session 165: Phase 155, the tangent hypothesis
 
-Merged to `main` with Phase 154 (`7791c2f`, `e72fc8d`). Suite 3128, analyze clean, browser gate 13. Not pushed at session end.
+Merged to `main` with Phase 154 (`7791c2f`, `e72fc8d`) and pushed. Suite 3128, analyze clean, browser gate 13; all three workflows green (CI 4m30s, Benchmarks 36s, Deploy 2m35s), so both phases are live.
 
 **The gap was an oversight, and the blocker was not real.** `TangentLine` emitted nothing and was not on `hypotheses()`'s documented list of kinds that emit nothing deliberately — which is how the gap should be read. The stated blocker was that the touch point is computed inside `recompute` and is never a `GeoPoint`. It does not have to be: **a point the construction puts on both the tangent and its circle *is* the touch point**, because a tangent meets its circle exactly once. So `perp(O, T, T, P)` for every other named `P` on the line. Two things it needed beyond that: a **named centre** (a `ThreePointCircle` has none, so a drawn `CircleCenter` is the fallback — without it the most natural tangency figure emits nothing), and a **circle-by-construction guard**, since the tangent to a general conic at `T` is not perpendicular to `T→centre`.
 
