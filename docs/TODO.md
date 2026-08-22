@@ -18,10 +18,25 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 
 The first of the two structural gaps Phase 150 found behind its three rules (PLAN §"Two closures the rule table is standing in for"). Ahead of M-P3 in value, and the cheapest of the three open prover phases.
 
-- [ ] **Lines and circles as objects carrying their point sets**, merged by union-find, so "which points name this line" is a lookup rather than a derivation. A `Fact` keeps its point-tuple form (the vocabulary and the save format do not move); what changes is that the *matcher* resolves a pair to its carrier before joining
-- [ ] **Deletes rules rather than adding them**: `coll_transitive` and `perp_coll` go, and `para_coll` — already written, measured and rejected in Phase 150 — never comes back. Their rigs become tests of the closure
+**Split in two.** The structure and the rule deletions are separable, and separating them is what makes a regression legible: with the matcher moved *and* three rules gone in one commit, a fact that stops being derived has two possible causes. 151a lands the closure with no consumer and measures it against the rule set as it stands; 151b moves the matcher and deletes what the measurement showed to be redundant.
+
+### 151a — the carrier index (done)
+
+- [x] **Lines and circles as objects carrying their point sets** (`lib/domain/prover/carriers.dart`), merged by union-find over the tuples that name them — pairs for a line, triples for a circle, which is the classical soundness argument and the only difference between the two closures. A `Fact` keeps its point-tuple form: the vocabulary and the save format do not move, and nothing here writes to a `FactDatabase`
+- [x] **The invariant that makes a lookup a map read**: every arity-subset of a class's point set maps to that class, maintained by re-keying after each merge. So a merge that makes two previously unrelated names equal is found when the points are re-keyed, not later by a rule — and `lineThrough` is total, a pair no `coll` has mentioned answering the carrier of exactly those two points
+- [x] **Incremental, because the engine is**: `absorb` takes one fact at a time and lands where a rebuild from the whole database lands, in any arrival order (pinned both ways)
+- [x] **Measured against the rule set as it stands** — the deletion argument for 151b, made before anything moves. On `perp-true-unproved.rgl` (+ its auxiliary point) 8 `coll` facts are 2 line carriers of 4 points each, and `coll_transitive` + `perp_coll` account for 9 of the 41 facts; on `provoleas2.json` 11 `coll` facts are 2 carriers (5 and 4 points) and the two rules account for 11 of 75. **A full closure rebuild over `provoleas2`'s 75 facts costs 41 µs** — less than one average rule application (Session 158 measured 65 µs to 2.3 ms), which is what makes resolving through it affordable per join
+- [x] **`cyclic_fifth_point` fires on no fixture**, so the circle closure has no measured consumer today — recorded as `para_coll`'s status was, rather than claimed as a saving
+- [x] Tests (`test/domain/prover/carriers_test.dart`, 19): the empty closure's total lookup; merge on a shared name and *no* merge on a shared point (a pencil is not a line); the merge only the re-keying finds; `coll_transitive`'s and `cyclic_fifth_point`'s content as unions; what it refuses (`para`/`perp`/`midp`, a repeated point); incremental = rebuilt, forwards and backwards; and a sweep over a real run asserting every `coll` the rule derived is already a lookup in the closure built from the facts it did *not* derive
+- [x] Gates: analyze clean, suite **3003** green (2984 + 19)
+
+### 151b — the matcher resolves through it (open)
+
+- [ ] **The matcher resolves a pair to its carrier before joining**, behind a flag first so the before/after fact counts on the five fixtures are the same experiment
+- [ ] **Deletes rules rather than adding them**: `coll_transitive` and `perp_coll` go, `cyclic_fifth_point` goes if the closure subsumes it, and `para_coll` — already written, measured and rejected in Phase 150 — never comes back. Their rigs become tests of the closure
 - [ ] **Deletes the all-spellings search** in `questions.dart`: a question is one statement about carriers, so `ProverQuestion.spellings` collapses to one. The Phase 148 tests that turn on the multi-spelling scan will need to change character, exactly as Phase 150 already made one of them do
 - [ ] Cost: measure before and after on the five fixtures, especially `provoleas2.json` — the closure should *reduce* the fact count as well as the rule count
+- [ ] **A proof still has to read in point tuples.** A step citing a carrier is not a step a user can follow, so whatever the matcher resolves through, `Proof.render()` and `checkDerivation` keep naming points — and `derivation_check.dart` is the thing that will notice if they diverge
 
 ## Phase 152 — M-P3: the angle and ratio algebra (open)
 
