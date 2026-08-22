@@ -31,10 +31,11 @@ import 'package:regula/domain/prover/rule_engine.dart';
 /// - **power of the point**, `|PA|·|PB| = |PS|²` — an `eqratio`, and the
 ///   ratio-chain input the whole corpus holds exactly one of.
 ///
-/// Both hold in the figure and **neither is derived**, which is the
-/// state this phase's rule box changes. The tests below pin that gap as
-/// a measurement rather than describing it, so when a rule lands the
-/// number that moves is visible.
+/// Both hold in the figure. `tangent_lengths` (Phase 155d) derives the
+/// first; the second is out of reach for a **structural** reason rather
+/// than a missing rule, and the test below pins which. That distinction
+/// is the whole value of the document: it separates "the table is short
+/// a theorem" from "the vocabulary cannot say it".
 void main() {
   late Construction construction;
   late DiagramFilter filter;
@@ -116,23 +117,79 @@ void main() {
     expect(filter.holds(powerOfThePoint()), isTrue);
   });
 
-  test('and neither is derived — this is the gap, measured', () {
+  test('tangent_lengths derives the theorem, and one more besides', () {
     final database = exchange();
 
-    expect(database.contains(Fact.of(tangentLengths())), isFalse);
-    expect(database.contains(Fact.of(powerOfThePoint())), isFalse);
+    expect(database.contains(Fact.of(tangentLengths())), isTrue);
+    expect(
+      database.derivationOf(Fact.of(tangentLengths()))!.rule,
+      'tangent_lengths',
+    );
+
+    // The chord of contact is perpendicular to the centre→pole join.
+    // Nothing emitted it and no rule is about it: `perp_bisector` reads
+    // it off the new `cong` beside the radii `cong`, which is the sort
+    // of second theorem a rule with a consumer pays for.
+    expect(
+      database.contains(
+        Fact.of(
+          Predicate(PredicateKind.perp, [
+            named('S'),
+            named('T'),
+            named('O'),
+            named('P'),
+          ]),
+        ),
+      ),
+      isTrue,
+    );
   });
 
-  test('the ratio half has no input at all, which is the sharper half of '
-      'the finding', () {
+  test('power of the point stays out of reach, and the reason is the '
+      'orientation split rather than a missing rule', () {
     final database = exchange();
+    expect(database.contains(Fact.of(powerOfThePoint())), isFalse);
 
-    // 152e deferred the length system on measured evidence: 0 new `cong`
-    // across five fixtures and *one* `eqratio` in the whole corpus. This
-    // document adds no `eqratio` either — not because the algebra cannot
-    // hold one, but because no rule in the table manufactures one. Power
-    // of the point is the rule that would, and until it exists the ratio
-    // half of the length system has nothing to work on here.
+    // The similarity it needs is *true*: `psa` and `pbs` are similar,
+    // and the orientation-free predicate says so.
+    expect(
+      filter.holds(
+        Predicate(PredicateKind.simtri, [
+          named('P'),
+          named('S'),
+          named('A'),
+          named('P'),
+          named('B'),
+          named('S'),
+        ]),
+      ),
+      isTrue,
+    );
+
+    // But the two triangles are oppositely oriented, so the shared angle
+    // at `P` that `aa_simtri`'s second premise wants is *false* as a
+    // mod-π eqangle. That is the direct/reflected split M-P1 defers —
+    // no rule added to the table can reach around it, which is why
+    // `tangent_chord` was measured and dropped rather than kept in the
+    // hope of unlocking this.
+    expect(
+      filter.holds(
+        Predicate(PredicateKind.eqangle, [
+          named('P'),
+          named('S'),
+          named('P'),
+          named('A'),
+          named('P'),
+          named('B'),
+          named('P'),
+          named('S'),
+        ]),
+      ),
+      isFalse,
+    );
+
+    // So the ratio half of 152e's length system still has no input here:
+    // the corpus's one `eqratio` is not joined by a second.
     expect(
       database.facts.where((fact) => fact.kind == PredicateKind.eqratio),
       isEmpty,
