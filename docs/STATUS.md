@@ -1450,3 +1450,11 @@ Suite 3113 green (3107 + 6), analyze clean, browser gate 13, `flutter build web 
 **Not done: the look.** The phase's last gate is "looked at on a narrow window", and this is a layout claim, so the widget test is evidence about layout and gestures but not about the renderer. The Chrome extension was not connected this session, so browser automation could not drive it. A release build is served at `http://127.0.0.1:8731/` for the user to narrow and drag.
 
 **Next:** the look, then Phase 155 — the tangent hypothesis, which is the one that re-opens 152e's deferred length-system measurement.
+
+### Addendum — the look was attempted, and the way it failed is worth keeping
+
+The extension connected on the second try and the release build loaded, but `resize_window` silently no-ops on a **macOS-fullscreen** Chrome window: it reports success every time while the page's own numbers say otherwise — `innerWidth` pinned at the screen width, `screenX/screenY` at 0, and `outerWidth`/`outerHeight` coming back *smaller* than the inner size, which cannot happen on a real window. That last one is the tell.
+
+The workaround tried — pinning `flutter-view` to 430 px — is a **dead end, and instructively so**: it clips the view without changing what Flutter reports. The app bar stayed at its 56-px Material height instead of the 48-px `_phoneBarHeight`, which says `compactPanels` was still false; the panel would have docked rather than opened as a sheet, so it was the wide layout seen through a narrow hole. Any future attempt to fake a phone viewport in the browser should check the bar height first — it is the cheapest signal that the gate actually engaged.
+
+The look is deferred rather than done, at the user's call. Take Chrome out of fullscreen, then `resize_window` works.
