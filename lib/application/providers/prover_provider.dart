@@ -5,6 +5,7 @@ import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
 import '../../domain/prover/hypotheses.dart';
 import '../../domain/prover/proof.dart';
+import '../../domain/prover/prover.dart';
 import '../../domain/prover/questions.dart';
 import '../../domain/prover/rule_engine.dart';
 import 'construction_provider.dart';
@@ -260,7 +261,7 @@ class ProverAnswered extends ProverState {
 /// derived (PLAN §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
-/// it drives — `hypotheses`, `DiagramFilter`, `ProverEngine`, `Proof` —
+/// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
 /// is pure Dart under `lib/domain/prover/`, unit-tested there; what the
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.
@@ -304,7 +305,7 @@ class ProverNotifier extends _$ProverNotifier {
   /// The engine behind the published [ProverReady], kept so an exhausted
   /// run can be resumed rather than restarted. Phase 140 built the
   /// resumable shape; this is a consumer using it for what it is for.
-  ProverEngine? _engine;
+  Prover? _engine;
 
   @override
   ProverState build() => const ProverIdle();
@@ -334,7 +335,7 @@ class ProverNotifier extends _$ProverNotifier {
     final filter = DiagramFilter.probe(objects, absolute: absolute);
     final database = FactDatabase();
     seedHypotheses(database, hypotheses(objects, absolute: absolute), filter);
-    final engine = ProverEngine(database: database, filter: filter);
+    final engine = Prover(database: database, filter: filter);
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
@@ -406,7 +407,7 @@ class ProverNotifier extends _$ProverNotifier {
               hypotheses(objects, absolute: absolute),
               filter,
             );
-            return ProverEngine(database: database, filter: filter);
+            return Prover(database: database, filter: filter);
           }();
 
     if (!engine.filter.holds(question.canonical)) {
@@ -468,7 +469,7 @@ class ProverNotifier extends _$ProverNotifier {
   ///
   /// Any spelling will do: they are one statement, and which points name
   /// a line is the prover's business (see [ProverQuestion]).
-  static Fact? _derived(ProverEngine engine, ProverQuestion question) {
+  static Fact? _derived(Prover engine, ProverQuestion question) {
     for (final spelling in question.spellings) {
       final fact = Fact.of(spelling);
       if (engine.database.contains(fact)) return fact;
@@ -476,7 +477,7 @@ class ProverNotifier extends _$ProverNotifier {
     return null;
   }
 
-  ProverAnswer _answerFrom(ProverEngine engine, ProverQuestion question) {
+  ProverAnswer _answerFrom(Prover engine, ProverQuestion question) {
     final fact = _derived(engine, question);
     if (fact != null) {
       return ProverAnswer(
@@ -497,7 +498,7 @@ class ProverNotifier extends _$ProverNotifier {
     );
   }
 
-  ProverReady _readyFrom(ProverEngine engine, int revision) => ProverReady(
+  ProverReady _readyFrom(Prover engine, int revision) => ProverReady(
     revision: revision,
     database: engine.database,
     applications: engine.applications,

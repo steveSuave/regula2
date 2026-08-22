@@ -54,11 +54,8 @@ class ProverPass {
 /// diagram means something upstream is wrong, and letting it in would
 /// hide that.
 class Prover {
-  Prover({
-    required this.database,
-    required this.filter,
-    List<Rule>? rules,
-  }) : _dd = ProverEngine(database: database, filter: filter, rules: rules) {
+  Prover({required this.database, required this.filter, List<Rule>? rules})
+    : _dd = ProverEngine(database: database, filter: filter, rules: rules) {
     _absorb();
   }
 
@@ -95,16 +92,26 @@ class Prover {
   /// and pretending otherwise would put two incomparable things behind
   /// one number.
   int run({int? maxApplications}) {
+    final spentBefore = _dd.applications;
     while (!isComplete) {
-      if (maxApplications != null && _dd.applications >= maxApplications) break;
-      final budget = maxApplications == null
-          ? 1 << 30
-          : maxApplications - _dd.applications;
+      final budget = _budgetLeft(maxApplications, spentBefore);
+      if (budget <= 0) break;
       final pass = _pass(budget);
       passes.add(pass);
       if (pass.isQuiet) break;
     }
     return passes.length;
+  }
+
+  /// What this *call* may still spend.
+  ///
+  /// Per call and not per lifetime, which is `ProverEngine.runChunked`'s
+  /// contract and the one a resumed run depends on: a second call with
+  /// the same budget must be able to spend it, or *Keep going* keeps
+  /// nothing going.
+  int _budgetLeft(int? maxApplications, int spentBefore) {
+    if (maxApplications == null) return 1 << 30;
+    return maxApplications - (_dd.applications - spentBefore);
   }
 
   /// [run] with a yield between passes, so a long exchange never holds a
@@ -119,18 +126,23 @@ class Prover {
       throw ArgumentError.value(chunkBudget, 'chunkBudget', 'must be positive');
     }
     if (stopWhen != null && stopWhen()) return 0;
+    final spentBefore = _dd.applications;
     while (!isComplete) {
-      if (maxApplications != null && _dd.applications >= maxApplications) break;
-      var budget = chunkBudget;
-      if (maxApplications != null) {
-        final left = maxApplications - _dd.applications;
-        if (left < budget) budget = left;
-      }
-      if (budget <= 0) break;
+      final left = _budgetLeft(maxApplications, spentBefore);
+      if (left <= 0) break;
+      final budget = left < chunkBudget ? left : chunkBudget;
       final pass = _pass(budget);
       passes.add(pass);
       if (pass.isQuiet) break;
       if (stopWhen != null && stopWhen()) break;
+      // Every exit is taken *before* the yield, deliberately. A yield
+      // is a timer, and a caller that awaits this future without
+      // pumping — `testWidgets`' fake async, and so every widget test
+      // that drives the prover directly — would wait on a timer nobody
+      // fires. `ProverEngine.runChunked` has the same shape for the same
+      // reason; a run that has spent its budget must come back without
+      // touching the event loop.
+      if (_budgetLeft(maxApplications, spentBefore) <= 0) break;
       await yieldToEventLoop();
     }
     return passes.length;

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -237,6 +238,50 @@ void main() {
       final database = FactDatabase();
       final prover = Prover(database: database, filter: filter);
       expect(() => prover.runChunked(chunkBudget: 0), throwsArgumentError);
+    });
+
+    test('a spent budget comes back without touching the event loop', () {
+      // Found by a widget test, and a plain `await` would never have
+      // shown it: a yield is a timer, and inside `testWidgets`' fake
+      // async a caller that awaits this future without pumping waits on
+      // a timer nobody fires. So every exit must be taken *before* the
+      // yield — which is `ProverEngine.runChunked`'s shape, for exactly
+      // this reason.
+      final construction = jgexDocument();
+      final filter = DiagramFilter.probe(construction.objects);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(construction.objects), filter);
+      final prover = Prover(database: database, filter: filter);
+
+      fakeAsync((async) {
+        var settled = false;
+        prover
+            .runChunked(chunkBudget: 1000, maxApplications: 3)
+            .then((_) => settled = true);
+        async.flushMicrotasks();
+        expect(
+          settled,
+          isTrue,
+          reason: 'the run is waiting on a timer nobody will fire',
+        );
+      });
+      expect(prover.applications, lessThanOrEqualTo(3));
+    });
+
+    test('and so does a stopWhen that is already true', () {
+      final construction = jgexDocument();
+      final filter = DiagramFilter.probe(construction.objects);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(construction.objects), filter);
+      final prover = Prover(database: database, filter: filter);
+      fakeAsync((async) {
+        var settled = false;
+        prover
+            .runChunked(chunkBudget: 1000, stopWhen: () => true)
+            .then((_) => settled = true);
+        async.flushMicrotasks();
+        expect(settled, isTrue);
+      });
     });
 
     test('a stopWhen ends the exchange early', () async {
