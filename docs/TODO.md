@@ -14,11 +14,11 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 151 — M-P2d: the incidence closure (open)
+## Phase 151 — M-P2d: the incidence closure (done)
 
 The first of the two structural gaps Phase 150 found behind its three rules (PLAN §"Two closures the rule table is standing in for"). Ahead of M-P3 in value, and the cheapest of the three open prover phases.
 
-**Split, and the split is what caught the error.** 151a landed the closure with no consumer; 151b was to move the matcher and delete the rules it subsumed. Measured separately, the matcher move turned out to be a **regression on every fixture** — had it shipped together with three rule deletions, the cause would have been unreadable. The structure stands, the consumer does not, and 151c is the consumer the measurement points at instead.
+**Split, and the split is what caught the error.** 151a landed the closure with no consumer; 151b was to move the matcher and delete the rules it subsumed. Measured separately, the matcher move turned out to be a **regression on every fixture** — had it shipped together with three rule deletions, the cause would have been unreadable. 151c then chased the fact key instead, and a third measurement closed that too: **the closure's consumer is M-P3.** So the phase ships its structure and hands the rest to Phase 152, which is now next.
 
 ### 151a — the carrier index (done)
 
@@ -40,19 +40,14 @@ The step that was going to move the matcher, and the measurement that says not t
 - [x] **PLAN §"Two closures…" amended first**, since the sentence being corrected ("deletes rules, deletes the spelling search, makes every later rule cheaper") is a PLAN claim
 - [x] **`coll_transitive` and `perp_coll` stay.** They are the patch, and the patch is measurably cheaper than the half-closure that was going to replace it. `questions.dart`'s all-spellings search stays with them
 
-### 151c — the carrier-reduced fact key (open, and blocked on a decision)
+### 151c — the carrier-reduced fact key (closed, unbuilt: M-P3 is the consumer)
 
-What M-P2d actually wants, per 151b's finding: `perp(A,B,C,D)` and `perp(E,F,C,D)` as **one database entry**, so spellings collapse at the store and the join stays as pruned as it is today.
+What M-P2d looked like it wanted after 151b: `perp(A,B,C,D)` and `perp(E,F,C,D)` as one database entry. Three measurements, all taken off a baseline run with no engine change, closed it instead.
 
-**Two measurements now bound it, and they disagree** (PLAN §"Two closures…", the amendment). The upside is real and concentrated: `provoleas2.json` — the fixture that never reaches quiescence — holds **53 line-shaped facts that are 8 distinct statements**, and its 75 facts reduce to 30; `perp-true-unproved.rgl` 41 → 28. The three fixtures that already converge collapse by **nothing**. Against that, **10 of the 26 rules have a variable in both a line role and a point-or-segment role** (`perp_bisector`, `inscribed_angle` and its converse, `isosceles_base` and its converse, `midline_para`, `intercept_eqratio`, `sas_simtri`, `aa_simtri`, `perp_coll`), so a plain reduced key leaves a third of the table with no points to bind.
-
-**The design that survives both is narrower than the box below**: one entry per carrier-statement *carrying its witness spellings* — dedup at the key, enumerate witnesses at match time only for spanning variables. 151b's mistake was enumerating loosely everywhere. On `provoleas2` that is ~6.6 witnesses per key, so whether the enumeration gives back what the dedup saved is measurable — but only once it is built.
-
-- [ ] **Decide first, in PLAN, what a carrier merge does to facts already stored.** Two entries becoming one touches first-insert-wins (which derivation survives — the older, presumably, but say so) and the "premises strictly older than conclusions" argument that makes the proof DAG acyclic *by construction* rather than by check. No code until this is written down
-- [ ] **The key is mutable state, and that is the whole difficulty.** `Fact`'s canonical form is today a pure function of its points; a carrier-reduced key is a function of the closure, which grows during a run. Whatever the answer, `Fact` must not silently canonicalize differently at two moments in one run
-- [ ] **Re-measure the same three configurations** — baseline, key-reduced, key-reduced minus the three rules — on the five fixtures. The bar is the numbers in 151b: quiescence preserved on `locus3`/`apatitos-topos`, and no fact lost on `perp-true-unproved.rgl`
-- [ ] **A proof still has to read in point tuples.** A step citing a carrier is not a step a user can follow, so `Proof.render()` and `checkDerivation` keep naming points — and `derivation_check.dart` is what will notice if they diverge
-- [ ] **Only then** the rule deletions and `questions.dart`'s spelling collapse, which are downstream of the key and not of the matcher
+- [x] **The upside is real and concentrated.** `provoleas2.json` — the fixture that never reaches quiescence — holds **53 line-shaped facts that are 8 distinct statements**; its 75 facts reduce to 30, and `perp-true-unproved.rgl` 41 → 28. The three fixtures that already converge collapse by **nothing**
+- [x] **The rule table cannot take a plain reduced key.** 10 of 26 rules have a variable in both a line role and a point-or-segment role (`perp_bisector`, `inscribed_angle` and its converse, `isosceles_base` and its converse, `midline_para`, `intercept_eqratio`, `sas_simtri`, `aa_simtri`, `perp_coll`). `perp_bisector` — `cong(o,a,o,b) & cong(p,a,p,b) => perp(o,p,a,b)` — binds `a`, `b` as segment ends and then names them as a line. A design that survives it is narrower: one entry per carrier-statement *carrying its witness spellings*, enumerating only at spanning variables
+- [x] **And then the third measurement made it moot.** Split the line-shaped facts by kind: `provoleas2` is para 18 / perp 11 / eqangle 24, `perp-true-unproved` 9 / 12 / 3, `apatitos-topos` 0 / 1 / 13. **Every line-shaped kind is a kind AR absorbs** — and that is the same observation from the other end, since `lineSlots` is non-empty for exactly the predicates whose arguments name *lines*, which is what θ is a variable over. After M-P3, `para`/`perp`/`eqangle` are not facts, and `lineSlots` is empty for every kind that remains. A witness-set database would deduplicate facts M-P3 deletes
+- [x] **So M-P2d's consumer is M-P3, not a fact-key redesign**, and PLAN's §M-P3 bullet says so. The ordering was backwards: incidence went before AR because it looked cheaper, and it *is* cheaper — but only the half that was already free (Phase 151a). `coll_transitive`, `perp_coll` and `questions.dart`'s all-spellings search stay until AR lands
 
 ## Phase 152 — M-P3: the angle and ratio algebra (open)
 
@@ -61,6 +56,8 @@ The second structural gap, and the real M-P3 (PLAN §M-P3, rewritten). Not a sec
 - [ ] **θ per line, mod π; every angle fact a linear equation.** `para` is a zero difference, `perp` is π/2, Chasles is addition, closure is elimination. Log-lengths give the same for `cong` and `eqratio`
 - [ ] **The point is the cost profile, not only the power.** `eqangle`/`eqratio` carry 128-form orbits against 8 for `perp` and 6 for `coll` — they are why `provoleas2.json` never reaches quiescence. Moving angles out of the fact set removes the cost centre instead of feeding it
 - [ ] **A peer of DD behind one `Prover` facade**, sharing the fact database and the numeric filter, exchanging facts at the boundary. Roughly thirty of JGEX's seventy-two rules fall out of this plus Phase 151 for free
+- [ ] **θ is indexed per carrier, so `carriers.dart` (Phase 151a) is what this is built on** — that is the whole of what M-P2d ended up delivering, and Phase 151b/c is the record of why. The three kinds AR absorbs are exactly the three with non-empty `lineSlots`, so when they leave the fact set the line-spelling problem leaves with them
+- [ ] **What the DD fact set is afterwards**: `coll`, `cyclic`, `cong`, `midp`, `eqratio`, `simtri`, `contri` — every one of them `lineSlots`-empty. `coll_transitive`, `perp_coll` and `questions.dart`'s all-spellings search are re-examined *here*, not before
 - [ ] **Not in scope until the algebra exists**: Pythagoras (squared lengths), the `2·∠`/`3·∠` family and the 180° angle sum (a coefficient ring). Named here so they are not mistaken for rule-table work
 
 ## Phase 153 — auxiliary construction (open)
