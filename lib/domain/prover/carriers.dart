@@ -76,6 +76,68 @@ class Carrier {
   String toString() => '${kind.name}{${points.map((p) => p.id).join(', ')}}';
 }
 
+/// The argument pairs of [kind] that name a **line** — the slots a
+/// matcher may resolve through the line closure, replacing the witness
+/// pair with any other pair on the same carrier.
+///
+/// This table is a soundness claim per entry, and it is the one place
+/// where the closure can go wrong: reading a slot as a line when it
+/// names a *segment* would let `cong(A,B,C,D)` match a premise spelled
+/// `cong(A,X,C,D)` with `A`, `B`, `X` collinear, which is false the
+/// moment `|AX| ≠ |AB|` — and it would be false invisibly, since the
+/// numeric screen only ever sees the conclusion. So the entries are
+/// pinned against the *evaluators* (`carriers_test.dart`), exactly the
+/// way `Fact`'s symmetry group is: the claim "this substitution
+/// preserves truth" is one only `Predicate.holdsOn` can adjudicate.
+///
+/// **The two directions of error are not symmetric, and only one of them
+/// fails a test.** A slot listed that should not be makes the matcher
+/// unsound, and the sweep catches it on a numeric counterexample. A slot
+/// *missing* that belongs costs completeness only — the matcher resolves
+/// less than it could — so nothing here fails; what would show it is the
+/// fact-count measurement, not a test.
+///
+/// The claims, in the order of the switch:
+///
+/// - **`para`, `perp`** — both pairs name lines. `ab ∥ cd` is a
+///   statement about two directions, and every pair on line `ab` has
+///   that direction.
+/// - **`eqangle`** — all four pairs name lines. The predicate is
+///   `∠(ab, cd) = ∠(ef, gh)` read **mod π**, which is the angle between
+///   *lines*; that is the same reading `Fact`'s column swap already
+///   relies on.
+/// - **`cong`, `eqratio`** — no slot is a line. A pair names a segment,
+///   and a segment has a length its carrier does not: `|AB|` and `|AX|`
+///   differ for `X` on line `AB`. This is the entry that would be
+///   unsound if it were guessed by shape.
+/// - **`midp`, `simtri`, `contri`** — the arguments are points in
+///   distinguished roles, not pairs. `midp(m,a,b)` does put `m` on line
+///   `ab`, but that is incidence the closure *absorbs* (as the `coll`
+///   `midp_coll` derives), never a slot to resolve.
+/// - **`coll`, `cyclic`** — empty for a different reason, and worth
+///   saying so: these predicates *are* the incidence. Their content is
+///   what builds the closure, so resolving them through it would be
+///   circular rather than merely wrong.
+List<List<int>> lineSlots(PredicateKind kind) => switch (kind) {
+  PredicateKind.para || PredicateKind.perp => const [
+    [0, 1],
+    [2, 3],
+  ],
+  PredicateKind.eqangle => const [
+    [0, 1],
+    [2, 3],
+    [4, 5],
+    [6, 7],
+  ],
+  PredicateKind.coll ||
+  PredicateKind.cyclic ||
+  PredicateKind.cong ||
+  PredicateKind.eqratio ||
+  PredicateKind.midp ||
+  PredicateKind.simtri ||
+  PredicateKind.contri => const [],
+};
+
 /// The incidence closure: lines and circles merged by union-find over
 /// the tuples that name them, so that a pair of points resolves to *the*
 /// line it lies on rather than to one spelling of it.

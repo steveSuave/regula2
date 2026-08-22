@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
@@ -24,6 +25,8 @@ void main() {
   final d = free('d');
   final e = free('e');
   final f = free('f');
+  final g = free('g');
+  final h = free('h');
 
   Fact coll(GeoPoint x, GeoPoint y, GeoPoint z) =>
       Fact(PredicateKind.coll, [x, y, z]);
@@ -35,6 +38,198 @@ void main() {
   List<String> ids(Carrier carrier) => [
     for (final point in carrier.points) point.id,
   ];
+
+  group('lineSlots — the table, pinned against the evaluators', () {
+    // The one place the closure can be unsound. A slot listed here is a
+    // claim that swapping its witness pair for any other pair on the
+    // same line preserves the predicate's truth; only the evaluators can
+    // adjudicate that, so they do, over a seeded sweep rather than one
+    // hand-picked rig.
+    //
+    // The negatives matter as much as the positives: `cong` and
+    // `eqratio` have exactly the same *shape* as `perp` and `eqangle`
+    // and are exactly the entries that must stay empty, because a pair
+    // names a segment and a segment has a length its carrier does not.
+
+    Vec2 along(Vec2 origin, Vec2 direction, double t) => origin + direction * t;
+
+    /// [count] configurations, deterministic.
+    Iterable<math.Random> sweep(int count) sync* {
+      for (var i = 0; i < count; i++) {
+        yield math.Random(9_000 + i);
+      }
+    }
+
+    Vec2 randomPoint(math.Random rng) =>
+        Vec2(rng.nextDouble() * 12 - 6, rng.nextDouble() * 12 - 6);
+
+    Vec2 randomDirection(math.Random rng) {
+      final angle = rng.nextDouble() * math.pi;
+      return Vec2(math.cos(angle), math.sin(angle));
+    }
+
+    /// A parameter far enough from [avoid] that the substituted point is
+    /// a genuinely different one — otherwise the sweep would pass by
+    /// substituting a point for itself.
+    double otherParameter(math.Random rng, double avoid) {
+      var t = rng.nextDouble() * 8 - 4;
+      while ((t - avoid).abs() < 1) {
+        t += 2;
+      }
+      return t;
+    }
+
+    test('para and perp resolve through either line slot', () {
+      for (final rng in sweep(40)) {
+        final d1 = randomDirection(rng);
+        final d2 = Vec2(-d1.y, d1.x);
+        final o1 = randomPoint(rng);
+        final o2 = randomPoint(rng);
+        final tb = otherParameter(rng, 0);
+        final td = otherParameter(rng, 0);
+
+        for (final entry in {
+          PredicateKind.para: d1,
+          PredicateKind.perp: d2,
+        }.entries) {
+          final points = [
+            o1,
+            along(o1, d1, tb),
+            o2,
+            along(o2, entry.value, td),
+          ];
+          final base = Predicate(entry.key, [a, b, c, d]);
+          expect(
+            base.holdsOn(points),
+            isTrue,
+            reason: 'bad rig: ${entry.key.name} is not true here',
+          );
+          for (final slot in lineSlots(entry.key)) {
+            final moved = [...points];
+            final origin = points[slot[0]];
+            final direction = slot[0] == 0 ? d1 : entry.value;
+            moved[slot[1]] = along(
+              origin,
+              direction,
+              otherParameter(rng, slot[0] == 0 ? tb : td),
+            );
+            expect(
+              base.holdsOn(moved),
+              isTrue,
+              reason: '${entry.key.name} slot $slot is not a line slot',
+            );
+          }
+        }
+      }
+    });
+
+    test('eqangle resolves through all four, because it reads mod pi', () {
+      for (final rng in sweep(40)) {
+        final d1 = randomDirection(rng);
+        final theta = rng.nextDouble() * math.pi;
+        Vec2 turned(Vec2 v) => Vec2(
+          v.x * math.cos(theta) - v.y * math.sin(theta),
+          v.x * math.sin(theta) + v.y * math.cos(theta),
+        );
+        final d3 = randomDirection(rng);
+        final directions = [d1, turned(d1), d3, turned(d3)];
+        final origins = [for (var i = 0; i < 4; i++) randomPoint(rng)];
+        final parameters = [for (var i = 0; i < 4; i++) otherParameter(rng, 0)];
+        final points = <Vec2>[
+          for (var i = 0; i < 4; i++) ...[
+            origins[i],
+            along(origins[i], directions[i], parameters[i]),
+          ],
+        ];
+        final base = Predicate(PredicateKind.eqangle, [a, b, c, d, e, f, g, h]);
+        expect(
+          base.holdsOn(points),
+          isTrue,
+          reason: 'bad rig: eqangle is not true here',
+        );
+        expect(lineSlots(PredicateKind.eqangle).length, 4);
+        for (final slot in lineSlots(PredicateKind.eqangle)) {
+          final index = slot[0] ~/ 2;
+          final moved = [...points];
+          moved[slot[1]] = along(
+            origins[index],
+            directions[index],
+            otherParameter(rng, parameters[index]),
+          );
+          expect(
+            base.holdsOn(moved),
+            isTrue,
+            reason: 'eqangle slot $slot is not a line slot',
+          );
+        }
+      }
+    });
+
+    test('cong and eqratio have no line slot, and here is why', () {
+      // Driven off the table rather than restating it: for every pair
+      // slot of these two kinds, substituting another point on the same
+      // line must preserve truth *exactly when the table lists the
+      // slot*. It lists none, so every substitution must break the
+      // predicate — and adding an entry here would fail on a numeric
+      // counterexample rather than on an `isEmpty`.
+      const origin = Vec2(0, 0);
+      const unit = Vec2(1, 0);
+      const other = Vec2(0, 2);
+      final near = along(origin, unit, 4);
+      final far = along(origin, unit, 9);
+      final otherEnd = along(other, unit, 4);
+      final otherFar = along(other, unit, 9);
+      final ends = [origin, near, other, otherEnd];
+      final replacements = {1: far, 3: otherFar};
+
+      for (final kind in [PredicateKind.cong, PredicateKind.eqratio]) {
+        final points = kind == PredicateKind.cong ? ends : [...ends, ...ends];
+        final base = Predicate(kind, [
+          for (var i = 0; i < kind.arity; i++) [a, b, c, d, e, f, g, h][i],
+        ]);
+        expect(
+          base.holdsOn(points),
+          isTrue,
+          reason: 'bad rig: ${kind.name} is not true here',
+        );
+        for (var slot = 0; slot * 2 < kind.arity; slot++) {
+          final moved = [...points];
+          moved[slot * 2 + 1] = replacements[(slot * 2 + 1) % 4]!;
+          final listed = lineSlots(kind).any((entry) => entry[0] == slot * 2);
+          expect(
+            base.holdsOn(moved),
+            listed,
+            reason:
+                '${kind.name} slot ${slot * 2}: a segment is not its '
+                'carrier, so this substitution must break it',
+          );
+        }
+      }
+    });
+
+    test('coll and cyclic are empty for a different reason', () {
+      // Not "the substitution would be unsound" but "the substitution is
+      // circular": these predicates are what *builds* the closure.
+      expect(lineSlots(PredicateKind.coll), isEmpty);
+      expect(lineSlots(PredicateKind.cyclic), isEmpty);
+      expect(lineSlots(PredicateKind.midp), isEmpty);
+      expect(lineSlots(PredicateKind.simtri), isEmpty);
+      expect(lineSlots(PredicateKind.contri), isEmpty);
+    });
+
+    test('every listed slot is a well-formed pair of the kind', () {
+      for (final kind in PredicateKind.values) {
+        final seen = <int>{};
+        for (final slot in lineSlots(kind)) {
+          expect(slot.length, 2);
+          expect(slot[1], slot[0] + 1, reason: '$kind slots are adjacent');
+          expect(slot[0].isEven, isTrue);
+          expect(slot[0], lessThan(kind.arity));
+          expect(seen.add(slot[0]), isTrue, reason: '$kind repeats a slot');
+        }
+      }
+    });
+  });
 
   group('an empty closure', () {
     test('a pair no coll has mentioned names exactly itself', () {
