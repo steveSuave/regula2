@@ -7,10 +7,13 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/prover/angle_chase.dart';
 import 'package:regula/domain/prover/angle_closure.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
+import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/prover.dart';
 import 'package:regula/domain/prover/rational.dart';
@@ -105,6 +108,33 @@ void main() {
         AngleEquation.difference('a', 'c', Rational.zero),
       );
     });
+  });
+
+  test('a chase renders on the compile target, glyphs and all', () {
+    // The chase is the one thing in a proof written in characters the
+    // rest of the app never uses — `θ`, `π`, `⟹`. Those live in three
+    // different Unicode blocks and reach the page as string literals
+    // through whichever web backend is compiling, so "the strings come
+    // out right" is a claim about the target, not about the source.
+    // Held here for the same reason `Rational` is: a green VM suite is
+    // not evidence about the browser.
+    final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+    final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+    final c = FreePoint(id: 'c', position: const Vec2(2, 0));
+    final d = FreePoint(id: 'd', position: const Vec2(3, 0));
+    final e = FreePoint(id: 'e', position: const Vec2(4, 0));
+    final f = FreePoint(id: 'f', position: const Vec2(5, 0));
+    final chase = AngleChase.of(Fact(PredicateKind.para, [a, b, e, f]), [
+      Fact(PredicateKind.perp, [a, b, c, d]),
+      Fact(PredicateKind.perp, [c, d, e, f]),
+    ]);
+    expect(chase, isNotNull);
+    expect(chase!.isSound, isTrue);
+    expect(chase.render(), [
+      'θ(ab) = θ(cd) + π/2',
+      'θ(cd) = θ(ef) + π/2',
+      '⟹ θ(ab) = θ(ef)',
+    ]);
   });
 
   test('the exchange runs, and its steps verify, in the browser', () {
