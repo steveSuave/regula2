@@ -503,6 +503,24 @@ A user brought a JGEX proof of a theorem this prover could not reach, on a docum
 
 **So M-P2d is not matcher work; it is fact-key work.** For the closure to pay, `perp(A,B,C,D)` and `perp(E,F,C,D)` must be *one database entry* — the key must reduce a line slot to its carrier, which collapses spellings at the store and leaves the join as pruned as it is today. That is a change to `Fact`/`FactDatabase`, and it has one hard problem that must be decided before any code: **a carrier merge re-keys facts already stored.** Two entries becoming one touches first-insert-wins (which derivation survives?) and the "premises strictly older than conclusions" argument that makes the proof DAG acyclic by construction. Until that is settled, `coll_transitive` and `perp_coll` stay — they are the patch, and the patch is measurably cheaper than the half-closure that was going to replace it.
 
+**Two measurements bound that redesign before it is attempted, and they disagree with each other. Both were taken in Phase 151b, off a baseline run, with no engine change.**
+
+*The upside is large, and it is concentrated on exactly the document that needs it.* Grouping a finished run's facts by their carrier-reduced key:
+
+| fixture | facts | reduced | line-shaped facts → keys |
+|---|---|---|---|
+| `provoleas2.json` | 75 | **30** | 53 → **8** |
+| `perp-true-unproved.rgl` (+aux) | 41 | 28 | 24 → 11 |
+| `apatitos-topos.rgl` | 30 | 30 | 14 → 14 |
+| `locus3.json` | 15 | 15 | 7 → 7 |
+| `no-locus.rgl` | 4 | 4 | 1 → 1 |
+
+`provoleas2` is the document that never reaches quiescence, and it spent its 30 000 applications re-deriving **eight** line-shaped statements in fifty-three spellings. The three fixtures that already converge collapse by nothing at all. So the reduction is worth a great deal in precisely one regime and nothing outside it — which is an argument for doing it, and equally an argument for not expecting it to pay everywhere. (Both columns are a *ceiling*: the closure used is the most-informed one, built from the finished database, and a reduced-key run would derive a different fact set rather than a subset of this one.)
+
+*The rule table, as written, cannot take a plain reduced key.* **Ten of the twenty-six rules have a variable in both a line role and a point-or-segment role** — `inscribed_angle` and its converse, `perp_bisector`, `isosceles_base` and its converse, `midline_para`, `intercept_eqratio`, `sas_simtri`, `aa_simtri`, and `perp_coll` itself. `perp_bisector` is the clearest: `cong(o,a,o,b) & cong(p,a,p,b) => perp(o,p,a,b)` binds `a` and `b` as segment ends and then names them as a line. If the stored `perp` keeps only carriers, those variables have no points to bind, and a third of the table stops matching.
+
+**Which points at a narrower design than "reduce the key", and names what 151b got wrong.** One entry per carrier-statement, *carrying the witness spellings that produced it*: dedup at the key, and enumerate witnesses at match time **only for variables that span two roles**. 151b's failure was enumerating loosely everywhere instead. Whether the witness enumeration gives back the branching the dedup saved is the open question, and on `provoleas2` it is quantified — about 6.6 witnesses per key — so it is measurable rather than arguable. That measurement needs the design built, which is why 151c is a decision and not a task.
+
 **Angles are an algebra, and pattern rules are a bad way to compute in one.** JGEX ships 29 "full angle rules"; its first six are not rules at all but the definition of a structure — `∠[u,v]` as a group element, `∠[u,v] = −∠[v,u]`, `= 0` iff parallel, `= 1` iff perpendicular, and Chasles, `∠[u,s] + ∠[s,v] = ∠[u,v]`. The remaining twenty-three are *identities in that structure*, hard-coded as match patterns because matching is the engine available. Doing the same here would be the expensive way to buy what one algebraic module gives.
 
 **The cost argument decides it, and it is measurable rather than aesthetic.** The engine binds each stored fact through its whole orbit, and the orbits are not the same size: `midp` 2 forms, `coll` 6, `para`/`perp`/`cong` 8, **`eqangle`/`eqratio` 128**. So a rule whose premises are `coll` and `perp` is nearly free — which is why Phase 150's three cost nothing measurable — while a rule with two `eqangle` premises is the shape that makes `provoleas2.json` never reach quiescence. Adding angle rules makes the cost centre worse. Moving angles *out* of the fact set and into a linear system removes it: with θ per line, closure is Gaussian elimination, polynomial in the number of lines rather than combinatorial in the number of facts. Roughly thirty of JGEX's seventy-two rules fall out of the two closures for free.
