@@ -1,0 +1,22 @@
+test/web/angle_closure_web_test.dart
+  s_309b5d9295cd87::t_7bcdb45ccf38b2 80,85,90
+  s_309b5d9295cd87::t_b0129d50e867f8 1-79,81-84,86-89,91-146
+docs/TODO.md
+  s_309b5d9295cd87::t_cc51b9dae24917 100-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "bfcf74f202545931ee25eba330c050fd0a077297",
+  "prompts": {},
+  "sessions": {
+    "s_309b5d9295cd87": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "031b523e-bc66-4211-9bef-f5444488676e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
