@@ -1404,3 +1404,21 @@ Then **Phase 136**, opened by the hidden-incidence rig: the locus walk plans bot
 - `Sector`'s start/end-on-center guard is now relative (`ProjPoint.closeTo`, 1e-9) where V1 compared `Vec2`s exactly — same policy shift as Phase 107's coincidence guards, pinned by a test.
 - `Midpoint.position` (and every migrated point's `toVec2`) reads at-infinity beyond ~1e9 relative — the Sector/Arc chains in the locus fixture die there (t ≈ 4e9), comfortably past the tail-convergence threshold; V1 had no cutoff at all. If a future fixture needs more range, that cutoff is the next wall.
 - `circumcircleOf` with one point at infinity is the line pair (line through the finite two, ℓ∞) — three of the conic's five defining points (it, I, J) sit on ℓ∞, so ℓ∞ is a component. Handy for tests; don't "fix" it to a null.
+
+## 2026-08-22 — session 163: JGEX's Prove menu, compared
+
+Docs only, no code. A user put JGEX's *Prove* menu beside ours and asked three questions: what can we answer, why is concurrency missing, and why did selecting four segments offer nothing.
+
+**What we can answer, and the two lists it separates into.** `predicate.dart` holds ten relations and `questions.dart` offers six from four selection shapes, against JGEX's seventeen items. The gaps have only three causes between them, all already-scheduled work: no *name* for the point a statement is about (tangency's touch point, concurrency's meeting point → Phase 153); no coefficient ring or length system (Special Angle, Angles Equation, Equal Product, Segment Equation → 152e's deferred boxes); and a selection being a `Set<String>`, which forecloses the *correspondence* `simtri`/`contri` need. Written up in PLAN §"JGEX's question list, compared".
+
+**Concurrency is missing from JGEX's list too, and that is the answer.** In a point-tuple vocabulary three lines concurring is `coll(P, X, Y)` at the meeting point, and dually collinearity of three points. Sugar over an existing `IntersectionPoint` is thirty lines (Phase 156); a real `concurrent` predicate would buy refutation with *no* named point via a 3×3 determinant, and is held back as a vocabulary addition needing its own symmetry group.
+
+**Two genuine findings behind the four-segment report.** First, `questions.dart:186` handles at most two carriers, so four segments falls straight through to empty — and the panel then renders *nothing at all*, no header and no reason, which is why a limitation read as breakage. Second, `eqangle`'s exclusion is justified as "eight points, or a correspondence a selection cannot express", and that reasoning is true of point selections and **false of carriers**: four segments are exactly `∠(s1,s2) = ∠(s3,s4)`, with the same three-pairing ambiguity already accepted for four points. The justification was over-applied.
+
+**Tangent is an oversight, not a decision.** `TangentLine` emits nothing and is not in `hypotheses()`'s documented list of kinds that contribute nothing deliberately. Tangency needs no new predicate — `perp(O, T, T, P)` at a named touch point, with the radii `cong` already emitted — and the blocker is only that the touch point is computed inside `recompute` rather than being a `GeoPoint`. When the user has drawn the intersection, the emission is available today.
+
+**The sequencing consequence, which is the part worth remembering.** Phase 152e deferred the length system on measured evidence (0 new `cong` on five fixtures, one `eqratio` in the whole corpus) — but that is a fact about the corpus. Tangent-length equality manufactures `cong` and power-of-a-point manufactures ratio chains, so **Phase 155 re-opens that measurement** and must come before it.
+
+Four phases opened: **154** the mobile proof sheet (`main.dart:1451` pins it at half height with no `isScrollControlled` — a `DraggableScrollableSheet` with 0.5 as the *initial* size, plus threading a `ScrollController?` into the panel's three bare `ListView`s), **155** the tangent hypothesis, **156** the questions a selection cannot ask, **157** the correspondence questions. 154 and 155 have no dependencies; 156 wants 155 for its tangency chip; 157 is gated on deciding ordered-vs-panel-local correspondence before any code.
+
+**Next:** 154 or 155 — 154 is the user-visible annoyance and is self-contained; 155 is the one that unblocks a deferred milestone box.
