@@ -733,4 +733,185 @@ void main() {
       );
     });
   });
+
+  /// Phase 154. On a phone the panel is a modal sheet, and until this
+  /// phase it was a [FractionallySizedBox] at half the screen with no
+  /// way to grow: a proof of any length was read four steps at a time.
+  /// The tests here are about the *gesture*, not the numbers — asserting
+  /// an initial fraction would pin the shape of the bug rather than the
+  /// behaviour that fixes it.
+  group('the proof sheet on a phone', () {
+    const phone = Size(400, 800);
+
+    /// The bar is one horizontal scrollable at this width, so the Proof
+    /// button has to be scrolled to before it can be tapped — the same
+    /// move `app_bar_layout_test.dart` makes.
+    Future<void> pumpPhoneEditor(WidgetTester tester) async {
+      tester.view.physicalSize = phone;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: EditorScreen()),
+        ),
+      );
+    }
+
+    Future<void> openSheet(WidgetTester tester) async {
+      await tester.scrollUntilVisible(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.byIcon(Icons.fact_check_outlined),
+        ),
+        80,
+        scrollable: find.descendant(
+          of: find.byType(AppBar),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.tap(find.byIcon(Icons.fact_check_outlined));
+      await tester.pumpAndSettle();
+    }
+
+    /// Drags the panel's own scrollable by [dy] — negative is upwards,
+    /// which is the gesture that grows the sheet.
+    Future<void> dragPanel(WidgetTester tester, double dy) async {
+      await tester.drag(
+        find.descendant(
+          of: find.byType(ProofPanel),
+          matching: find.byType(Scrollable),
+        ),
+        Offset(0, dy),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the button opens a sheet, not a docked panel', (tester) async {
+      await pumpPhoneEditor(tester);
+      expect(find.byType(ProofPanel), findsNothing);
+
+      await openSheet(tester);
+
+      expect(find.byType(ProofPanel), findsOneWidget);
+      expect(find.textContaining('Nothing proved yet'), findsOneWidget);
+      // The figure is still visible behind it: the sheet opens at half
+      // the screen, which is the intent the phase kept.
+      expect(
+        tester.getSize(find.byType(ProofPanel)).height,
+        lessThan(phone.height / 2 + 1),
+      );
+    });
+
+    testWidgets('dragging the content up grows it past half the screen', (
+      tester,
+    ) async {
+      seedVarignon();
+      await pumpPhoneEditor(tester);
+      await openSheet(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+
+      final opened = tester.getSize(find.byType(ProofPanel)).height;
+      await dragPanel(tester, -300);
+      final grown = tester.getSize(find.byType(ProofPanel)).height;
+
+      expect(grown, greaterThan(opened));
+      // Past the old ceiling — this is the defect, in one expectation.
+      expect(grown, greaterThan(phone.height / 2));
+    });
+
+    testWidgets('the empty state can be grown too — it is what the panel '
+        'opens on', (tester) async {
+      await pumpPhoneEditor(tester);
+      await openSheet(tester);
+
+      final opened = tester.getSize(find.byType(ProofPanel)).height;
+      await dragPanel(tester, -300);
+
+      expect(
+        tester.getSize(find.byType(ProofPanel)).height,
+        greaterThan(opened),
+      );
+    });
+
+    testWidgets('dragging it down tucks it away without dismissing', (
+      tester,
+    ) async {
+      seedVarignon();
+      await pumpPhoneEditor(tester);
+      await openSheet(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+
+      final opened = tester.getSize(find.byType(ProofPanel)).height;
+      await dragPanel(tester, 400);
+
+      // Smaller, still there: a reader glancing at the figure has not
+      // lost the proof they were in the middle of.
+      final tucked = tester.getSize(find.byType(ProofPanel)).height;
+      expect(tucked, lessThan(opened));
+      expect(find.byType(ProofPanel), findsOneWidget);
+    });
+
+    testWidgets('the back affordance and Keep going survive the minimum size', (
+      tester,
+    ) async {
+      seedVarignon();
+      await pumpPhoneEditor(tester);
+      await openSheet(tester);
+      await container.read(proverProvider.notifier).prove(applicationBudget: 3);
+      await tester.pumpAndSettle();
+
+      // A goal open, so the header carries the back arrow.
+      await tester.tap(inPanel(find.byType(ListTile)).first);
+      await tester.pumpAndSettle();
+      await dragPanel(tester, 400);
+
+      // The header is outside the scrollable and pinned, so shrinking
+      // cannot hide it.
+      expect(find.byTooltip('Back to the list'), findsOneWidget);
+      await tester.tap(find.byTooltip('Back to the list'));
+      await tester.pumpAndSettle();
+
+      // And the run's own control is reachable by scrolling within
+      // whatever height is left. `ensureVisible` rather than a raw drag:
+      // the list builds all its children, so a finder matches an
+      // off-screen row and a scroll-until-found would scroll nothing.
+      await tester.ensureVisible(find.text('Keep going'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(find.text('Keep going')).bottom,
+        lessThanOrEqualTo(phone.height),
+      );
+      await tester.tap(find.text('Keep going'));
+      await tester.pumpAndSettle();
+      expect(
+        (container.read(proverProvider) as ProverReady).reachedFixpoint,
+        isTrue,
+      );
+    });
+
+    testWidgets('the docked panel owns its own scrolling — no controller, '
+        'and it still scrolls', (tester) async {
+      seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+
+      final panel = tester.widget<ProofPanel>(find.byType(ProofPanel));
+      expect(panel.scrollController, isNull);
+
+      final list = inPanel(find.byType(Scrollable));
+      final before = tester.getSize(find.byType(ProofPanel));
+      await tester.drag(list, const Offset(0, -60));
+      await tester.pumpAndSettle();
+
+      // A docked panel is sized by its column, not by a gesture: the
+      // drag scrolled and did not resize anything.
+      expect(tester.getSize(find.byType(ProofPanel)), before);
+    });
+  });
 }
