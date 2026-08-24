@@ -1598,3 +1598,20 @@ The browser look is the one open box: extension not connected this session (seco
 - Certificate detail worth knowing: on Varignon the closure proves `∠(MN,NP) = ∠(QP,MQ)` from the *diagonals'* midline parallels (`para(B,D,M,Q)`, `para(A,C,M,N)`, …), not the two side parallels a human would cite — echelon order chooses the route. The test pins "every premise is a `para`", not which.
 
 **Next.** Concurrency as sugar, then the tangency ask; then merge.
+
+### Addendum — Phase 159d/e, concurrency as sugar and the tangency ask; the phase closes
+
+**Done on the same branch, one code commit (`0a2d916`).** Suite **3208** green (3195 + 13), analyze clean, browser gate 13, wasm release build compiles. Phase 159 is complete; merged to `main` this session (see below).
+
+- **`ProverQuestion.reading`, the one addition both boxes needed.** Sugar is by definition a sentence other than the fact it desugars to, so Phase 157's "one spelling" cannot hold for it verbatim: the chip and the verdict show the reading ("PA, PB and PC are concurrent", "QK is tangent to the circle at K"), and the tooltip keeps the fact the prover is actually asked (`coll(P, C, Z)`, `perp(O, K, K, Q)`). `questionLabel` is `reading ?? readFact(...)`; `verdictMessage` quotes through it, so the refutation reads "“RS is tangent to the circle at R” is not true…".
+- **Concurrency**: every pair of the three carriers with a *named* point structurally on both, against every witness pair of the third that the meeting point is not part of — all spellings of one statement. The degenerate shape is real: three lines through P with no other name on any of them phrase nothing, because every pair on every third line contains P. Refusing that is what keeps "P, P, C are collinear" off the chip row (mutation-checked).
+- **Tangency**: a line and a circle-by-construction with a named centre and a named touch point — exactly Phase 155's conditions, now shared through the public `circleCentre` / `isCircleByConstruction` instead of restated. A secant with two named crossings asks about both (four spellings) and the filter refutes it; a `ThreePointCircle` says nothing until a `CircleCenter` is drawn on it; a `FivePointConic` through five concyclic points says nothing (mutation: dropping the guard fails exactly that test). The circle selection is admitted only in this one shape — a circle with anything else still phrases nothing.
+- **End to end in the panel**: the pencil's concurrency and the tangent both come back *proved* (each is a hypothesis of its figure — the plumbing is what the box owed, not a theorem), the secant *refuted* with no run.
+
+**The phase in one paragraph.** Five working boxes, five commits, 3185 → 3208. The hint (159a), the four-carrier `eqangle` with the corrected pairing count (159b), the closure-backed ask that turned out to be the first positive AR measurement rather than the fifth negative (159c), and the two sugars (159d/e). What the panel *offers* went from six of the vocabulary's ten to seven (`eqangle` joined) plus two sentences the vocabulary has no word for. Still absent by design: `eqratio`, `simtri`, `contri`, and the compound questions — all Phase 160's, the builder.
+
+**Gotchas.**
+
+- A carrier's name in a reading is its *first known pair* — the defining pair for a segment or ray, else the first two named points on it in construction order. For a `TangentLine` that is "pole, touch" (`QK`), which is not what a user would call the line. Fine for now; the builder's line slot will want a proper carrier name, which is where to fix it.
+- `askableQuestions` now imports `hypotheses.dart` (for the two helpers) and `fact_naming.dart` (for `describePoint`). Both domain, no cycle.
+- `LineThroughTwoPoints` pairs contain the defining points *as non-length* pairs; the concurrency reading still names them, which is what you want.
