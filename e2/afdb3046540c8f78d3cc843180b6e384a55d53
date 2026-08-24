@@ -1,0 +1,37 @@
+test/domain/prover/angle_closure_test.dart
+  s_8271ce0b958a38::t_22596714b71146 114-115
+test/domain/prover/tangent_chase_test.dart
+  s_8271ce0b958a38::t_22596714b71146 172-174
+  s_8271ce0b958a38::t_2fa32674096113 191-193
+lib/application/providers/prover_provider.dart
+  s_8271ce0b958a38::t_a459352711b71e 50,52,54-61,63-66
+benchmark/prover_chunk_bench.dart
+  s_8271ce0b958a38::t_af1ace9b98e397 38
+test/domain/prover/tangent_chord_test.dart
+  s_8271ce0b958a38::t_6e36e5f52d875c 1-182
+test/domain/prover/length_closure_upside_test.dart
+  s_8271ce0b958a38::t_22596714b71146 116-120,139-153
+lib/domain/prover/rule.dart
+  s_8271ce0b958a38::t_946aa6d7c92ba7 150-170,172,175-181,261-269,271-296
+  s_8271ce0b958a38::t_22596714b71146 171,173-174
+test/domain/prover/rule_engine_test.dart
+  s_8271ce0b958a38::t_6e36e5f52d875c 222-255,257-258,260-262,264
+test/presentation/panels/proof_panel_test.dart
+  s_8271ce0b958a38::t_547a022539e33d 855-870
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "e2afdb3046540c8f78d3cc843180b6e384a55d53",
+  "prompts": {},
+  "sessions": {
+    "s_8271ce0b958a38": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d582676e-5574-438e-8c89-d52f4c690b76",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
