@@ -243,6 +243,16 @@ So `selectionProvider` stays a `Set<String>` and no consumer of it changes. This
 - [ ] **Mobile is a first-class target for this surface, not an afterthought** — it is the case that kills the dropdown design, and Phase 154's sheet is where it has to live. A template with eight slots must be fillable at a phone's sheet height
 - [ ] Tests: templates → `ProverQuestion` for every kind, including carrier-filled line slots expanding to all spellings; the refute-before-OK path taking no run; the correspondence actually reaching `simtri` on a rig where the wrong correspondence is false
 
+## Phase 162 — a question reads as spelled (in progress)
+
+A user's report on `test/fixtures/tangent-chord.rgl` (session 170): selecting the four segments of the tangent–chord figure offered "angles ECD and CBD are equal" — false as magnitudes — and two chips beginning "the angle from EC to DB…" truncated past reading. All three were the *right* statements: the chip label read `readFact(Fact.of(canonical))`, and `eqangle`'s transpose symmetry canonicalized `∠(BC,CE) = ∠(BD,DC)` (the theorem, 47.4° = 47.4°) into its equivalent `∠(EC,DC) = ∠(BC,DB)`, whose three-point prose names different angles. A fact reads canonical because it *is* its orbit; a question is a spelling the user chose, and must read as spelled.
+
+- [ ] **`readPredicate`** beside `readFact`, one implementation; `questionLabel` reads the question's own spelling, the asked proof's goal row too
+- [ ] **The four-carrier orientation is chosen, not inherited from construction order**: of a statement's eight spellings prefer one that reads three-point on both sides, and among those one whose *magnitude* reading is true in the figure (positions, as the filter reads them); deterministic on ties
+- [ ] **Chip labels wrap** — a phone's sheet is full-width and a docked panel is 300 px; a draggable panel would help neither, wrapping helps both
+- [ ] Tests: `readPredicate` keeps the spelling `readFact` canonicalizes away; the fixture's four segments read "angles BCE and BDC are equal"; a long label wraps in a narrow panel
+- [ ] **Not here, and the reason the user's actual goal still comes back *unproved*:** the tangent–chord theorem needs the `tangent_chord` rule Phase 155 wrote, measured and dropped — its conclusions were reachable another way on *that* fixture, not on this one (7 facts, complete, no route). Reinstating it, in a cheaper premise shape than `cong × cong`, is its own phase
+
 ## Phase 161 — the uncharged pass (open; unscheduled)
 
 Phase 156's measurement, promoted: `proverChunkBudget` bounds only the *charged* half of a DD step, and on `apatitos-topos.rgl` (worst pass 1.4 s) and `tangent-chase.rgl` (2.5 s) the uncharged half — the join enumeration that yields no candidate, advanced without being counted as an application — is the whole freeze, flat across every candidate budget. No chunk budget makes those passes frame-sized, Stop cannot be noticed sooner than one of them ends, and the same mechanism is why `tangent-chase` runs **5.7 s to quiescence** in the provider's configuration. `benchmark/prover_chunk_bench.dart` is the rig; the Phase 145 note ("a join enumeration that yields no candidate is advanced without being charged") named the mechanism without pricing it.

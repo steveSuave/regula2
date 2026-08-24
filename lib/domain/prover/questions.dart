@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../construction/geo_object.dart';
 import '../construction/incidence.dart';
 import '../construction/objects/ray.dart';
@@ -308,8 +310,17 @@ List<ProverQuestion> askableQuestions(
   // each as a linear equation over line angles, `θ1 − θ0 = θ3 − θ2`,
   // i.e. `θ1 + θ2 = θ0 + θ3`: a statement is a partition of the four
   // lines into two pairs with equal angle *sums*, and there are three of
-  // those. Below, one oriented spelling of each; the test checks all six
-  // orientations canonicalize onto exactly these.
+  // those. The test checks all orientations canonicalize onto exactly
+  // these.
+  //
+  // Which of a statement's eight spellings is *offered* matters, because
+  // the chip reads as spelled (Phase 162): `∠(BC,CE) = ∠(BD,DC)` and its
+  // transpose are one directed fact and two different sentences —
+  // "angles BCE and BDC are equal" is the tangent–chord theorem, "angles
+  // ECD and CBD are equal" is false as magnitudes. So the spelling is
+  // chosen, not inherited from construction order: one that reads
+  // three-point on both sides, and among those one whose magnitude
+  // reading is true in the figure; deterministic on ties.
   if (carriers.length == 4 && selectedPoints.isEmpty) {
     final groups = <_Group>[];
     for (final carrier in carriers) {
@@ -317,12 +328,25 @@ List<ProverQuestion> askableQuestions(
       if (group == null) return const [];
       groups.add(group);
     }
-    const pairings = [
-      [0, 1, 2, 3], // θ1 + θ2 = θ0 + θ3
-      [0, 1, 3, 2], // θ1 + θ3 = θ0 + θ2
-      [0, 2, 3, 1], // θ2 + θ3 = θ0 + θ1
+    // The three partitions into equal-sum pairs, as (a, b | c, d) with
+    // θa + θb ≡ θc + θd.
+    const partitions = [
+      [1, 2, 0, 3],
+      [1, 3, 0, 2],
+      [2, 3, 0, 1],
     ];
-    for (final [i, j, k, l] in pairings) {
+    for (final [a, b, c, d] in partitions) {
+      // Every spelling ∠(x,y) = ∠(z,w) of θy − θx ≡ θw − θz with
+      // {y, z} = {a, b} and {x, w} = {c, d}, or the roles swapped.
+      final orientations = <List<int>>[
+        for (final (y, z) in [(a, b), (b, a)])
+          for (final (x, w) in [(c, d), (d, c)]) ...[
+            [x, y, z, w],
+            [z, w, x, y],
+          ],
+      ];
+      final chosen = _bestOrientation(orientations, groups);
+      final [i, j, k, l] = chosen;
       final spellings = [
         for (final p in groups[i].pairs)
           for (final q in groups[j].pairs)
@@ -417,4 +441,77 @@ bool _sameLines(_Pair p, _Pair q, _Pair r, _Pair s) {
       (identical(x.a, y.a) && identical(x.b, y.b)) ||
       (identical(x.a, y.b) && identical(x.b, y.a));
   return (same(p, r) && same(q, s)) || (same(p, s) && same(q, r));
+}
+
+/// The orientation of an `eqangle` statement to offer, out of the
+/// [orientations] that spell it (Phase 162).
+///
+/// Scored on the groups' first pairs — the ones the offered spelling
+/// uses: two for each side that shares exactly one point (it reads
+/// three-point, "angle BCE", instead of "the angle from BC to CE"), and
+/// one more when both do and the two angles are equal *as magnitudes*
+/// in the figure, so that the plain reading is true in the sense a
+/// reader takes it and not only mod π. Ties go to the first listed,
+/// which is what makes the choice deterministic.
+List<int> _bestOrientation(List<List<int>> orientations, List<_Group> groups) {
+  var best = orientations.first;
+  var bestScore = -1;
+  for (final orientation in orientations) {
+    final [i, j, k, l] = orientation;
+    final first = _vertex(groups[i].pairs.first, groups[j].pairs.first);
+    final second = _vertex(groups[k].pairs.first, groups[l].pairs.first);
+    var score = (first == null ? 0 : 2) + (second == null ? 0 : 2);
+    if (first != null && second != null && _sameMagnitude(first, second)) {
+      score += 1;
+    }
+    if (score > bestScore) {
+      best = orientation;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+/// The angle two pairs name three-point — vertex and arms — when they
+/// share exactly one point, else null.
+({GeoPoint vertex, GeoPoint arm1, GeoPoint arm2})? _vertex(_Pair p, _Pair q) {
+  final shared = [
+    for (final x in [p.a, p.b])
+      for (final y in [q.a, q.b])
+        if (identical(x, y)) x,
+  ];
+  if (shared.length != 1) return null;
+  final vertex = shared.single;
+  return (
+    vertex: vertex,
+    arm1: identical(p.a, vertex) ? p.b : p.a,
+    arm2: identical(q.a, vertex) ? q.b : q.a,
+  );
+}
+
+/// Whether two three-point angles are equal as undirected magnitudes in
+/// the current figure — the sense a reader takes "angles BCE and BDC
+/// are equal" in. Positions are read as the filter reads them; any
+/// missing or degenerate one answers false, which is "no preference".
+bool _sameMagnitude(
+  ({GeoPoint vertex, GeoPoint arm1, GeoPoint arm2}) first,
+  ({GeoPoint vertex, GeoPoint arm1, GeoPoint arm2}) second,
+) {
+  double? magnitude(({GeoPoint vertex, GeoPoint arm1, GeoPoint arm2}) angle) {
+    final v = angle.vertex.position;
+    final a = angle.arm1.position;
+    final b = angle.arm2.position;
+    if (v == null || a == null || b == null) return null;
+    final u = a - v;
+    final w = b - v;
+    if (u.normSquared == 0 || w.normSquared == 0) return null;
+    return math.acos(
+      ((u.x * w.x + u.y * w.y) / (u.norm * w.norm)).clamp(-1.0, 1.0),
+    );
+  }
+
+  final m1 = magnitude(first);
+  final m2 = magnitude(second);
+  if (m1 == null || m2 == null) return false;
+  return (m1 - m2).abs() < 1e-6;
 }

@@ -12,7 +12,8 @@ export 'fact_naming.dart'
         describePoint,
         factReadingConvention,
         predicateKindLabel,
-        readFact;
+        readFact,
+        readPredicate;
 
 /// One line of a proof: a fact, and the warrant for it.
 ///

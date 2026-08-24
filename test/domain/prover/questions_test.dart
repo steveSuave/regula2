@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/circle_center.dart';
@@ -14,6 +18,7 @@ import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/fact.dart';
+import 'package:regula/domain/prover/fact_naming.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/questions.dart';
 
@@ -230,6 +235,48 @@ void main() {
       construction.add(Segment(id: 'bc2', point1: b, point2: c));
       construction.add(Segment(id: 'cd2', point1: c, point2: d));
       expect(ask(construction, {'bc', 'cd', 'bc2', 'cd2'}), isEmpty);
+    });
+
+    test('the offered spelling reads three-point and true as magnitudes '
+        '(Phase 162, the tangent–chord report)', () {
+      // Circle about A through B; C, D on it; chords BC, BD, DC; the
+      // tangent at C with E on it. The user selects the four segments
+      // of "∠ECB = ∠CDB" and must see that sentence, not its transpose.
+      final construction = decodeDocument(
+        jsonDecode(File('test/fixtures/tangent-chord.rgl').readAsStringSync())
+            as Map<String, dynamic>,
+      ).construction;
+      final byName = {
+        for (final o in construction.objects) o.attributes.name: o.id,
+      };
+      final questions = ask(construction, {
+        byName['b']!,
+        byName['d']!,
+        byName['e']!,
+        byName['f']!,
+      });
+
+      expect(questions, hasLength(3));
+      final readings = questions
+          .map((q) => readPredicate(q.canonical))
+          .toList();
+      expect(
+        readings,
+        contains('angles BCE and BDC are equal'),
+        reason: 'the theorem, as the user would state it',
+      );
+      expect(
+        readings,
+        isNot(contains('angles ECD and CBD are equal')),
+        reason: 'its transpose is the same fact and a false-looking sentence',
+      );
+      for (final reading in readings) {
+        expect(
+          reading,
+          startsWith('angles '),
+          reason: 'every side shares a vertex here, so no "the angle from"',
+        );
+      }
     });
 
     test('selections that phrase nothing phrase nothing', () {

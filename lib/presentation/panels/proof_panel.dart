@@ -243,8 +243,11 @@ Widget quietTooltip({required String message, required Widget child}) =>
 /// A question with a [ProverQuestion.reading] is sugar, and reads as
 /// what was asked rather than as the fact it desugars to; the fact
 /// stays in the tooltip.
+///
+/// The spelling is the question's own, not its orbit's canonical form
+/// (Phase 162): see [readPredicate].
 String questionLabel(ProverQuestion question) =>
-    question.reading ?? readFact(Fact.of(question.canonical));
+    question.reading ?? readPredicate(question.canonical);
 
 /// What a verdict says, in words the reader can act on.
 ///
@@ -285,9 +288,52 @@ String verdictMessage(ProverAnswer answer) {
 bool isStale(ProverState state, int revision) =>
     state is ProverReady && state.revision != revision;
 
+/// A question offered as a chip, whose label wraps (Phase 162).
+///
+/// Not an [ActionChip]: `Chip` lays its label out twice — once
+/// unconstrained to size itself, then again inside the width it chose
+/// minus its own padding — which is fine for the one-line, faded label
+/// it assumes and wrong for a wrapping one, where *every* label then
+/// breaks onto two lines at the chip's full width. A sentence about
+/// four lines does not fit 300 px docked, and a phone's sheet is no
+/// wider; wrapping is what works on both, and this widget sizes to its
+/// text and wraps only when it must. The look is the M3 action chip's:
+/// outline, 8 px corners, `labelLarge`.
+class QuestionChip extends StatelessWidget {
+  const QuestionChip({super.key, required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+      side: BorderSide(color: theme.colorScheme.outline),
+    );
+    return Material(
+      color: Colors.transparent,
+      shape: shape,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: shape,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Text(label, style: theme.textTheme.labelLarge, softWrap: true),
+        ),
+      ),
+    );
+  }
+}
+
 /// Side panel showing what the prover derived, and the proof of whichever
 /// statement is picked.
 class ProofPanel extends ConsumerStatefulWidget {
+  /// The most of the panel's height the chip block may take before it
+  /// scrolls within itself (Phase 162) — the rest is the answer's.
+  static const double questionsShare = 0.4;
+
   /// The line shown in place of the chips when the selection phrases
   /// nothing (Phase 159).
   ///
@@ -421,29 +467,42 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
     // the object tree already does between its panel and its drawer.
     return Material(
       color: theme.colorScheme.surfaceContainerLow,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _header(theme, state, revision),
-          const Divider(height: 1),
-          if (questions.isNotEmpty)
-            _questions(theme, questions)
-          else if (selectedIds.isNotEmpty)
-            _unaskable(theme),
-          // No tooltip overlay may exist while list rows churn — see
-          // [rawSpellingTooltip] for the web-renderer race this guards.
-          // Dismissing on every notification is cheap: the call walks
-          // the list of *visible* tooltips, normally empty.
-          Expanded(
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (_) {
-                Tooltip.dismissAllToolTips();
-                return false;
-              },
-              child: _body(theme, state, selectedIds),
-            ),
+      // No tooltip overlay may exist while rows churn under a pointer —
+      // see [rawSpellingTooltip] for the web-renderer race this guards.
+      // Around the whole panel, since the chips scroll too now.
+      // Dismissing on every notification is cheap: the call walks the
+      // list of *visible* tooltips, normally empty.
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (_) {
+          Tooltip.dismissAllToolTips();
+          return false;
+        },
+        child: LayoutBuilder(
+          builder: (context, constraints) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _header(theme, state, revision),
+              const Divider(height: 1),
+              if (questions.isNotEmpty)
+                // Capped, and scrolling within the cap: chips wrap
+                // (Phase 162) and four selected points offer ten, so an
+                // uncapped block would take a phone's whole sheet and
+                // leave the answer no room at all.
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight:
+                        constraints.maxHeight * ProofPanel.questionsShare,
+                  ),
+                  child: SingleChildScrollView(
+                    child: _questions(theme, questions),
+                  ),
+                )
+              else if (selectedIds.isNotEmpty)
+                _unaskable(theme),
+              Expanded(child: _body(theme, state, selectedIds)),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -485,9 +544,8 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
               // the scrolling list and get the same guarded surface.
               rawSpellingTooltip(
                 message: describeFact(Fact.of(question.canonical)),
-                child: ActionChip(
-                  label: Text(questionLabel(question)),
-                  visualDensity: VisualDensity.compact,
+                child: QuestionChip(
+                  label: questionLabel(question),
                   onPressed: () => _ask(question),
                 ),
               ),
@@ -655,7 +713,12 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
             title: const Text('Keep going'),
             onTap: () => ref.read(proverProvider.notifier).askMore(),
           ),
-        if (proof != null) ..._proofRows(theme, proof),
+        if (proof != null)
+          ..._proofRows(
+            theme,
+            proof,
+            goalLabel: questionLabel(answer.question),
+          ),
       ],
     );
   }
@@ -772,12 +835,23 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
 
   /// The numbered steps as rows, so an asked question's proof and a
   /// listed goal's proof read identically — they are the same object.
-  List<Widget> _proofRows(ThemeData theme, Proof proof) => [
+  ///
+  /// [goalLabel] is how an *asked* goal was phrased — the question's own
+  /// spelling, or its sugar — so the goal row does not re-read the same
+  /// statement in canonical order under the header that just read it.
+  List<Widget> _proofRows(
+    ThemeData theme,
+    Proof proof, {
+    String? goalLabel,
+  }) => [
     Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: rawSpellingTooltip(
         message: describeFact(proof.goal),
-        child: Text(readFact(proof.goal), style: theme.textTheme.titleSmall),
+        child: Text(
+          goalLabel ?? readFact(proof.goal),
+          style: theme.textTheme.titleSmall,
+        ),
       ),
     ),
     for (final step in proof.steps)

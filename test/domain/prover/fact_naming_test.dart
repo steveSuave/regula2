@@ -142,6 +142,40 @@ void main() {
     });
   });
 
+  group('readPredicate reads as spelled (Phase 162)', () {
+    test('a question keeps its spelling; a fact reads its orbit', () {
+      FreePoint named(String id, String name) => FreePoint(
+        id: id,
+        position: Vec2.zero,
+        attributes: ObjectAttributes(name: name),
+      );
+      final b = named('b', 'B');
+      final c = named('c', 'C');
+      final d = named('d', 'D');
+      final e = named('e', 'E');
+      // ∠(BC, CE) = ∠(BD, DC): the tangent–chord theorem's own spelling.
+      final asked = Predicate(PredicateKind.eqangle, [b, c, c, e, b, d, d, c]);
+      expect(readPredicate(asked), 'angles BCE and BDC are equal');
+      // Its transpose is the same fact and a different sentence.
+      final transposed = Predicate(PredicateKind.eqangle, [
+        b,
+        c,
+        b,
+        d,
+        c,
+        e,
+        d,
+        c,
+      ]);
+      expect(Fact.of(transposed), Fact.of(asked));
+      expect(readPredicate(transposed), 'angles CBD and ECD are equal');
+      // readFact is readPredicate of the canonical spelling — one
+      // implementation, and the fact side has not moved.
+      final fact = Fact.of(asked);
+      expect(readFact(fact), readPredicate(fact.statement));
+    });
+  });
+
   group('the separator rule, taken from the chase and not re-invented', () {
     test('one multi-character name switches the whole fact to commas', () {
       final fact = Fact(PredicateKind.para, [

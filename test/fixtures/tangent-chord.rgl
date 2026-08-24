@@ -1,0 +1,320 @@
+{
+  "version": 1,
+  "viewport": {
+    "pan": [
+      -532.9061433029183,
+      307.1536426776495
+    ],
+    "scale": 0.6482249770662134,
+    "rotation": 0
+  },
+  "showAxes": false,
+  "showGrid": false,
+  "snapToGrid": false,
+  "objects": [
+    {
+      "id": "fbcf2e4c-dd0d-4916-a4e9-fc91dc490fca",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 904.5,
+        "y": -437.5
+      },
+      "attributes": {
+        "name": "A",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "96a80e36-c6a1-4890-a927-58464dc8f815",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 545,
+        "y": -647.5
+      },
+      "attributes": {
+        "name": "B",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "e7c88440-7444-4e05-88d6-b3f54bfab6b6",
+      "type": "CircleCenterPoint",
+      "parents": [
+        "fbcf2e4c-dd0d-4916-a4e9-fc91dc490fca",
+        "96a80e36-c6a1-4890-a927-58464dc8f815"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "a",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ac63016f-938c-49b0-b8a3-b52ab1b09682",
+      "type": "PointOnObject",
+      "parents": [
+        "e7c88440-7444-4e05-88d6-b3f54bfab6b6"
+      ],
+      "params": {
+        "parameter": 2.0147369968048467
+      },
+      "attributes": {
+        "name": "C",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "43a1be01-57db-4d79-bf88-9b2b97ca399e",
+      "type": "Segment",
+      "parents": [
+        "96a80e36-c6a1-4890-a927-58464dc8f815",
+        "ac63016f-938c-49b0-b8a3-b52ab1b09682"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "b",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "1d21d51d-50b5-431d-8826-426f9b66a58b",
+      "type": "TangentLine",
+      "parents": [
+        "ac63016f-938c-49b0-b8a3-b52ab1b09682",
+        "e7c88440-7444-4e05-88d6-b3f54bfab6b6"
+      ],
+      "params": {
+        "branch": 0
+      },
+      "attributes": {
+        "name": "c",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "af073cd3-cead-439c-b3b1-3d69321a145a",
+      "type": "TangentLine",
+      "parents": [
+        "ac63016f-938c-49b0-b8a3-b52ab1b09682",
+        "e7c88440-7444-4e05-88d6-b3f54bfab6b6"
+      ],
+      "params": {
+        "branch": 1
+      },
+      "attributes": {
+        "name": "d",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "7df0dda4-def1-42e4-9b6f-f27e58517a32",
+      "type": "PointOnObject",
+      "parents": [
+        "e7c88440-7444-4e05-88d6-b3f54bfab6b6"
+      ],
+      "params": {
+        "parameter": -1.7134929493609425
+      },
+      "attributes": {
+        "name": "D",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "a7883620-118b-478a-bd6c-a533bd6efd87",
+      "type": "Segment",
+      "parents": [
+        "96a80e36-c6a1-4890-a927-58464dc8f815",
+        "7df0dda4-def1-42e4-9b6f-f27e58517a32"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "e",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "5555a9bb-8877-4945-a6de-daf58a19fe26",
+      "type": "Segment",
+      "parents": [
+        "7df0dda4-def1-42e4-9b6f-f27e58517a32",
+        "ac63016f-938c-49b0-b8a3-b52ab1b09682"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "f",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "1b305ec6-4a6d-4b07-a497-2c9476edf2bc",
+      "type": "PointOnObject",
+      "parents": [
+        "af073cd3-cead-439c-b3b1-3d69321a145a"
+      ],
+      "params": {
+        "parameter": -56.30057981986226
+      },
+      "attributes": {
+        "name": "E",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6,
+        "labelDy": -18,
+        "labelFontSize": 16,
+        "strokeWidth": 2,
+        "dashPeriod": 0,
+        "tickMarks": 0,
+        "pointSize": 4,
+        "angleMarkerRadius": 28,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    }
+  ]
+}

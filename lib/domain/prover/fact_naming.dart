@@ -72,13 +72,27 @@ String predicateKindLabel(PredicateKind kind) => switch (kind) {
 /// that could drift from it: decided once per fact, `AB` when every
 /// name is a single character, `A,B` otherwise — "angle p17p3p9" would
 /// run three names into one.
-String readFact(Fact fact) {
-  final names = fact.points.map(describePoint).toList();
+String readFact(Fact fact) => _read(fact.kind, fact.points);
+
+/// [readFact] for a predicate *as spelled* (Phase 162).
+///
+/// A fact reads in canonical order because it *is* its orbit — every
+/// spelling is the same statement. A question is one spelling the user
+/// chose, and for `eqangle` the choice is visible: the transpose
+/// symmetry turns `∠(BC,CE) = ∠(BD,DC)` into `∠(EC,DC) = ∠(BC,DB)`,
+/// the same directed statement mod π, whose three-point prose names
+/// angles of different magnitude. Canonicalizing before reading would
+/// hand the user a sentence they did not ask and would not believe.
+String readPredicate(Predicate predicate) =>
+    _read(predicate.kind, predicate.points);
+
+String _read(PredicateKind kind, List<GeoPoint> points) {
+  final names = points.map(describePoint).toList();
   final separator = names.every((name) => name.length == 1) ? '' : ',';
   String seg(int i) => '${names[i]}$separator${names[i + 1]}';
   String tri(int i) =>
       '${names[i]}$separator${names[i + 1]}$separator${names[i + 2]}';
-  return switch (fact.kind) {
+  return switch (kind) {
     PredicateKind.coll => '${names[0]}, ${names[1]}, ${names[2]} are collinear',
     PredicateKind.para => '${seg(0)} is parallel to ${seg(2)}',
     PredicateKind.perp => '${seg(0)} is perpendicular to ${seg(2)}',
@@ -88,7 +102,7 @@ String readFact(Fact fact) {
     PredicateKind.eqratio => '${seg(0)} : ${seg(2)} = ${seg(4)} : ${seg(6)}',
     PredicateKind.simtri => 'triangles ${tri(0)} and ${tri(3)} are similar',
     PredicateKind.contri => 'triangles ${tri(0)} and ${tri(3)} are congruent',
-    PredicateKind.eqangle => _readEqangle(fact, names, separator),
+    PredicateKind.eqangle => _readEqangle(points, names, separator),
   };
 }
 
@@ -100,9 +114,13 @@ const String factReadingConvention =
     'Angles are compared as lines, mod π; similar and congruent '
     'triangles may be mirror images.';
 
-String _readEqangle(Fact fact, List<String> names, String separator) {
-  final first = _anglePhrase(fact, names, separator, 0);
-  final second = _anglePhrase(fact, names, separator, 4);
+String _readEqangle(
+  List<GeoPoint> points,
+  List<String> names,
+  String separator,
+) {
+  final first = _anglePhrase(points, names, separator, 0);
+  final second = _anglePhrase(points, names, separator, 4);
   if (first.threePoint && second.threePoint) {
     return 'angles ${first.text} and ${second.text} are equal';
   }
@@ -118,7 +136,7 @@ String _readEqangle(Fact fact, List<String> names, String separator) {
 /// Exactly one: a pair sharing both points is one line twice, and there
 /// is no angle there to name three-point.
 ({String text, bool threePoint}) _anglePhrase(
-  Fact fact,
+  List<GeoPoint> points,
   List<String> names,
   String separator,
   int offset,
@@ -126,7 +144,7 @@ String _readEqangle(Fact fact, List<String> names, String separator) {
   final shared = <(int, int)>[
     for (var i = offset; i < offset + 2; i++)
       for (var j = offset + 2; j < offset + 4; j++)
-        if (identical(fact.points[i], fact.points[j])) (i, j),
+        if (identical(points[i], points[j])) (i, j),
   ];
   if (shared.length == 1) {
     final (i, j) = shared.single;

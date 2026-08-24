@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
@@ -616,7 +617,7 @@ void main() {
       await tester.pump();
       expect(find.text(ProofPanel.unaskableSelectionHint), findsOneWidget);
       expect(find.text('Ask about the selection'), findsNothing);
-      expect(inPanel(find.byType(ActionChip)), findsNothing);
+      expect(inPanel(find.byType(QuestionChip)), findsNothing);
 
       // Session 163's four segments: three equal-angle readings, each
       // naming its segments' points.
@@ -625,7 +626,7 @@ void main() {
           .selectMany(sides.map((side) => side.id));
       await tester.pump();
       expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
-      expect(inPanel(find.byType(ActionChip)), findsNWidgets(3));
+      expect(inPanel(find.byType(QuestionChip)), findsNWidgets(3));
       for (final question in askableQuestions(
         construction.objects,
         selectedIds: {for (final side in sides) side.id},
@@ -642,7 +643,7 @@ void main() {
       await tester.pump();
       expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
       expect(find.text('Ask about the selection'), findsOneWidget);
-      expect(inPanel(find.byType(ActionChip)), findsNWidgets(3));
+      expect(inPanel(find.byType(QuestionChip)), findsNWidgets(3));
 
       // And a lone point is back to the hint.
       container.read(selectionProvider.notifier).select(corners.first.id);
@@ -697,6 +698,7 @@ void main() {
       final others = questions.where((q) => !identical(q, question));
       expect(others, hasLength(2));
 
+      await tester.ensureVisible(find.text(questionLabel(question)));
       await tester.tap(find.text(questionLabel(question)));
       await tester.pumpAndSettle();
 
@@ -710,6 +712,7 @@ void main() {
       for (final other in others) {
         await tester.tap(find.byTooltip('Back to the list'));
         await tester.pump();
+        await tester.ensureVisible(find.text(questionLabel(other)));
         await tester.tap(find.text(questionLabel(other)));
         await tester.pumpAndSettle();
         expect(
@@ -784,6 +787,7 @@ void main() {
           selectedIds: ids,
         ).single;
         expect(question.reading, isNotNull);
+        await tester.ensureVisible(find.text(question.reading!));
         await tester.tap(find.text(question.reading!));
         await tester.pumpAndSettle();
         return container.read(proverProvider) as ProverAnswered;
@@ -825,6 +829,67 @@ void main() {
       );
     });
 
+    testWidgets('a long chip wraps, and an asked eqangle reads as spelled', (
+      tester,
+    ) async {
+      final construction = container.read(constructionProvider).construction;
+      // Multi-character names make every label long enough to overflow
+      // the 300 px docked panel on one line.
+      final a = free('a', 'Alpha', 0, 0);
+      final b = free('b', 'Beta', 6, 1);
+      final c = free('c', 'Gamma', 7, 5);
+      final d = free('d', 'Delta', 1, 4);
+      final sides = [
+        Segment(id: 's0', point1: a, point2: b),
+        Segment(id: 's1', point1: b, point2: c),
+        Segment(id: 's2', point1: c, point2: d),
+        Segment(id: 's3', point1: d, point2: a),
+      ];
+      for (final object in [a, b, c, d, ...sides]) {
+        construction.add(object);
+      }
+      await pumpEditor(tester);
+      await openPanel(tester);
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(sides.map((side) => side.id));
+      await tester.pump();
+
+      final questions = askableQuestions(
+        construction.objects,
+        selectedIds: {for (final side in sides) side.id},
+      );
+      for (final question in questions) {
+        final label = questionLabel(question);
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text(label),
+        );
+        final lineHeight = paragraph.text.style!.fontSize! * 1.2;
+        expect(
+          paragraph.size.height,
+          greaterThan(lineHeight * 1.5),
+          reason: '"$label" must wrap, not fade out at the chip edge',
+        );
+        expect(paragraph.size.width, lessThanOrEqualTo(ProofPanel.panelWidth));
+      }
+
+      // Ask one: the header and the verdict carry the question's own
+      // spelling, which is the sentence on the chip.
+      final question = questions.first;
+      await tester.ensureVisible(find.text(questionLabel(question)));
+      await tester.tap(find.text(questionLabel(question)));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(questionLabel(question)),
+        findsNWidgets(2),
+        reason: 'the chip, still offered, and the answer header',
+      );
+      expect(
+        find.textContaining('“${questionLabel(question)}”'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('a selection offers what it can phrase, and asking works', (
       tester,
     ) async {
@@ -839,11 +904,16 @@ void main() {
           .selectMany(rig.goal.points.map((point) => point.id));
       await tester.pump();
       expect(find.text('Ask about the selection'), findsOneWidget);
-      final names = rig.goal.points.map(describePoint).toList();
-      final chip =
-          '${names[0]}${names[1]} is parallel to ${names[2]}${names[3]}';
+      // The chip reads the question's own spelling (Phase 162), which
+      // is the selection's order, not the canonical fact's.
+      final question = askableQuestions(
+        container.read(constructionProvider).construction.objects,
+        selectedIds: rig.goal.points.map((point) => point.id).toSet(),
+      ).singleWhere((q) => Fact.of(q.canonical) == rig.goal);
+      final chip = questionLabel(question);
       expect(find.text(chip), findsOneWidget);
 
+      await tester.ensureVisible(find.text(chip));
       await tester.tap(find.text(chip));
       await tester.pumpAndSettle();
 
@@ -881,11 +951,11 @@ void main() {
         for (final id in free)
           describePoint(construction.byId(id)! as GeoPoint),
       ];
-      await tester.tap(
-        find.text(
-          '${names[0]}${names[1]} is perpendicular to ${names[2]}${names[3]}',
-        ),
+      final chip = find.text(
+        '${names[0]}${names[1]} is perpendicular to ${names[2]}${names[3]}',
       );
+      await tester.ensureVisible(chip);
+      await tester.tap(chip);
       await tester.pumpAndSettle();
 
       final state = container.read(proverProvider) as ProverAnswered;
@@ -933,6 +1003,9 @@ void main() {
       container.read(selectionProvider.notifier).selectMany([dc.id, fd.id]);
       await tester.pump();
 
+      await tester.ensureVisible(
+        find.textContaining('is perpendicular to').first,
+      );
       await tester.tap(find.textContaining('is perpendicular to').first);
       await tester.pumpAndSettle();
 
@@ -1037,12 +1110,16 @@ void main() {
           .read(selectionProvider.notifier)
           .selectMany(rig.goal.points.map((point) => point.id));
       await tester.pump();
-      final names = rig.goal.points.map(describePoint).toList();
-      await tester.tap(
-        find.text(
-          '${names[0]}${names[1]} is parallel to ${names[2]}${names[3]}',
+      final chip = find.text(
+        questionLabel(
+          askableQuestions(
+            container.read(constructionProvider).construction.objects,
+            selectedIds: rig.goal.points.map((point) => point.id).toSet(),
+          ).singleWhere((q) => Fact.of(q.canonical) == rig.goal),
         ),
       );
+      await tester.ensureVisible(chip);
+      await tester.tap(chip);
       await tester.pumpAndSettle();
       expect(container.read(proverProvider), isA<ProverAnswered>());
 
