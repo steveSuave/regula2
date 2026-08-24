@@ -1,6 +1,7 @@
 import '../commands/add_object_command.dart';
 import '../commands/macro_command.dart';
 import '../construction/geo_object.dart';
+import '../construction/incidence.dart';
 import '../construction/objects/tangent_line.dart';
 import '../math/vec2.dart';
 import 'point_resolution.dart';
@@ -9,7 +10,9 @@ import 'tool.dart';
 /// Collects one point and one circle — in either order — then emits
 /// **both** tangent lines from the point to the circle in a single
 /// `MacroCommand` (the GeoGebra convention: the pair is the natural undo
-/// unit, and deleting one afterwards is trivial).
+/// unit, and deleting one afterwards is trivial) — or **one**, when the
+/// point is on the circle by construction and the two branches would be
+/// the same line (Phase 164).
 ///
 /// The `PointAndLineTool` pattern with a circle slot: a tap on an
 /// existing point fills the point slot, and the topmost in-threshold
@@ -71,7 +74,10 @@ class TangentTool implements ToolInputPreview {
     return ToolCommitted(
       MacroCommand([
         if (pointIsNew) AddObjectCommand(point),
-        for (final branch in [0, 1])
+        // From a point on the circle both branches are the tangent at
+        // that point, so emitting both would add one line twice (Phase
+        // 164). Branch 0 is the survivor for no reason beyond being first.
+        for (final branch in structurallyIncident(circle, point) ? [0] : [0, 1])
           AddObjectCommand(
             TangentLine(
               id: newId(),

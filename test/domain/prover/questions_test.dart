@@ -722,4 +722,66 @@ void main() {
       );
     });
   });
+
+  group('one line under two objects (Phase 164)', () {
+    Construction load(String name) => decodeDocument(
+      jsonDecode(File('test/fixtures/$name').readAsStringSync())
+          as Map<String, dynamic>,
+    ).construction;
+
+    test('the tangent-chord fixture reads the same whichever tangent is '
+        'clicked', () {
+      // `c` and `d` are both the tangent at C; E was glued to `d`. A
+      // canvas click lands on either by a last-bit margin, so the
+      // question set must not depend on which.
+      final construction = load('tangent-chord.rgl');
+      final byName = {
+        for (final o in construction.objects) o.attributes.name: o.id,
+      };
+      List<String> canon(Set<String> ids) => [
+        for (final q in ask(construction, ids)) '${q.kind.name} ${q.canonical}',
+      ];
+      final viaD = canon({
+        byName['b']!,
+        byName['d']!,
+        byName['e']!,
+        byName['f']!,
+      });
+      final viaC = canon({
+        byName['b']!,
+        byName['c']!,
+        byName['e']!,
+        byName['f']!,
+      });
+
+      expect(viaD, hasLength(3), reason: 'the three angle readings');
+      expect(viaC, viaD);
+    });
+
+    test('a segment beside a line through its ends borrows the line\'s '
+        'points', () {
+      final construction = Construction();
+      final a = free('a', 0, 0);
+      final b = free('b', 4, 0);
+      final c = free('c', 0, 3);
+      final d = free('d', 4, 3);
+      final ab = Segment(id: 'ab', point1: a, point2: b);
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final x = PointOnObject(id: 'x', curve: line, parameter: 8);
+      final cd = Segment(id: 'cd', point1: c, point2: d);
+      for (final object in [a, b, c, d, ab, line, x, cd]) {
+        construction.add(object);
+      }
+
+      final para = ask(construction, {
+        'ab',
+        'cd',
+      }).firstWhere((q) => q.kind == PredicateKind.para);
+      final firstPairs = {
+        for (final s in para.spellings)
+          s.points.take(2).map((p) => p.id).join(),
+      };
+      expect(firstPairs, {'ab', 'ax', 'bx'});
+    });
+  });
 }

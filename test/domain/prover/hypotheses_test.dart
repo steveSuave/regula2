@@ -26,6 +26,7 @@ import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/radical_axis_line.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
@@ -295,6 +296,18 @@ void main() {
   });
 
   group('line kinds', () {
+    test('a coll whose points sit on two copies of one line is emitted '
+        '(Phase 164)', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final segment = Segment(id: 'ab', point1: a, point2: b);
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final c = PointOnObject(id: 'c', curve: line, parameter: 2.0);
+      final facts = hypotheses([a, b, segment, line, c]);
+
+      expect(facts, hasFact(Predicate(PredicateKind.coll, [a, b, c])));
+    });
+
     test('ParallelLine emits para through witness pairs', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 1));

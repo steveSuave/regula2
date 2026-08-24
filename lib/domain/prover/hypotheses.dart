@@ -92,19 +92,14 @@ List<Predicate> hypotheses(
     );
   }
   final all = List.of(objects);
-  final points = [
-    for (final object in all)
-      if (object is GeoPoint) object,
-  ];
   final out = <Predicate>[];
   void emit(PredicateKind kind, List<GeoPoint> args) =>
       out.add(Predicate(kind, args));
 
-  // The points the construction puts on a carrier, in insertion order.
-  List<GeoPoint> onCurve(GeoObject curve) => [
-    for (final point in points)
-      if (structurallyIncident(curve, point)) point,
-  ];
+  // The points the construction puts on a carrier, in insertion order —
+  // across coincident copies of a line too (Phase 164), so a `coll`
+  // whose three points sit on two objects drawing one line is emitted.
+  List<GeoPoint> onCurve(GeoObject curve) => pointsOnCarrier(all, curve);
   List<List<GeoPoint>> pairsOn(GeoObject curve) => _choose(onCurve(curve), 2);
 
   // The circle's centre as a *named* point: the one its kind stores, or

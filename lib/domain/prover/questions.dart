@@ -104,10 +104,6 @@ List<ProverQuestion> askableQuestions(
   required Set<String> selectedIds,
 }) {
   final all = List.of(objects);
-  final points = [
-    for (final object in all)
-      if (object is GeoPoint) object,
-  ];
   final selected = [
     for (final object in all)
       if (selectedIds.contains(object.id)) object,
@@ -125,10 +121,9 @@ List<ProverQuestion> askableQuestions(
       if (object is GeoCircle) object,
   ];
 
-  List<GeoPoint> onCarrier(GeoObject carrier) => [
-    for (final point in points)
-      if (structurallyIncident(carrier, point)) point,
-  ];
+  // Across coincident copies of the carrier too (Phase 164): a figure
+  // holding one line twice reads the same whichever copy was clicked.
+  List<GeoPoint> onCarrier(GeoObject carrier) => pointsOnCarrier(all, carrier);
 
   // A segment or a ray bounds a length between its own two defining
   // points; any other pair on it merely witnesses the direction. A
