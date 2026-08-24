@@ -1,0 +1,26 @@
+docs/STATUS.md
+  s_40bbf370e4a62a::t_e83ddf780293c9 1430,1482
+  s_40bbf370e4a62a::t_1d5d914e10edaf 1414,1432
+docs/PLAN.md
+  s_40bbf370e4a62a::t_e83ddf780293c9 622-623
+docs/TODO.md
+  s_40bbf370e4a62a::t_e83ddf780293c9 162,174,184,188,193,202,207,214
+  s_40bbf370e4a62a::t_bdf7a190f00ef2 163-173,175-183,185-187,189-192,194,197-199,201
+  s_40bbf370e4a62a::t_d34321d3217575 195-196,200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "404a8e8c3ec529f9ba77fced46f8eebb68663772",
+  "prompts": {},
+  "sessions": {
+    "s_40bbf370e4a62a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "96dae66d-ab27-4552-9f64-7ae1f91ec2ef",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
