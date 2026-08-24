@@ -13,6 +13,7 @@ import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/prover/angle_translation.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
@@ -327,6 +328,66 @@ void main() {
       expect(state.answer.proof, isNotNull);
       expect(state.answer.proof!.verify(), isEmpty);
       expect(state.answer.proof!.steps.last.fact, rig.goal);
+    });
+
+    test('an equal-angle question DD never stores is answered by the angle '
+        'side', () async {
+      // The four sides of the Varignon parallelogram: ∠(MN, NP) =
+      // ∠(QP, MQ), from MN ∥ QP and NP ∥ MQ. No rule concludes it, so the
+      // database of a complete run does not hold it; the closure does.
+      final rig = seedVarignon();
+      GeoPoint at(String id) => rig.construction.byId(id)! as GeoPoint;
+      final (m, n, p, q) = (at('mab'), at('mbc'), at('mcd'), at('mda'));
+      final question = questionOf(PredicateKind.eqangle, [
+        m,
+        n,
+        n,
+        p,
+        q,
+        p,
+        m,
+        q,
+      ]);
+      final notifier = container.read(proverProvider.notifier);
+
+      await notifier.ask(question);
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      final proof = state.answer.proof!;
+      expect(proof.verify(), isEmpty);
+      expect(proof.steps.last.fact, Fact.of(question.canonical));
+      expect(proof.steps.last.rule, angleArithmeticRule);
+      expect(proof.steps.last.chase, isNotNull);
+    });
+
+    test('a complete run is consulted for it too, closure included', () async {
+      // The same question after ▶: the held engine answers without a
+      // second run, and "answers" includes what only the closure holds.
+      final rig = seedVarignon();
+      GeoPoint at(String id) => rig.construction.byId(id)! as GeoPoint;
+      final (m, n, p, q) = (at('mab'), at('mbc'), at('mcd'), at('mda'));
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.prove();
+      final ready = container.read(proverProvider) as ProverReady;
+      expect(ready.reachedFixpoint, isTrue);
+      final fact = Fact.of(
+        Predicate(PredicateKind.eqangle, [m, n, n, p, q, p, m, q]),
+      );
+      expect(
+        ready.database.contains(fact),
+        isFalse,
+        reason: 'DD never stores it',
+      );
+
+      await notifier.ask(
+        questionOf(PredicateKind.eqangle, [m, n, n, p, q, p, m, q]),
+      );
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(state.answer.proof!.verify(), isEmpty);
+      expect(state.run!.applications, ready.applications, reason: 'no new run');
     });
 
     test('a false claim is refuted without the prover running', () async {

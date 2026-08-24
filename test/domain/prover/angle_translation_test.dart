@@ -54,6 +54,49 @@ void main() {
       );
     });
 
+    test('equationOf reads an eqangle as one row, and registers nothing', () {
+      final translation = AngleTranslation();
+      final equation = translation.equationOf(
+        eqangle([a, b, c, d, e, f, g, h]),
+      );
+
+      // ∠(ab, cd) = ∠(ef, gh) is θ_cd − θ_ab ≡ θ_gh − θ_ef.
+      expect(equation, isNotNull);
+      expect(equation!.coefficients, {
+        AngleTranslation.lineVariable(a, b): -BigInt.one,
+        AngleTranslation.lineVariable(c, d): BigInt.one,
+        AngleTranslation.lineVariable(e, f): BigInt.one,
+        AngleTranslation.lineVariable(g, h): -BigInt.one,
+      });
+      expect(equation.constant, Rational.zero);
+      expect(
+        translation.variables,
+        isEmpty,
+        reason: 'asking what a fact would say is not saying it',
+      );
+
+      // A degenerate segment names no line; a coll is two rows, not one.
+      expect(translation.equationOf(eqangle([a, a, c, d, e, f, g, h])), isNull);
+      expect(translation.equationOf(coll([a, b, c])), isNull);
+    });
+
+    test('an eqangle is entailed by the two parallels it is made of', () {
+      // ∠(ab, cd) = ∠(ef, gh) from ab ∥ ef and cd ∥ gh — the Varignon
+      // four-side question, in the abstract.
+      final translation = AngleTranslation()
+        ..absorb(para([a, b, e, f]))
+        ..absorb(para([c, d, g, h]));
+      expect(
+        translation.entailmentOf(eqangle([a, b, c, d, e, f, g, h])),
+        isNotNull,
+      );
+      expect(
+        translation.entailmentOf(eqangle([a, b, c, d, g, h, e, f])),
+        isNull,
+        reason: 'the other orientation is 2θ, which is not a theorem',
+      );
+    });
+
     test('a pair written either way round is one variable', () {
       expect(
         AngleTranslation.lineVariable(a, b),

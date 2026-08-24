@@ -239,8 +239,12 @@ Widget quietTooltip({required String message, required Widget child}) =>
 /// for one fact. Routing both through `readFact` also removed this
 /// function's fallback arm — the four kinds with no chip form now read
 /// as well as the six that had one.
+///
+/// A question with a [ProverQuestion.reading] is sugar, and reads as
+/// what was asked rather than as the fact it desugars to; the fact
+/// stays in the tooltip.
 String questionLabel(ProverQuestion question) =>
-    readFact(Fact.of(question.canonical));
+    question.reading ?? readFact(Fact.of(question.canonical));
 
 /// What a verdict says, in words the reader can act on.
 ///
@@ -254,7 +258,7 @@ String questionLabel(ProverQuestion question) =>
 /// boundary marked — "AB is perpendicular to CD is not true" garden-
 /// paths where "“AB is perpendicular to CD” is not true" does not.
 String verdictMessage(ProverAnswer answer) {
-  final statement = '“${readFact(Fact.of(answer.question.canonical))}”';
+  final statement = '“${questionLabel(answer.question)}”';
   return switch (answer.verdict) {
     ProverVerdict.refuted =>
       '$statement is not true of this construction — it breaks when the '
@@ -284,6 +288,18 @@ bool isStale(ProverState state, int revision) =>
 /// Side panel showing what the prover derived, and the proof of whichever
 /// statement is picked.
 class ProofPanel extends ConsumerStatefulWidget {
+  /// The line shown in place of the chips when the selection phrases
+  /// nothing (Phase 159).
+  ///
+  /// A selection that phrases nothing used to render nothing at all,
+  /// which is indistinguishable from a broken panel. The line names the
+  /// four shapes [askableQuestions] accepts, so it is only true as long
+  /// as that function's shapes are; it says nothing on an *empty*
+  /// selection, where the derived list is the panel's whole purpose.
+  static const String unaskableSelectionHint =
+      'Nothing to ask about this selection \u2014 select two or four '
+      'lines, a line and two points, or three or four points.';
+
   const ProofPanel({super.key, this.scrollController});
 
   /// The controller of whatever scrollable is currently the panel's body,
@@ -410,7 +426,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         children: [
           _header(theme, state, revision),
           const Divider(height: 1),
-          if (questions.isNotEmpty) _questions(theme, questions),
+          if (questions.isNotEmpty)
+            _questions(theme, questions)
+          else if (selectedIds.isNotEmpty)
+            _unaskable(theme),
           // No tooltip overlay may exist while list rows churn — see
           // [rawSpellingTooltip] for the web-renderer race this guards.
           // Dismissing on every notification is cheap: the call walks
@@ -428,6 +447,16 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
       ),
     );
   }
+
+  Widget _unaskable(ThemeData theme) => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+    child: Text(
+      ProofPanel.unaskableSelectionHint,
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
 
   /// What the current selection can be asked, offered as chips.
   ///

@@ -1,13 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/circle_center.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/questions.dart';
 
@@ -129,6 +135,103 @@ void main() {
       expect(perpPairings, {'abcd', 'acbd', 'adbc'});
     });
 
+    test('four segments give the three equal-angle statements, and only '
+        'three', () {
+      final construction = Construction();
+      final a = free('a', 0, 0);
+      final b = free('b', 4, 0);
+      final c = free('c', 5, 3);
+      final d = free('d', 1, 3);
+      final sides = [
+        Segment(id: 's0', point1: a, point2: b),
+        Segment(id: 's1', point1: b, point2: c),
+        Segment(id: 's2', point1: c, point2: d),
+        Segment(id: 's3', point1: d, point2: a),
+      ];
+      for (final object in [a, b, c, d, ...sides]) {
+        construction.add(object);
+      }
+
+      final questions = ask(construction, {'s0', 's1', 's2', 's3'});
+
+      expect(questions, hasLength(3));
+      expect(kinds(questions), {PredicateKind.eqangle});
+      final offered = {for (final q in questions) Fact.of(q.canonical)};
+      expect(offered, hasLength(3), reason: 'three distinct statements');
+
+      // The check that the three are the *right* three: every way of
+      // reading four lines as ∠(x,y) = ∠(z,w) — 24 orderings, of which
+      // the 6 below cover every orbit once the first side is anchored on
+      // s0 — canonicalizes onto one of the offered facts. So nothing a
+      // user could mean is missing, and (with three offered) nothing is
+      // offered twice. The naive side-pairings (01|23, 02|13, 03|12)
+      // fail this: the first two are one fact under the transpose.
+      Fact reading(List<int> order) {
+        final points = [
+          for (final i in order) ...[sides[i].point1, sides[i].point2],
+        ];
+        return Fact.of(Predicate(PredicateKind.eqangle, points));
+      }
+
+      const orientations = [
+        [0, 1, 2, 3],
+        [0, 1, 3, 2],
+        [0, 2, 1, 3],
+        [0, 2, 3, 1],
+        [0, 3, 1, 2],
+        [0, 3, 2, 1],
+      ];
+      final covered = {for (final o in orientations) reading(o)};
+      expect(covered, hasLength(3), reason: 'D4 leaves exactly three orbits');
+      expect(covered, offered);
+
+      // The naive pairing really is a duplicate — pinned so the comment
+      // above stays true of the symmetry group, not just of this rig.
+      expect(reading([0, 1, 2, 3]), reading([0, 2, 1, 3]));
+    });
+
+    test('four carriers phrase every witness pair, and refuse a line '
+        'against itself', () {
+      final construction = Construction();
+      final a = free('a', 0, 0);
+      final b = free('b', 4, 0);
+      final c = free('c', 5, 3);
+      final d = free('d', 1, 3);
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final bc = Segment(id: 'bc', point1: b, point2: c);
+      final cd = Segment(id: 'cd', point1: c, point2: d);
+      final da = Segment(id: 'da', point1: d, point2: a);
+      for (final object in [a, b, c, d, ab, bc, cd, da]) {
+        construction.add(object);
+      }
+      // A third point on the line: it now has three names.
+      construction.add(PointOnObject(id: 'x', curve: ab, parameter: 2));
+
+      final questions = ask(construction, {'ab', 'bc', 'cd', 'da'});
+
+      expect(questions, hasLength(3));
+      for (final question in questions) {
+        expect(
+          question.spellings,
+          hasLength(3),
+          reason: 'three names for the line, one for each segment',
+        );
+        expect(
+          {for (final s in question.spellings) Fact.of(s)},
+          hasLength(3),
+          reason: 'different witness pairs are different spellings',
+        );
+      }
+
+      // Two lines each named twice: every reading is the same two lines
+      // on both sides of the equation (`θ = θ`) or one line against
+      // itself (`0 = …`), and nothing is offered — the four-carrier form
+      // of 'two carriers naming the same two points relate nothing'.
+      construction.add(Segment(id: 'bc2', point1: b, point2: c));
+      construction.add(Segment(id: 'cd2', point1: c, point2: d));
+      expect(ask(construction, {'bc', 'cd', 'bc2', 'cd2'}), isEmpty);
+    });
+
     test('selections that phrase nothing phrase nothing', () {
       final r = rig();
 
@@ -148,6 +251,20 @@ void main() {
         ask(r.construction, {'ab', 'cd', 'a'}),
         isEmpty,
         reason: 'two carriers plus a stray point is ambiguous',
+      );
+      r.construction.add(
+        Segment(
+          id: 'ad',
+          point1: r.byName['a']! as GeoPoint,
+          point2: r.byName['d']! as GeoPoint,
+        ),
+      );
+      // Three carriers phrase concurrency now (Phase 159, the sugar group
+      // below); what stays refused is anything with a leftover.
+      expect(
+        ask(r.construction, {'ab', 'cd', 'ad', 'a'}),
+        isEmpty,
+        reason: 'four line-shaped things and a stray point is not four lines',
       );
     });
 
@@ -203,6 +320,240 @@ void main() {
       );
 
       expect(ask(r.construction, {'ab', 'l'}), isEmpty);
+    });
+  });
+
+  group('sugar: what the vocabulary has no word for', () {
+    /// P with three lines through it and one more named point on the
+    /// third — the shape concurrency needs: a meeting point, and a pair
+    /// naming the third line that the meeting point is not part of.
+    ({Construction construction, List<GeoObject> lines}) pencil({
+      bool witness = true,
+    }) {
+      final construction = Construction();
+      final p = free('p', 0, 0);
+      final a = free('a', 4, 0);
+      final b = free('b', 0, 4);
+      final c = free('c', 3, 3);
+      final la = LineThroughTwoPoints(id: 'la', point1: p, point2: a);
+      final lb = LineThroughTwoPoints(id: 'lb', point1: p, point2: b);
+      final lc = LineThroughTwoPoints(id: 'lc', point1: p, point2: c);
+      for (final object in [p, a, b, c, la, lb, lc]) {
+        construction.add(object);
+      }
+      if (witness) {
+        construction.add(PointOnObject(id: 'z', curve: lc, parameter: 2));
+      }
+      return (construction: construction, lines: [la, lb, lc]);
+    }
+
+    test('three lines through a named point ask coll about the third', () {
+      final r = pencil();
+      final questions = ask(r.construction, {'la', 'lb', 'lc'});
+
+      expect(questions, hasLength(1));
+      final question = questions.single;
+      expect(question.kind, PredicateKind.coll);
+      expect(question.reading, 'pa, pb and pc are concurrent');
+      // The meeting point P against the one pair on lc it is not part
+      // of: (c, z). Pairs (p, c) and (p, z) would say "P, P, C are
+      // collinear" — refused. Same on la and lb, whose only other pairs
+      // contain P, so the other two carrier pairs contribute nothing.
+      expect(question.spellings.map((s) => s.points.map((p) => p.id).join()), [
+        'pcz',
+      ]);
+    });
+
+    test('no named meeting point, no chip', () {
+      final construction = Construction();
+      final a = free('a', 0, 0);
+      final b = free('b', 4, 0);
+      final c = free('c', 0, 3);
+      final d = free('d', 4, 3);
+      final e = free('e', 1, 1);
+      final f = free('f', 5, 2);
+      for (final object in [
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        LineThroughTwoPoints(id: 'ab', point1: a, point2: b),
+        LineThroughTwoPoints(id: 'cd', point1: c, point2: d),
+        LineThroughTwoPoints(id: 'ef', point1: e, point2: f),
+      ]) {
+        construction.add(object);
+      }
+      expect(ask(construction, {'ab', 'cd', 'ef'}), isEmpty);
+    });
+
+    test('a meeting point on all three, and no other name: nothing', () {
+      // Every pair on every third line contains P, so every spelling is
+      // degenerate; the question needs a name P is not part of.
+      final r = pencil(witness: false);
+      expect(ask(r.construction, {'la', 'lb', 'lc'}), isEmpty);
+    });
+
+    test('a concurrency the figure denies is still asked, and refuted '
+        'later', () {
+      // P on la and lb, and a third line nowhere near: coll(P, C, D) is
+      // the question; that it is false is the filter's finding.
+      final construction = Construction();
+      final p = free('p', 0, 0);
+      final a = free('a', 4, 0);
+      final b = free('b', 0, 4);
+      final c = free('c', 3, 3);
+      final d = free('d', 5, 1);
+      for (final object in [
+        p,
+        a,
+        b,
+        c,
+        d,
+        LineThroughTwoPoints(id: 'la', point1: p, point2: a),
+        LineThroughTwoPoints(id: 'lb', point1: p, point2: b),
+        LineThroughTwoPoints(id: 'cd', point1: c, point2: d),
+      ]) {
+        construction.add(object);
+      }
+      final question = ask(construction, {'la', 'lb', 'cd'}).single;
+      expect(question.spellings.map((s) => s.points.map((p) => p.id).join()), [
+        'pcd',
+      ]);
+    });
+
+    /// Phase 155's tangency figure: a circle with a structural centre, a
+    /// tangent from an external pole, and the touch point drawn as the
+    /// intersection of the two.
+    ({Construction construction, GeoCircle circle, GeoLine tangent}) tangency({
+      bool touch = true,
+    }) {
+      final construction = Construction();
+      final o = free('o', 0, 0);
+      final rim = free('r', 3, 0);
+      final circle = CircleCenterPoint(id: 'k', center: o, onCircle: rim);
+      final q = free('q', 9, 0);
+      final tangent = TangentLine(id: 't', point: q, circle: circle, branch: 0);
+      for (final object in [o, rim, circle, q, tangent]) {
+        construction.add(object);
+      }
+      if (touch) {
+        construction.add(
+          IntersectionPoint(
+            id: 'x',
+            curve1: tangent,
+            curve2: circle,
+            branchIndex: 0,
+          ),
+        );
+      }
+      return (construction: construction, circle: circle, tangent: tangent);
+    }
+
+    test('a line and a circle ask whether the line is tangent', () {
+      final r = tangency();
+      final questions = ask(r.construction, {'t', 'k'});
+
+      expect(questions, hasLength(1));
+      final question = questions.single;
+      expect(question.kind, PredicateKind.perp);
+      expect(question.reading, 'qx is tangent to the circle at x');
+      // perp(O, X, X, Q): the radius to the touch point against the line.
+      expect(question.spellings.map((s) => s.points.map((p) => p.id).join()), [
+        'oxxq',
+      ]);
+    });
+
+    test('no named touch point, no chip — the same silence as the '
+        'hypothesis', () {
+      final r = tangency(touch: false);
+      expect(ask(r.construction, {'t', 'k'}), isEmpty);
+    });
+
+    test('a circle with no named centre says nothing; drawing one is '
+        'enough', () {
+      final construction = Construction();
+      final a = free('a', 3, 0);
+      final b = free('b', 0, 3);
+      final c = free('c', -3, 0);
+      final circle = ThreePointCircle(id: 'k', point1: a, point2: b, point3: c);
+      final q = free('q', 9, 0);
+      final tangent = TangentLine(id: 't', point: q, circle: circle, branch: 0);
+      final touch = IntersectionPoint(
+        id: 'x',
+        curve1: tangent,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      for (final object in [a, b, c, circle, q, tangent, touch]) {
+        construction.add(object);
+      }
+      expect(ask(construction, {'t', 'k'}), isEmpty);
+
+      construction.add(CircleCenter(id: 'o', circle: circle));
+      final question = ask(construction, {'t', 'k'}).single;
+      expect(question.spellings.map((s) => s.points.map((p) => p.id).join()), [
+        'oxxq',
+      ]);
+    });
+
+    test('a conic that looks round is not a circle, and is not asked', () {
+      final construction = Construction();
+      final points = [
+        free('a', 4, 0),
+        free('b', 0, 4),
+        free('c', -4, 0),
+        free('d', 0, -4),
+        free('e', 3, 2.6457513110645907),
+      ];
+      final conic = FivePointConic(id: 'k', points: points);
+      final o = CircleCenter(id: 'o', circle: conic);
+      final q = free('q', 9, 5);
+      final tangent = TangentLine(id: 't', point: q, circle: conic, branch: 0);
+      final touch = IntersectionPoint(
+        id: 'x',
+        curve1: tangent,
+        curve2: conic,
+        branchIndex: 0,
+      );
+      for (final object in [...points, conic, o, q, tangent, touch]) {
+        construction.add(object);
+      }
+      expect(ask(construction, {'t', 'k'}), isEmpty);
+    });
+
+    test('a secant asks about both crossings, and drops the "at"', () {
+      final construction = Construction();
+      final o = free('o', 0, 0);
+      final rim = free('r', 3, 0);
+      final circle = CircleCenterPoint(id: 'k', center: o, onCircle: rim);
+      final s = free('s', 0, 9);
+      // Through the rim point and a point above: the rim is one crossing
+      // by construction, the other is drawn.
+      final secant = LineThroughTwoPoints(id: 'l', point1: rim, point2: s);
+      final other = IntersectionPoint(
+        id: 'y',
+        curve1: secant,
+        curve2: circle,
+        branchIndex: 1,
+      );
+      for (final object in [o, rim, circle, s, secant, other]) {
+        construction.add(object);
+      }
+      final question = ask(construction, {'l', 'k'}).single;
+      expect(question.reading, 'rs is tangent to the circle');
+      expect(
+        {for (final p in question.spellings) p.points.map((p) => p.id).join()},
+        {'orrs', 'orry', 'oyyr', 'oyys'},
+      );
+    });
+
+    test('a circle with anything but one line phrases nothing', () {
+      final r = tangency();
+      expect(ask(r.construction, {'k'}), isEmpty);
+      expect(ask(r.construction, {'k', 'o'}), isEmpty);
+      expect(ask(r.construction, {'k', 't', 'q'}), isEmpty);
     });
   });
 

@@ -201,4 +201,28 @@ class Prover {
 
   /// Whether the exchange holds [fact].
   bool holds(Fact fact) => database.contains(fact);
+
+  /// Whether the exchange holds [fact] *or can* — and if only the
+  /// latter, holds it from now on (Phase 159).
+  ///
+  /// [_publish] enumerates `para` and `perp` and deliberately never
+  /// `eqangle`: quadruples of variables are quartic, and 152e measured
+  /// 2 527 entailed statements on one fixture with no consumer for any.
+  /// An *ask* is the other direction — one membership query against the
+  /// closure — and the one statement it lands on is recorded as an
+  /// `angle_arithmetic` step exactly as a published one would be, so
+  /// that `Proof.of` has a derivation to read and `verify` a certificate
+  /// to check. Screened through the filter like every publication, and
+  /// **not** handed to DD's pivot queue: the fact was asked for, not
+  /// derived toward, and waking a quiescent engine on it would make
+  /// [isComplete] a function of what the user asked.
+  bool resolve(Fact fact) {
+    if (database.contains(fact)) return true;
+    final certificate = angles.entailmentOf(fact);
+    if (certificate == null) return false;
+    if (!filter.holds(fact.statement)) return false;
+    final premises = angles.sourcesOf(certificate);
+    if (premises.any((premise) => !database.contains(premise))) return false;
+    return database.add(fact, Derivation(angleArithmeticRule, premises));
+  }
 }

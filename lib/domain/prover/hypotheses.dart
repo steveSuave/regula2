@@ -112,16 +112,7 @@ List<Predicate> hypotheses(
   // the radius, so without a name for the centre there is nothing to
   // say — a `ThreePointCircle` has no structural centre and is exactly
   // the case this second half exists for.
-  GeoPoint? centreOf(GeoCircle circle) {
-    final structural = _structuralCenter(circle);
-    if (structural != null) return structural;
-    for (final object in all) {
-      if (object is CircleCenter && identical(object.circle, circle)) {
-        return object;
-      }
-    }
-    return null;
-  }
+  GeoPoint? centreOf(GeoCircle circle) => circleCentre(circle, all);
 
   for (final object in all) {
     // Incidence-shaped statements, for every carrier at once: points a
@@ -132,7 +123,7 @@ List<Predicate> hypotheses(
         for (final triple in _choose(onCurve(object), 3)) {
           emit(PredicateKind.coll, triple);
         }
-      case GeoCircle() when _isCircleByConstruction(object):
+      case GeoCircle() when isCircleByConstruction(object):
         for (final quad in _choose(onCurve(object), 4)) {
           emit(PredicateKind.cyclic, quad);
         }
@@ -213,7 +204,7 @@ List<Predicate> hypotheses(
           i.vertex3,
           i.vertex2,
         ]);
-      case final CircleCenter o when _isCircleByConstruction(o.circle):
+      case final CircleCenter o when isCircleByConstruction(o.circle):
         for (final pair in pairsOn(o.circle)) {
           emit(PredicateKind.cong, [o, pair[0], o, pair[1]]);
         }
@@ -297,7 +288,7 @@ List<Predicate> hypotheses(
       // theorem. Note the pole and *not* another point of the polar: the
       // tangent at `T` is the line `T→pole`, while the polar is the chord
       // of contact, and confusing the two would emit a falsehood.
-      case final PolarLine l when _isCircleByConstruction(l.circle):
+      case final PolarLine l when isCircleByConstruction(l.circle):
         final centre = centreOf(l.circle);
         if (centre == null) break;
         for (final pair in pairsOn(l)) {
@@ -318,8 +309,8 @@ List<Predicate> hypotheses(
       // `incidence.dart`, where it would also reach line clipping and hit
       // testing — a change with consumers well outside the prover.
       case final RadicalAxisLine l
-          when _isCircleByConstruction(l.circle1) &&
-              _isCircleByConstruction(l.circle2):
+          when isCircleByConstruction(l.circle1) &&
+              isCircleByConstruction(l.circle2):
         final centre1 = centreOf(l.circle1);
         final centre2 = centreOf(l.circle2);
         if (centre1 == null || centre2 == null) break;
@@ -346,7 +337,7 @@ List<Predicate> hypotheses(
       // is *not* perpendicular to the join of `t` with the conic's
       // centre, so the statement would be false about a `FivePointConic`
       // that happens to look round.
-      case final TangentLine t when _isCircleByConstruction(t.circle):
+      case final TangentLine t when isCircleByConstruction(t.circle):
         final centre = centreOf(t.circle);
         if (centre == null) break;
         final onTangent = onCurve(t);
@@ -368,10 +359,30 @@ List<Predicate> hypotheses(
 /// conic-valued kinds under `GeoCircle` (Phase 119's parking decision)
 /// are conics whose being a circle would be an accident of position, and
 /// `cyclic`/radius-`cong` must not be asserted about them.
-bool _isCircleByConstruction(GeoCircle circle) => switch (circle) {
+/// Whether [circle] is a circle *by construction* rather than a conic
+/// that happens to look round — the guard every circle-shaped statement
+/// (`cyclic`, radii `cong`, tangency `perp`) sits behind, because none
+/// of them is true of a general conic.
+bool isCircleByConstruction(GeoCircle circle) => switch (circle) {
   FivePointConic() || BifocalConic() || FocalConic() => false,
   _ => true,
 };
+
+/// The named centre of [circle]: the point its kind stores as its own,
+/// or failing that a `CircleCenter` the user drew on it (a
+/// `ThreePointCircle` has no structural centre, and the most natural
+/// tangency figure would otherwise say nothing). Null when neither
+/// exists — there is then no point for a radius statement to be about.
+GeoPoint? circleCentre(GeoCircle circle, Iterable<GeoObject> objects) {
+  final structural = _structuralCenter(circle);
+  if (structural != null) return structural;
+  for (final object in objects) {
+    if (object is CircleCenter && identical(object.circle, circle)) {
+      return object;
+    }
+  }
+  return null;
+}
 
 /// The point the kind stores as its own center, when it has one.
 GeoPoint? _structuralCenter(GeoCircle circle) => switch (circle) {

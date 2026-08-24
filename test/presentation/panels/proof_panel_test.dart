@@ -14,9 +14,14 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/angle_translation.dart';
 import 'package:regula/domain/prover/carriers.dart';
@@ -573,6 +578,251 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(container.read(proofHighlightProvider), isEmpty);
+    });
+
+    testWidgets('a selection that phrases nothing says so', (tester) async {
+      // Session 163's report: four selected segments, no chips, no
+      // explanation. Four segments are four carriers, which Phase 159
+      // now phrases — so the silent case here is one that stays silent.
+      final rig = seedVarignon();
+      final construction = container.read(constructionProvider).construction;
+      final corners = [for (final m in rig.midpoints) m.point1];
+      final sides = [
+        for (var i = 0; i < 4; i++)
+          Segment(
+            id: 'side$i',
+            point1: corners[i],
+            point2: corners[(i + 1) % 4],
+          ),
+      ];
+      for (final side in sides) {
+        construction.add(side);
+      }
+      await pumpEditor(tester);
+      await openPanel(tester);
+
+      // Nothing selected: neither chips nor the hint — the derived list
+      // is the panel then.
+      expect(find.text('Ask about the selection'), findsNothing);
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
+
+      // Two sides and a stray corner: refused for good (half a selection
+      // silently ignored is a question nobody asked).
+      container.read(selectionProvider.notifier).selectMany([
+        sides[0].id,
+        sides[1].id,
+        corners[2].id,
+      ]);
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsOneWidget);
+      expect(find.text('Ask about the selection'), findsNothing);
+      expect(inPanel(find.byType(ActionChip)), findsNothing);
+
+      // Session 163's four segments: three equal-angle readings, each
+      // naming its segments' points.
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(sides.map((side) => side.id));
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
+      expect(inPanel(find.byType(ActionChip)), findsNWidgets(3));
+      for (final question in askableQuestions(
+        construction.objects,
+        selectedIds: {for (final side in sides) side.id},
+      )) {
+        expect(question.kind, PredicateKind.eqangle);
+        expect(find.text(questionLabel(question)), findsOneWidget);
+      }
+
+      // Two of them phrase perp / para / cong: chips, and the hint gone.
+      container.read(selectionProvider.notifier).selectMany([
+        sides[0].id,
+        sides[2].id,
+      ]);
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
+      expect(find.text('Ask about the selection'), findsOneWidget);
+      expect(inPanel(find.byType(ActionChip)), findsNWidgets(3));
+
+      // And a lone point is back to the hint.
+      container.read(selectionProvider.notifier).select(corners.first.id);
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsOneWidget);
+    });
+
+    testWidgets('four segments ask an equal-angle question, and the '
+        'inscribed angle answers it', (tester) async {
+      // P, Q, A, B on one circle: ∠APB = ∠AQB by `inscribed_angle`. The
+      // four segments PA, PB, QA, QB are that statement's carriers, and
+      // one of the three readings they offer is it.
+      final construction = container.read(constructionProvider).construction;
+      final o = free('o', 'O', 0, 0);
+      final a = free('a', 'A', 5, 0);
+      final circle = CircleCenterPoint(id: 'k', center: o, onCircle: a);
+      GeoPoint on(String id, String name, double t) => PointOnObject(
+        id: id,
+        curve: circle,
+        parameter: t,
+        attributes: ObjectAttributes(name: name),
+      );
+      final b = on('b', 'B', 2.0);
+      final p = on('p', 'P', 0.9);
+      final q = on('q', 'Q', 4.0);
+      final sides = [
+        Segment(id: 'pa', point1: p, point2: a),
+        Segment(id: 'pb', point1: p, point2: b),
+        Segment(id: 'qa', point1: q, point2: a),
+        Segment(id: 'qb', point1: q, point2: b),
+      ];
+      for (final object in [o, a, circle, b, p, q, ...sides]) {
+        construction.add(object);
+      }
+      await pumpEditor(tester);
+      await openPanel(tester);
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(sides.map((side) => side.id));
+      await tester.pump();
+
+      final inscribed = Fact.of(
+        Predicate(PredicateKind.eqangle, [p, a, p, b, q, a, q, b]),
+      );
+      final questions = askableQuestions(
+        construction.objects,
+        selectedIds: {for (final side in sides) side.id},
+      );
+      final question = questions.singleWhere(
+        (q) => q.spellings.any((s) => Fact.of(s) == inscribed),
+      );
+      final others = questions.where((q) => !identical(q, question));
+      expect(others, hasLength(2));
+
+      await tester.tap(find.text(questionLabel(question)));
+      await tester.pumpAndSettle();
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(
+        state.answer.proof!.steps.map((step) => step.rule),
+        contains('inscribed_angle'),
+      );
+      // The other two readings are false in the figure: refuted, no run.
+      for (final other in others) {
+        await tester.tap(find.byTooltip('Back to the list'));
+        await tester.pump();
+        await tester.tap(find.text(questionLabel(other)));
+        await tester.pumpAndSettle();
+        expect(
+          (container.read(proverProvider) as ProverAnswered).answer.verdict,
+          ProverVerdict.refuted,
+        );
+      }
+    });
+
+    testWidgets('sugar reads as what was asked: concurrency and tangency', (
+      tester,
+    ) async {
+      final construction = container.read(constructionProvider).construction;
+      // Three lines through P, with Z naming PC beside C.
+      final p = free('p', 'P', 0, 0);
+      final a = free('a', 'A', 4, 0);
+      final b = free('b', 'B', 0, 4);
+      final c = free('c', 'C', 3, 3);
+      final la = LineThroughTwoPoints(id: 'la', point1: p, point2: a);
+      final lb = LineThroughTwoPoints(id: 'lb', point1: p, point2: b);
+      final lc = LineThroughTwoPoints(id: 'lc', point1: p, point2: c);
+      final z = PointOnObject(
+        id: 'z',
+        curve: lc,
+        parameter: 2,
+        attributes: const ObjectAttributes(name: 'Z'),
+      );
+      // A circle about O, its tangent from Q with the touch point K
+      // drawn, and a secant through the rim point R and S.
+      final o = free('o', 'O', 20, 0);
+      final r = free('r', 'R', 23, 0);
+      final circle = CircleCenterPoint(id: 'k', center: o, onCircle: r);
+      final q = free('q', 'Q', 29, 0);
+      final tangent = TangentLine(id: 't', point: q, circle: circle, branch: 0);
+      final touch = IntersectionPoint(
+        id: 'x',
+        curve1: tangent,
+        curve2: circle,
+        branchIndex: 0,
+        attributes: const ObjectAttributes(name: 'K'),
+      );
+      final s = free('s', 'S', 20, 9);
+      final secant = LineThroughTwoPoints(id: 'l', point1: r, point2: s);
+      for (final object in [
+        p,
+        a,
+        b,
+        c,
+        la,
+        lb,
+        lc,
+        z,
+        o,
+        r,
+        circle,
+        q,
+        tangent,
+        touch,
+        s,
+        secant,
+      ]) {
+        construction.add(object);
+      }
+      await pumpEditor(tester);
+      await openPanel(tester);
+
+      Future<ProverAnswered> askChip(Set<String> ids) async {
+        container.read(selectionProvider.notifier).selectMany(ids);
+        await tester.pump();
+        final question = askableQuestions(
+          construction.objects,
+          selectedIds: ids,
+        ).single;
+        expect(question.reading, isNotNull);
+        await tester.tap(find.text(question.reading!));
+        await tester.pumpAndSettle();
+        return container.read(proverProvider) as ProverAnswered;
+      }
+
+      // Concurrent by construction: coll(P, C, Z) is a hypothesis.
+      final concurrent = await askChip({'la', 'lb', 'lc'});
+      expect(
+        concurrent.answer.question.reading,
+        'PA, PB and PC are concurrent',
+      );
+      expect(concurrent.answer.verdict, ProverVerdict.proved);
+      expect(
+        find.textContaining('“PA, PB and PC are concurrent” — proved'),
+        findsOneWidget,
+        reason: 'the verdict quotes what was asked, not the coll it became',
+      );
+
+      await tester.tap(find.byTooltip('Back to the list'));
+      await tester.pump();
+      final tangentAnswer = await askChip({'t', 'k'});
+      expect(
+        tangentAnswer.answer.question.reading,
+        'QK is tangent to the circle at K',
+      );
+      expect(tangentAnswer.answer.verdict, ProverVerdict.proved);
+
+      await tester.tap(find.byTooltip('Back to the list'));
+      await tester.pump();
+      final secantAnswer = await askChip({'l', 'k'});
+      expect(
+        secantAnswer.answer.question.reading,
+        'RS is tangent to the circle at R',
+      );
+      expect(secantAnswer.answer.verdict, ProverVerdict.refuted);
+      expect(
+        find.textContaining('“RS is tangent to the circle at R” is not true'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a selection offers what it can phrase, and asking works', (
