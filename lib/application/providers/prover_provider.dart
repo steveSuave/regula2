@@ -562,14 +562,16 @@ class ProverNotifier extends _$ProverNotifier {
     );
   }
 
-  /// The spelling of [question] the run derived, or null for none.
+  /// The spelling of [question] the run holds, or null for none.
   ///
   /// Any spelling will do: they are one statement, and which points name
-  /// a line is the prover's business (see [ProverQuestion]).
+  /// a line is the prover's business (see [ProverQuestion]). "Holds"
+  /// through [Prover.resolve], so an `eqangle` the angle side entails
+  /// but DD never stores is an answer too, with its certificate.
   static Fact? _derived(Prover engine, ProverQuestion question) {
     for (final spelling in question.spellings) {
       final fact = Fact.of(spelling);
-      if (engine.database.contains(fact)) return fact;
+      if (engine.resolve(fact)) return fact;
     }
     return null;
   }

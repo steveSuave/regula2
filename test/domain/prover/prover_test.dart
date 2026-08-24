@@ -173,6 +173,75 @@ void main() {
     });
   });
 
+  group('resolving a question the database does not hold', () {
+    /// The parallelogram's angle: ∠(MN, NP) = ∠(QP, MQ), true because
+    /// MN ∥ QP and NP ∥ MQ. DD has no `para & para ⇒ eqangle`, so no
+    /// run stores it; AR entails it from the two parallels in one row.
+    Fact fourSides(Construction construction) {
+      GeoPoint at(String id) => construction.byId(id)! as GeoPoint;
+      final (m, n, p, q) = (at('mab'), at('mbc'), at('mcd'), at('mda'));
+      return Fact.of(
+        Predicate(PredicateKind.eqangle, [m, n, n, p, q, p, m, q]),
+      );
+    }
+
+    test('an entailed eqangle is recorded as a certificate on demand', () {
+      final construction = varignon();
+      final joint = exchange(construction);
+      final fact = fourSides(construction);
+      expect(joint.prover.isComplete, isTrue);
+      expect(joint.database.contains(fact), isFalse);
+      final before = joint.database.length;
+
+      expect(joint.prover.resolve(fact), isTrue);
+
+      expect(joint.database.contains(fact), isTrue);
+      expect(joint.database.length, before + 1);
+      final derivation = joint.database.derivationOf(fact)!;
+      expect(derivation.rule, angleArithmeticRule);
+      // Which parallels the certificate cites is the echelon's choice
+      // (here the diagonals' midlines, not the sides'); that they are
+      // all parallels is the theorem's.
+      expect(derivation.premises, isNotEmpty);
+      expect(
+        derivation.premises.every((p) => p.kind == PredicateKind.para),
+        isTrue,
+        reason: '${derivation.premises}',
+      );
+      final proof = Proof.of(fact, joint.database);
+      expect(proof.verify(), isEmpty, reason: 'a certificate, not a claim');
+      expect(proof.steps.last.chase, isNotNull, reason: 'and it reads');
+      // Asked for, not derived toward: the engine stays complete.
+      expect(joint.prover.isComplete, isTrue);
+      // Idempotent — a second ask is a lookup.
+      expect(joint.prover.resolve(fact), isTrue);
+      expect(joint.database.length, before + 1);
+    });
+
+    test('what the closure does not entail is not recorded', () {
+      final construction = varignon();
+      final joint = exchange(construction);
+      GeoPoint at(String id) => construction.byId(id)! as GeoPoint;
+      // ∠(AB, MN) = ∠(MN, NP): not a theorem, not in the closure.
+      final fact = Fact.of(
+        Predicate(PredicateKind.eqangle, [
+          at('a'),
+          at('b'),
+          at('mab'),
+          at('mbc'),
+          at('mab'),
+          at('mbc'),
+          at('mbc'),
+          at('mcd'),
+        ]),
+      );
+      final before = joint.database.length;
+      expect(joint.prover.resolve(fact), isFalse);
+      expect(joint.database.length, before);
+      expect(joint.database.contains(fact), isFalse);
+    });
+  });
+
   group('what a pass is', () {
     test('a run records its passes and ends on a quiet one', () {
       final joint = exchange(varignon());

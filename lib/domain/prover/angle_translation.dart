@@ -102,7 +102,7 @@ class AngleTranslation {
   /// answers false and is left to DD — `cong` and `eqratio` are the
   /// length system's, and the rest are about points.
   bool absorb(Fact fact) {
-    final equations = _equationsOf(fact);
+    final equations = _equationsOf(fact, name: _register);
     if (equations.isEmpty) return false;
     var contributed = false;
     for (final equation in equations) {
@@ -122,7 +122,12 @@ class AngleTranslation {
     return contributed;
   }
 
-  List<AngleEquation> _equationsOf(Fact fact) {
+  /// The relations [fact] states, over variables named by [name] —
+  /// [_register] when saying them, [lineVariable] when only asking.
+  List<AngleEquation> _equationsOf(
+    Fact fact, {
+    required String Function(GeoPoint, GeoPoint) name,
+  }) {
     final points = fact.points;
     switch (fact.kind) {
       case PredicateKind.para:
@@ -132,8 +137,8 @@ class AngleTranslation {
         }
         return [
           AngleEquation.difference(
-            _register(points[0], points[1]),
-            _register(points[2], points[3]),
+            name(points[0], points[1]),
+            name(points[2], points[3]),
             fact.kind == PredicateKind.perp ? rightAngle : Rational.zero,
           ),
         ];
@@ -146,7 +151,7 @@ class AngleTranslation {
         }
         final variables = [
           for (var segment = 0; segment < 4; segment++)
-            _register(points[segment * 2], points[segment * 2 + 1]),
+            name(points[segment * 2], points[segment * 2 + 1]),
         ];
         final coefficients = <String, BigInt>{};
         void add(String variable, BigInt amount) {
@@ -165,13 +170,13 @@ class AngleTranslation {
         // closure would call it redundant.
         return [
           AngleEquation.difference(
-            _register(points[0], points[1]),
-            _register(points[0], points[2]),
+            name(points[0], points[1]),
+            name(points[0], points[2]),
             Rational.zero,
           ),
           AngleEquation.difference(
-            _register(points[0], points[1]),
-            _register(points[1], points[2]),
+            name(points[0], points[1]),
+            name(points[1], points[2]),
             Rational.zero,
           ),
         ];
@@ -227,24 +232,23 @@ class AngleTranslation {
     return out;
   }
 
-  /// The row form of [fact], or null when the kind has no angle content
-  /// or the fact is degenerate.
+  /// The row form of [fact], or null when the kind has no *single* row
+  /// — `para`, `perp` and `eqangle` are one relation each; `coll` is
+  /// two and is not a row; the rest have no angle content — or the fact
+  /// is degenerate.
   ///
   /// Unlike [absorb] this registers nothing: asking what a fact *would*
   /// say is not saying it.
   AngleEquation? equationOf(Fact fact) {
-    if (fact.kind != PredicateKind.para && fact.kind != PredicateKind.perp) {
-      return null;
+    switch (fact.kind) {
+      case PredicateKind.para:
+      case PredicateKind.perp:
+      case PredicateKind.eqangle:
+        final equations = _equationsOf(fact, name: lineVariable);
+        return equations.isEmpty ? null : equations.single;
+      default:
+        return null;
     }
-    final points = fact.points;
-    if (points[0].id == points[1].id || points[2].id == points[3].id) {
-      return null;
-    }
-    return AngleEquation.difference(
-      lineVariable(points[0], points[1]),
-      lineVariable(points[2], points[3]),
-      fact.kind == PredicateKind.perp ? rightAngle : Rational.zero,
-    );
   }
 
   /// The certificate for [fact] if the closure entails it, else null.
