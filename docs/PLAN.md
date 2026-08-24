@@ -630,6 +630,18 @@ The rule: **which object names a line is the prover's business, not the click's.
 
 What this is not: a merge of the objects, a change to the hit-tester, or a numeric coincidence test. Two objects that merely lie on one line in the current figure are two lines, and a question about them is a question the filter answers.
 
+### The builder as built (pinned in Phase 160)
+
+Four things the previous section did not settle, settled by building it.
+
+**A line slot is one carrier or two points.** The section says "eight point slots" for `eqangle` and, three paragraphs later, that a line slot accepts a carrier. Those are one rule, not two: a slot of type *line* takes a carrier — and reads through every witness pair on it, across coincident copies — or two taps naming a pair, and `eqangle` is four such slots in two groups. Filled by points it is JGEX's eight; filled by carriers it says strictly more than JGEX's dialog can. A *segment* slot is the same with one constraint: it must bound a length (a segment, a ray, or two points; never a plain line), because `cong`, `eqratio` and `midp` are about lengths. That constraint surfaced a defect in the chips while the spelling code was being shared: `cong` was spelled through *every* pair on a segment, so `|AB| = |CD|` with a third point `X` on `AB` also asked `cong(A,X,C,D)` — a different statement, and a proof of it would have answered the question *proved*. A length is named by the pair that bounds it, and only that pair; direction relations read every pair. `question_spellings.dart` is where that rule lives now, for both producers.
+
+**The builder is over the canvas, not in the panel.** The section says "tap the figure to fill" and, elsewhere, that Phase 154's sheet is where it has to live on a phone. Those conflict: the sheet is modal and covers the figure. So the bar sits along the bottom of the canvas on every layout — one row of relation and close, one sideways-scrolling row of slot chips grouped as the statement groups them, one row of verdict and *Ask* — and on a phone the sheet closes when the builder opens from it and reopens when the question is asked. The draft is a provider (`questionDraftProvider`) for `selectionProvider`'s reason: the panel opens it, the canvas fills it, the bar shows it, and they share no ancestor worth threading it through.
+
+**A tap into the builder is not a selection.** While a draft is open, a select-mode tap on an object fills the next slot and the selection does not move. The alternative — fill *and* select — would re-target the next tool under every tap, which is the invisible re-addressing this codebase keeps writing reports about. The selection is read exactly once, when the builder opens, to seed the draft in construction order.
+
+**No compound question.** The section left Equilateral and Bisect as "either `ProverQuestion` grows a conjunction or these are several chips", with the mixed verdict as the thing to decide. Decided against the type: the answer is three-way *about the figure* (M-P4), and a compound whose conjuncts split — one refuted, one unproved — would need a fourth answer that is about the question's shape instead. Equilateral is two `cong` asks; Bisect is the `midp` or the `eqangle` template, both of which exist. The template list is exactly the vocabulary plus the two sugars, and the test that every `PredicateKind` has a template is what a conjunction type would have broken.
+
 ### M-P — Deductive-database prover
 
 Independent of the kernel track; can start any time after Phase 112 (it consumes projected positions only).

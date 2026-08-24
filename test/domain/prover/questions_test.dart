@@ -693,6 +693,33 @@ void main() {
       );
     });
 
+    test('a length is named by its bounding pair only — a witness pair on '
+        'a segment spells a different statement', () {
+      // |AB| = |CD| is about A and B. With X a third point on segment AB,
+      // cong(A,X,C,D) is a *different* statement, not a spelling of it —
+      // answering the question proved on that fact would be unsound. The
+      // direction questions still read every witness pair.
+      final construction = Construction();
+      final a = free('a', 0, 0);
+      final b = free('b', 4, 0);
+      final c = free('c', 0, 3);
+      final d = free('d', 4, 3);
+      final ab = Segment(id: 'ab', point1: a, point2: b);
+      final cd = Segment(id: 'cd', point1: c, point2: d);
+      for (final object in [a, b, c, d, ab, cd]) {
+        construction.add(object);
+      }
+      final x = PointOnObject(id: 'x', curve: ab, parameter: 0.5);
+      construction.add(x);
+
+      final questions = ask(construction, {'ab', 'cd'});
+      final cong = questions.singleWhere((q) => q.kind == PredicateKind.cong);
+      final para = questions.singleWhere((q) => q.kind == PredicateKind.para);
+
+      expect(cong.spellings.map((s) => s.toString()), ['cong(a, b, c, d)']);
+      expect(para.spellings, hasLength(3));
+    });
+
     test('a degenerate pairing is refused before it is asked', () {
       // Two segments sharing both endpoints would phrase perp(a,b,a,b),
       // which names no pair of lines. It is a property of the tuple, so

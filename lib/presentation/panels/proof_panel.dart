@@ -22,12 +22,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/proof_highlight_provider.dart';
 import '../../application/providers/prover_provider.dart';
+import '../../application/providers/question_draft_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../domain/prover/carriers.dart';
 import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
 import '../../domain/prover/predicate.dart';
 import '../../domain/prover/proof.dart';
+import '../../domain/prover/question_template.dart';
 import '../../domain/prover/questions.dart';
 
 /// The statements worth offering as goals: what the run *derived*.
@@ -344,7 +346,8 @@ class ProofPanel extends ConsumerStatefulWidget {
   /// selection, where the derived list is the panel's whole purpose.
   static const String unaskableSelectionHint =
       'Nothing to ask about this selection \u2014 select two or four '
-      'lines, a line and two points, or three or four points.';
+      'lines, a line and two points, or three or four points; or build '
+      'any question from the Ask button above.';
 
   const ProofPanel({super.key, this.scrollController});
 
@@ -579,6 +582,17 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
               style: theme.textTheme.titleSmall,
             ),
           ),
+          // The builder (Phase 160): any question, with no selection at
+          // all — the complete path beside the chips' fast one.
+          PopupMenuButton<QuestionTemplate>(
+            tooltip: 'Ask a question',
+            icon: const Icon(Icons.add_comment_outlined),
+            onSelected: _build,
+            itemBuilder: (context) => [
+              for (final template in QuestionTemplate.values)
+                PopupMenuItem(value: template, child: Text(template.label)),
+            ],
+          ),
           if (canGoBack)
             IconButton(
               tooltip: 'Back to the list',
@@ -621,6 +635,16 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         ],
       ),
     );
+  }
+
+  /// Opens the builder on [template] (Phase 160). The bar is the
+  /// editor's, over the canvas, because it is filled by tapping the
+  /// figure — and in a sheet this panel *covers* the figure, so the
+  /// sheet closes first. The editor reopens it when the question is
+  /// asked.
+  void _build(QuestionTemplate template) {
+    ref.read(questionDraftProvider.notifier).open(template);
+    if (widget.scrollController != null) Navigator.of(context).pop();
   }
 
   Future<void> _prove() async {

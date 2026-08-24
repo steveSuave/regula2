@@ -10,6 +10,7 @@ import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/document_settings_provider.dart';
 import '../../application/providers/proof_highlight_provider.dart';
+import '../../application/providers/question_draft_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
@@ -810,6 +811,14 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
         target = object;
         break;
       }
+    }
+    // A question being built takes the tap (Phase 160): the next slot
+    // fills and the selection stays where it was — the slot carries the
+    // order, and a selection that moved under every tap would re-target
+    // the next tool invisibly. An empty tap still clears.
+    if (target != null && ref.read(questionDraftProvider) != null) {
+      ref.read(questionDraftProvider.notifier).tap(target);
+      return;
     }
     final selection = ref.read(selectionProvider.notifier);
     if (target == null) {
