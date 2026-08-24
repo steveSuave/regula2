@@ -307,17 +307,31 @@ class ProverNotifier extends _$ProverNotifier {
   /// resumable shape; this is a consumer using it for what it is for.
   Prover? _engine;
 
+  /// Set by [stop], read once per pass through `stopWhen` — the hook
+  /// `Prover.runChunked` already checks — and reset at the top of every
+  /// run method, so a stop belongs to the run it interrupted and never
+  /// to the next one.
+  bool _cancelled = false;
+
   @override
   ProverState build() => const ProverIdle();
 
   /// Reads the construction, runs the prover over it, and publishes what
   /// it derived. Answers when the run is finished or superseded.
   ///
+  /// A held run at this revision is **continued, not rebuilt** — [ask]'s
+  /// guard, which this method shipped without (Phase 156): a ▶ on an
+  /// incomplete run used to re-probe, re-seed and start from zero while
+  /// the *Keep going* row below it resumed correctly. Restarting when
+  /// the revision has moved stays right, and is what the guard's
+  /// comparison keeps.
+  ///
   /// [applicationBudget] overrides [proverApplicationBudget] for this
   /// call — a consumer that wants a quick first answer can ask for one,
   /// and [proveMore] picks up whatever is left either way.
   Future<void> prove({int? applicationBudget}) async {
     final generation = ++_generation;
+    _cancelled = false;
     final snapshot = ref.read(constructionProvider);
     final objects = List.of(snapshot.construction.objects);
     final absolute = snapshot.construction.kernel.absolute;
@@ -328,22 +342,44 @@ class ProverNotifier extends _$ProverNotifier {
       );
       return;
     }
+    final reusable =
+        _engine != null && _heldRevision(state) == snapshot.revision;
     state = ProverRunning(snapshot.revision);
     // Synchronous, and deliberately before the first yield: `probe`
     // perturbs the live construction's roots and restores them
     // bit-exactly, so nothing may interleave with it.
-    final filter = DiagramFilter.probe(objects, absolute: absolute);
-    final database = FactDatabase();
-    seedHypotheses(database, hypotheses(objects, absolute: absolute), filter);
-    final engine = Prover(database: database, filter: filter);
+    final engine = reusable
+        ? _engine!
+        : () {
+            final filter = DiagramFilter.probe(objects, absolute: absolute);
+            final database = FactDatabase();
+            seedHypotheses(
+              database,
+              hypotheses(objects, absolute: absolute),
+              filter,
+            );
+            return Prover(database: database, filter: filter);
+          }();
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
+      stopWhen: () => _cancelled,
     );
     if (generation != _generation) return;
     _engine = engine;
     state = _readyFrom(engine, snapshot.revision);
   }
+
+  /// The construction revision [_engine] was built at, read off the
+  /// published state — the two are only ever assigned together. Null
+  /// when the state carries none, [ProverRunning] included: reusing the
+  /// engine an in-flight run may itself be driving would interleave two
+  /// `runChunked` loops over one engine.
+  static int? _heldRevision(ProverState held) => switch (held) {
+    ProverReady(:final revision) => revision,
+    ProverAnswered(:final revision) => revision,
+    _ => null,
+  };
 
   /// Spends another [proverApplicationBudget] on the run already held,
   /// which is what a consumer offers when [ProverReady.reachedFixpoint]
@@ -354,10 +390,12 @@ class ProverNotifier extends _$ProverNotifier {
     final engine = _engine;
     if (held is! ProverReady || engine == null || engine.isComplete) return;
     final generation = ++_generation;
+    _cancelled = false;
     state = ProverRunning(held.revision);
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
+      stopWhen: () => _cancelled,
     );
     if (generation != _generation) return;
     state = _readyFrom(engine, held.revision);
@@ -378,6 +416,7 @@ class ProverNotifier extends _$ProverNotifier {
   /// simply consulted.
   Future<void> ask(ProverQuestion question, {int? applicationBudget}) async {
     final generation = ++_generation;
+    _cancelled = false;
     final snapshot = ref.read(constructionProvider);
     final objects = List.of(snapshot.construction.objects);
     final absolute = snapshot.construction.kernel.absolute;
@@ -427,7 +466,7 @@ class ProverNotifier extends _$ProverNotifier {
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
-      stopWhen: () => _derived(engine, question) != null,
+      stopWhen: () => _cancelled || _derived(engine, question) != null,
     );
     if (generation != _generation) return;
     _engine = engine;
@@ -451,11 +490,12 @@ class ProverNotifier extends _$ProverNotifier {
     }
     final question = held.answer.question;
     final generation = ++_generation;
+    _cancelled = false;
     state = ProverRunning(held.revision);
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
-      stopWhen: () => _derived(engine, question) != null,
+      stopWhen: () => _cancelled || _derived(engine, question) != null,
     );
     if (generation != _generation) return;
     state = ProverAnswered(
@@ -515,6 +555,23 @@ class ProverNotifier extends _$ProverNotifier {
   void showRun(ProverReady run) {
     if (_engine == null || !identical(_engine!.database, run.database)) return;
     state = run;
+  }
+
+  /// Asks the run in flight to stop at its next pass boundary; a no-op
+  /// when nothing is running.
+  ///
+  /// **Cancellation is not supersession, and the two must not be
+  /// collapsed**: [_generation] exists so a superseded run *drops* its
+  /// result, and a stopped run must *publish* one — everything derived
+  /// so far, in the identical shape a spent budget publishes
+  /// (`ProverReady(reachedFixpoint: false)`, or an undecided answer),
+  /// so *Keep going* resumes it with no second mechanism and no new arm
+  /// on [ProverState]. Which is why this sets a flag the run reads
+  /// rather than touching the state itself: the interrupted `runChunked`
+  /// returns through its own publish path.
+  void stop() {
+    if (state is! ProverRunning) return;
+    _cancelled = true;
   }
 
   /// Drops any held run, back to [ProverIdle]. File > New / Open, and

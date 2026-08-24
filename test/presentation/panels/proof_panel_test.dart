@@ -732,6 +732,55 @@ void main() {
         isTrue,
       );
     });
+
+    testWidgets('the Stop button exists only while running, and a tap '
+        'publishes the prefix', (tester) async {
+      // A document whose run outlives its first chunk — Varignon
+      // completes inside one, so a Stop there is never on screen long
+      // enough to tap.
+      final construction = decodeDocument(
+        jsonDecode(
+              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+      await pumpEditor(tester);
+      await openPanel(tester);
+
+      expect(inPanel(find.byTooltip('Stop')), findsNothing);
+      expect(find.byTooltip('Prove'), findsOneWidget);
+
+      // Unawaited on purpose: the run suspends at its first yield — a
+      // timer the widget test's fake async holds until pumped — so the
+      // running state is what is on screen.
+      final pending = container.read(proverProvider.notifier).prove();
+      await tester.pump();
+
+      expect(container.read(proverProvider), isA<ProverRunning>());
+      expect(inPanel(find.byTooltip('Stop')), findsOneWidget);
+      expect(find.byTooltip('Prove'), findsNothing);
+
+      await tester.tap(find.byTooltip('Stop'));
+      await tester.pumpAndSettle();
+      await pending;
+
+      final state = container.read(proverProvider) as ProverReady;
+      expect(state.reachedFixpoint, isFalse);
+      expect(inPanel(find.byTooltip('Stop')), findsNothing);
+
+      // The resume row sits at the foot of a list this document fills
+      // far past the fold, so it has to be scrolled to before a finder
+      // can see it.
+      await tester.drag(inPanel(find.byType(Scrollable)), const Offset(0, -5000));
+      await tester.pump();
+      expect(
+        find.text('Keep going'),
+        findsOneWidget,
+        reason: 'a stopped run resumes through the same row a spent '
+            'budget does',
+      );
+    });
   });
 
   /// Phase 154. On a phone the panel is a modal sheet, and until this
