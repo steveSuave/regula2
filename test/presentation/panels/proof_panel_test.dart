@@ -103,6 +103,42 @@ void main() {
   Finder inPanel(Finder matching) =>
       find.descendant(of: find.byType(ProofPanel), matching: matching);
 
+  /// Unfolds [kind]'s group in the derived list. Groups start folded
+  /// (Phase 158), so a test that reaches a row opens its group first,
+  /// the way a user does; the whole header row is the fold target.
+  Future<void> expandGroup(WidgetTester tester, PredicateKind kind) async {
+    final header = inPanel(find.text(predicateKindLabel(kind)));
+    // Scroll first, then ensure: a lazy list builds a header only near
+    // the fold, and `ensureVisible` needs it built (session 168).
+    await tester.scrollUntilVisible(
+      header,
+      60,
+      scrollable: inPanel(find.byType(Scrollable)),
+    );
+    await tester.ensureVisible(header);
+    await tester.pumpAndSettle();
+    await tester.tap(header);
+    await tester.pump();
+  }
+
+  /// `perp-true-unproved.rgl` into the container, returning its point
+  /// named [name]. Point C — a point on a line — is the selection that
+  /// narrows the derived list to two of its six kinds; Varignon has no
+  /// object that empties any kind at all (measured: every one of its
+  /// eight points touches all five).
+  GeoPoint loadPerpFixture({required String name}) {
+    final construction = decodeDocument(
+      jsonDecode(
+            File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+          )
+          as Map<String, dynamic>,
+    ).construction;
+    container.read(constructionProvider.notifier).replace(construction);
+    return construction.objects.whereType<GeoPoint>().firstWhere(
+      (point) => point.attributes.name == name,
+    );
+  }
+
   setUp(() {
     container = ProviderContainer();
     addTearDown(container.dispose);
@@ -245,6 +281,7 @@ void main() {
       // The goal list, and the Varignon conclusion is in it. The list
       // is long enough to scroll, so reach the row the way a user does.
       final goalText = readFact(rig.goal);
+      await expandGroup(tester, PredicateKind.para);
       await tester.scrollUntilVisible(
         find.text(goalText),
         60,
@@ -283,6 +320,7 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Prove'), findsOneWidget);
+      await expandGroup(tester, PredicateKind.para);
 
       container
           .read(constructionProvider)
@@ -316,6 +354,9 @@ void main() {
 
       container.read(selectionProvider.notifier).select(id);
       await tester.pump();
+      for (final kind in groupedGoals(narrowed).keys) {
+        await expandGroup(tester, kind);
+      }
 
       // Short enough now that the whole narrowed list is laid out, so
       // the rendered rows are the list — and every one names M.
@@ -331,6 +372,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
+      await expandGroup(tester, PredicateKind.para);
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -389,6 +431,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
+      await expandGroup(tester, PredicateKind.para);
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -432,6 +475,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
+      await expandGroup(tester, PredicateKind.para);
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -460,6 +504,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
+      await expandGroup(tester, PredicateKind.para);
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -635,6 +680,7 @@ void main() {
       expect(step.chase, isNotNull);
 
       final goalRow = find.text(readFact(goal));
+      await expandGroup(tester, goal.kind);
       await tester.scrollUntilVisible(
         goalRow,
         60,
@@ -665,6 +711,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
+      await expandGroup(tester, PredicateKind.para);
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -821,6 +868,8 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
 
+      await expandGroup(tester, PredicateKind.para);
+
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -894,6 +943,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
+      await expandGroup(tester, PredicateKind.para);
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -929,10 +979,25 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       final database = (container.read(proverProvider) as ProverReady).database;
-      // The first derived row — at the top of the list, no scrolling
-      // needed to hover it.
-      final goal = provableGoals(database).first;
+      // Every group open, so the list overflows and a wheel actually
+      // scrolls it — folded, Varignon's overview fits the panel and a
+      // wheel would move nothing, which is no test of the guard. The
+      // hovered row is the first of the first group: at the top of the
+      // list, no scrolling needed to reach it.
+      final groups = groupedGoals(provableGoals(database));
+      for (final kind in groups.keys) {
+        await expandGroup(tester, kind);
+      }
+      final goal = groups.values.first.first;
       expect(rig.goal, isNot(goal), reason: 'rig sanity: distinct facts');
+      // Opening the groups scrolled the list to its foot; back to the top.
+      await tester.scrollUntilVisible(
+        find.text(readFact(goal)),
+        -60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.ensureVisible(find.text(readFact(goal)));
+      await tester.pumpAndSettle();
       final overlayText = find.text(describeFact(goal));
 
       final mouse = await tester.createGesture(
@@ -966,6 +1031,243 @@ void main() {
         findsNothing,
         reason: 'no tooltip overlay may exist while list rows churn',
       );
+    });
+  });
+
+  group('the derived list, grouped like the object tree', () {
+    // Phase 158: a flat column in database order became a per-kind
+    // overview — headers in `PredicateKind`'s declaration order, folded
+    // until opened, empty kinds absent, and what is about the run or the
+    // reading kept outside the groups.
+    test('groupedGoals buckets by kind in declaration order, whatever '
+        'order the facts arrive in', () {
+      final a = free('a', 'A', 0, 0);
+      final b = free('b', 'B', 1, 0);
+      final c = free('c', 'C', 2, 0);
+      final d = free('d', 'D', 3, 0);
+      final cong = Fact(PredicateKind.cong, [a, b, c, d]);
+      final coll1 = Fact(PredicateKind.coll, [a, b, c]);
+      final coll2 = Fact(PredicateKind.coll, [b, c, d]);
+      final para = Fact(PredicateKind.para, [a, b, c, d]);
+
+      final groups = groupedGoals([cong, coll1, para, coll2]);
+
+      expect(groups.keys, [
+        PredicateKind.coll,
+        PredicateKind.para,
+        PredicateKind.cong,
+      ]);
+      // Within a bucket, arrival order — the database's own.
+      expect(groups[PredicateKind.coll], [coll1, coll2]);
+      expect(groups[PredicateKind.para], [para]);
+      expect(groups[PredicateKind.cong], [cong]);
+    });
+
+    test('an empty bucket is absent, not present with zero', () {
+      expect(groupedGoals(const []), isEmpty);
+      final a = free('a', 'A', 0, 0);
+      final b = free('b', 'B', 1, 0);
+      final c = free('c', 'C', 2, 0);
+      final groups = groupedGoals([
+        Fact(PredicateKind.midp, [a, b, c]),
+      ]);
+      expect(groups.keys, [PredicateKind.midp]);
+      expect(groups.containsKey(PredicateKind.coll), isFalse);
+    });
+
+    test('composed with the selection filter, a header counts the '
+        'filtered facts', () async {
+      final c = loadPerpFixture(name: 'C');
+      await container.read(proverProvider.notifier).prove();
+      final database = (container.read(proverProvider) as ProverReady).database;
+      final narrowed = provableGoals(database, selectedIds: {c.id});
+      final groups = groupedGoals(narrowed);
+
+      expect(
+        groups.values.fold(0, (sum, facts) => sum + facts.length),
+        narrowed.length,
+      );
+      for (final facts in groups.values) {
+        for (final fact in facts) {
+          expect(fact.points, contains(c));
+        }
+      }
+      // Grouping after filtering is what makes the surviving headers the
+      // answer to "what does the prover know about this?" — fewer of
+      // them than the full run has.
+      expect(groups.keys, [PredicateKind.para, PredicateKind.perp]);
+      expect(
+        groupedGoals(provableGoals(database)).length,
+        greaterThan(groups.length),
+      );
+    });
+
+    testWidgets('groups start folded with a count, open on a tap, and '
+        'list their rows in database order', (tester) async {
+      seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      final ready = container.read(proverProvider) as ProverReady;
+      final groups = groupedGoals(provableGoals(ready.database));
+      expect(groups.length, greaterThan(1), reason: 'rig sanity');
+
+      // Every kind with something has a header, every header is folded
+      // and carries its count, and no row is on screen.
+      for (final MapEntry(key: kind, value: facts) in groups.entries) {
+        final header = find.ancestor(
+          of: inPanel(find.text(predicateKindLabel(kind))),
+          matching: find.byType(InkWell),
+        );
+        expect(header, findsOneWidget);
+        expect(
+          find.descendant(of: header, matching: find.text('${facts.length}')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: header,
+            matching: find.byIcon(Icons.chevron_right),
+          ),
+          findsOneWidget,
+        );
+      }
+      expect(inPanel(find.byType(ListTile)), findsNothing);
+
+      // Opening one group shows its rows, in the order the database
+      // holds them, and the count steps aside for them.
+      final kind = groups.keys.first;
+      final facts = groups[kind]!;
+      await expandGroup(tester, kind);
+      final header = find.ancestor(
+        of: inPanel(find.text(predicateKindLabel(kind))),
+        matching: find.byType(InkWell),
+      );
+      expect(
+        find.descendant(of: header, matching: find.text('${facts.length}')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: header, matching: find.byIcon(Icons.expand_more)),
+        findsOneWidget,
+      );
+      for (final fact in facts) {
+        await tester.ensureVisible(find.text(readFact(fact)));
+      }
+      final tops = [
+        for (final fact in facts)
+          tester.getTopLeft(find.text(readFact(fact))).dy,
+      ];
+      expect(tops, [...tops]..sort());
+      // The other groups stayed folded.
+      expect(inPanel(find.byType(ListTile)), findsNWidgets(facts.length));
+
+      // And a second tap folds it again.
+      await expandGroup(tester, kind);
+      expect(inPanel(find.byType(ListTile)), findsNothing);
+    });
+
+    testWidgets('a kind with nothing in it has no header — with and '
+        'without a selection', (tester) async {
+      final c = loadPerpFixture(name: 'C');
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      final database = (container.read(proverProvider) as ProverReady).database;
+
+      final all = groupedGoals(provableGoals(database));
+      expect(
+        all.length,
+        lessThan(PredicateKind.values.length),
+        reason: 'the rig must leave some kind underived',
+      );
+      for (final kind in PredicateKind.values) {
+        expect(
+          inPanel(find.text(predicateKindLabel(kind))),
+          all.containsKey(kind) ? findsOneWidget : findsNothing,
+        );
+      }
+
+      // Under a selection the survivors are the answer, and the kinds
+      // the selection emptied are gone rather than shown at zero.
+      final narrowed = groupedGoals(
+        provableGoals(database, selectedIds: {c.id}),
+      );
+      expect(narrowed.length, lessThan(all.length), reason: 'rig sanity');
+      container.read(selectionProvider.notifier).select(c.id);
+      await tester.pump();
+      for (final kind in PredicateKind.values) {
+        expect(
+          inPanel(find.text(predicateKindLabel(kind))),
+          narrowed.containsKey(kind) ? findsOneWidget : findsNothing,
+        );
+      }
+      expect(inPanel(find.text('0')), findsNothing);
+    });
+
+    testWidgets('a selection that empties every bucket reaches the note, '
+        'not an empty column', (tester) async {
+      seedVarignon();
+      final stranger = free('e', 'E', 3, 3);
+      container.read(constructionProvider).construction.add(stranger);
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      final database = (container.read(proverProvider) as ProverReady).database;
+      expect(
+        provableGoals(database, selectedIds: {stranger.id}),
+        isEmpty,
+        reason: 'nothing may be derived about a point in no relation',
+      );
+
+      container.read(selectionProvider.notifier).select(stranger.id);
+      await tester.pump();
+      for (final kind in PredicateKind.values) {
+        expect(inPanel(find.text(predicateKindLabel(kind))), findsNothing);
+      }
+      expect(
+        find.textContaining('Nothing derived about the selection'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Keep going sits outside the groups', (tester) async {
+      seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await container.read(proverProvider.notifier).prove(applicationBudget: 3);
+      await tester.pump();
+
+      // Every group folded, and the run's own control is still there —
+      // it is about the run, not about a kind, so no fold can hide it.
+      expect(inPanel(find.byIcon(Icons.expand_more)), findsNothing);
+      expect(find.text('Keep going'), findsOneWidget);
+      expect(inPanel(find.byType(ListTile)), findsOneWidget);
+    });
+
+    testWidgets('the reading convention sits outside the groups', (
+      tester,
+    ) async {
+      final construction = decodeDocument(
+        jsonDecode(
+              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+
+      // Nothing opened, and the note is at the foot regardless: it is
+      // about how every row reads, not about one kind's rows.
+      expect(inPanel(find.byIcon(Icons.expand_more)), findsNothing);
+      await tester.ensureVisible(find.text(factReadingConvention));
+      expect(find.text(factReadingConvention), findsOneWidget);
     });
   });
 
@@ -1157,7 +1459,14 @@ void main() {
       await container.read(proverProvider.notifier).prove(applicationBudget: 3);
       await tester.pumpAndSettle();
 
-      // A goal open, so the header carries the back arrow.
+      // A goal open, so the header carries the back arrow. Groups start
+      // folded, so open the first one before reaching for its row —
+      // otherwise the first tile is *Keep going*.
+      final ready = container.read(proverProvider) as ProverReady;
+      await expandGroup(
+        tester,
+        groupedGoals(provableGoals(ready.database)).keys.first,
+      );
       await tester.tap(inPanel(find.byType(ListTile)).first);
       await tester.pumpAndSettle();
       await dragPanel(tester, 400);
@@ -1169,9 +1478,16 @@ void main() {
       await tester.pumpAndSettle();
 
       // And the run's own control is reachable by scrolling within
-      // whatever height is left. `ensureVisible` rather than a raw drag:
-      // the list builds all its children, so a finder matches an
-      // off-screen row and a scroll-until-found would scroll nothing.
+      // whatever height is left. Both moves, in this order: the list is
+      // lazy, so the tile may not be built until the list is scrolled
+      // toward it (the open group's rows push it past the cache extent
+      // at the tucked height), and once built a finder matches it
+      // off-screen, where only `ensureVisible` brings it in.
+      await tester.scrollUntilVisible(
+        find.text('Keep going'),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
       await tester.ensureVisible(find.text('Keep going'));
       await tester.pumpAndSettle();
       expect(

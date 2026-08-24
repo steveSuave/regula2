@@ -19,6 +19,32 @@ String describeFact(Fact fact) =>
 String describePoint(GeoPoint point) =>
     point.attributes.name.isEmpty ? point.id : point.attributes.name;
 
+/// A kind's display name, as a heading over facts of that kind.
+///
+/// The display-name table the vocabulary does not have: `PredicateKind`
+/// names its members for the rule set (`coll`, `eqangle`), and a reader
+/// grouping the derived list wants "Collinear points". Lives beside
+/// [readFact] for the same reason: what a list *says* should be readable
+/// without a widget tree.
+///
+/// Exhaustive over a closed enum, deliberately — the argument written
+/// at `stepReason`: a kind added without a label is a build error here,
+/// where a string table would quietly fall behind. Header order in a
+/// grouped list is `PredicateKind.values`' own, so it is fixed by the
+/// declaration and never by the data.
+String predicateKindLabel(PredicateKind kind) => switch (kind) {
+  PredicateKind.coll => 'Collinear points',
+  PredicateKind.para => 'Parallel lines',
+  PredicateKind.perp => 'Perpendicular lines',
+  PredicateKind.cong => 'Equal lengths',
+  PredicateKind.cyclic => 'Concyclic points',
+  PredicateKind.eqangle => 'Equal angles',
+  PredicateKind.eqratio => 'Equal ratios',
+  PredicateKind.midp => 'Midpoints',
+  PredicateKind.simtri => 'Similar triangles',
+  PredicateKind.contri => 'Congruent triangles',
+};
+
 /// A fact as a sentence — the prose renderer, beside [describeFact] and
 /// deliberately not replacing it.
 ///

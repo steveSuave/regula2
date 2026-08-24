@@ -24,6 +24,32 @@ void main() {
     for (final id in ids.split('')) point(id),
   ];
 
+  group('predicateKindLabel', () {
+    // Phase 158: the display-name table over the closed enum. Pinned
+    // string by string because these are headings a user reads, and in
+    // declaration order because that order is what a grouped list
+    // renders in.
+    test('every kind, by name, in declaration order', () {
+      expect(PredicateKind.values.map(predicateKindLabel), [
+        'Collinear points',
+        'Parallel lines',
+        'Perpendicular lines',
+        'Equal lengths',
+        'Concyclic points',
+        'Equal angles',
+        'Equal ratios',
+        'Midpoints',
+        'Similar triangles',
+        'Congruent triangles',
+      ]);
+    });
+
+    test('labels are distinct — two kinds under one heading would merge', () {
+      final labels = PredicateKind.values.map(predicateKindLabel).toSet();
+      expect(labels.length, PredicateKind.values.length);
+    });
+  });
+
   group('readFact, one honest reading per kind', () {
     test('coll — a list, not a segment', () {
       final fact = Fact(PredicateKind.coll, points('abc'));

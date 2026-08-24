@@ -56,6 +56,30 @@ List<Fact> provableGoals(
         fact,
 ];
 
+/// [goals], bucketed by kind for the grouped list — the object tree's
+/// shape (`object_tree_panel.dart`), mirrored: every kind seeded in
+/// `PredicateKind.values`' declaration order, facts appended in the
+/// order they arrive, empty buckets dropped before anything renders.
+///
+/// Takes the goals *after* [provableGoals]' selection filter, exactly as
+/// the tree filters before it buckets, so a header's count is the
+/// filtered count. Dropping empties after filtering is where the rule
+/// earns its keep: with a selection live most kinds are empty, and the
+/// surviving headers are then a direct answer to "what does the prover
+/// know about this?". A header reading "Similar triangles 0" would be a
+/// claim about the run that the header's absence already makes better.
+///
+/// Keyed by the enum rather than by its label: the label is a display
+/// decision (`predicateKindLabel`), the kind is the fact's own.
+Map<PredicateKind, List<Fact>> groupedGoals(Iterable<Fact> goals) {
+  final groups = {for (final kind in PredicateKind.values) kind: <Fact>[]};
+  for (final goal in goals) {
+    groups[goal.kind]!.add(goal);
+  }
+  groups.removeWhere((_, facts) => facts.isEmpty);
+  return groups;
+}
+
 /// The reason column for one step: `given`, or the rule and the steps it
 /// cites.
 ///
@@ -215,6 +239,12 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   /// for the canvas to read — the number is this panel's business, the
   /// ids are the canvas's.
   int? _readingStep;
+
+  /// The kinds whose group the user has unfolded — empty at first, so
+  /// every group starts folded and a finished run opens as a per-kind
+  /// overview of *what sort* of thing it found; expanding is opting into
+  /// the list. View state, like the tree's: gone when the panel closes.
+  final Set<PredicateKind> _expanded = {};
 
   /// Captured at init because `dispose` may not touch `ref` — the same
   /// constraint `ConstructionNotifier` records for its own life-cycle.
@@ -537,19 +567,40 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
       // must land where the reader left the list.
       key: const PageStorageKey<String>('proof-goals'),
       children: [
-        for (final goal in goals)
-          ListTile(
-            dense: true,
-            title: rawSpellingTooltip(
-              message: describeFact(goal),
-              child: Text(readFact(goal), style: theme.textTheme.bodyMedium),
-            ),
-            trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: () => setState(() {
-              _goal = goal;
-              _stopReading();
+        // Grouped like the object tree (Phase 158): a header per kind
+        // that has something, folded until opened, the count standing in
+        // for the hidden rows. What follows the groups is about the run
+        // and the reading, not about a kind, so it stays outside them.
+        for (final (index, MapEntry(key: kind, value: facts)) in groupedGoals(
+          goals,
+        ).entries.indexed) ...[
+          if (index > 0) const Divider(height: 17, indent: 12, endIndent: 12),
+          _FactGroupHeader(
+            label: predicateKindLabel(kind),
+            count: facts.length,
+            folded: !_expanded.contains(kind),
+            onToggleFold: () => setState(() {
+              if (!_expanded.remove(kind)) _expanded.add(kind);
             }),
           ),
+          if (_expanded.contains(kind))
+            for (final goal in facts)
+              ListTile(
+                dense: true,
+                title: rawSpellingTooltip(
+                  message: describeFact(goal),
+                  child: Text(
+                    readFact(goal),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: () => setState(() {
+                  _goal = goal;
+                  _stopReading();
+                }),
+              ),
+        ],
         if (!state.reachedFixpoint) _continueTile(theme, state),
         if (conventionApplies(goals)) _conventionNote(theme),
       ],
@@ -684,4 +735,70 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
       ),
     ),
   );
+}
+
+/// A kind's heading over the derived facts of that kind, folding as its
+/// only gesture.
+///
+/// Mirrors the object tree's `_GroupHeader` and deliberately does not
+/// share it: that header doubles as select-by-kind — tap replaces the
+/// selection with the group, long-press adds — and a *fact* group has no
+/// such action to offer. Sharing the widget would drag those semantics
+/// along. So the whole row is the fold target (there is nothing else for
+/// a tap to mean), the chevron says which way it is, and while folded a
+/// trailing count stands in for the hidden rows — the same job the count
+/// does in the tree, keeping a folded overview from hiding the answer.
+///
+/// No tooltip, on purpose: this row lives in the same lazy list whose
+/// hover tooltips Phase 157 had to hold back (see [rawSpellingTooltip]),
+/// and a header has no raw spelling to offer.
+class _FactGroupHeader extends StatelessWidget {
+  const _FactGroupHeader({
+    required this.label,
+    required this.count,
+    required this.folded,
+    required this.onToggleFold,
+  });
+
+  final String label;
+  final int count;
+  final bool folded;
+  final VoidCallback onToggleFold;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onToggleFold,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+        child: Row(
+          children: [
+            Icon(
+              folded ? Icons.chevron_right : Icons.expand_more,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge!.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (folded)
+              Text(
+                '$count',
+                style: theme.textTheme.labelMedium!.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
