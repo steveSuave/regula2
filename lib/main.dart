@@ -14,6 +14,7 @@ import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
 import 'application/providers/document_settings_provider.dart';
 import 'application/providers/preferences_provider.dart';
+import 'application/providers/prover_provider.dart';
 import 'application/providers/selection_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
@@ -285,6 +286,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     ref.read(constructionProvider.notifier).replace(Construction());
     ref.read(viewportProvider.notifier).set(_centeredViewport());
     ref.read(documentSettingsProvider.notifier).reset();
+    // The prover's held engine is about the document that just went
+    // away; without this the panel shows its facts marked stale, and
+    // *Keep going* would extend a run about a construction that no
+    // longer exists (Phase 156).
+    ref.read(proverProvider.notifier).clear();
   }
 
   Future<void> _openConstruction() async {
@@ -296,6 +302,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       ref.read(constructionProvider.notifier).replace(decoded.construction);
       ref.read(viewportProvider.notifier).set(decoded.viewport);
       ref.read(documentSettingsProvider.notifier).set(decoded.settings);
+      // Same as File > New: the held run is about the replaced document.
+      ref.read(proverProvider.notifier).clear();
       // The reader may have moved intersection points the file had
       // stacked on one crossing, and may have found some it could not
       // move. Both are invisible on the canvas — a re-pointed crossing

@@ -296,6 +296,41 @@ void main() {
       );
       expect(prover.isComplete, isFalse);
     });
+
+    test('onPass fires once per pass, the final one included', () async {
+      final construction = jgexDocument();
+      final filter = DiagramFilter.probe(construction.objects);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(construction.objects), filter);
+      final prover = Prover(database: database, filter: filter);
+
+      var calls = 0;
+      final passes = await prover.runChunked(
+        chunkBudget: 64,
+        maxApplications: 30000,
+        onPass: () => calls++,
+      );
+
+      expect(calls, passes, reason: 'one call per pass, none skipped');
+      expect(calls, greaterThan(1), reason: 'the rig must actually chunk');
+    });
+
+    test('onPass does not fire when the entry checks return', () async {
+      final construction = jgexDocument();
+      final filter = DiagramFilter.probe(construction.objects);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(construction.objects), filter);
+      final prover = Prover(database: database, filter: filter);
+
+      var calls = 0;
+      await prover.runChunked(
+        chunkBudget: 1000,
+        stopWhen: () => true,
+        onPass: () => calls++,
+      );
+
+      expect(calls, 0, reason: 'no pass ran, so there is nothing to report');
+    });
   });
 
   group('an angle step that is not one is refused', () {

@@ -18,6 +18,7 @@ import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/prover.dart';
 import 'package:regula/domain/prover/questions.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
@@ -159,10 +160,54 @@ void main() {
       container.listen(proverProvider, (_, next) => seen.add(next));
 
       final pending = container.read(proverProvider.notifier).prove();
-      expect(seen.whereType<ProverRunning>(), hasLength(1));
+      // At least one: the initial publish is synchronous, and each pass
+      // republishes with its progress (Phase 156), so a document that
+      // runs past its first pass before the first yield adds more.
+      expect(seen.whereType<ProverRunning>(), isNotEmpty);
+      expect(seen.first, isA<ProverRunning>());
       await pending;
 
       expect(seen.last, isA<ProverReady>());
+    });
+
+    test('progress is republished per pass, and the count climbs', () async {
+      // Varignon completes inside one chunk, so the progress reports
+      // need the document whose run takes many — the Phase 148 rig.
+      container
+          .read(constructionProvider.notifier)
+          .replace(
+            decodeDocument(
+              jsonDecode(
+                    File(
+                      'test/fixtures/perp-true-unproved.rgl',
+                    ).readAsStringSync(),
+                  )
+                  as Map<String, dynamic>,
+            ).construction,
+          );
+      final seen = <ProverState>[];
+      container.listen(proverProvider, (_, next) => seen.add(next));
+
+      await container.read(proverProvider.notifier).prove();
+
+      final progress = seen
+          .whereType<ProverRunning>()
+          .map((state) => state.applications)
+          .toList();
+      expect(progress.first, 0, reason: 'the initial publish knows nothing');
+      expect(
+        progress.length,
+        greaterThan(2),
+        reason: 'a many-pass run must report along the way, not just start',
+      );
+      expect(
+        progress.last,
+        (seen.last as ProverReady).applications,
+        reason: 'the final report is the finished run\'s own count',
+      );
+      for (var i = 1; i < progress.length; i++) {
+        expect(progress[i], greaterThanOrEqualTo(progress[i - 1]));
+      }
     });
 
     test('an empty document proves nothing and says so plainly', () async {
@@ -519,6 +564,184 @@ void main() {
 
       final state = container.read(proverProvider) as ProverReady;
       expect(state.applications, lessThan(proverApplicationBudget));
+      expect(state.reachedFixpoint, isTrue);
+    });
+  });
+
+  group('stopping (Phase 156)', () {
+    /// A document whose fixpoint outlives many chunks — ~16 000
+    /// applications under the exchange — so a stop lands mid-flight.
+    /// Varignon completes inside its first chunk and can never be
+    /// stopped at all.
+    Construction loadBlowup() => decodeDocument(
+      jsonDecode(
+            File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+          )
+          as Map<String, dynamic>,
+    ).construction;
+
+    GeoPoint named(Construction construction, String name) => construction
+        .objects
+        .whereType<GeoPoint>()
+        .firstWhere((point) => point.attributes.name == name);
+
+    /// The uninterrupted control: the same exchange, run straight
+    /// through in the domain.
+    FactDatabase exchangeRun(Iterable<GeoObject> objects) {
+      final all = List.of(objects);
+      final filter = DiagramFilter.probe(all);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(all), filter);
+      Prover(database: database, filter: filter).run();
+      return database;
+    }
+
+    test('a stopped run publishes the prefix, and resumes to the '
+        'fixpoint', () async {
+      container.read(constructionProvider.notifier).replace(loadBlowup());
+      final notifier = container.read(proverProvider.notifier);
+
+      // `prove` runs synchronously to its first yield — one chunk — so
+      // a stop issued right after it interrupts a run in flight.
+      final pending = notifier.prove();
+      expect(container.read(proverProvider), isA<ProverRunning>());
+      notifier.stop();
+      await pending;
+
+      // Cancellation is not supersession: the interrupted run must
+      // *publish* its prefix, in the identical shape a spent budget
+      // publishes, not drop it the way a superseded run does.
+      final stopped = container.read(proverProvider) as ProverReady;
+      expect(stopped.reachedFixpoint, isFalse);
+      expect(stopped.database.length, greaterThan(0));
+
+      await notifier.proveMore();
+
+      final finished = container.read(proverProvider) as ProverReady;
+      expect(finished.reachedFixpoint, isTrue);
+      expect(
+        finished.database.facts.toSet(),
+        exchangeRun(
+          container.read(constructionProvider).construction.objects,
+        ).facts.toSet(),
+        reason: 'stopped-then-resumed lands where an uninterrupted run lands',
+      );
+    });
+
+    test('a stopped question is undecided, and askMore settles it', () async {
+      final construction = loadBlowup();
+      container.read(constructionProvider.notifier).replace(construction);
+      final notifier = container.read(proverProvider.notifier);
+      // True in the figure and out of the table's reach (the Phase 148
+      // rig), so an uninterrupted ask would end in `unproved` — a stop
+      // must end in `undecided` instead, because an interrupted run has
+      // shown nothing about reachability.
+      final question = ProverQuestion(PredicateKind.perp, [
+        Predicate(PredicateKind.perp, [
+          named(construction, 'C'),
+          named(construction, 'D'),
+          named(construction, 'D'),
+          named(construction, 'F'),
+        ]),
+      ]);
+
+      final pending = notifier.ask(question);
+      notifier.stop();
+      await pending;
+
+      var state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.undecided);
+
+      await notifier.askMore();
+
+      state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.unproved);
+      expect(state.run!.reachedFixpoint, isTrue);
+    });
+
+    test('stop when nothing is running is a no-op, and does not bleed '
+        'into the next run', () async {
+      seedVarignon();
+      final notifier = container.read(proverProvider.notifier);
+
+      notifier.stop();
+      expect(container.read(proverProvider), const ProverIdle());
+
+      await notifier.prove();
+      expect(
+        (container.read(proverProvider) as ProverReady).reachedFixpoint,
+        isTrue,
+        reason: 'a stale stop flag would end this run at its first pass',
+      );
+    });
+  });
+
+  group('prove resumes (Phase 156)', () {
+    test('▶ twice at one revision continues the held engine', () async {
+      seedVarignon();
+      final notifier = container.read(proverProvider.notifier);
+
+      await notifier.prove(applicationBudget: 3);
+      final first = container.read(proverProvider) as ProverReady;
+      expect(first.reachedFixpoint, isFalse);
+      expect(first.applications, 3);
+
+      await notifier.prove(applicationBudget: 3);
+
+      final second = container.read(proverProvider) as ProverReady;
+      expect(
+        identical(second.database, first.database),
+        isTrue,
+        reason: 'no re-probe, no re-seed: the same engine continued',
+      );
+      expect(
+        second.applications,
+        6,
+        reason: 'cumulative across the two presses — a rebuild would read 3',
+      );
+    });
+
+    test('▶ after a revision bump rebuilds, as the refresh icon '
+        'says', () async {
+      seedVarignon();
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.prove(applicationBudget: 3);
+      final first = container.read(proverProvider) as ProverReady;
+
+      container
+          .read(constructionProvider)
+          .construction
+          .add(free('e', 'E', 3, 3));
+      await notifier.prove(applicationBudget: 3);
+
+      final second = container.read(proverProvider) as ProverReady;
+      expect(identical(second.database, first.database), isFalse);
+      expect(
+        second.applications,
+        3,
+        reason: 'a fresh engine starts its count over',
+      );
+      expect(second.revision, greaterThan(first.revision));
+    });
+
+    test('▶ after an answer continues the engine the ask built', () async {
+      final rig = seedVarignon();
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.ask(
+        ProverQuestion(PredicateKind.para, [rig.goal.statement]),
+        applicationBudget: 3,
+      );
+      final answered = container.read(proverProvider) as ProverAnswered;
+      expect(answered.answer.verdict, ProverVerdict.undecided);
+
+      await notifier.prove();
+
+      final state = container.read(proverProvider) as ProverReady;
+      expect(
+        identical(state.database, answered.run!.database),
+        isTrue,
+        reason: 'the ask\'s partial run is the prefix, not waste',
+      );
       expect(state.reachedFixpoint, isTrue);
     });
   });

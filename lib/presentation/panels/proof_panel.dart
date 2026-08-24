@@ -317,20 +317,31 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
                 }
               },
             ),
-          IconButton(
-            tooltip: isStale(state, revision)
-                ? 'The figure changed — prove again'
-                : 'Prove',
-            icon: running
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    isStale(state, revision) ? Icons.refresh : Icons.play_arrow,
-                  ),
-            onPressed: running ? null : _prove,
-          ),
+          // While running, the slot holds a Stop button instead of a
+          // disabled play — a run started by mistake is sat out
+          // otherwise. The stop publishes the prefix derived so far in
+          // the same shape a spent budget does, so *Keep going* below
+          // resumes it.
+          if (running) ...[
+            const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            IconButton(
+              tooltip: 'Stop',
+              icon: const Icon(Icons.stop),
+              onPressed: () => ref.read(proverProvider.notifier).stop(),
+            ),
+          ] else
+            IconButton(
+              tooltip: isStale(state, revision)
+                  ? 'The figure changed — prove again'
+                  : 'Prove',
+              icon: Icon(
+                isStale(state, revision) ? Icons.refresh : Icons.play_arrow,
+              ),
+              onPressed: _prove,
+            ),
         ],
       ),
     );
@@ -352,8 +363,16 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           'Nothing proved yet. The prover reads the construction and '
           'derives what follows from it — press play to run it.',
         );
-      case ProverRunning():
-        return _note(theme, 'Deriving…');
+      case ProverRunning(:final applications):
+        // Republished once per pass, so a long run reads as working
+        // rather than frozen — the count is the same unit the stopped
+        // row below reports in.
+        return _note(
+          theme,
+          applications == 0
+              ? 'Deriving…'
+              : 'Deriving… $applications steps so far.',
+        );
       case ProverRefused(:final reason):
         return _note(theme, reason);
       case ProverAnswered():
