@@ -1,0 +1,40 @@
+test/domain/tools/tangent_tool_test.dart
+  s_c1eff4c552de9b::t_7e8fd38eab1399 70-86
+lib/domain/construction/incidence.dart
+  s_c1eff4c552de9b::t_169259f98dafbe 112-139,141-152,155-165,167-193
+  s_c1eff4c552de9b::t_aaffa598e3aaf3 140,153-154,166
+lib/domain/prover/hypotheses.dart
+  s_c1eff4c552de9b::t_169259f98dafbe 99-102
+test/domain/prover/questions_test.dart
+  s_c1eff4c552de9b::t_7e8fd38eab1399 725-786
+lib/domain/tools/tangent_tool.dart
+  s_c1eff4c552de9b::t_169259f98dafbe 4,13-15,77-80
+test/domain/construction/incidence_test.dart
+  s_c1eff4c552de9b::t_abcad8c5a11af4 2
+  s_c1eff4c552de9b::t_7e8fd38eab1399 4,12,19,198-335
+  s_c1eff4c552de9b::t_13b1daa1a087be 336
+test/domain/prover/hypotheses_test.dart
+  s_c1eff4c552de9b::t_abcad8c5a11af4 29
+  s_c1eff4c552de9b::t_7e8fd38eab1399 299-310
+test/domain/prover/tangent_chord_test.dart
+  s_c1eff4c552de9b::t_7e8fd38eab1399 15,107-132
+  s_c1eff4c552de9b::t_1e0e7dce64a568 133-134
+lib/domain/prover/questions.dart
+  s_c1eff4c552de9b::t_169259f98dafbe 124-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "a73d2527c2fee4e298ef50c15b878d50510def14",
+  "prompts": {},
+  "sessions": {
+    "s_c1eff4c552de9b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ce128758-00e1-4ec5-bbb0-9118200fabb6",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
