@@ -1636,3 +1636,23 @@ The browser look is the one open box: extension not connected this session (seco
 
 - A carrier's name in a reading is its first known pair in construction order (the tangent here reads `CE`: C is its pole and was added first). Fine for chips; the builder's line slot (Phase 160) will want a real carrier name.
 - `_sameMagnitude` compares to 1e-6 rad on unperturbed positions only — it is a *preference*, not a claim; the filter is still what decides truth.
+
+## 2026-08-24 — session 171: Phase 163, the tangent–chord rule and the rule it cost
+
+**Done — Phase 163 end to end on `phase-163-tangent-chord`, one code commit (`e2afdb3`).** Suite **3219** green (3215 + 4), analyze clean, browser gate 13, wasm release build compiles. Merged to `main` this session.
+
+- **The box was wrong about where the cost was, and the first measurement said so.** Phase 162 left "reinstate `tangent_chord` in a cheaper premise shape than `cong × cong`". Measured with the premises in either order, the timings are identical to the millisecond on every fixture — the engine enumerates a premise's whole kind through its whole orbit whatever is bound, so order cannot matter. The rule's price was downstream: twelve new `eqangle`s on `tangent-chase.rgl` took it from quiescence at 16 882 applications to *not finishing* at the 30 000 cap.
+- **The downstream cost was `eqangle_transitive`, alone.** No shared variable between its premises, so 128 × 128 orbit forms per pair of facts, uncharged. Deleted on 152e's terms (one rule at a time, table otherwise unchanged): no fact of any other kind lost on any of the seven fixtures, 15 `eqangle`s lost on `provoleas2` and all 15 closure-resolved. `apatitos-topos` 1 272 → 49 ms, `tangent-chase` 5 261 → 186 ms, and **`provoleas2` converges** — 25 826 applications, 115 facts against the capped 82, deterministic across five runs. The provider's cap comment said that document was "still deriving after 200 000"; corrected, cap kept (the next document is not the corpus).
+- **`tangent_chord` in**: the user's figure proves in 5 ms by one step over the tangency and two radii, `verify()` empty, pinned to have no route without the rule; the panel chip comes back *proved*. Per-rule rig pins the swapped mod-π reading as refuted. `tangent-chase` 388 ms quiescent with it.
+- **The other row sums, measured and recorded**: `para_transitive` deletable by the same argument (0 lost, −30–45 % applications on three fixtures) — left for its own decision; `perp_perp_para` / `para_perp_perp` lose stored `para`/`perp` the publisher does not reach, kept.
+- **The length-closure tripwire fired** — on the ratio half, not the `cong` half. `provoleas2` at quiescence holds five `eqratio`s sharing `AO`; re-pinned at 6, the ratio-closure re-measurement recorded as 152e's open box.
+- **Phase 161 repriced**: worst pass at chunk 250 is 72 ms on `apatitos-topos` (was 1.4 s) and 297 ms on `tangent-chase` (was 2.5 s). The remaining over-frame pass is the `eqangle × eqangle` joins of `aa_simtri`/`sas_simtri`.
+- PLAN gained §"A row sum is not a rule"; `tangent-chord.rgl` joined `prover_chunk_bench`'s list.
+
+**Next.** Phase 160 (the builder) or 161 (now much smaller), or the two recorded-not-done measurements: delete `para_transitive`, re-measure the ratio closure on `provoleas2`. Carried: `readFact` on listed `eqangle`s can still read magnitude-false (session 170); Phase 157's browser look still unverified (extension unconnected).
+
+**Gotchas.**
+
+- A measurement rig that calls `Prover.resolve` *records* what it resolves — my first fact counts were 15 high on `provoleas2` for exactly that reason. Count before asking.
+- Rules with a repeated variable (`aa_simtri`'s `eqangle(a,b,a,c,…)`) are cheap despite two 128-form premises, because most pivot forms fail at the pivot binding and never reach the join. It is the *all-distinct* pattern that is quadratic in forms.
+- `length_closure_upside_test` had run `provoleas2` at a 20 000 budget "because it never converges"; it converges at 25 826 now, so the test runs everything to quiescence and asserts it.
