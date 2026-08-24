@@ -1712,3 +1712,18 @@ The browser look is the one open box: extension not connected this session (seco
 - `provoleas2.json`'s point names are not the ones session 171's STATUS used: the midpoint of `AB` is **`O`**, the midpoint of `AO` is **`M`**, and `N` is the third vertex of the equilateral triangle `AON` — so Phase 163's "`|MA|/|AO| = |AO|/|AB|` beside `|AO|/|AN| = |ON|/|AO|`" was read off ids, not names. Name points through `describePoint`, not from memory.
 - Three of the five stored `eqratio`s there are the similar-triangle spellings of `AON ~ ONA`, which together say the triangle is equilateral — content the `cong`s already hold, which is why the union-find was already saturated and the chain needed an *intercept* fact to buy anything.
 - The python edit-script gotcha from session 173 bit again twice: match the *formatted* text, and a header rewrite that slices from a doc comment silently drops the imports above it. And a library doc comment must sit above `library;`, which must sit above every import.
+
+## 2026-08-25 — session 174 (continued): Phase 166, `para_transitive` deleted
+
+**Done — one code commit on `phase-166-para-transitive`.** The quick deletion Phase 163 recorded, done on its terms: measured one rule at a time over the seven fixtures — **no fact count moves anywhere**, applications to quiescence −43 % on `locus3`, −31 % on `perp-true-unproved`, −42 % on `provoleas2`, the other four identical to the application — then deleted, table 27 → 26. The Varignon rigs (`rule_engine_test`, `proof_test`) keep the rule as a test-local `Rule.parse`: a two-rule table with no AR is exactly where a join is what the engine test wants, and `Proof.verify` is handed the table plus that rule, with `unknown rule para_transitive` pinned as the answer without it. New pin `para_transitive_test.dart`: every composite of two stored `para`s on `provoleas2` is stored by the publisher alone. Gates: analyze clean, suite **3275** green (the rule's per-rule rig out, the new pin in), browser gate 13.
+
+**Two boundary rigs followed the table.** The theorem's last step is the closure's now, so `prover_provider_test`'s "straight domain-side run" control (a DD-only `ProverEngine`) derived strictly less than the provider and was moved to the exchange; and `proof_panel_test`'s "a DD step is left alone" opened Varignon's theorem, whose proof now carries a chase — it opens the `midline_para` fact instead, which is still one bare DD step over `midp` givens.
+
+**Next.** As before: Phase 165 (the length system) is the open engine item with a regression waiting; Phase 161's decision box is smaller still now that two of the table's four row sums are gone; Phase 153 remains the large one.
+
+**Gotchas.**
+
+- `Proof.verify()` resolves rule names against `ddCoreRules` unless given `rules:` — a proof built on a restricted or test-local table verifies as "unknown rule", which is the right answer and easy to misread as a broken certificate.
+- The rule's per-rule soundness rig (`expectRuleFires`) looks the rule up in the table, so it cannot outlive the rule; the Varignon test is what exercises the mechanics now.
+- One aborted widget test in `proof_panel_test.dart` took the **21 tests after it** down with `UnmountedRefException: Cannot use the Ref of proofHighlightProvider after it has been disposed` — a pending highlight callback outliving the test's container. Read the *first* failure in that file; the rest are cascade. (Whether the callback should be cancelled on dispose is a real question, left open — it only bites when a test dies mid-way.)
+- `flutter test 2>&1 | tail -3` in the background keeps three lines: when it fails, the failure list is gone and the suite runs again. Redirect the whole log to the scratchpad instead.

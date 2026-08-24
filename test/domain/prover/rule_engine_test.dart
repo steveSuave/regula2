@@ -13,7 +13,6 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
-import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
@@ -40,6 +39,17 @@ void main() {
 
   Rule ruleNamed(String name) =>
       ddCoreRules.firstWhere((rule) => rule.name == name);
+
+  /// Not in the table since Phase 166 — the angle closure publishes
+  /// every `para` it would store — but a perfectly good two-premise
+  /// rule for exercising the engine, which is what the Varignon rig
+  /// wants: a restricted table with no AR, where the theorem needs a
+  /// join. Kept here rather than in `ddCoreRules` so the shipped table
+  /// is exactly what the measurements say it is.
+  final paraTransitive = Rule.parse(
+    'para_transitive',
+    'para(a,b,c,d) & para(c,d,e,f) => para(a,b,e,f)',
+  );
 
   /// Seeds exactly [seeds], runs the single [ruleName] to quiescence,
   /// and expects [conclusion] derived by it. Every seed must itself be a
@@ -147,27 +157,6 @@ void main() {
           Predicate(PredicateKind.perp, [a, c, b, d]),
         ],
         conclusion: Predicate(PredicateKind.perp, [a, d, b, c]),
-      );
-    });
-
-    test('para_transitive', () {
-      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
-      final b = FreePoint(id: 'b', position: const Vec2(4, 1));
-      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
-      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
-      final l1 = ParallelLine(id: 'l1', through: c, reference: ab);
-      final d = PointOnObject(id: 'd', curve: l1, parameter: 2);
-      final e = FreePoint(id: 'e', position: const Vec2(1, 6));
-      final l2 = ParallelLine(id: 'l2', through: e, reference: l1);
-      final f = PointOnObject(id: 'f', curve: l2, parameter: 2);
-      expectRuleFires(
-        ruleName: 'para_transitive',
-        objects: [a, b, ab, c, l1, d, e, l2, f],
-        seeds: [
-          Predicate(PredicateKind.para, [c, d, a, b]),
-          Predicate(PredicateKind.para, [e, f, c, d]),
-        ],
-        conclusion: Predicate(PredicateKind.para, [e, f, a, b]),
       );
     });
 
@@ -881,7 +870,7 @@ void main() {
       final construction = build([a, b, c, d, mab, mbc, mcd, mda]);
       final engine = engineOver(
         construction,
-        rules: [ruleNamed('midline_para'), ruleNamed('para_transitive')],
+        rules: [ruleNamed('midline_para'), paraTransitive],
       );
       engine.run();
 

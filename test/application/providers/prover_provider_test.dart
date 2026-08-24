@@ -89,7 +89,10 @@ void main() {
     final filter = DiagramFilter.probe(all);
     final database = FactDatabase();
     seedHypotheses(database, hypotheses(all), filter);
-    ProverEngine(database: database, filter: filter).run();
+    // The exchange, not DD alone: since Phase 166 Varignon's theorem is
+    // reached by the angle closure's publisher (`para_transitive` was a
+    // row sum), so a DD-only control would be strictly smaller.
+    Prover(database: database, filter: filter).run();
     return database;
   }
 

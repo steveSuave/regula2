@@ -280,6 +280,17 @@ Session 172: the tangent–chord theorem proved on the VM, in `flutter run`, and
 - [x] Gates: analyze clean, suite **3229** green (3219 + 10), browser gate 13
 - [x] Looked at on the deployed build after the merge (`9d6464b`, `main.dart.wasm` 2 727 931 bytes), with the fixture loaded through the extension: the same four clicks that gave "Nothing to ask" on the previous build offer the three chips, and "angles BCE and BDC are equal" proves by `tangent chord` from the tangency and two radii
 
+## Phase 166 — `para_transitive` deleted (done)
+
+Phase 163's recorded-not-acted-on row sum, acted on — its own decision, one rule at a time, everything else unchanged (PLAN §"A row sum is not a rule").
+
+- [x] **Measured before deleting, on all seven fixtures**: identical fact counts by kind with and without the rule everywhere; applications to quiescence 682 → 386 on `locus3` (−43 %), 4 896 → 3 400 on `perp-true-unproved` (−31 %), 22 996 → 13 268 on `provoleas2` (−42 %); `apatitos-topos`, `no-locus`, `tangent-chase`, `tangent-chord` untouched to the application. Wall time follows on the three (44 → 15 ms, 55 → 42 ms, 445 → 392 ms)
+- [x] **Deleted**, with the note at its place in `rule.dart` and the `eqangle_transitive` note beside `cong_transitive` updated; the two rules that stay (`perp_perp_para`, `para_perp_perp`) do so because the publisher does not reach what they store — that finding is unchanged
+- [x] **The Varignon rigs keep the rule locally.** `rule_engine_test` and `proof_test` run a two-rule table with no AR, where the theorem *needs* a join; that is an engine test, not a table test, so `para_transitive` lives there as a test-local `Rule.parse` and `verify()` is handed the table plus it — with the unknown-rule refusal pinned beside, as a check on the check. The per-rule soundness rig is gone with the rule; the rule's mechanics are still exercised by Varignon
+- [x] **Pinned** (`para_transitive_test.dart`): the table lacks it, and on `provoleas2` at quiescence every composite of two stored `para`s sharing a side is stored without it (over a hundred composites, 46 `para`s). Table count 27 → 26
+- [x] **Two boundary rigs followed the table**: the provider test's DD-only control run became the exchange (the theorem's last step is the publisher's now), and the panel test pinning a bare DD step opens a `midline_para` fact instead of the theorem, whose proof now carries a chase
+- [x] Gates: analyze clean, suite **3275** green, browser gate 13
+
 ## Phase 165 — the length system (open)
 
 M-P3's other half, un-deferred by session 174's measurement (152e's last box): a ℚ-linear closure over segment log-lengths entails `|AB| = |LO|` on `provoleas2.json` — a `cong` the rule table cannot reach, with a coefficient 2 the union-find cannot form — and 43 `eqratio`s with it. The angle system is the template (`angle_closure.dart` / `angle_translation.dart` / `angle_chase.dart`), with one deliberate difference: lengths have no modulus, so this elimination **is** over ℚ (PLAN §"AR is a ℤ-module" — the length paragraph), and `Rational` already is what it needs. What it must not do is share code with the angle side that would let a ℚ pivot leak into θ.
