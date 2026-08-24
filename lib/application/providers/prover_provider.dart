@@ -47,19 +47,23 @@ const int proverChunkBudget = 250;
 
 /// The ceiling on one [ProverNotifier.prove] call, in rule applications.
 ///
-/// **Quiescence is not something a real document owes**, and that is a
+/// **Quiescence is not something a real document owes**, and that was a
 /// measurement rather than a caution: `test/fixtures/provoleas2.json`
-/// (27 objects, 23 hypotheses) is still deriving after 200 000
+/// (27 objects, 23 hypotheses) was still deriving after 200 000
 /// applications — the `eqangle` join blowup Session 156 named as
-/// structural and had not yet seen materialize. So a UI consumer needs a
-/// ceiling, and exhaustion is a reported *state*, not a failure:
-/// everything derived so far is a fixpoint prefix, and the engine
-/// resumes exactly where it stopped ([ProverNotifier.proveMore]).
+/// structural. Phase 163 found the blowup was one rule,
+/// `eqangle_transitive` (128 orbit forms joined against 128), and
+/// deleted it; that document now reaches quiescence at 25 826
+/// applications and every fixture in the corpus converges under this
+/// cap. The ceiling stays, because the next document is not the corpus:
+/// exhaustion is a reported *state*, not a failure — everything derived
+/// so far is a fixpoint prefix, and the engine resumes exactly where it
+/// stopped ([ProverNotifier.proveMore]).
 ///
-/// **30 000 is ~2 s in the regime where the cap actually binds.** On that
-/// same blowup rig an application costs ~65 µs on the VM; documents that
-/// reach quiescence do it in hundreds of applications and never see this
-/// number. It stays counted in applications rather than milliseconds for
+/// **30 000 was ~2 s in the regime where the cap bound** (~65 µs per
+/// application on the VM, on the blowup rig as it was); documents that
+/// reach quiescence do it in hundreds to tens of thousands of
+/// applications. It stays counted in applications rather than milliseconds for
 /// the Phase 139/140 reason — a run's outcome must be a function of the
 /// document, not of the machine — with the honest caveat recorded in the
 /// Phase 145 notes: an application's cost is *not* flat on the real rule

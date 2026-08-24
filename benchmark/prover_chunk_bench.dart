@@ -35,6 +35,7 @@ const fixtures = [
   'test/fixtures/perp-true-unproved.rgl',
   'test/fixtures/provoleas2.json',
   'test/fixtures/tangent-chase.rgl',
+  'test/fixtures/tangent-chord.rgl',
 ];
 
 /// The provider's cap: `provoleas2.json` never reaches quiescence, so an

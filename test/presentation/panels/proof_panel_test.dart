@@ -852,6 +852,22 @@ void main() {
       expect(find.text('angles BCE and BDC are equal'), findsOneWidget);
       expect(find.text('angles ECD and CBD are equal'), findsNothing);
       expect(find.textContaining('the angle from'), findsNothing);
+
+      // And asked, it is proved — by the tangent–chord rule Phase 163
+      // put back, with the tangency and two radii as the givens.
+      await tester.ensureVisible(find.text('angles BCE and BDC are equal'));
+      await tester.tap(find.text('angles BCE and BDC are equal'));
+      await tester.pumpAndSettle();
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(
+        state.answer.proof!.steps.map((step) => step.rule),
+        contains('tangent_chord'),
+      );
+      expect(
+        find.textContaining('“angles BCE and BDC are equal” — proved'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a long chip wraps, and an asked eqangle reads as spelled', (

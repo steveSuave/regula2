@@ -219,26 +219,49 @@ void main() {
       );
     });
 
-    test('eqangle_transitive', () {
-      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
-      final b = FreePoint(id: 'b', position: const Vec2(4, 1));
-      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
-      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
-      final l1 = ParallelLine(id: 'l1', through: c, reference: ab);
-      final d = PointOnObject(id: 'd', curve: l1, parameter: 2);
-      final m = FreePoint(id: 'm', position: const Vec2(1, 6));
-      final l2 = ParallelLine(id: 'l2', through: m, reference: l1);
-      final n = PointOnObject(id: 'n', curve: l2, parameter: 2);
-      final e = FreePoint(id: 'e', position: const Vec2(5, 5));
-      final f = FreePoint(id: 'f', position: const Vec2(6, 9));
+    test('tangent_chord', () {
+      // The alternate-segment theorem: `t` on the circle about `o`, the
+      // tangent at `t` carrying `p`, and `a`, `b` on the circle. The
+      // angle between the tangent and the chord `ta` equals the
+      // inscribed angle on `ta` at `b`.
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(5, 0));
+      final circle = CircleCenterPoint(id: 'c', center: o, onCircle: rim);
+      final t = PointOnObject(id: 't', curve: circle, parameter: 2.0);
+      final tangent = TangentLine(
+        id: 'tan',
+        point: t,
+        circle: circle,
+        branch: 0,
+      );
+      final p = PointOnObject(id: 'p', curve: tangent, parameter: 3.0);
+      final a = PointOnObject(id: 'a', curve: circle, parameter: -1.2);
+      final b = PointOnObject(id: 'b', curve: circle, parameter: 0.4);
+      final objects = [o, rim, circle, t, tangent, p, a, b];
+
+      // The mod-π spelling the filter accepts is the one the rule
+      // concludes; the other reading of "tangent–chord equals inscribed"
+      // — the same four segments with the second side's orientation
+      // swapped — is false, and a rule concluding it would be caught
+      // here by the screen, not by the pattern.
+      final filter = DiagramFilter.probe(build(objects).objects);
+      expect(
+        filter.holds(
+          Predicate(PredicateKind.eqangle, [t, p, t, a, b, a, b, t]),
+        ),
+        isFalse,
+        reason: 'the swapped reading is not the theorem',
+      );
+
       expectRuleFires(
-        ruleName: 'eqangle_transitive',
-        objects: [a, b, ab, c, l1, d, m, l2, n, e, f],
+        ruleName: 'tangent_chord',
+        objects: objects,
         seeds: [
-          Predicate(PredicateKind.eqangle, [a, b, e, f, c, d, e, f]),
-          Predicate(PredicateKind.eqangle, [c, d, e, f, m, n, e, f]),
+          Predicate(PredicateKind.perp, [o, t, t, p]),
+          Predicate(PredicateKind.cong, [o, t, o, a]),
+          Predicate(PredicateKind.cong, [o, t, o, b]),
         ],
-        conclusion: Predicate(PredicateKind.eqangle, [a, b, e, f, m, n, e, f]),
+        conclusion: Predicate(PredicateKind.eqangle, [t, p, t, a, b, t, b, a]),
       );
     });
 

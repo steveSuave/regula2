@@ -169,9 +169,9 @@ void main() {
     // But the two triangles are oppositely oriented, so the shared angle
     // at `P` that `aa_simtri`'s second premise wants is *false* as a
     // mod-π eqangle. That is the direct/reflected split M-P1 defers —
-    // no rule added to the table can reach around it, which is why
-    // `tangent_chord` was measured and dropped rather than kept in the
-    // hope of unlocking this.
+    // no rule added to the table can reach around it — not
+    // `tangent_chord` either, back in the table since Phase 163 for a
+    // theorem of its own and not for this one.
     expect(
       filter.holds(
         Predicate(PredicateKind.eqangle, [
@@ -188,8 +188,9 @@ void main() {
       isFalse,
     );
 
-    // So the ratio half of 152e's length system still has no input here:
-    // the corpus's one `eqratio` is not joined by a second.
+    // So this document gives the ratio half of 152e's length system no
+    // input — the corpus's `eqratio`s are `perp-true-unproved.rgl`'s one
+    // and, since Phase 163, `provoleas2.json`'s five.
     expect(
       database.facts.where((fact) => fact.kind == PredicateKind.eqratio),
       isEmpty,

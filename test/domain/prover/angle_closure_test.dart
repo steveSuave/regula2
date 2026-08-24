@@ -111,7 +111,8 @@ void main() {
     });
 
     test('an eqangle chain closes', () {
-      // eqangle_transitive, as a row sum.
+      // The DD table's `eqangle_transitive`, as a row sum — and since
+      // Phase 163 this *is* that rule: the table no longer carries it.
       final closure = AngleClosure()
         ..add(eqangle('a', 'b', 'c', 'd'))
         ..add(eqangle('c', 'd', 'e', 'f'));

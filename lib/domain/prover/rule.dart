@@ -147,11 +147,38 @@ final List<Rule> ddCoreRules = List.unmodifiable([
     'cong_transitive',
     'cong(a,b,c,d) & cong(c,d,e,f) => cong(a,b,e,f)',
   ),
-  Rule.parse(
-    'eqangle_transitive',
-    'eqangle(a,b,c,d,e,f,g,h) & eqangle(e,f,g,h,p,q,r,s) '
-        '=> eqangle(a,b,c,d,p,q,r,s)',
-  ),
+  // `eqangle_transitive` — `eqangle(a,b,c,d,e,f,g,h) &
+  // eqangle(e,f,g,h,p,q,r,s) => eqangle(a,b,c,d,p,q,r,s)` — is **not
+  // here** (Phase 163). It is a row sum, which is to say it is what the
+  // angle closure *is*: with M-P3 in the exchange, every statement it
+  // could store is already entailed, and `Prover.resolve` answers an
+  // ask against the closure. It was also the most expensive line in the
+  // table by a wide margin, for a reason PLAN §"Two closures" named
+  // before it was measured: an `eqangle` has 128 orbit forms, and a
+  // premise pair with no shared variable lets every form of the pivot
+  // join every form of every other `eqangle` — 16 384 bind attempts per
+  // pair, none of them charged as an application, which is the
+  // "uncharged pass" Phase 161 priced without naming.
+  //
+  // Measured one rule at a time, as 152e asked, over all seven fixtures
+  // with the rest of the table unchanged. Dropping it: **no fact of any
+  // other kind is lost anywhere**, and the only facts lost at all are 15
+  // `eqangle`s on `provoleas2.json`, every one of which the closure
+  // resolves. What it buys: `apatitos-topos.rgl` 1 272 → 49 ms to
+  // quiescence on the same 31 facts, `tangent-chase.rgl` 5 261 → 186 ms
+  // on the same 46, `locus3` 72 → 8 ms — and `provoleas2.json`, which
+  // had never reached quiescence, **completes** at 25 810 applications
+  // with 115 facts where the capped run held 82: +27 `para`, +4 `perp`,
+  // +3 `coll`, +5 `eqratio`, a `midp`, a `simtri` and a `contri` the
+  // transitive join had been starving of pivots (and 9 fewer stored
+  // `eqangle`s, all of them one `resolve` away).
+  //
+  // The same measurement on the table's other row sums, recorded and
+  // not acted on: `para_transitive` likewise loses nothing on any
+  // fixture (and cuts applications 30–45 % on three); `perp_perp_para`
+  // and `para_perp_perp` each lose stored `para`/`perp` facts the
+  // publisher does not reach (17 and 44 `para` on two fixtures, one
+  // `perp` on `locus3`), so they stay.
   Rule.parse(
     'eqratio_transitive',
     'eqratio(a,b,c,d,e,f,g,h) & eqratio(e,f,g,h,p,q,r,s) '
@@ -231,33 +258,42 @@ final List<Rule> ddCoreRules = List.unmodifiable([
     'tangent_lengths',
     'perp(o,s,s,p) & perp(o,t,t,p) & cong(o,s,o,t) => cong(p,s,p,t)',
   ),
-  // `tangent_chord` — the alternate-segment theorem, written as
-  // `perp(o,t,t,p) & cong(o,t,o,a) & cong(o,t,o,b)
-  //  => eqangle(t,p,t,a,b,t,b,a)` — is **not here, and was measured
-  // rather than argued about**. It is a genuine theorem (the mod-π
-  // spelling was checked against the filter, and the swapped reading is
-  // false), and it does fire. What it buys is the question:
+  // The tangent–chord (alternate segment) theorem (Phase 163): the angle
+  // between a tangent and a chord through its point of contact equals
+  // the inscribed angle on the chord from any other point of the
+  // circle. `perp(o,t,t,p)` is the tangency as `hypotheses` emits it —
+  // a `TangentLine` whose touch point `t` the figure has named, with a
+  // named centre `o` and another named point `p` on the line — and the
+  // two `cong`s put `a` and `b` on the circle. The conclusion's mod-π
+  // spelling is the one the filter accepts; the swapped reading
+  // `eqangle(t,p,t,a,b,a,b,t)` is false and the per-rule rig pins that.
   //
-  // - On `tangent-chase.rgl` it reaches the *same* two substantive facts
-  //   `tangent_lengths` reaches — by the longer road through
-  //   `isosceles_converse` — plus **13 eqangles**, at roughly twice the
-  //   run time (its `cong × cong` premise pair is the expensive shape;
-  //   `tangent_lengths` joins on `perp`, of which there are few).
-  // - On `apatitos-topos.rgl` it adds **3 facts, every one an eqangle**;
-  //   no `cong`, `perp`, `para` or `cyclic` moves.
-  // - On the other four fixtures: nothing.
-  //
-  // So its unique contribution corpus-wide is sixteen eqangles that no
-  // consumer acts on — 152e's finding restated, and the `para_coll`
-  // precedent exactly. Written, rigged, measured, deleted; one line the
-  // day a document needs it.
-  //
-  // **Power of the point is not what it was missing**, and the reason is
-  // worth keeping because it is structural rather than a gap in the
-  // table. `|pa|·|pb| = |ps|²` needs the similarity of `psa` and `pbs`,
-  // which is *true* — `simtri(p,s,a,p,b,s)` holds in the figure. But the
-  // two triangles are oppositely oriented, so the shared angle at `p`
-  // that `aa_simtri`'s second premise wants is **false as a mod-π
+  // Phase 155 wrote this rule, measured it and dropped it: on
+  // `tangent-chase.rgl` it doubled the run for thirteen `eqangle`s no
+  // consumer acted on. Two things changed. The consumer arrived —
+  // Phase 159's four-carrier ask is an `eqangle` question, and
+  // `test/fixtures/tangent-chord.rgl` is a user's figure whose theorem
+  // *is* this one and reachable no other way (the inscribed-angle road
+  // needs a fourth point on the circle that the figure does not have).
+  // And the cost was never this rule's: re-measured with the premises in
+  // either order the timings are identical to the millisecond, because
+  // the expense was `eqangle_transitive` pivoting on the new facts
+  // through its 128 × 128 forms — see the note above. With that rule
+  // gone this one costs `apatitos-topos` 49 → 71 ms (+3 eqangle),
+  // `tangent-chase` 186 → 388 ms (+12 eqangle, still quiescent at 1 594
+  // applications where the old pair ran past the 30 000 cap), and the
+  // user's document 3 → 5 ms, proved.
+  Rule.parse(
+    'tangent_chord',
+    'perp(o,t,t,p) & cong(o,t,o,a) & cong(o,t,o,b) '
+        '=> eqangle(t,p,t,a,b,t,b,a)',
+  ),
+  // **Power of the point is not what tangency was missing**, and the
+  // reason is worth keeping because it is structural rather than a gap
+  // in the table. `|pa|·|pb| = |ps|²` needs the similarity of `psa` and
+  // `pbs`, which is *true* — `simtri(p,s,a,p,b,s)` holds in the figure.
+  // But the two triangles are oppositely oriented, so the shared angle
+  // at `p` that `aa_simtri`'s second premise wants is **false as a mod-π
   // eqangle** (checked, not assumed). That is the direct/reflected split
   // M-P1 defers, not a rule anyone can add here.
 ]);
