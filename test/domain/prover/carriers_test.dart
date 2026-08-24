@@ -424,6 +424,52 @@ void main() {
     });
   });
 
+  group('isTrivial — a relation between a line and itself', () {
+    // Phase 158b. `a b c` one line, `d e f` another, `g h` a third.
+    CarrierIndex index() => CarrierIndex()
+      ..absorb(coll(a, b, c))
+      ..absorb(coll(d, e, f));
+
+    test('para and perp: one line under two names', () {
+      expect(index().isTrivial(para(a, b, a, c)), isTrue);
+      expect(index().isTrivial(para(a, b, b, c)), isTrue);
+      expect(index().isTrivial(para(a, b, d, e)), isFalse);
+      expect(index().isTrivial(Fact(PredicateKind.perp, [a, b, b, c])), isTrue);
+      expect(
+        index().isTrivial(Fact(PredicateKind.perp, [a, b, d, e])),
+        isFalse,
+      );
+    });
+
+    test('eqangle: two zero angles, or one angle spelled twice', () {
+      Fact eqangle(List<GeoPoint> points) =>
+          Fact(PredicateKind.eqangle, points);
+      // ∠(ab, ac) = ∠(de, df): both sides one line — two zeros.
+      expect(index().isTrivial(eqangle([a, b, a, c, d, e, d, f])), isTrue);
+      // ∠(ab, de) = ∠(bc, ef): the same two lines, other names.
+      expect(index().isTrivial(eqangle([a, b, d, e, b, c, e, f])), isTrue);
+      // ∠(ab, de) = ∠(gh, de): a genuine equality of directions.
+      expect(index().isTrivial(eqangle([a, b, d, e, g, h, d, e])), isFalse);
+      // One zero side and one real side is a real fact about the other.
+      expect(index().isTrivial(eqangle([a, b, a, c, g, h, d, e])), isFalse);
+    });
+
+    test('never for the kinds that do not relate two lines', () {
+      // cong over collinear segments says something; coll names a line.
+      expect(
+        index().isTrivial(Fact(PredicateKind.cong, [a, b, b, c])),
+        isFalse,
+      );
+      expect(index().isTrivial(coll(a, b, c)), isFalse);
+      expect(index().isTrivial(Fact(PredicateKind.midp, [b, a, c])), isFalse);
+      expect(index().isTrivial(cyclic(a, b, d, e)), isFalse);
+    });
+
+    test('an empty closure calls nothing trivial', () {
+      expect(CarrierIndex().isTrivial(para(a, b, a, c)), isFalse);
+    });
+  });
+
   group('incremental equals rebuilt', () {
     // The property the engine needs: forward chaining absorbs one fact
     // at a time, in an order nothing controls, and must land where a

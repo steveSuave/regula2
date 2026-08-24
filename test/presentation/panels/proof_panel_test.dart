@@ -19,6 +19,7 @@ import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/angle_translation.dart';
+import 'package:regula/domain/prover/carriers.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/predicate.dart';
@@ -106,8 +107,8 @@ void main() {
   /// Unfolds [kind]'s group in the derived list. Groups start folded
   /// (Phase 158), so a test that reaches a row opens its group first,
   /// the way a user does; the whole header row is the fold target.
-  Future<void> expandGroup(WidgetTester tester, PredicateKind kind) async {
-    final header = inPanel(find.text(predicateKindLabel(kind)));
+  Future<void> expandGroup(WidgetTester tester, GoalGroup group) async {
+    final header = inPanel(find.text(group.label));
     // Scroll first, then ensure: a lazy list builds a header only near
     // the fold, and `ensureVisible` needs it built (session 168).
     await tester.scrollUntilVisible(
@@ -118,6 +119,21 @@ void main() {
     await tester.ensureVisible(header);
     await tester.pumpAndSettle();
     await tester.tap(header);
+    await tester.pump();
+  }
+
+  /// Opens [goal]'s proof through its row's arrow — the row itself
+  /// points at the figure (Phase 158b).
+  Future<void> openProof(WidgetTester tester, Fact goal) async {
+    await tester.tap(
+      find.descendant(
+        of: find.ancestor(
+          of: find.text(readFact(goal)),
+          matching: find.byType(ListTile),
+        ),
+        matching: find.byTooltip('Show proof'),
+      ),
+    );
     await tester.pump();
   }
 
@@ -281,7 +297,7 @@ void main() {
       // The goal list, and the Varignon conclusion is in it. The list
       // is long enough to scroll, so reach the row the way a user does.
       final goalText = readFact(rig.goal);
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
         find.text(goalText),
         60,
@@ -291,7 +307,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(goalText), findsOneWidget);
 
-      await tester.tap(find.text(goalText));
+      await openProof(tester, rig.goal);
       await tester.pump();
 
       // The step list, rendered from `Proof.steps`: every step's
@@ -320,7 +336,7 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Prove'), findsOneWidget);
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
 
       container
           .read(constructionProvider)
@@ -354,15 +370,44 @@ void main() {
 
       container.read(selectionProvider.notifier).select(id);
       await tester.pump();
-      for (final kind in groupedGoals(narrowed).keys) {
+      final carriers = (container.read(proverProvider) as ProverReady).carriers;
+      for (final kind in groupedGoals(narrowed, carriers: carriers).keys) {
         await expandGroup(tester, kind);
       }
 
-      // Short enough now that the whole narrowed list is laid out, so
-      // the rendered rows are the list — and every one names M.
-      expect(inPanel(find.byType(ListTile)), findsNWidgets(narrowed.length));
-      for (final goal in narrowed) {
+      // Every narrowed goal is a row (reached the way a user does — the
+      // grouped list is lazy and taller than the panel), and every row
+      // ever built names M: the rendered rows are the narrowed list.
+      final narrowedTexts = {for (final goal in narrowed) readFact(goal)};
+      // Back to the top (opening the groups scrolled to the foot), then
+      // down through the rows in the panel's own order — group by group,
+      // database order within — so a downward search meets each one.
+      await tester.drag(
+        inPanel(find.byType(Scrollable)),
+        const Offset(0, 5000),
+      );
+      await tester.pumpAndSettle();
+      final inListOrder = groupedGoals(
+        narrowed,
+        carriers: carriers,
+      ).values.expand((facts) => facts);
+      for (final goal in inListOrder) {
+        await tester.scrollUntilVisible(
+          find.text(readFact(goal)),
+          60,
+          scrollable: inPanel(find.byType(Scrollable)),
+        );
         expect(find.text(readFact(goal)), findsOneWidget);
+        for (final row in tester.widgetList<ListTile>(
+          inPanel(find.byType(ListTile)),
+        )) {
+          final text = find
+              .descendant(of: find.byWidget(row), matching: find.byType(Text))
+              .evaluate()
+              .map((element) => (element.widget as Text).data)
+              .firstWhere(narrowedTexts.contains, orElse: () => null);
+          expect(text, isNotNull, reason: 'a row that does not name M');
+        }
       }
     });
 
@@ -372,7 +417,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -380,7 +425,7 @@ void main() {
       );
       await tester.ensureVisible(find.text(readFact(rig.goal)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(readFact(rig.goal)));
+      await openProof(tester, rig.goal);
       await tester.pump();
       expect(container.read(proofHighlightProvider), isEmpty);
 
@@ -431,7 +476,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -439,7 +484,7 @@ void main() {
       );
       await tester.ensureVisible(find.text(readFact(rig.goal)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(readFact(rig.goal)));
+      await openProof(tester, rig.goal);
       await tester.pump();
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
         rig.goal,
@@ -475,7 +520,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -483,7 +528,7 @@ void main() {
       );
       await tester.ensureVisible(find.text(readFact(rig.goal)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(readFact(rig.goal)));
+      await openProof(tester, rig.goal);
       await tester.pump();
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
         rig.goal,
@@ -504,7 +549,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -512,7 +557,7 @@ void main() {
       );
       await tester.ensureVisible(find.text(readFact(rig.goal)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(readFact(rig.goal)));
+      await openProof(tester, rig.goal);
       await tester.pump();
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
         rig.goal,
@@ -680,7 +725,7 @@ void main() {
       expect(step.chase, isNotNull);
 
       final goalRow = find.text(readFact(goal));
-      await expandGroup(tester, goal.kind);
+      await expandGroup(tester, KindGroup(goal.kind));
       await tester.scrollUntilVisible(
         goalRow,
         60,
@@ -688,7 +733,7 @@ void main() {
       );
       await tester.ensureVisible(goalRow);
       await tester.pumpAndSettle();
-      await tester.tap(goalRow);
+      await openProof(tester, goal);
       await tester.pumpAndSettle();
 
       final lines = chaseLines(step, proof);
@@ -711,7 +756,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -719,7 +764,7 @@ void main() {
       );
       await tester.ensureVisible(find.text(readFact(rig.goal)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(readFact(rig.goal)));
+      await openProof(tester, rig.goal);
       await tester.pumpAndSettle();
 
       // Varignon reaches its parallelogram through `midp`, which the
@@ -868,7 +913,7 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
 
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
 
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
@@ -887,7 +932,7 @@ void main() {
 
       // The proof view reads the same way: prose rows, raw tooltips —
       // on the goal header and on every step.
-      await tester.tap(find.text(readFact(rig.goal)));
+      await openProof(tester, rig.goal);
       await tester.pump();
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
         rig.goal,
@@ -943,7 +988,7 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
-      await expandGroup(tester, PredicateKind.para);
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
         find.text(readFact(rig.goal)),
         60,
@@ -951,7 +996,7 @@ void main() {
       );
       await tester.ensureVisible(find.text(readFact(rig.goal)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(readFact(rig.goal)));
+      await openProof(tester, rig.goal);
       await tester.pumpAndSettle();
 
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
@@ -984,7 +1029,10 @@ void main() {
       // wheel would move nothing, which is no test of the guard. The
       // hovered row is the first of the first group: at the top of the
       // list, no scrolling needed to reach it.
-      final groups = groupedGoals(provableGoals(database));
+      final groups = groupedGoals(
+        provableGoals(database),
+        carriers: (container.read(proverProvider) as ProverReady).carriers,
+      );
       for (final kind in groups.keys) {
         await expandGroup(tester, kind);
       }
@@ -1052,15 +1100,15 @@ void main() {
 
       final groups = groupedGoals([cong, coll1, para, coll2]);
 
-      expect(groups.keys, [
-        PredicateKind.coll,
-        PredicateKind.para,
-        PredicateKind.cong,
+      expect(groups.keys, const [
+        KindGroup(PredicateKind.coll),
+        KindGroup(PredicateKind.para),
+        KindGroup(PredicateKind.cong),
       ]);
       // Within a bucket, arrival order — the database's own.
-      expect(groups[PredicateKind.coll], [coll1, coll2]);
-      expect(groups[PredicateKind.para], [para]);
-      expect(groups[PredicateKind.cong], [cong]);
+      expect(groups[const KindGroup(PredicateKind.coll)], [coll1, coll2]);
+      expect(groups[const KindGroup(PredicateKind.para)], [para]);
+      expect(groups[const KindGroup(PredicateKind.cong)], [cong]);
     });
 
     test('an empty bucket is absent, not present with zero', () {
@@ -1071,8 +1119,8 @@ void main() {
       final groups = groupedGoals([
         Fact(PredicateKind.midp, [a, b, c]),
       ]);
-      expect(groups.keys, [PredicateKind.midp]);
-      expect(groups.containsKey(PredicateKind.coll), isFalse);
+      expect(groups.keys, const [KindGroup(PredicateKind.midp)]);
+      expect(groups.containsKey(const KindGroup(PredicateKind.coll)), isFalse);
     });
 
     test('composed with the selection filter, a header counts the '
@@ -1095,7 +1143,10 @@ void main() {
       // Grouping after filtering is what makes the surviving headers the
       // answer to "what does the prover know about this?" — fewer of
       // them than the full run has.
-      expect(groups.keys, [PredicateKind.para, PredicateKind.perp]);
+      expect(groups.keys, const [
+        KindGroup(PredicateKind.para),
+        KindGroup(PredicateKind.perp),
+      ]);
       expect(
         groupedGoals(provableGoals(database)).length,
         greaterThan(groups.length),
@@ -1110,14 +1161,17 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       final ready = container.read(proverProvider) as ProverReady;
-      final groups = groupedGoals(provableGoals(ready.database));
+      final groups = groupedGoals(
+        provableGoals(ready.database),
+        carriers: ready.carriers,
+      );
       expect(groups.length, greaterThan(1), reason: 'rig sanity');
 
       // Every kind with something has a header, every header is folded
       // and carries its count, and no row is on screen.
-      for (final MapEntry(key: kind, value: facts) in groups.entries) {
+      for (final MapEntry(key: group, value: facts) in groups.entries) {
         final header = find.ancestor(
-          of: inPanel(find.text(predicateKindLabel(kind))),
+          of: inPanel(find.text(group.label)),
           matching: find.byType(InkWell),
         );
         expect(header, findsOneWidget);
@@ -1137,11 +1191,11 @@ void main() {
 
       // Opening one group shows its rows, in the order the database
       // holds them, and the count steps aside for them.
-      final kind = groups.keys.first;
-      final facts = groups[kind]!;
-      await expandGroup(tester, kind);
+      final group = groups.keys.first;
+      final facts = groups[group]!;
+      await expandGroup(tester, group);
       final header = find.ancestor(
-        of: inPanel(find.text(predicateKindLabel(kind))),
+        of: inPanel(find.text(group.label)),
         matching: find.byType(InkWell),
       );
       expect(
@@ -1164,7 +1218,7 @@ void main() {
       expect(inPanel(find.byType(ListTile)), findsNWidgets(facts.length));
 
       // And a second tap folds it again.
-      await expandGroup(tester, kind);
+      await expandGroup(tester, group);
       expect(inPanel(find.byType(ListTile)), findsNothing);
     });
 
@@ -1177,7 +1231,8 @@ void main() {
       await tester.pumpAndSettle();
       final database = (container.read(proverProvider) as ProverReady).database;
 
-      final all = groupedGoals(provableGoals(database));
+      final carriers = (container.read(proverProvider) as ProverReady).carriers;
+      final all = groupedGoals(provableGoals(database), carriers: carriers);
       expect(
         all.length,
         lessThan(PredicateKind.values.length),
@@ -1186,7 +1241,7 @@ void main() {
       for (final kind in PredicateKind.values) {
         expect(
           inPanel(find.text(predicateKindLabel(kind))),
-          all.containsKey(kind) ? findsOneWidget : findsNothing,
+          all.containsKey(KindGroup(kind)) ? findsOneWidget : findsNothing,
         );
       }
 
@@ -1194,6 +1249,7 @@ void main() {
       // the selection emptied are gone rather than shown at zero.
       final narrowed = groupedGoals(
         provableGoals(database, selectedIds: {c.id}),
+        carriers: carriers,
       );
       expect(narrowed.length, lessThan(all.length), reason: 'rig sanity');
       container.read(selectionProvider.notifier).select(c.id);
@@ -1201,7 +1257,7 @@ void main() {
       for (final kind in PredicateKind.values) {
         expect(
           inPanel(find.text(predicateKindLabel(kind))),
-          narrowed.containsKey(kind) ? findsOneWidget : findsNothing,
+          narrowed.containsKey(KindGroup(kind)) ? findsOneWidget : findsNothing,
         );
       }
       expect(inPanel(find.text('0')), findsNothing);
@@ -1268,6 +1324,153 @@ void main() {
       expect(inPanel(find.byIcon(Icons.expand_more)), findsNothing);
       await tester.ensureVisible(find.text(factReadingConvention));
       expect(find.text(factReadingConvention), findsOneWidget);
+    });
+  });
+
+  group('the trivial group, and the row that points', () {
+    // Phase 158b.
+    test('groupedGoals puts what the carriers call trivial last, out of '
+        'its kind — and has no such group without carriers', () {
+      final a = free('a', 'A', 0, 0);
+      final b = free('b', 'B', 1, 0);
+      final c = free('c', 'C', 2, 0);
+      final d = free('d', 'D', 0, 1);
+      final e = free('e', 'E', 1, 1);
+      final coll = Fact(PredicateKind.coll, [a, b, c]);
+      final selfPara = Fact(PredicateKind.para, [a, b, a, c]);
+      final realPara = Fact(PredicateKind.para, [a, b, d, e]);
+      final carriers = CarrierIndex.over([coll]);
+
+      final groups = groupedGoals([selfPara, realPara], carriers: carriers);
+      expect(groups.keys, const [
+        KindGroup(PredicateKind.para),
+        TrivialGroup(),
+      ]);
+      expect(groups[const KindGroup(PredicateKind.para)], [realPara]);
+      expect(groups[const TrivialGroup()], [selfPara]);
+
+      // Nothing trivial, no group — the empty-bucket rule.
+      expect(groupedGoals([realPara], carriers: carriers).keys, const [
+        KindGroup(PredicateKind.para),
+      ]);
+      // No carriers, no notion of trivial.
+      expect(groupedGoals([selfPara, realPara]).keys, const [
+        KindGroup(PredicateKind.para),
+      ]);
+    });
+
+    test(
+      'ProverReady.carriers is the closure of the run\'s own facts',
+      () async {
+        loadPerpFixture(name: 'C');
+        await container.read(proverProvider.notifier).prove();
+        final ready = container.read(proverProvider) as ProverReady;
+        final colls = ready.database.facts.where(
+          (fact) => fact.kind == PredicateKind.coll,
+        );
+        expect(colls, isNotEmpty, reason: 'rig sanity');
+        for (final coll in colls) {
+          final [x, y, z] = coll.points;
+          expect(ready.carriers.sameLine(x, y, y, z), isTrue);
+        }
+      },
+    );
+
+    testWidgets('the Trivial header is last, folded, and counts what the '
+        'closure calls trivial', (tester) async {
+      loadPerpFixture(name: 'C');
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      final ready = container.read(proverProvider) as ProverReady;
+      final goals = provableGoals(ready.database);
+      final trivial = goals.where(ready.carriers.isTrivial).toList();
+      expect(trivial.length, greaterThan(1), reason: 'the rig must pollute');
+      final groups = groupedGoals(goals, carriers: ready.carriers);
+      expect(groups.keys.last, const TrivialGroup());
+      expect(groups[const TrivialGroup()], trivial);
+
+      final header = find.ancestor(
+        of: inPanel(find.text('Trivial')),
+        matching: find.byType(InkWell),
+      );
+      expect(header, findsOneWidget);
+      expect(
+        find.descendant(of: header, matching: find.text('${trivial.length}')),
+        findsOneWidget,
+      );
+      // Below every kind header.
+      final top = tester.getTopLeft(inPanel(find.text('Trivial'))).dy;
+      for (final group in groups.keys) {
+        if (group is TrivialGroup) continue;
+        expect(
+          tester.getTopLeft(inPanel(find.text(group.label))).dy,
+          lessThan(top),
+        );
+      }
+      // Its rows are not in their kind's group — on this fixture every
+      // derived parallel is a line with itself, so the parallel group
+      // is gone entirely, and no kind group holds a trivial fact.
+      expect(groups.containsKey(const KindGroup(PredicateKind.para)), isFalse);
+      for (final MapEntry(key: group, value: facts) in groups.entries) {
+        if (group is KindGroup) {
+          expect(facts.any(ready.carriers.isTrivial), isFalse);
+        }
+      }
+      expect(find.text(trivialGroupNote), findsNothing);
+
+      // Opened, it says what it is, then lists them.
+      await expandGroup(tester, const TrivialGroup());
+      expect(find.text(trivialGroupNote), findsOneWidget);
+      expect(find.text(readFact(trivial.first)), findsOneWidget);
+    });
+
+    testWidgets('a tap on a row lights its points; the arrow opens the '
+        'proof', (tester) async {
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      await expandGroup(tester, const KindGroup(PredicateKind.para));
+      await tester.scrollUntilVisible(
+        find.text(readFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      expect(container.read(proofHighlightProvider), isEmpty);
+
+      await tester.tap(find.text(readFact(rig.goal)));
+      await tester.pump();
+      expect(
+        container.read(proofHighlightProvider),
+        rig.goal.points.map((point) => point.id).toSet(),
+      );
+      // Still the list — no proof opened.
+      expect(find.byTooltip('Back to the list'), findsNothing);
+      final row = tester.widget<ListTile>(
+        find.ancestor(
+          of: find.text(readFact(rig.goal)),
+          matching: find.byType(ListTile),
+        ),
+      );
+      expect(row.selected, isTrue);
+
+      // A second tap clears — a highlight the user cannot turn off is one
+      // they would have to close the panel to escape.
+      await tester.tap(find.text(readFact(rig.goal)));
+      await tester.pump();
+      expect(container.read(proofHighlightProvider), isEmpty);
+
+      // The arrow opens the proof, and opening drops the emphasis.
+      await tester.tap(find.text(readFact(rig.goal)));
+      await tester.pump();
+      await openProof(tester, rig.goal);
+      expect(find.byTooltip('Back to the list'), findsOneWidget);
+      expect(container.read(proofHighlightProvider), isEmpty);
     });
   });
 
@@ -1465,9 +1668,12 @@ void main() {
       final ready = container.read(proverProvider) as ProverReady;
       await expandGroup(
         tester,
-        groupedGoals(provableGoals(ready.database)).keys.first,
+        groupedGoals(
+          provableGoals(ready.database),
+          carriers: ready.carriers,
+        ).keys.first,
       );
-      await tester.tap(inPanel(find.byType(ListTile)).first);
+      await tester.tap(inPanel(find.byTooltip('Show proof')).first);
       await tester.pumpAndSettle();
       await dragPanel(tester, 400);
 

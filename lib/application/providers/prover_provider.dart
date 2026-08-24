@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/prover/carriers.dart';
 import '../../domain/prover/diagram_filter.dart';
 import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
@@ -176,7 +177,7 @@ class ProverRunning extends ProverState {
 /// consumer can tell a current answer from a stale one *without this
 /// provider watching the construction* — see [ProverNotifier].
 class ProverReady extends ProverState {
-  const ProverReady({
+  ProverReady({
     required this.revision,
     required this.database,
     required this.applications,
@@ -188,6 +189,15 @@ class ProverReady extends ProverState {
   /// Every fact the run derived, each carrying the derivation it was
   /// discovered with — the proof DAG, already stored.
   final FactDatabase database;
+
+  /// The run's incidence closure — which points name which line — read
+  /// off [database] once, on first use. What lets a consumer tell a
+  /// parallel from an identity (`CarrierIndex.isTrivial`).
+  ///
+  /// Built here rather than taken from the engine: `Prover.incidence`
+  /// is the angle side's and may trail the database after a stop, while
+  /// this is the closure of exactly the facts this state publishes.
+  late final CarrierIndex carriers = CarrierIndex.over(database.facts);
 
   /// Rule applications spent, cumulative across
   /// [ProverNotifier.proveMore] — so it is bounded by
