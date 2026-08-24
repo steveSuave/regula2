@@ -277,7 +277,7 @@ Session 172: the tangent–chord theorem proved on the VM, in `flutter run`, and
 - [x] The hit-tester is not touched: a near-tie between two objects that are the same line is not the hit-tester's to resolve, and once the question builder reads both the same the tie stops mattering
 - [x] Tests (10): `coincidentCarriers` per kind (the on-circle tangent pair true, the external pair false, a reversed ray true, symmetric both ways); `pointsOnCarrier` order; the fixture with `c` selected offers the same three questions as with `d` and the first is proved by `tangent_chord` either way; a segment beside the line through its ends borrows the line's glued point; a `coll` across two copies of a line; the tool on an on-circle point adds one `TangentLine`, on an external point two
 - [x] Gates: analyze clean, suite **3229** green (3219 + 10), browser gate 13
-- [ ] Looked at on the deployed build after the merge, with the fixture loaded through the extension (the file-input route is in memory): click the tangent anywhere, the three chips appear, the first proves
+- [x] Looked at on the deployed build after the merge (`9d6464b`, `main.dart.wasm` 2 727 931 bytes), with the fixture loaded through the extension: the same four clicks that gave "Nothing to ask" on the previous build offer the three chips, and "angles BCE and BDC are equal" proves by `tangent chord` from the tangency and two radii
 
 ## Phase 161 — the uncharged pass (open; unscheduled)
 

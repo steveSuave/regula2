@@ -1669,7 +1669,7 @@ The browser look is the one open box: extension not connected this session (seco
 - The tangent tool emits one line from a point on the circle.
 - PLAN gained §"One line under two objects is one line".
 
-**Next.** The deployed look (Phase 164's last box) once the deploy of the merge lands; then Phase 160 (the question builder) or the two recorded measurements (delete `para_transitive`; re-measure the ratio closure on `provoleas2`). Carried: `readFact` on listed `eqangle`s can still read magnitude-false — visible in this session's screenshot as step `[4]` reading "angles ECD and CBD" under a question that read "BCE and BDC".
+**Next.** Phase 164's deployed look is done (same clicks, three chips, proved). Then Phase 160 (the question builder) or the two recorded measurements (delete `para_transitive`; re-measure the ratio closure on `provoleas2`). Carried: `readFact` on listed `eqangle`s can still read magnitude-false — visible in this session's screenshot as step `[4]` reading "angles ECD and CBD" under a question that read "BCE and BDC".
 
 **Gotchas.**
 
