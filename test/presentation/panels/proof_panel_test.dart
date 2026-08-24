@@ -575,6 +575,56 @@ void main() {
       expect(container.read(proofHighlightProvider), isEmpty);
     });
 
+    testWidgets('a selection that phrases nothing says so', (tester) async {
+      // Session 163's report: four selected segments, no chips, no
+      // explanation. Four segments are four carriers, a shape
+      // [askableQuestions] refuses (until Phase 159's eqangle box).
+      final rig = seedVarignon();
+      final construction = container.read(constructionProvider).construction;
+      final corners = [for (final m in rig.midpoints) m.point1];
+      final sides = [
+        for (var i = 0; i < 4; i++)
+          Segment(
+            id: 'side$i',
+            point1: corners[i],
+            point2: corners[(i + 1) % 4],
+          ),
+      ];
+      for (final side in sides) {
+        construction.add(side);
+      }
+      await pumpEditor(tester);
+      await openPanel(tester);
+
+      // Nothing selected: neither chips nor the hint — the derived list
+      // is the panel then.
+      expect(find.text('Ask about the selection'), findsNothing);
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
+
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(sides.map((side) => side.id));
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsOneWidget);
+      expect(find.text('Ask about the selection'), findsNothing);
+      expect(inPanel(find.byType(ActionChip)), findsNothing);
+
+      // Two of them phrase perp / para / cong: chips, and the hint gone.
+      container.read(selectionProvider.notifier).selectMany([
+        sides[0].id,
+        sides[2].id,
+      ]);
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
+      expect(find.text('Ask about the selection'), findsOneWidget);
+      expect(inPanel(find.byType(ActionChip)), findsNWidgets(3));
+
+      // And a lone point is back to the hint.
+      container.read(selectionProvider.notifier).select(corners.first.id);
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsOneWidget);
+    });
+
     testWidgets('a selection offers what it can phrase, and asking works', (
       tester,
     ) async {
