@@ -279,6 +279,53 @@ void main() {
       }
     });
 
+    test('the magnitude preference beats construction order', () {
+      // The same figure with the carriers added as BC, BD, CE, DC: now
+      // the first three-point orientation the enumeration meets is the
+      // transpose, "angles CBD and ECD are equal" (107° vs 73°), and
+      // only the magnitude check picks "BCE and BDC" (47° = 47°) over
+      // it. The fixture test above passes without that check, because
+      // its order happens to list the true reading first.
+      final construction = Construction();
+      final b = free('b', 545, -647.5);
+      final c = free('c', 725.6807082866486, -61.51607625972173);
+      final d = free('d', 845.2908907717656, -849.6098535395618);
+      final e = free('e', 208.57068851405248, -307.4554255448492);
+      for (final object in [
+        b,
+        c,
+        d,
+        e,
+        Segment(id: 'bc', point1: b, point2: c),
+        Segment(id: 'bd', point1: b, point2: d),
+        Segment(id: 'ce', point1: c, point2: e),
+        Segment(id: 'dc', point1: d, point2: c),
+      ]) {
+        construction.add(object);
+      }
+      final readings = ask(construction, {
+        'bc',
+        'bd',
+        'ce',
+        'dc',
+      }).map((q) => readPredicate(q.canonical)).toList();
+      // Any spelling whose magnitudes agree will do — which of the
+      // four the tie-break lands on is enumeration order, not meaning.
+      const trueReadings = {
+        'angles bce and bdc are equal',
+        'angles bdc and bce are equal',
+        'angles ecb and cdb are equal',
+        'angles cdb and ecb are equal',
+      };
+      expect(
+        readings.where(trueReadings.contains),
+        hasLength(1),
+        reason: 'the theorem, read as magnitudes: $readings',
+      );
+      expect(readings, isNot(contains('angles cbd and ecd are equal')));
+      expect(readings, isNot(contains('angles ecd and cbd are equal')));
+    });
+
     test('selections that phrase nothing phrase nothing', () {
       final r = rig();
 
