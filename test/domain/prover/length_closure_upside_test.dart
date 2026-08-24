@@ -113,13 +113,11 @@ void main() {
       final filter = DiagramFilter.probe(construction.objects);
       final database = FactDatabase();
       seedHypotheses(database, hypotheses(construction.objects), filter);
-      // `provoleas2.json` never reaches a fixpoint (measured: still
-      // deriving after 200 000 applications), so it is compared at a
-      // budget rather than at quiescence.
-      Prover(
-        database: database,
-        filter: filter,
-      ).run(maxApplications: path.contains('provoleas2') ? 20000 : null);
+      // Every fixture reaches quiescence since Phase 163 deleted
+      // `eqangle_transitive` — `provoleas2.json` included, at 25 826
+      // applications, where it used to be still deriving after 200 000.
+      final prover = Prover(database: database, filter: filter)..run();
+      expect(prover.isComplete, isTrue, reason: '$path did not converge');
       final byId = {
         for (final object in construction.objects) object.id: object,
       };
@@ -138,11 +136,20 @@ void main() {
           .length;
     }
 
-    // And the ratio half, which is the genuinely ℚ content: still one
-    // `eqratio` in the whole corpus, `perp-true-unproved.rgl`'s. The
-    // tangency document contributes none — not for want of a rule but
-    // because power of the point needs the direct/reflected split M-P1
-    // defers (pinned in `tangent_chase_test.dart`).
-    expect(totalEqratio, 1);
+    // And the ratio half, which is the genuinely ℚ content. Until Phase
+    // 163 this pinned *one* `eqratio` in the whole corpus,
+    // `perp-true-unproved.rgl`'s — the tangency document contributes
+    // none, not for want of a rule but because power of the point needs
+    // the direct/reflected split M-P1 defers (pinned in
+    // `tangent_chase_test.dart`). Then `provoleas2.json` reached
+    // quiescence and holds **five**: three spellings of one
+    // `simtri_eqratio` and two `intercept_eqratio`s, and they share the
+    // segment `AO` — `|MA|/|AO| = |AO|/|AB|` beside
+    // `|AO|/|AN| = |ON|/|AO|` is a chain a ratio closure would close.
+    // That is the input 152e's deferral was measured without; the
+    // re-measurement is recorded there as the next thing to do, and
+    // this pin moves to the new count so it fires again on the next
+    // change rather than on this one.
+    expect(totalEqratio, 6);
   });
 }
