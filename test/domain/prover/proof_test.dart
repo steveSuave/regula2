@@ -26,6 +26,17 @@ void main() {
   Rule ruleNamed(String name) =>
       ddCoreRules.firstWhere((rule) => rule.name == name);
 
+  /// Not in the table since Phase 166 — the angle closure publishes
+  /// every `para` it would store — but a perfectly good two-premise
+  /// rule for exercising the engine, which is what the Varignon rig
+  /// wants: a restricted table with no AR, where the theorem needs a
+  /// join. Kept here rather than in `ddCoreRules` so the shipped table
+  /// is exactly what the measurements say it is.
+  final paraTransitive = Rule.parse(
+    'para_transitive',
+    'para(a,b,c,d) & para(c,d,e,f) => para(a,b,e,f)',
+  );
+
   FreePoint free(String id, String name, double x, double y) => FreePoint(
     id: id,
     position: Vec2(x, y),
@@ -74,7 +85,7 @@ void main() {
     );
     final engine = engineOver(
       build([a, b, c, d, mab, mbc, mcd, mda]),
-      rules: [ruleNamed('midline_para'), ruleNamed('para_transitive')],
+      rules: [ruleNamed('midline_para'), paraTransitive],
     );
     engine.run();
     return (
@@ -244,7 +255,11 @@ void main() {
       final rig = varignon();
       final proof = Proof.of(rig.goal, rig.engine.database);
       expect(proof.deductions, isNotEmpty);
-      expect(proof.verify(), isEmpty);
+      // The rig's rule is not in the shipped table (Phase 166), so the
+      // certificate is checked against the table plus that rule — and,
+      // as a check on the check, fails to resolve without it.
+      expect(proof.verify(rules: [...ddCoreRules, paraTransitive]), isEmpty);
+      expect(proof.verify(), contains('step 7: unknown rule para_transitive'));
     });
 
     test('names the step whose premises do not entail it', () {

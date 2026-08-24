@@ -130,10 +130,17 @@ final List<Rule> ddCoreRules = List.unmodifiable([
   // point is the orthocentre of the other three.
   Rule.parse('orthocentre', 'perp(a,b,c,d) & perp(a,c,b,d) => perp(a,d,b,c)'),
   // Direction algebra: parallelism and perpendicularity compose.
-  Rule.parse(
-    'para_transitive',
-    'para(a,b,c,d) & para(c,d,e,f) => para(a,b,e,f)',
-  ),
+  // `para_transitive` — `para(a,b,c,d) & para(c,d,e,f) => para(a,b,e,f)`
+  // — is **not here** (Phase 166). It is a row sum like
+  // `eqangle_transitive` below, and it went the same way, on the same
+  // measurement: the angle closure *publishes* `para`, so every
+  // composite the rule could store is already stored by the exchange.
+  // Dropping it changes no fact count on any of the seven fixtures and
+  // cuts applications to quiescence by 43 % on `locus3` (682 → 386),
+  // 31 % on `perp-true-unproved` (4 896 → 3 400) and 42 % on
+  // `provoleas2` (22 996 → 13 268); the other four are untouched. The
+  // two rules that remain here are *not* row sums the publisher
+  // reaches — see the note below `cong_transitive`.
   Rule.parse(
     'perp_perp_para',
     'perp(a,b,c,d) & perp(c,d,e,f) => para(a,b,e,f)',
@@ -173,12 +180,12 @@ final List<Rule> ddCoreRules = List.unmodifiable([
   // transitive join had been starving of pivots (and 9 fewer stored
   // `eqangle`s, all of them one `resolve` away).
   //
-  // The same measurement on the table's other row sums, recorded and
-  // not acted on: `para_transitive` likewise loses nothing on any
-  // fixture (and cuts applications 30–45 % on three); `perp_perp_para`
-  // and `para_perp_perp` each lose stored `para`/`perp` facts the
-  // publisher does not reach (17 and 44 `para` on two fixtures, one
-  // `perp` on `locus3`), so they stay.
+  // The same measurement on the table's other row sums, one at a time:
+  // `para_transitive` likewise lost nothing on any fixture and is gone
+  // too (Phase 166, note above); `perp_perp_para` and `para_perp_perp`
+  // each lose stored `para`/`perp` facts the publisher does not reach
+  // (17 and 44 `para` on two fixtures, one `perp` on `locus3`), so they
+  // stay.
   Rule.parse(
     'eqratio_transitive',
     'eqratio(a,b,c,d,e,f,g,h) & eqratio(e,f,g,h,p,q,r,s) '
