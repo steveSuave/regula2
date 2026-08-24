@@ -106,6 +106,28 @@ bool conventionApplies(Iterable<Fact> facts) => facts.any(
   },
 );
 
+/// The raw spelling riding on a prose surface: a settled hover on
+/// desktop, a long-press on touch.
+///
+/// The wait is load-bearing, not cosmetic. A [Tooltip] shows on hover
+/// immediately by default, and in a lazy list that is an overlay
+/// attached and detached for every row that passes under a stationary
+/// pointer while the list scrolls — which trips a framework race on the
+/// web renderer (the `RawTooltip`/`OverlayPortal` descendant of
+/// flutter/flutter#133545): the mouse tracker hit-tests the overlay's
+/// deferred box before it is laid out and throws once per pointer
+/// event, which the user experiences as scrolling that sticks. With a
+/// wait, a row merely passing through never begins to show; the scroll
+/// listener in [_ProofPanelState.build] covers the other order
+/// (hover first, then scroll). VM tests cannot reproduce the crash —
+/// the two guards are pinned behaviourally instead.
+Widget rawSpellingTooltip({required String message, required Widget child}) =>
+    Tooltip(
+      message: message,
+      waitDuration: const Duration(milliseconds: 500),
+      child: child,
+    );
+
 /// The chip's wording for a question — the same sentence the derived
 /// list would use for the statement, via `readFact`.
 ///
@@ -261,7 +283,19 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           _header(theme, state, revision),
           const Divider(height: 1),
           if (questions.isNotEmpty) _questions(theme, questions),
-          Expanded(child: _body(theme, state, selectedIds)),
+          // No tooltip overlay may exist while list rows churn — see
+          // [rawSpellingTooltip] for the web-renderer race this guards.
+          // Dismissing on every notification is cheap: the call walks
+          // the list of *visible* tooltips, normally empty.
+          Expanded(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (_) {
+                Tooltip.dismissAllToolTips();
+                return false;
+              },
+              child: _body(theme, state, selectedIds),
+            ),
+          ),
         ],
       ),
     );
@@ -289,13 +323,16 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           runSpacing: 6,
           children: [
             for (final question in questions)
-              ActionChip(
-                label: Text(questionLabel(question)),
-                // The raw spelling rides along on every prose surface —
-                // a hover on desktop, a long-press on touch.
-                tooltip: describeFact(Fact.of(question.canonical)),
-                visualDensity: VisualDensity.compact,
-                onPressed: () => _ask(question),
+              // Wrapped rather than the chip's own `tooltip:` parameter,
+              // which offers no waitDuration — the chips sit right above
+              // the scrolling list and get the same guarded surface.
+              rawSpellingTooltip(
+                message: describeFact(Fact.of(question.canonical)),
+                child: ActionChip(
+                  label: Text(questionLabel(question)),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _ask(question),
+                ),
               ),
           ],
         ),
@@ -503,7 +540,7 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         for (final goal in goals)
           ListTile(
             dense: true,
-            title: Tooltip(
+            title: rawSpellingTooltip(
               message: describeFact(goal),
               child: Text(readFact(goal), style: theme.textTheme.bodyMedium),
             ),
@@ -546,7 +583,7 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   List<Widget> _proofRows(ThemeData theme, Proof proof) => [
     Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Tooltip(
+      child: rawSpellingTooltip(
         message: describeFact(proof.goal),
         child: Text(readFact(proof.goal), style: theme.textTheme.titleSmall),
       ),
@@ -579,7 +616,7 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Tooltip(
+                    rawSpellingTooltip(
                       message: describeFact(step.fact),
                       child: Text(
                         readFact(step.fact),

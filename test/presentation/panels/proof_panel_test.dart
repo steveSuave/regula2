@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -912,6 +913,59 @@ void main() {
         reason: 'the rig must stay convention-free for this test to bite',
       );
       expect(find.text(factReadingConvention), findsNothing);
+    });
+
+    testWidgets('a raw-spelling tooltip waits out a passing pointer and '
+        'dies on scroll', (tester) async {
+      // The two guards against the web renderer's tooltip-overlay race
+      // (see rawSpellingTooltip): a row the pointer merely passes over
+      // must never begin to show, and a tooltip that is showing must be
+      // gone the moment the list scrolls. The crash itself is only
+      // reproducible under the real engine's mouse tracker — these pin
+      // the behaviour each guard exists to provide.
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      final database = (container.read(proverProvider) as ProverReady).database;
+      // The first derived row — at the top of the list, no scrolling
+      // needed to hover it.
+      final goal = provableGoals(database).first;
+      expect(rig.goal, isNot(goal), reason: 'rig sanity: distinct facts');
+      final overlayText = find.text(describeFact(goal));
+
+      final mouse = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+        pointer: 7,
+      );
+      await mouse.addPointer();
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.text(readFact(goal))));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        overlayText,
+        findsNothing,
+        reason:
+            'a pointer merely passing through must not raise the '
+            'overlay — that churn is the crash',
+      );
+
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(overlayText, findsOneWidget, reason: 'a settled hover shows it');
+
+      // A small wheel scroll: the row shifts 4 px, so the pointer stays
+      // inside it — only the scroll listener can be what dismisses.
+      final wheel = TestPointer(8, PointerDeviceKind.mouse);
+      wheel.hover(tester.getCenter(find.text(readFact(goal))));
+      await tester.sendEventToBinding(wheel.scroll(const Offset(0, 4)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        overlayText,
+        findsNothing,
+        reason: 'no tooltip overlay may exist while list rows churn',
+      );
     });
   });
 
