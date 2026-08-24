@@ -1120,23 +1120,34 @@ void main() {
       await openPanel(tester);
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
+      // A midline is parallel to the diagonal: one `midline_para` step
+      // over `midp` givens, which the angle algebra cannot read — so this
+      // proof is all DD, and adding a second line to every step would be
+      // noise. (Varignon's theorem itself is no longer the rig for this:
+      // since Phase 166 its last step is the closure's, chase and all.)
+      final mab = rig.midpoints[0];
+      final mbc = rig.midpoints[1];
+      final midline = Fact(PredicateKind.para, [
+        mab.point1,
+        mbc.point2,
+        mab,
+        mbc,
+      ]);
       await expandGroup(tester, const KindGroup(PredicateKind.para));
       await tester.scrollUntilVisible(
-        find.text(readFact(rig.goal)),
+        find.text(readFact(midline)),
         60,
         scrollable: inPanel(find.byType(Scrollable)),
       );
-      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.ensureVisible(find.text(readFact(midline)));
       await tester.pumpAndSettle();
-      await openProof(tester, rig.goal);
+      await openProof(tester, midline);
       await tester.pumpAndSettle();
 
-      // Varignon reaches its parallelogram through `midp`, which the
-      // angle algebra cannot read — so this proof is all DD, and adding
-      // a second line to every step would be noise.
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
-        rig.goal,
+        midline,
       )!;
+      expect(proof.deductions.map((step) => step.rule), ['midline_para']);
       expect(proof.steps.every((step) => step.chase == null), isTrue);
       expect(inPanel(find.textContaining('θ(')), findsNothing);
     });
