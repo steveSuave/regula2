@@ -2,6 +2,8 @@ import '../construction/geo_object.dart';
 import '../construction/incidence.dart';
 import '../construction/objects/ray.dart';
 import '../construction/objects/segment.dart';
+import 'fact_naming.dart';
+import 'hypotheses.dart';
 import 'predicate.dart';
 
 /// A question about the figure, and every point-tuple spelling of it
@@ -21,7 +23,7 @@ import 'predicate.dart';
 /// refutes all — which is why [canonical] is enough to ask the
 /// `DiagramFilter`.
 class ProverQuestion {
-  ProverQuestion(this.kind, List<Predicate> spellings)
+  ProverQuestion(this.kind, List<Predicate> spellings, {this.reading})
     : spellings = List.unmodifiable(spellings) {
     if (spellings.isEmpty) {
       throw ArgumentError.value(spellings, 'spellings', 'must be non-empty');
@@ -29,6 +31,15 @@ class ProverQuestion {
   }
 
   final PredicateKind kind;
+
+  /// The sentence this question is asked *as*, when the spellings are
+  /// sugar for something the vocabulary has no word for — "these three
+  /// lines are concurrent" is `coll` about their meeting point, "this
+  /// line is tangent to the circle" is `perp` about the radius (Phase
+  /// 159). Null for a question that *is* its fact, which reads through
+  /// `readFact`. The spelling stays visible either way: it is what the
+  /// prover is actually asked, and what the tooltip shows.
+  final String? reading;
 
   /// Every equivalent phrasing, first-listed first. Non-empty.
   final List<Predicate> spellings;
@@ -107,6 +118,10 @@ List<ProverQuestion> askableQuestions(
     for (final object in selected)
       if (object is GeoLine) object,
   ];
+  final circles = [
+    for (final object in selected)
+      if (object is GeoCircle) object,
+  ];
 
   List<GeoPoint> onCarrier(GeoObject carrier) => [
     for (final point in points)
@@ -147,9 +162,63 @@ List<ProverQuestion> askableQuestions(
   // and a stray point, a circle alongside — would have to be read by
   // ignoring part of what the user picked, and silently ignoring half a
   // selection is how a tool answers a question nobody asked.
-  if (selected.length != selectedPoints.length + carriers.length) {
+  if (selected.length !=
+      selectedPoints.length + carriers.length + circles.length) {
     return const [];
   }
+
+  // How a carrier is named in a reading: its defining pair when it has
+  // one, else the first pair the selection knows on it — with the
+  // separator rule `readFact` uses.
+  String nameOf(_Group group) {
+    final pair = group.pairs.first;
+    final names = [pair.a, pair.b].map(describePoint).toList();
+    final separator = names.every((name) => name.length == 1) ? '' : ',';
+    return names.join(separator);
+  }
+
+  // A line and a circle: is the line tangent? Sugar (Phase 159): the
+  // tangent at `T` is perpendicular to the radius `O→T`, so the question
+  // is `perp(O, T, T, P)` for every other named `P` on the line — which
+  // needs a named centre and a named touch point, exactly as Phase 155's
+  // hypothesis does. A point the construction puts on both the line and
+  // the circle is the touch point; without one, or without a centre,
+  // there is no statement to ask and the chip is not offered (naming the
+  // point is Phase 153's job, not a special case here). A secant with
+  // two named crossings phrases the same question about each, and the
+  // filter refutes it.
+  if (circles.length == 1 && carriers.length == 1 && selectedPoints.isEmpty) {
+    final circle = circles.single;
+    final line = carriers.single;
+    if (!isCircleByConstruction(circle)) return const [];
+    final centre = circleCentre(circle, all);
+    if (centre == null) return const [];
+    final group = groupFor(line);
+    if (group == null) return const [];
+    final onLine = onCarrier(line);
+    final touches = [
+      for (final point in onLine)
+        if (structurallyIncident(circle, point)) point,
+    ];
+    final spellings = [
+      for (final touch in touches)
+        for (final other in onLine)
+          if (!identical(other, touch) && !identical(other, centre))
+            Predicate(PredicateKind.perp, [centre, touch, touch, other]),
+    ];
+    if (spellings.isEmpty) return const [];
+    final at = touches.length == 1
+        ? ' at ${describePoint(touches.single)}'
+        : '';
+    return [
+      ProverQuestion(
+        PredicateKind.perp,
+        spellings,
+        reading: '${nameOf(group)} is tangent to the circle$at',
+      ),
+    ];
+  }
+  if (circles.isNotEmpty) return const [];
 
   final out = <ProverQuestion>[];
   void relate(_Group first, _Group second) {
@@ -188,6 +257,49 @@ List<ProverQuestion> askableQuestions(
     relate(first, groupOfSelectedPoints()!);
     return out;
   }
+  // Three line-shaped things: are they concurrent? Sugar (Phase 159,
+  // PLAN §"JGEX's question list, compared"): in a point-tuple vocabulary
+  // concurrency is `coll(P, X, Y)` where `P` is the meeting point of two
+  // of the lines and `X`, `Y` name the third — every pair of carriers
+  // with a named meeting point, every witness pair on the third. With no
+  // named meeting point there is nothing to say, and the honest answer
+  // is a chip that is not offered rather than a point invented here. A
+  // `concurrent` predicate proper — refutation with no named point at
+  // all — is a vocabulary addition and its own phase.
+  if (carriers.length == 3 && selectedPoints.isEmpty) {
+    final groups = <_Group>[];
+    for (final carrier in carriers) {
+      final group = groupFor(carrier);
+      if (group == null) return const [];
+      groups.add(group);
+    }
+    final spellings = <Predicate>[];
+    for (var i = 0; i < 3; i++) {
+      for (var j = i + 1; j < 3; j++) {
+        final k = 3 - i - j;
+        final meeting = [
+          for (final point in onCarrier(carriers[i]))
+            if (structurallyIncident(carriers[j], point)) point,
+        ];
+        for (final p in meeting) {
+          for (final pair in groups[k].pairs) {
+            if (identical(p, pair.a) || identical(p, pair.b)) continue;
+            spellings.add(Predicate(PredicateKind.coll, [p, pair.a, pair.b]));
+          }
+        }
+      }
+    }
+    if (spellings.isEmpty) return const [];
+    final names = groups.map(nameOf).toList();
+    return [
+      ProverQuestion(
+        PredicateKind.coll,
+        spellings,
+        reading: '${names[0]}, ${names[1]} and ${names[2]} are concurrent',
+      ),
+    ];
+  }
+
   // Four line-shaped things: an equality of angles. Three statements,
   // not six and not two, and *which* three is the finding: `eqangle`'s
   // transpose symmetry (M-P2a) makes `∠(c0,c1) = ∠(c2,c3)` the same fact

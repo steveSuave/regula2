@@ -16,9 +16,12 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/angle_translation.dart';
 import 'package:regula/domain/prover/carriers.dart';
@@ -714,6 +717,112 @@ void main() {
           ProverVerdict.refuted,
         );
       }
+    });
+
+    testWidgets('sugar reads as what was asked: concurrency and tangency', (
+      tester,
+    ) async {
+      final construction = container.read(constructionProvider).construction;
+      // Three lines through P, with Z naming PC beside C.
+      final p = free('p', 'P', 0, 0);
+      final a = free('a', 'A', 4, 0);
+      final b = free('b', 'B', 0, 4);
+      final c = free('c', 'C', 3, 3);
+      final la = LineThroughTwoPoints(id: 'la', point1: p, point2: a);
+      final lb = LineThroughTwoPoints(id: 'lb', point1: p, point2: b);
+      final lc = LineThroughTwoPoints(id: 'lc', point1: p, point2: c);
+      final z = PointOnObject(
+        id: 'z',
+        curve: lc,
+        parameter: 2,
+        attributes: const ObjectAttributes(name: 'Z'),
+      );
+      // A circle about O, its tangent from Q with the touch point K
+      // drawn, and a secant through the rim point R and S.
+      final o = free('o', 'O', 20, 0);
+      final r = free('r', 'R', 23, 0);
+      final circle = CircleCenterPoint(id: 'k', center: o, onCircle: r);
+      final q = free('q', 'Q', 29, 0);
+      final tangent = TangentLine(id: 't', point: q, circle: circle, branch: 0);
+      final touch = IntersectionPoint(
+        id: 'x',
+        curve1: tangent,
+        curve2: circle,
+        branchIndex: 0,
+        attributes: const ObjectAttributes(name: 'K'),
+      );
+      final s = free('s', 'S', 20, 9);
+      final secant = LineThroughTwoPoints(id: 'l', point1: r, point2: s);
+      for (final object in [
+        p,
+        a,
+        b,
+        c,
+        la,
+        lb,
+        lc,
+        z,
+        o,
+        r,
+        circle,
+        q,
+        tangent,
+        touch,
+        s,
+        secant,
+      ]) {
+        construction.add(object);
+      }
+      await pumpEditor(tester);
+      await openPanel(tester);
+
+      Future<ProverAnswered> askChip(Set<String> ids) async {
+        container.read(selectionProvider.notifier).selectMany(ids);
+        await tester.pump();
+        final question = askableQuestions(
+          construction.objects,
+          selectedIds: ids,
+        ).single;
+        expect(question.reading, isNotNull);
+        await tester.tap(find.text(question.reading!));
+        await tester.pumpAndSettle();
+        return container.read(proverProvider) as ProverAnswered;
+      }
+
+      // Concurrent by construction: coll(P, C, Z) is a hypothesis.
+      final concurrent = await askChip({'la', 'lb', 'lc'});
+      expect(
+        concurrent.answer.question.reading,
+        'PA, PB and PC are concurrent',
+      );
+      expect(concurrent.answer.verdict, ProverVerdict.proved);
+      expect(
+        find.textContaining('“PA, PB and PC are concurrent” — proved'),
+        findsOneWidget,
+        reason: 'the verdict quotes what was asked, not the coll it became',
+      );
+
+      await tester.tap(find.byTooltip('Back to the list'));
+      await tester.pump();
+      final tangentAnswer = await askChip({'t', 'k'});
+      expect(
+        tangentAnswer.answer.question.reading,
+        'QK is tangent to the circle at K',
+      );
+      expect(tangentAnswer.answer.verdict, ProverVerdict.proved);
+
+      await tester.tap(find.byTooltip('Back to the list'));
+      await tester.pump();
+      final secantAnswer = await askChip({'l', 'k'});
+      expect(
+        secantAnswer.answer.question.reading,
+        'RS is tangent to the circle at R',
+      );
+      expect(secantAnswer.answer.verdict, ProverVerdict.refuted);
+      expect(
+        find.textContaining('“RS is tangent to the circle at R” is not true'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a selection offers what it can phrase, and asking works', (

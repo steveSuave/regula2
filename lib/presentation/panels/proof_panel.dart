@@ -239,8 +239,12 @@ Widget quietTooltip({required String message, required Widget child}) =>
 /// for one fact. Routing both through `readFact` also removed this
 /// function's fallback arm — the four kinds with no chip form now read
 /// as well as the six that had one.
+///
+/// A question with a [ProverQuestion.reading] is sugar, and reads as
+/// what was asked rather than as the fact it desugars to; the fact
+/// stays in the tooltip.
 String questionLabel(ProverQuestion question) =>
-    readFact(Fact.of(question.canonical));
+    question.reading ?? readFact(Fact.of(question.canonical));
 
 /// What a verdict says, in words the reader can act on.
 ///
@@ -254,7 +258,7 @@ String questionLabel(ProverQuestion question) =>
 /// boundary marked — "AB is perpendicular to CD is not true" garden-
 /// paths where "“AB is perpendicular to CD” is not true" does not.
 String verdictMessage(ProverAnswer answer) {
-  final statement = '“${readFact(Fact.of(answer.question.canonical))}”';
+  final statement = '“${questionLabel(answer.question)}”';
   return switch (answer.verdict) {
     ProverVerdict.refuted =>
       '$statement is not true of this construction — it breaks when the '

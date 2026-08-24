@@ -466,6 +466,50 @@ void main() {
   /// for the figure to name one — and a point on both the tangent and
   /// its circle *is* the touch point, since a tangent meets its circle
   /// exactly once.
+  group('the circle helpers (Phase 159 made them public)', () {
+    test('circleCentre: structural, else a drawn CircleCenter, else null', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(3, 0));
+      final byCentre = CircleCenterPoint(id: 'c', center: o, onCircle: rim);
+      expect(circleCentre(byCentre, [o, rim, byCentre]), same(o));
+
+      final a = FreePoint(id: 'a', position: const Vec2(3, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(0, 3));
+      final c = FreePoint(id: 'c2', position: const Vec2(-3, 0));
+      final byPoints = ThreePointCircle(
+        id: 'k',
+        point1: a,
+        point2: b,
+        point3: c,
+      );
+      expect(circleCentre(byPoints, [a, b, c, byPoints]), isNull);
+      final drawn = CircleCenter(id: 'd', circle: byPoints);
+      expect(circleCentre(byPoints, [a, b, c, byPoints, drawn]), same(drawn));
+    });
+
+    test('isCircleByConstruction: the three conic kinds are not', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(3, 0));
+      expect(
+        isCircleByConstruction(
+          CircleCenterPoint(id: 'c', center: o, onCircle: rim),
+        ),
+        isTrue,
+      );
+      final points = [
+        FreePoint(id: 'a', position: const Vec2(0, 0)),
+        FreePoint(id: 'b', position: const Vec2(4, 0)),
+        FreePoint(id: 'c', position: const Vec2(1, 3)),
+        FreePoint(id: 'd', position: const Vec2(5, 4)),
+        FreePoint(id: 'e', position: const Vec2(-1, 2)),
+      ];
+      expect(
+        isCircleByConstruction(FivePointConic(id: 'k', points: points)),
+        isFalse,
+      );
+    });
+  });
+
   group('TangentLine', () {
     test('the drawn touch point makes the radius perpendicular', () {
       final o = FreePoint(id: 'o', position: const Vec2(0, 0));
