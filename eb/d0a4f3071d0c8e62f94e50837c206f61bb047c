@@ -1,0 +1,45 @@
+test/fixtures/tangent-chord.rgl
+  s_4fa864a940d147::t_a05ed4656bd3fb 1-320
+test/domain/prover/fact_naming_test.dart
+  s_4fa864a940d147::t_4708b403d6259c 145-178
+lib/domain/prover/questions.dart
+  s_4fa864a940d147::t_206a0f31cef1ec 1-2,313-323,331-336,338-349,445-517
+lib/domain/prover/proof.dart
+  s_4fa864a940d147::t_4708b403d6259c 15-16
+test/domain/prover/questions_test.dart
+  s_4fa864a940d147::t_4708b403d6259c 1-3,5,21,240-279
+  s_4fa864a940d147::t_342f01a2b165a3 280-281
+test/presentation/panels/proof_panel_test.dart
+  s_4fa864a940d147::t_77aa5e657c12d9 882-886
+  s_4fa864a940d147::t_10566576118b1d 701,715,790,879,890,916,954-955,957-958,1006-1008
+  s_4fa864a940d147::t_48d39ed4c99be1 907-913
+  s_4fa864a940d147::t_21c80a27d97cbd 620,629,646
+  s_4fa864a940d147::t_bfbc0d35fea3a7 1113-1118,1121-1122
+  s_4fa864a940d147::t_4708b403d6259c 6,832-878,880-881,887-888
+  s_4fa864a940d147::t_bc1009efa53d04 889,891-892
+docs/TODO.md
+  s_4fa864a940d147::t_206a0f31cef1ec 246-255
+lib/presentation/panels/proof_panel.dart
+  s_4fa864a940d147::t_21c80a27d97cbd 291-329,547-548
+  s_4fa864a940d147::t_206a0f31cef1ec 246-248,250,716-721,838-846,851-854
+  s_4fa864a940d147::t_10566576118b1d 333-336,470-492,495-503,505
+  s_4fa864a940d147::t_58564bb30ccc87 493-494
+lib/domain/prover/fact_naming.dart
+  s_4fa864a940d147::t_206a0f31cef1ec 75-90,95,105,117-123,139,147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ebd0a4f3071d0c8e62f94e50837c206f61bb047c",
+  "prompts": {},
+  "sessions": {
+    "s_4fa864a940d147": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f164116-f94e-4749-944f-253cd00456b6",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
