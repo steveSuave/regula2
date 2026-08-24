@@ -10,6 +10,7 @@ import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/document_settings_provider.dart';
+import 'package:regula/application/providers/prover_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -348,6 +349,56 @@ void main() {
 
     expect(find.text('New construction'), findsNothing);
     expect(container.read(constructionProvider).construction.isEmpty, isTrue);
+  });
+
+  /// Runs the prover over the current document to completion. Unawaited
+  /// until pumped: the run's yields are timers the widget test's fake
+  /// async holds, so a bare await would wait on a timer nobody fires.
+  Future<void> proveHeld(WidgetTester tester) async {
+    final pending = container.read(proverProvider.notifier).prove();
+    await tester.pumpAndSettle();
+    await pending;
+    expect(container.read(proverProvider), isA<ProverReady>());
+  }
+
+  testWidgets('New drops the held prover run with the document', (
+    tester,
+  ) async {
+    // Without the clear, the panel keeps the replaced document's facts
+    // marked stale, and *Keep going* would extend a run about a
+    // construction that no longer exists (Phase 156).
+    await pumpEditor(tester);
+    buildSmallConstruction();
+    await proveHeld(tester);
+
+    await tapFileMenu(tester, 'New');
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(proverProvider), const ProverIdle());
+  });
+
+  testWidgets('Open drops the held prover run with the document', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    buildSmallConstruction();
+    await proveHeld(tester);
+    picker.openResult = _fileWithBytes(
+      utf8.encode(
+        jsonEncode(
+          encodeDocument(
+            Construction()
+              ..add(FreePoint(id: 'x', position: const Vec2(1, 1))),
+            viewport: const ViewportState(),
+          ),
+        ),
+      ),
+    );
+
+    await tapFileMenu(tester, 'Open…');
+
+    expect(container.read(proverProvider), const ProverIdle());
   });
 }
 
