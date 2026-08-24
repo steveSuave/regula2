@@ -1,0 +1,36 @@
+lib/domain/prover/prover.dart
+  s_031cec89a7be38::t_5a51eed6e0c49e 120-125,130,143
+lib/application/providers/prover_provider.dart
+  s_031cec89a7be38::t_1b384d19b738dc 438,443
+  s_031cec89a7be38::t_841307eb7e1b81 510,515
+  s_031cec89a7be38::t_3b4cbf88f8b5d0 400,407-414
+  s_031cec89a7be38::t_063e60b1c62d0e 150,154-158,161-163,166,169-170
+  s_031cec89a7be38::t_6d0547287ee431 377-380
+  s_031cec89a7be38::t_27d83aaed33a3c 540,545
+  s_031cec89a7be38::t_eb058fcf255f90 415-416
+test/presentation/panels/proof_panel_test.dart
+  s_031cec89a7be38::t_bfa2b12eee680e 763-765
+test/domain/prover/prover_test.dart
+  s_031cec89a7be38::t_138d42df4c0c35 299-333
+lib/presentation/panels/proof_panel.dart
+  s_031cec89a7be38::t_b253c2fbcf8f24 366-375
+test/application/providers/prover_provider_test.dart
+  s_031cec89a7be38::t_008ffaaab109ce 163-167,173-210
+  s_031cec89a7be38::t_20fe8ebbfb5c8e 211-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7d1ee89bdfbf3de3ec60e20e6dd0db5d3d8fb519",
+  "prompts": {},
+  "sessions": {
+    "s_031cec89a7be38": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8c6605af-cafe-4aab-8d43-d74d98be0c0e",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
