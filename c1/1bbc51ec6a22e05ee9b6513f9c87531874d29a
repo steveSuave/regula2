@@ -1,0 +1,21 @@
+docs/TODO.md
+  s_5783a4f4188c71::t_7ae5a5f3dbb2a0 188-189
+docs/STATUS.md
+  s_5783a4f4188c71::t_54849353dd7f2e 1520-1529
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c11bbc51ec6a22e05ee9b6513f9c87531874d29a",
+  "prompts": {},
+  "sessions": {
+    "s_5783a4f4188c71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "60c2b29d-b9b0-4760-8616-e5cf3d8deb66",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
