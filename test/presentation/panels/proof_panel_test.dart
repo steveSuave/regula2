@@ -829,6 +829,31 @@ void main() {
       );
     });
 
+    testWidgets('the tangent–chord selection reads as the theorem, not its '
+        'transpose (Phase 162)', (tester) async {
+      final construction = decodeDocument(
+        jsonDecode(File('test/fixtures/tangent-chord.rgl').readAsStringSync())
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+      final byName = {
+        for (final o in construction.objects) o.attributes.name: o.id,
+      };
+      await pumpEditor(tester);
+      await openPanel(tester);
+      container.read(selectionProvider.notifier).selectMany([
+        byName['b']!,
+        byName['d']!,
+        byName['e']!,
+        byName['f']!,
+      ]);
+      await tester.pump();
+
+      expect(find.text('angles BCE and BDC are equal'), findsOneWidget);
+      expect(find.text('angles ECD and CBD are equal'), findsNothing);
+      expect(find.textContaining('the angle from'), findsNothing);
+    });
+
     testWidgets('a long chip wraps, and an asked eqangle reads as spelled', (
       tester,
     ) async {
