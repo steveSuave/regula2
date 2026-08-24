@@ -15,6 +15,7 @@ import 'application/providers/construction_provider.dart';
 import 'application/providers/document_settings_provider.dart';
 import 'application/providers/preferences_provider.dart';
 import 'application/providers/prover_provider.dart';
+import 'application/providers/question_draft_provider.dart';
 import 'application/providers/selection_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
@@ -91,6 +92,7 @@ import 'presentation/panels/geometry_menu.dart';
 import 'presentation/panels/intersection_report.dart';
 import 'presentation/panels/object_tree_panel.dart';
 import 'presentation/panels/proof_panel.dart';
+import 'presentation/panels/question_builder_bar.dart';
 import 'presentation/panels/toolbar.dart';
 import 'presentation/shortcuts/app_shortcuts.dart';
 import 'presentation/shortcuts/cheat_sheet.dart';
@@ -1523,6 +1525,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         (state) => state.tool is NamePointsTool || state.tool is TextTool,
       ),
     );
+    // Presence only: the bar watches the draft itself.
+    final buildingQuestion = ref.watch(
+      questionDraftProvider.select((draft) => draft != null),
+    );
     final hideDeleteActive = ref.watch(
       toolProvider.select(
         (state) => state.tool is DeleteTool || state.tool is VisibilityTool,
@@ -1608,6 +1614,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                           // Before the region-pick overlay, so an export
                           // pick owns the whole surface.
                           _compassChip(),
+                          // The question builder (Phase 160), along the
+                          // canvas's bottom on every layout: it is
+                          // filled by tapping the figure, which a
+                          // phone's proof sheet would cover.
+                          if (buildingQuestion)
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: QuestionBuilderBar(
+                                onAsked: () => compactPanels
+                                    ? _openProofSheet()
+                                    : setState(() => _showProofPanel = true),
+                              ),
+                            ),
                           // Sits on top of (and exactly over) the canvas,
                           // so its local coordinates are canvas
                           // coordinates; opaque, so the canvas can't

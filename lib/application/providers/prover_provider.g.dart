@@ -12,7 +12,7 @@ part of 'prover_provider.dart';
 /// derived (PLAN §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
-/// it drives — `hypotheses`, `DiagramFilter`, `ProverEngine`, `Proof` —
+/// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
 /// is pure Dart under `lib/domain/prover/`, unit-tested there; what the
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.
@@ -52,7 +52,7 @@ final proverProvider = ProverNotifierProvider._();
 /// derived (PLAN §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
-/// it drives — `hypotheses`, `DiagramFilter`, `ProverEngine`, `Proof` —
+/// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
 /// is pure Dart under `lib/domain/prover/`, unit-tested there; what the
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.
@@ -90,7 +90,7 @@ final class ProverNotifierProvider
   /// derived (PLAN §M-P4).
   ///
   /// **This is the domain/Flutter boundary and nothing more.** Everything
-  /// it drives — `hypotheses`, `DiagramFilter`, `ProverEngine`, `Proof` —
+  /// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
   /// is pure Dart under `lib/domain/prover/`, unit-tested there; what the
   /// application layer adds is a lifetime, a revision to compare against,
   /// and a budget.
@@ -149,13 +149,13 @@ final class ProverNotifierProvider
   }
 }
 
-String _$proverNotifierHash() => r'56dd9d39d59fd1c4b5d834d5e2f57be50b60717e';
+String _$proverNotifierHash() => r'e0e2bcd0713c4783c633d978bb6764b52bb2460d';
 
 /// Runs the DD prover over the live construction, and holds what it
 /// derived (PLAN §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
-/// it drives — `hypotheses`, `DiagramFilter`, `ProverEngine`, `Proof` —
+/// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
 /// is pure Dart under `lib/domain/prover/`, unit-tested there; what the
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.

@@ -378,6 +378,32 @@ void main() {
       expect(reopened.tap(r.o['b']!).isComplete, isTrue);
     });
 
+    test('seeded from a selection in the order given, skipping what does '
+        'not fit', () {
+      final r = rig();
+      // Two segments and a stray point: the segments land in the first
+      // group of an eqangle, the point fills nothing it does not fit.
+      final seeded = QuestionDraft.seeded(QuestionTemplate.cong, [
+        r.o['x']!,
+        r.o['ab']!,
+        r.o['cd']!,
+      ]);
+      // A point *does* fit a segment slot (as half a pair), so the seed
+      // is exactly what tapping those three in that order gives: x·?
+      // replaced by the carrier ab, then cd.
+      expect(seeded.values[0], isA<CarrierValue>());
+      expect(seeded.values[1], isA<CarrierValue>());
+      expect(seeded.isComplete, isTrue);
+
+      final circleFirst = QuestionDraft.seeded(QuestionTemplate.coll, [
+        r.o['ab']!,
+        r.o['a']!,
+        r.o['b']!,
+      ]);
+      expect(circleFirst.current, 2, reason: 'the segment fits no point slot');
+      expect(circleFirst.values.take(2).whereType<PointValue>(), hasLength(2));
+    });
+
     test('a draft is immutable', () {
       final r = rig();
       final draft = QuestionDraft(QuestionTemplate.coll);

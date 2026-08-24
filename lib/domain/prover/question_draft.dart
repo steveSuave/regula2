@@ -94,6 +94,26 @@ class QuestionDraft {
   QuestionDraft._(this.template, List<SlotValue?> values)
     : values = List.unmodifiable(values);
 
+  /// A draft of [template] seeded from what was selected when it opened
+  /// — [selected] tapped in, in the order given, each object skipped
+  /// where it does not fit the slot its turn falls on.
+  ///
+  /// Convenience only: two segments selected when an `eqangle` template
+  /// opens land in the first group, and the user fills the rest. The
+  /// order is the caller's (a construction's order, for a selection
+  /// that keeps none), so nothing is reordered silently — and a seeded
+  /// slot is a filled slot like any other, as editable as an empty one.
+  factory QuestionDraft.seeded(
+    QuestionTemplate template,
+    Iterable<GeoObject> selected,
+  ) {
+    var draft = QuestionDraft(template);
+    for (final object in selected) {
+      draft = draft.tap(object);
+    }
+    return draft;
+  }
+
   final QuestionTemplate template;
 
   /// One entry per slot of [template], null while empty.
