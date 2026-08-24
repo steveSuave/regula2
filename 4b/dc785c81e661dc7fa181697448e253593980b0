@@ -1,0 +1,45 @@
+lib/presentation/panels/question_builder_bar.dart
+  s_7c56e3aea1efa3::t_702b9ec95e6065 1-283
+lib/main.dart
+  s_7c56e3aea1efa3::t_702b9ec95e6065 18,95,1528-1531,1617-1631
+test/domain/prover/question_template_test.dart
+  s_7c56e3aea1efa3::t_e791d3a6d1ed94 381-406
+lib/application/providers/question_draft_provider.g.dart
+  s_7c56e3aea1efa3::t_e26d4c3ec64496 1-194
+test/presentation/panels/question_builder_bar_test.dart
+  s_7c56e3aea1efa3::t_aa14a489bfeb7a 1-7,9-84,86-100,107-137,139-148,150-168,170-217,219-312,314-327
+  s_7c56e3aea1efa3::t_cf2ae902c59737 101-106,149,218,313
+  s_7c56e3aea1efa3::t_05b06fb1f2e645 8,85,138,169
+lib/presentation/canvas/geometry_canvas.dart
+  s_7c56e3aea1efa3::t_702b9ec95e6065 13,815-821
+  s_7c56e3aea1efa3::t_0f74b34746ae5e 822
+lib/presentation/panels/proof_panel.dart
+  s_7c56e3aea1efa3::t_702b9ec95e6065 25,32,349-350,585-595,640-647
+  s_7c56e3aea1efa3::t_e0b13f9baef80c 648-649
+lib/application/providers/question_draft_provider.dart
+  s_7c56e3aea1efa3::t_e791d3a6d1ed94 26-28
+  s_7c56e3aea1efa3::t_e26d4c3ec64496 1-25,29-127
+lib/application/providers/prover_provider.g.dart
+  s_7c56e3aea1efa3::t_e26d4c3ec64496 15,55,93,152,158
+lib/domain/prover/question_draft.dart
+  s_7c56e3aea1efa3::t_e26d4c3ec64496 97-116
+test/application/providers/question_draft_provider_test.dart
+  s_7c56e3aea1efa3::t_87d4c0dca87c26 89
+  s_7c56e3aea1efa3::t_e791d3a6d1ed94 1-88,90-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "4bdc785c81e661dc7fa181697448e253593980b0",
+  "prompts": {},
+  "sessions": {
+    "s_7c56e3aea1efa3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27f52ef8-37a4-4735-810f-a27a0b003d5b",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
