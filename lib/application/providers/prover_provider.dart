@@ -147,19 +147,27 @@ class ProverIdle extends ProverState {
 
 /// A run is in flight over the construction as of [revision].
 class ProverRunning extends ProverState {
-  const ProverRunning(this.revision);
+  const ProverRunning(this.revision, {this.applications = 0});
 
   final int revision;
 
+  /// Rule applications spent so far, republished once per pass — what
+  /// turns "the app is frozen" into "it is working, and here is how
+  /// hard". Zero until the first pass reports.
+  final int applications;
+
   @override
   bool operator ==(Object other) =>
-      other is ProverRunning && other.revision == revision;
+      other is ProverRunning &&
+      other.revision == revision &&
+      other.applications == applications;
 
   @override
-  int get hashCode => Object.hash(ProverRunning, revision);
+  int get hashCode => Object.hash(ProverRunning, revision, applications);
 
   @override
-  String toString() => 'ProverRunning(revision: $revision)';
+  String toString() =>
+      'ProverRunning(revision: $revision, applications: $applications)';
 }
 
 /// A finished run, and the facts it reached.
@@ -366,7 +374,10 @@ class ProverNotifier extends _$ProverNotifier {
     }
     final reusable =
         _engine != null && _heldRevision(state) == snapshot.revision;
-    state = ProverRunning(snapshot.revision);
+    state = ProverRunning(
+      snapshot.revision,
+      applications: reusable ? _engine!.applications : 0,
+    );
     // Synchronous, and deliberately before the first yield: `probe`
     // perturbs the live construction's roots and restores them
     // bit-exactly, so nothing may interleave with it.
@@ -386,10 +397,21 @@ class ProverNotifier extends _$ProverNotifier {
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
       stopWhen: () => _cancelled,
+      onPass: () => _reportProgress(generation, engine, snapshot.revision),
     );
     if (generation != _generation) return;
     _engine = engine;
     state = _readyFrom(engine, snapshot.revision);
+  }
+
+  /// Republishes the running state with the applications spent so far —
+  /// `onPass`'s body, once per pass, so the panel can say how hard the
+  /// run is working instead of freezing on `Deriving…`. Guarded the way
+  /// the completion publish is: a superseded run's progress is dropped
+  /// with its result.
+  void _reportProgress(int generation, Prover engine, int revision) {
+    if (generation != _generation) return;
+    state = ProverRunning(revision, applications: engine.applications);
   }
 
   /// The construction revision [_engine] was built at, read off the
@@ -413,11 +435,12 @@ class ProverNotifier extends _$ProverNotifier {
     if (held is! ProverReady || engine == null || engine.isComplete) return;
     final generation = ++_generation;
     _cancelled = false;
-    state = ProverRunning(held.revision);
+    state = ProverRunning(held.revision, applications: held.applications);
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
       stopWhen: () => _cancelled,
+      onPass: () => _reportProgress(generation, engine, held.revision),
     );
     if (generation != _generation) return;
     state = _readyFrom(engine, held.revision);
@@ -484,11 +507,12 @@ class ProverNotifier extends _$ProverNotifier {
       return;
     }
 
-    state = ProverRunning(snapshot.revision);
+    state = ProverRunning(snapshot.revision, applications: engine.applications);
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
       stopWhen: () => _cancelled || _derived(engine, question) != null,
+      onPass: () => _reportProgress(generation, engine, snapshot.revision),
     );
     if (generation != _generation) return;
     _engine = engine;
@@ -513,11 +537,12 @@ class ProverNotifier extends _$ProverNotifier {
     final question = held.answer.question;
     final generation = ++_generation;
     _cancelled = false;
-    state = ProverRunning(held.revision);
+    state = ProverRunning(held.revision, applications: engine.applications);
     await engine.runChunked(
       chunkBudget: proverChunkBudget,
       maxApplications: applicationBudget ?? proverApplicationBudget,
       stopWhen: () => _cancelled || _derived(engine, question) != null,
+      onPass: () => _reportProgress(generation, engine, held.revision),
     );
     if (generation != _generation) return;
     state = ProverAnswered(

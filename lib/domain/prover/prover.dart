@@ -117,10 +117,17 @@ class Prover {
   /// [run] with a yield between passes, so a long exchange never holds a
   /// frame hostage — `ProverEngine.runChunked`'s bargain at the pass
   /// granularity.
+  ///
+  /// [onPass] is called once per pass, right after it ran — the hook a
+  /// caller that published "running" once and then hears nothing until
+  /// the future completes uses to say how far the run has got. It fires
+  /// for every pass, the final one included, and never fires when the
+  /// entry checks return without a pass.
   Future<int> runChunked({
     required int chunkBudget,
     int? maxApplications,
     bool Function()? stopWhen,
+    void Function()? onPass,
   }) async {
     if (chunkBudget <= 0) {
       throw ArgumentError.value(chunkBudget, 'chunkBudget', 'must be positive');
@@ -133,6 +140,7 @@ class Prover {
       final budget = left < chunkBudget ? left : chunkBudget;
       final pass = _pass(budget);
       passes.add(pass);
+      onPass?.call();
       if (pass.isQuiet) break;
       if (stopWhen != null && stopWhen()) break;
       // Every exit is taken *before* the yield, deliberately. A yield

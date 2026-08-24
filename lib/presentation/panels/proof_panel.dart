@@ -363,8 +363,16 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           'Nothing proved yet. The prover reads the construction and '
           'derives what follows from it — press play to run it.',
         );
-      case ProverRunning():
-        return _note(theme, 'Deriving…');
+      case ProverRunning(:final applications):
+        // Republished once per pass, so a long run reads as working
+        // rather than frozen — the count is the same unit the stopped
+        // row below reports in.
+        return _note(
+          theme,
+          applications == 0
+              ? 'Deriving…'
+              : 'Deriving… $applications steps so far.',
+        );
       case ProverRefused(:final reason):
         return _note(theme, reason);
       case ProverAnswered():

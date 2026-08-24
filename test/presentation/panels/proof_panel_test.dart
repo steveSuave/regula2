@@ -760,6 +760,9 @@ void main() {
       expect(container.read(proverProvider), isA<ProverRunning>());
       expect(inPanel(find.byTooltip('Stop')), findsOneWidget);
       expect(find.byTooltip('Prove'), findsNothing);
+      // The first pass ran before the first yield, so the body already
+      // reports how far the run has got rather than a bare 'Deriving…'.
+      expect(find.textContaining('steps so far'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Stop'));
       await tester.pumpAndSettle();

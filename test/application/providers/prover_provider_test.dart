@@ -160,10 +160,54 @@ void main() {
       container.listen(proverProvider, (_, next) => seen.add(next));
 
       final pending = container.read(proverProvider.notifier).prove();
-      expect(seen.whereType<ProverRunning>(), hasLength(1));
+      // At least one: the initial publish is synchronous, and each pass
+      // republishes with its progress (Phase 156), so a document that
+      // runs past its first pass before the first yield adds more.
+      expect(seen.whereType<ProverRunning>(), isNotEmpty);
+      expect(seen.first, isA<ProverRunning>());
       await pending;
 
       expect(seen.last, isA<ProverReady>());
+    });
+
+    test('progress is republished per pass, and the count climbs', () async {
+      // Varignon completes inside one chunk, so the progress reports
+      // need the document whose run takes many — the Phase 148 rig.
+      container
+          .read(constructionProvider.notifier)
+          .replace(
+            decodeDocument(
+              jsonDecode(
+                    File(
+                      'test/fixtures/perp-true-unproved.rgl',
+                    ).readAsStringSync(),
+                  )
+                  as Map<String, dynamic>,
+            ).construction,
+          );
+      final seen = <ProverState>[];
+      container.listen(proverProvider, (_, next) => seen.add(next));
+
+      await container.read(proverProvider.notifier).prove();
+
+      final progress = seen
+          .whereType<ProverRunning>()
+          .map((state) => state.applications)
+          .toList();
+      expect(progress.first, 0, reason: 'the initial publish knows nothing');
+      expect(
+        progress.length,
+        greaterThan(2),
+        reason: 'a many-pass run must report along the way, not just start',
+      );
+      expect(
+        progress.last,
+        (seen.last as ProverReady).applications,
+        reason: 'the final report is the finished run\'s own count',
+      );
+      for (var i = 1; i < progress.length; i++) {
+        expect(progress[i], greaterThanOrEqualTo(progress[i - 1]));
+      }
     });
 
     test('an empty document proves nothing and says so plainly', () async {
