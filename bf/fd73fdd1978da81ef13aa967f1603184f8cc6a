@@ -1,0 +1,21 @@
+test/application/providers/prover_provider_test.dart
+  s_eabb8a0ad4653b::t_9232ba72c18f9b 92-95
+test/presentation/panels/proof_panel_test.dart
+  s_eabb8a0ad4653b::t_9232ba72c18f9b 1123-1135,1138,1142,1144,1148,1150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "bffd73fdd1978da81ef13aa967f1603184f8cc6a",
+  "prompts": {},
+  "sessions": {
+    "s_eabb8a0ad4653b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "60250a0b-c48c-4a41-af12-3f7f6d6551cd",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
