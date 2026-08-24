@@ -23,6 +23,7 @@ import '../../application/providers/construction_provider.dart';
 import '../../application/providers/proof_highlight_provider.dart';
 import '../../application/providers/prover_provider.dart';
 import '../../application/providers/selection_provider.dart';
+import '../../domain/prover/carriers.dart';
 import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
 import '../../domain/prover/predicate.dart';
@@ -55,6 +56,100 @@ List<Fact> provableGoals(
           fact.points.any((point) => selectedIds.contains(point.id)))
         fact,
 ];
+
+/// A heading in the grouped derived list: one per kind that has
+/// something, and one for the facts that relate a line to itself.
+///
+/// A sealed pair rather than a string key so that [KindGroup] carries the
+/// kind (the fact's own) while the label stays a display decision, and
+/// so a `switch` over groups is checked.
+sealed class GoalGroup {
+  const GoalGroup();
+
+  /// The heading a reader sees.
+  String get label;
+}
+
+/// The facts of one kind.
+final class KindGroup extends GoalGroup {
+  const KindGroup(this.kind);
+
+  final PredicateKind kind;
+
+  @override
+  String get label => predicateKindLabel(kind);
+
+  @override
+  bool operator ==(Object other) => other is KindGroup && other.kind == kind;
+
+  @override
+  int get hashCode => kind.hashCode;
+
+  @override
+  String toString() => 'KindGroup(${kind.name})';
+}
+
+/// The facts that are true and content-free — a line parallel to
+/// itself, two zero angles equal (`CarrierIndex.isTrivial`). Last in the
+/// list, born folded, so the pollution is one line reading `Trivial 20`
+/// while the facts stay reachable: proofs cite them, the count explains
+/// the run's total, and a question answered *proved* for "AB ∥ AC" on
+/// collinear points has a place to be found. Grouped rather than hidden
+/// by decision (Phase 158b).
+final class TrivialGroup extends GoalGroup {
+  const TrivialGroup();
+
+  @override
+  String get label => 'Trivial';
+
+  @override
+  bool operator ==(Object other) => other is TrivialGroup;
+
+  @override
+  int get hashCode => (TrivialGroup).hashCode;
+
+  @override
+  String toString() => 'TrivialGroup';
+}
+
+/// What the [TrivialGroup] is, said once when it is opened — because
+/// "ED is parallel to AB" reads as a real fact unless the reader knows
+/// the four points are collinear.
+const String trivialGroupNote =
+    'Relations between a line and itself — true, and content-free. '
+    'The prover derives them because a degenerate figure can satisfy a '
+    'rule; they are kept because proofs cite them.';
+
+/// [goals], bucketed for the grouped list — the object tree's shape
+/// (`object_tree_panel.dart`), mirrored: every kind seeded in
+/// `PredicateKind.values`' declaration order, facts appended in the
+/// order they arrive, empty buckets dropped before anything renders.
+/// Then, last, the [TrivialGroup]: the facts [carriers] calls trivial,
+/// *removed* from their kind's bucket. Without carriers nothing can be
+/// called trivial, and every fact sits under its kind.
+///
+/// Takes the goals *after* [provableGoals]' selection filter, exactly as
+/// the tree filters before it buckets, so a header's count is the
+/// filtered count. Dropping empties after filtering is where the rule
+/// earns its keep: with a selection live most kinds are empty, and the
+/// surviving headers are then a direct answer to "what does the prover
+/// know about this?". A header reading "Similar triangles 0" would be a
+/// claim about the run that the header's absence already makes better.
+Map<GoalGroup, List<Fact>> groupedGoals(
+  Iterable<Fact> goals, {
+  CarrierIndex? carriers,
+}) {
+  final groups = <GoalGroup, List<Fact>>{
+    for (final kind in PredicateKind.values) KindGroup(kind): <Fact>[],
+    const TrivialGroup(): <Fact>[],
+  };
+  for (final goal in goals) {
+    final trivial = carriers?.isTrivial(goal) ?? false;
+    groups[trivial ? const TrivialGroup() : KindGroup(goal.kind)]!.add(goal);
+  }
+  groups.removeWhere((_, facts) => facts.isEmpty);
+  return groups;
+}
 
 /// The reason column for one step: `given`, or the rule and the steps it
 /// cites.
@@ -122,6 +217,13 @@ bool conventionApplies(Iterable<Fact> facts) => facts.any(
 /// (hover first, then scroll). VM tests cannot reproduce the crash —
 /// the two guards are pinned behaviourally instead.
 Widget rawSpellingTooltip({required String message, required Widget child}) =>
+    quietTooltip(message: message, child: child);
+
+/// A tooltip that waits out a passing pointer — the only kind this
+/// panel's lists may hold, for the reason [rawSpellingTooltip] gives.
+/// `IconButton.tooltip` offers no wait, so a button in a row wraps in
+/// this instead.
+Widget quietTooltip({required String message, required Widget child}) =>
     Tooltip(
       message: message,
       waitDuration: const Duration(milliseconds: 500),
@@ -216,6 +318,17 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   /// ids are the canvas's.
   int? _readingStep;
 
+  /// The kinds whose group the user has unfolded — empty at first, so
+  /// every group starts folded and a finished run opens as a per-kind
+  /// overview of *what sort* of thing it found; expanding is opting into
+  /// the list. View state, like the tree's: gone when the panel closes.
+  final Set<GoalGroup> _expanded = {};
+
+  /// The goal whose points are emphasized on the figure, or null. The
+  /// goal-list twin of [_readingStep]: a tap on a row points at what
+  /// the fact is about, and only the trailing arrow opens its proof.
+  Fact? _litGoal;
+
   /// Captured at init because `dispose` may not touch `ref` — the same
   /// constraint `ConstructionNotifier` records for its own life-cycle.
   /// Read eagerly in [initState]: a `late final` initializer would run
@@ -253,10 +366,25 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
     _highlight.show(step.fact.points.map((point) => point.id));
   }
 
+  /// Emphasizes [goal]'s points on the figure, or clears the emphasis
+  /// when the goal already lit is tapped again — the same toggle as
+  /// [_readStep], because a row in the list and a step in a proof are
+  /// both statements about places on the figure.
+  void _readGoal(Fact goal) {
+    if (_litGoal == goal) {
+      setState(() => _litGoal = null);
+      _highlight.clear();
+      return;
+    }
+    setState(() => _litGoal = goal);
+    _highlight.show(goal.points.map((point) => point.id));
+  }
+
   /// Back to the goal list, or to a different goal: either way no step
-  /// is being read any more.
+  /// is being read any more, and no goal is lit.
   void _stopReading() {
     _readingStep = null;
+    _litGoal = null;
     _highlight.clear();
   }
 
@@ -537,19 +665,54 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
       // must land where the reader left the list.
       key: const PageStorageKey<String>('proof-goals'),
       children: [
-        for (final goal in goals)
-          ListTile(
-            dense: true,
-            title: rawSpellingTooltip(
-              message: describeFact(goal),
-              child: Text(readFact(goal), style: theme.textTheme.bodyMedium),
-            ),
-            trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: () => setState(() {
-              _goal = goal;
-              _stopReading();
+        // Grouped like the object tree (Phase 158): a header per kind
+        // that has something, folded until opened, the count standing in
+        // for the hidden rows. What follows the groups is about the run
+        // and the reading, not about a kind, so it stays outside them.
+        for (final (index, MapEntry(key: group, value: facts)) in groupedGoals(
+          goals,
+          carriers: state.carriers,
+        ).entries.indexed) ...[
+          if (index > 0) const Divider(height: 17, indent: 12, endIndent: 12),
+          _FactGroupHeader(
+            label: group.label,
+            count: facts.length,
+            folded: !_expanded.contains(group),
+            onToggleFold: () => setState(() {
+              if (!_expanded.remove(group)) _expanded.add(group);
             }),
           ),
+          if (_expanded.contains(group)) ...[
+            if (group is TrivialGroup) _smallNote(theme, trivialGroupNote),
+            for (final goal in facts)
+              ListTile(
+                dense: true,
+                selected: _litGoal == goal,
+                title: rawSpellingTooltip(
+                  message: describeFact(goal),
+                  child: Text(
+                    readFact(goal),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                // The row points at the figure; only the arrow opens
+                // the proof (Phase 158b). A waited tooltip, never
+                // `IconButton.tooltip`, in a list that scrolls.
+                trailing: quietTooltip(
+                  message: 'Show proof',
+                  child: IconButton(
+                    icon: const Icon(Icons.chevron_right, size: 18),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => setState(() {
+                      _goal = goal;
+                      _stopReading();
+                    }),
+                  ),
+                ),
+                onTap: () => _readGoal(goal),
+              ),
+          ],
+        ],
         if (!state.reachedFixpoint) _continueTile(theme, state),
         if (conventionApplies(goals)) _conventionNote(theme),
       ],
@@ -656,10 +819,14 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   ];
 
   /// The reading convention, said once — see [conventionApplies].
-  Widget _conventionNote(ThemeData theme) => Padding(
+  Widget _conventionNote(ThemeData theme) =>
+      _smallNote(theme, factReadingConvention);
+
+  /// One italic line of small print inside a list.
+  Widget _smallNote(ThemeData theme, String text) => Padding(
     padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
     child: Text(
-      factReadingConvention,
+      text,
       style: theme.textTheme.bodySmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
         fontStyle: FontStyle.italic,
@@ -684,4 +851,70 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
       ),
     ),
   );
+}
+
+/// A kind's heading over the derived facts of that kind, folding as its
+/// only gesture.
+///
+/// Mirrors the object tree's `_GroupHeader` and deliberately does not
+/// share it: that header doubles as select-by-kind — tap replaces the
+/// selection with the group, long-press adds — and a *fact* group has no
+/// such action to offer. Sharing the widget would drag those semantics
+/// along. So the whole row is the fold target (there is nothing else for
+/// a tap to mean), the chevron says which way it is, and while folded a
+/// trailing count stands in for the hidden rows — the same job the count
+/// does in the tree, keeping a folded overview from hiding the answer.
+///
+/// No tooltip, on purpose: this row lives in the same lazy list whose
+/// hover tooltips Phase 157 had to hold back (see [rawSpellingTooltip]),
+/// and a header has no raw spelling to offer.
+class _FactGroupHeader extends StatelessWidget {
+  const _FactGroupHeader({
+    required this.label,
+    required this.count,
+    required this.folded,
+    required this.onToggleFold,
+  });
+
+  final String label;
+  final int count;
+  final bool folded;
+  final VoidCallback onToggleFold;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onToggleFold,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+        child: Row(
+          children: [
+            Icon(
+              folded ? Icons.chevron_right : Icons.expand_more,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge!.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (folded)
+              Text(
+                '$count',
+                style: theme.textTheme.labelMedium!.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

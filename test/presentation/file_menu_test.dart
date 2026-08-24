@@ -388,8 +388,7 @@ void main() {
       utf8.encode(
         jsonEncode(
           encodeDocument(
-            Construction()
-              ..add(FreePoint(id: 'x', position: const Vec2(1, 1))),
+            Construction()..add(FreePoint(id: 'x', position: const Vec2(1, 1))),
             viewport: const ViewportState(),
           ),
         ),

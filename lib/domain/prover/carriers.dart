@@ -230,6 +230,32 @@ class CarrierIndex {
   bool sameLine(GeoPoint a, GeoPoint b, GeoPoint c, GeoPoint d) =>
       lineThrough(a, b) == lineThrough(c, d);
 
+  /// Whether [fact] relates a line to itself — true, and content-free.
+  ///
+  /// `para`/`perp` whose two lines are one line; `eqangle` whose both
+  /// sides are a zero angle (each pair one line), or whose two sides are
+  /// one angle under two spellings. Every other kind is never trivial:
+  /// `cong` over collinear segments is a real fact, and `coll` names a
+  /// line rather than relating one.
+  ///
+  /// These exist because the DD table's implicit non-degeneracy
+  /// conditions ride on the numeric screen, and the screen cannot
+  /// refuse a degenerate instance whose conclusion is *true* — `0 = 0`,
+  /// `AB ∥ AB` (PLAN §"Nondegeneracy the numeric screen cannot carry").
+  /// They are load-bearing in the closure, so this is a reading of the
+  /// database, not a filter on it: the panel folds them away.
+  bool isTrivial(Fact fact) {
+    final p = fact.points;
+    bool same(int a, int b, int c, int d) => sameLine(p[a], p[b], p[c], p[d]);
+    return switch (fact.kind) {
+      PredicateKind.para || PredicateKind.perp => same(0, 1, 2, 3),
+      PredicateKind.eqangle =>
+        (same(0, 1, 2, 3) && same(4, 5, 6, 7)) ||
+            (same(0, 1, 4, 5) && same(2, 3, 6, 7)),
+      _ => false,
+    };
+  }
+
   /// Every line the closure has materialized — those a `coll` created,
   /// never the singletons [lineThrough] answers for an unmentioned pair.
   Iterable<Carrier> get lines => _closures[CarrierKind.line]!.carriers;
