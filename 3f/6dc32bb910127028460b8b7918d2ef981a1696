@@ -1,0 +1,19 @@
+test/presentation/panels/proof_panel_test.dart
+  s_4fa864a940d147::t_e1cc2795f81c58 832-856
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "3f6dc32bb910127028460b8b7918d2ef981a1696",
+  "prompts": {},
+  "sessions": {
+    "s_4fa864a940d147": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f164116-f94e-4749-944f-253cd00456b6",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
