@@ -1561,3 +1561,18 @@ The browser look is the one open box: extension not connected this session (seco
 - On `perp-true-unproved.rgl` *every* derived parallel is trivial, so with carriers there is no `Parallel lines` header at all. A widget test that groups without `ready.carriers` looks for headers the panel does not render — every widget-side `groupedGoals` passes them now.
 - `groupedGoals` without carriers still exists (pure tests, and "no index, nothing is trivial" is the documented meaning). Don't call it that way from a widget.
 - Walking rows with a downward `scrollUntilVisible` must follow the *panel's* order — group by group, database order within — from the top; database order alone scrolls past goals that sit in an earlier group and never finds them.
+
+## 2026-08-24 — session 170: Phase 159 opened with the cheapest box
+
+**Done — Phase 159a on `phase-159-unaskable-questions`, one code commit (`117810a`).** Suite **3186** green (3185 + 1), analyze clean, browser gate 13. Not merged.
+
+- **Orientation correction first.** Session 169's entry says Phase 158/158b were "not yet merged"; they were — `339fa32` merged `phase-158-grouped-goals` after that entry was written, and all three workflows on the push are green. Nothing to do, but the last STATUS line was stale on disk.
+- **The empty state says why.** `proof_panel.dart`'s `if (questions.isNotEmpty) _questions(...)` gained an `else if (selectedIds.isNotEmpty) _unaskable(theme)`: one `labelSmall` line, `ProofPanel.unaskableSelectionHint`, naming the four selection shapes `askableQuestions` accepts (two lines; a line and two points; three or four points). Deliberately silent on an *empty* selection — the derived list is the panel then, and a standing instruction line would be noise. The string is a public `static const` on the widget so the test pins it by identity rather than by prose; it is only true as long as `askableQuestions`'s shapes are, which the doc comment says — **Phase 159's `eqangle` box must reword it** ("four lines" joins the list).
+- **One widget test** walking the transitions: no selection → neither chips nor hint; four Varignon sides selected (session 163's report) → hint, no header, no `ActionChip`; two sides → three chips and no hint; a lone point → hint. Mutation-checked after committing: inverting the guard fails exactly that test alone, and the file's other 48 only through the known dispose cascade.
+
+**Next.** Phase 159's remaining boxes, in TODO order: `eqangle` from four carriers (the three pairings, chips naming their segments, and the hint reworded); the AR-entailment ask (a membership query — record the fifth negative and delete the path if it comes back zero); concurrency as sugar; the tangency ask. Merge is the user's call — push deploys. Phase 161 open and unscheduled; carried items unchanged from session 169 (Phase 157's browser look still unverified — extension unconnected, fourth session; the `:8731` debug server may or may not still be up).
+
+**Gotchas.**
+
+- The mutation-check cascade held true again: a single inverted guard read as 27 panel failures. Run the one test alone before believing the count.
+- `seedVarignon` returns midpoints, not corners; `midpoint.point1` of each is a corner in order, which is how the test builds the four sides without touching the helper.
