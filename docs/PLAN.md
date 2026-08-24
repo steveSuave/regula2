@@ -622,6 +622,14 @@ That reframes the whole problem, and it makes the answer smaller than either opt
 
 **What this does to the rest of the list.** It subsumes the correspondence questions (`simtri`, `contri`), the compound ones (Equilateral is two `cong`s, Bisect is a `midp` or an `eqangle`), and it makes the `concurrent` predicate and the tangency ask reachable the moment their engine side exists. The selection chips stay and stay first: for the common cases they are one gesture against a dozen, and "what can I ask about *this*" is a genuinely different question from "I want to ask *this* — about what". The builder is the complete path; the chips are the fast one.
 
+### One line under two objects is one line (pinned in Phase 164)
+
+The prover's vocabulary names a line by two points on it, and the construction names it by an *object* — and a construction can hold the same line twice. `tangent-chord.rgl` does: both branches of the tangent from a point *on* the circle are the tangent at that point, and the tool emitted both. Every reader that asked "which points are on this carrier?" through `structurallyIncident` alone then gave a different answer for the two copies, and a canvas click reaches either copy by a last-bit margin (the hit-tester breaks only exact ties). The user saw the difference as "provable locally, not on the site": the same figure, two clicks, two objects, one line.
+
+The rule: **which object names a line is the prover's business, not the click's.** `coincidentCarriers(a, b)` in `incidence.dart` says when two line objects are one carrier *by construction* — the same two points under any two-point kind, either order; the same tangent; relative lines of one kind through one point over coincident references; bisectors of one vertex over one arm pair — with the same zero-epsilon discipline as `structurallyIncident`: never a position test, so the answer survives any drag. `pointsOnCarrier(objects, carrier)` reads a line's points across its twins, and both `askableQuestions` and `hypotheses()` go through it. The tangent tool stops manufacturing the case (one line from a point on the circle), but documents already holding the pair are answered by the reader, not by a migration.
+
+What this is not: a merge of the objects, a change to the hit-tester, or a numeric coincidence test. Two objects that merely lie on one line in the current figure are two lines, and a question about them is a question the filter answers.
+
 ### M-P — Deductive-database prover
 
 Independent of the kernel track; can start any time after Phase 112 (it consumes projected positions only).

@@ -109,6 +109,88 @@ bool _derivedIncident(GeoObject curve, GeoPoint point) =>
       _ => false,
     };
 
+/// Whether [a] and [b] are one line **by construction** — the same
+/// carrier under two objects, decided from parent ties alone and never
+/// from current positions, for the reason [structurallyIncident] gives:
+/// the answer must survive any drag.
+///
+/// Where it is true:
+///
+/// - the same object;
+/// - two-point kinds ([LineThroughTwoPoints], [Segment], [Ray]) over the
+///   same two points in either order — a segment, the line through its
+///   ends and a ray along it all draw one carrier;
+/// - two [TangentLine]s from one point to one circle on the same
+///   branch, or on either branch when the point is *on* the circle,
+///   where both branches collapse to the tangent at that point (Phase
+///   164 — `tangent-chord.rgl` holds exactly that pair);
+/// - two [RelativeLine]s of one kind through one point whose references
+///   coincide;
+/// - two [AngleBisectorLine]s of one vertex over the same pair of arms.
+///
+/// Any other pair is not known to coincide, which is the safe answer: a
+/// line that merely lies on another in the current figure is not it.
+///
+/// This is what lets the prover's readers treat which *object* names a
+/// line as their business rather than the click's: a point the
+/// construction puts on `d` is on `c` when `c` and `d` are one line.
+bool coincidentCarriers(GeoLine a, GeoLine b) {
+  if (identical(a, b)) return true;
+  final ends = (_twoPointEnds(a), _twoPointEnds(b));
+  if (ends case ((final p1, final p2)?, (final q1, final q2)?)) {
+    return _samePair(p1, p2, q1, q2);
+  }
+  return switch ((a, b)) {
+    (final TangentLine x, final TangentLine y) =>
+      identical(x.point, y.point) &&
+          identical(x.circle, y.circle) &&
+          (x.branch == y.branch || structurallyIncident(x.circle, x.point)),
+    (final RelativeLine x, final RelativeLine y) =>
+      x.runtimeType == y.runtimeType &&
+          identical(x.through, y.through) &&
+          coincidentCarriers(x.reference, y.reference),
+    (final AngleBisectorLine x, final AngleBisectorLine y) =>
+      identical(x.vertex, y.vertex) &&
+          _samePair(x.arm1, x.arm2, y.arm1, y.arm2),
+    _ => false,
+  };
+}
+
+/// The points the construction puts on [carrier] — on it directly
+/// ([structurallyIncident]) or on any line in [objects] that
+/// [coincidentCarriers] says is the same line — in [objects]' order.
+///
+/// The prover's readers go through this rather than
+/// [structurallyIncident] alone so that a figure holding one line twice
+/// reads the same whichever copy is named (Phase 164).
+List<GeoPoint> pointsOnCarrier(Iterable<GeoObject> objects, GeoObject carrier) {
+  final all = objects is List<GeoObject> ? objects : objects.toList();
+  final twins = [
+    if (carrier is GeoLine)
+      for (final object in all)
+        if (object is GeoLine &&
+            !identical(object, carrier) &&
+            coincidentCarriers(object, carrier))
+          object,
+  ];
+  return [
+    for (final object in all)
+      if (object is GeoPoint &&
+          (structurallyIncident(carrier, object) ||
+              twins.any((twin) => structurallyIncident(twin, object))))
+        object,
+  ];
+}
+
+/// The two points a two-point line kind is drawn through, or null for
+/// any other kind.
+(GeoPoint, GeoPoint)? _twoPointEnds(GeoLine line) => switch (line) {
+  LineThroughTwoPoints() => (line.point1, line.point2),
+  Segment() => (line.point1, line.point2),
+  Ray() => (line.origin, line.through),
+  _ => null,
+};
+
 /// Whether {[a1], [a2]} and {[b1], [b2]} are the same instance pair,
 /// order-blind.
 bool _samePair(GeoObject a1, GeoObject a2, GeoObject b1, GeoObject b2) =>

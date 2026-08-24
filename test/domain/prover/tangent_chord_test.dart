@@ -12,6 +12,7 @@ import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/prover.dart';
+import 'package:regula/domain/prover/questions.dart';
 import 'package:regula/domain/prover/rule.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
@@ -101,6 +102,34 @@ void main() {
           PredicateKind.cong,
         ]),
       );
+    });
+
+    test('asked through either tangent, the answer is the same proof '
+        '(Phase 164)', () {
+      final byName = {
+        for (final o in construction.objects) o.attributes.name: o.id,
+      };
+      final run = exchange(construction, filter);
+      for (final tangent in ['c', 'd']) {
+        final questions = askableQuestions(
+          construction.objects,
+          selectedIds: {
+            byName['b']!,
+            byName[tangent]!,
+            byName['e']!,
+            byName['f']!,
+          },
+        );
+        expect(questions, isNotEmpty, reason: 'via $tangent');
+        final derived = questions.first.spellings
+            .map(Fact.of)
+            .firstWhere(run.prover.resolve);
+        expect(
+          run.database.derivationOf(derived)!.rule,
+          'tangent_chord',
+          reason: 'via $tangent',
+        );
+      }
     });
 
     test('without the rule the figure has no route', () {

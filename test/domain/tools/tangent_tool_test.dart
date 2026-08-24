@@ -67,6 +67,23 @@ void main() {
       }
     });
 
+    test('a point on the circle gets one tangent, not two (Phase 164)', () {
+      // Both branches from a point on the circle are the tangent at that
+      // point; emitting both put one line in the document twice.
+      final tool = newTool();
+      expect(
+        tool.onInput(ToolInput(const Vec2(1, 0.05), hit: circle)),
+        isA<ToolAccepted>(),
+      );
+      final result = tool.onInput(ToolInput(rim.position, hit: rim));
+      final command = (result as ToolCommitted).command as MacroCommand;
+      expect(command.commands, hasLength(1));
+      final tangents = tangentsOf(command);
+      expect(tangents.single.branch, 0);
+      expect(tangents.single.parents, [rim, circle]);
+      expect(tangents.single.line!.distanceTo(Vec2.zero), closeTo(1, 1e-12));
+    });
+
     test('empty canvas creates the point, whole step is one undo unit', () {
       final construction = Construction()
         ..add(center)

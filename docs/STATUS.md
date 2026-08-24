@@ -1656,3 +1656,23 @@ The browser look is the one open box: extension not connected this session (seco
 - A measurement rig that calls `Prover.resolve` *records* what it resolves — my first fact counts were 15 high on `provoleas2` for exactly that reason. Count before asking.
 - Rules with a repeated variable (`aa_simtri`'s `eqangle(a,b,a,c,…)`) are cheap despite two 128-form premises, because most pivot forms fail at the pivot binding and never reach the join. It is the *all-distinct* pattern that is quadratic in forms.
 - `length_closure_upside_test` had run `provoleas2` at a 20 000 budget "because it never converges"; it converges at 25 826 now, so the test runs everything to quiescence and asserts it.
+
+## 2026-08-24 — session 172: Phase 164, one line under two objects
+
+**Started as a bug report, not a phase.** The tangent–chord theorem proved on the VM and in `flutter run`, and the user reported it *not* proving on the deployed site. Everything headless said the deploy was fine: the deployed `main.dart.wasm` and `.js` both contain `tangent_chord` and not `eqangle_transitive`; the service worker is Flutter's self-unregistering stub; the provider's own path (probe → seed → `runChunked` → resolve) compiled with the deploy's exact command (`flutter build web --wasm --release`) proves it in headless Chrome under both the wasm and the dart2js arm. Then the extension connected, the fixture went into the deployed app through the *Open* dialog (memory: `load-fixture-into-deployed-app`), and the user's symptom reproduced on the first try — **"Nothing to ask about this selection"** — with the tab verifiably running the new build.
+
+**The cause was in the document, and it was the tangent tool's.** `tangent-chord.rgl` holds two `TangentLine`s at C, `c` and `d`, because the tool emits both branches unconditionally and from a point on the circle both are the tangent there. E is glued to `d`. A canvas click on the line lands on `c` or `d` by a last-bit difference in their coefficients (the hit-tester breaks only *exact* ties by insertion order), and `c` carries only C — no witness pair, no angle question. Hiding `c` and repeating the clicks gave the three chips and the proof. "Works locally" was a different click, or a different last bit.
+
+**Done — Phase 164 on `phase-164-coincident-tangent`, one code commit (`a73d252`).** Suite **3229** green (3219 + 10), analyze clean, browser gate 13. Merged to `main` this session.
+
+- `coincidentCarriers(a, b)` and `pointsOnCarrier(objects, carrier)` in `incidence.dart`, structural and symmetric, zero epsilon; `askableQuestions` and `hypotheses()` read through the latter. No fact count on any fixture moved.
+- The tangent tool emits one line from a point on the circle.
+- PLAN gained §"One line under two objects is one line".
+
+**Next.** The deployed look (Phase 164's last box) once the deploy of the merge lands; then Phase 160 (the question builder) or the two recorded measurements (delete `para_transitive`; re-measure the ratio closure on `provoleas2`). Carried: `readFact` on listed `eqangle`s can still read magnitude-false — visible in this session's screenshot as step `[4]` reading "angles ECD and CBD" under a question that read "BCE and BDC".
+
+**Gotchas.**
+
+- "Works locally, not on the site" is not evidence about the build until the *same document* has been loaded on the site. The file-input route (patch `HTMLInputElement.prototype.click`, catch the input, append it, `file_upload`) makes that a two-minute check; `performance.getEntriesByType('resource')` gives `main.dart.wasm`'s decoded size, which identifies the build.
+- Headless Chrome without a GPU makes the bootstrap fall back to the dart2js arm silently (the console says "Falling back to CPU-only rendering", the source column says `main.dart.js`). `--use-angle=swiftshader --enable-unsafe-swiftshader` gets the wasm arm; Chrome then does not exit on its own.
+- `flutter test --platform chrome --wasm` hung for eight minutes with no output on a test that ran in 3 s under dart2js; killed, not diagnosed. A release build of a scratch entrypoint under `lib/` served to headless Chrome was the faster road — and the entrypoint has to be deleted before anything ships.
