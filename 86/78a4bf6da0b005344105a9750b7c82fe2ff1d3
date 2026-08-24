@@ -1,0 +1,25 @@
+lib/domain/prover/question_template.dart
+  s_7c56e3aea1efa3::t_d4aab80ee3fdc1 1-181
+test/domain/prover/question_template_test.dart
+  s_7c56e3aea1efa3::t_939a0464b99e0f 168-176,245-248,250-251
+  s_7c56e3aea1efa3::t_50e8f4a3ed1ada 1-6,8-167,177-244,249,252-255,260-261,269-389
+  s_7c56e3aea1efa3::t_4e8edf58872092 7,256-259,262-268
+lib/domain/prover/question_draft.dart
+  s_7c56e3aea1efa3::t_d4aab80ee3fdc1 1-281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8678a4bf6da0b005344105a9750b7c82fe2ff1d3",
+  "prompts": {},
+  "sessions": {
+    "s_7c56e3aea1efa3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27f52ef8-37a4-4735-810f-a27a0b003d5b",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
