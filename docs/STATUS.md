@@ -1547,3 +1547,17 @@ The browser look is the one open box: extension not connected this session (seco
 - `expandGroup` taps the header *text*; the `InkWell` around the whole row receives it. A test that needs the chevron specifically should find `Icons.chevron_right` / `Icons.expand_more` inside the header's `InkWell` ancestor, as the folded-first test does.
 - Under a live selection, `_expanded` persists — opening a group and then selecting keeps it open. View state, deliberately; nothing pins it either way.
 - The phone-sheet test's comment used to say "the list builds all its children, so scroll-until-found would scroll nothing"; that was true of the flat list at the tucked height and is false once a group is open. Both moves, in that order, are correct in both regimes: `scrollUntilVisible` returns at once when the finder already matches.
+
+### Addendum — Phase 158b, from two UX points the user raised on the grouped list
+
+**Done on the same branch, one code commit (`ae3d60f`).** Suite **3185** green (3177 + 8), analyze clean, browser gate 13, wasm compiles. Still not merged.
+
+- **The row points, the arrow opens.** A tap on a goal row now lights its points on the figure — `_readGoal`, the step rows' own toggle — and only the trailing arrow opens the proof. The arrow is an `IconButton` inside `quietTooltip` (a 500 ms wait; `rawSpellingTooltip` now delegates to it), because `IconButton.tooltip` shows on hover immediately and that is the Phase 157 storm.
+- **The trivial facts, measured before deciding.** A scratch test over every fixture, using Phase 151's `CarrierIndex.sameLine`: **20 of the 45** derived facts on `perp-true-unproved.rgl` relate a line to itself (`midline_para` with the midline on its base, copied 16× by `perp_perp_para`), 4 of 22 on Varignon (`isosceles_base` on a flat triangle), 1 on apatitos, 0 on tangent-chase. And **10 non-trivial facts cite a trivial `para` directly** — they are the rule table's way of saying "same line", so they are load-bearing. That is why the fix is a reading and not a filter: `CarrierIndex.isTrivial`, `ProverReady.carriers` (the run's own closure, read once on first use — not the engine's `incidence`, which is the angle side's), and `groupedGoals` answering `Map<GoalGroup, List<Fact>>` with a `TrivialGroup` last, born folded, its facts removed from their kind, one italic line saying what it is when opened. User chose *group* over *hide*.
+- **The gap in an argument we had written down**, recorded as PLAN §"Nondegeneracy the numeric screen cannot carry": `rule.dart` says the DD sources' `ncoll` side conditions ride on the numeric screen; that holds only when the degenerate conclusion is *false*. `0 = 0` and `AB ∥ AB` pass every check. The AR side already separates a parallel from an identity; the DD table does not, and the honest fix is M-P3's, where `para` stops being a fact.
+
+**Gotchas.**
+
+- On `perp-true-unproved.rgl` *every* derived parallel is trivial, so with carriers there is no `Parallel lines` header at all. A widget test that groups without `ready.carriers` looks for headers the panel does not render — every widget-side `groupedGoals` passes them now.
+- `groupedGoals` without carriers still exists (pure tests, and "no index, nothing is trivial" is the documented meaning). Don't call it that way from a widget.
+- Walking rows with a downward `scrollUntilVisible` must follow the *panel's* order — group by group, database order within — from the top; database order alone scrolls past goals that sit in an earlier group and never finds them.
