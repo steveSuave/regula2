@@ -1,0 +1,42 @@
+test/presentation/panels/proof_panel_test.dart
+  s_3097c893f24213::t_743debe05541cf 382-394
+  s_3097c893f24213::t_f16407e71d9d69 1353-1355,1362-1377,1407-1410
+  s_3097c893f24213::t_e505b92e6e47d9 373-374,1032-1035,1164-1167,1234-1235,1252,1671-1674
+  s_3097c893f24213::t_8024fa7b2a5a1c 22,110-111,125-139,300,310,339,420,428,479,487,523,531,552,560,728,736,759,767,916,935,991,999,1103-1106,1109-1111,1122-1123,1146-1149,1172,1174,1194-1196,1198,1221,1244,1260,1330-1352,1356-1361,1378-1406,1420-1474,1676
+  s_3097c893f24213::t_c83e8db6b1275d 378-381,395-399,401-410,1411-1419
+  s_3097c893f24213::t_d6887aff87be28 1475-1476
+test/presentation/file_menu_test.dart
+  s_3097c893f24213::t_f16407e71d9d69 391
+docs/PLAN.md
+  s_3097c893f24213::t_7ecb77a23b9ae2 542-547
+docs/TODO.md
+  s_3097c893f24213::t_7ecb77a23b9ae2 206-216
+lib/presentation/panels/proof_panel.dart
+  s_3097c893f24213::t_3031bf16678627 26,60-108,110-124,127-129,138-145,147-148,220-226,325-330,369-382,384,387,678,680,682,685-686,690,698-712,714,822-826,829
+  s_3097c893f24213::t_f16407e71d9d69 109,672,674
+lib/application/providers/prover_provider.dart
+  s_3097c893f24213::t_5af87835f4f6f9 180,193-200
+  s_3097c893f24213::t_f16407e71d9d69 3
+  s_3097c893f24213::t_47e82c3a965a66 201
+test/domain/prover/carriers_test.dart
+  s_3097c893f24213::t_f16407e71d9d69 429-431,437,464
+  s_3097c893f24213::t_7e788d97534441 427-428,432-436,438-463,465-472
+lib/domain/prover/carriers.dart
+  s_3097c893f24213::t_7e788d97534441 233-258
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ae3d60f36440a6daafbdc591f561ad6c4d32c717",
+  "prompts": {},
+  "sessions": {
+    "s_3097c893f24213": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "db148f7f-ca3a-42d4-a9a5-a758d643a6de",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
