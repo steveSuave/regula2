@@ -1587,3 +1587,14 @@ The browser look is the one open box: extension not connected this session (seco
 - The hint now reads "two or four lines"; `askableQuestions`'s doc comment says where Phase 148's exclusion still holds (point selections) and where it did not.
 
 **Next.** Phase 159's third box — answer the `eqangle` ask against AR's entailment, a membership query; Varignon's four sides are the rig where DD says *unproved* and AR should not. Then concurrency as sugar, the tangency ask.
+
+### Addendum — Phase 159c, the `eqangle` ask against the closure
+
+**Done on the same branch, one code commit (`5e8848b`).** Suite **3195** green (3189 + 6), analyze clean, browser gate 13. Still not merged.
+
+- **`AngleTranslation.equationOf` reads `eqangle`** — the same row `absorb` builds, over unregistered variables (`_equationsOf` now takes the naming function: `_register` when saying, `lineVariable` when asking). Because `derivation_check.dart` and `AngleChase.of` both go through `equationOf`, an `eqangle` recorded as an `angle_arithmetic` step verifies and renders as a chase with no change to either.
+- **`Prover.resolve(fact)`**: the database, or on a miss the closure — and the one entailed statement is *recorded* as an `angle_arithmetic` step (filter-screened, premises present, `database.add`), so `Proof.of` has a derivation and `verify` a certificate. The enumeration ban in `_publish` stands: an ask is a single membership query. Deliberately **not** handed to DD's pivot queue — the fact was asked for, not derived toward, and `isComplete` must not become a function of what the user asked. Pinned: the engine stays complete, a second ask is a lookup. The provider's `_derived` spelling scan calls it, so `stopWhen` and the final answer both see the closure. Mutation (skip the closure branch) fails exactly the three new tests.
+- **The measurement, and it went the other way from the four before it.** Scratch rig over every fixture: all 4-subsets of carriers, the three readings each, filter-true ones counted, then DD (any spelling stored) before the closure. `locus3`: 35 true, DD 4, **closure +6**, 25 unproved. `provoleas2`: 9 true, DD 2, **closure +7 — every true reading answered**, on a run that had *not* reached fixpoint at 30 000. `perp-true-unproved`: 10 true, DD 2, **+2**, 6 unproved. The other four fixtures have fewer than four carriers. Total 54 / 8 / **+15**; the resolve calls cost ≤ 6 ms per fixture. 152e's consumers were rules; this consumer is the user, and the ask is the direction the enumeration ban was written to leave open. Path kept.
+- Certificate detail worth knowing: on Varignon the closure proves `∠(MN,NP) = ∠(QP,MQ)` from the *diagonals'* midline parallels (`para(B,D,M,Q)`, `para(A,C,M,N)`, …), not the two side parallels a human would cite — echelon order chooses the route. The test pins "every premise is a `para`", not which.
+
+**Next.** Concurrency as sugar, then the tangency ask; then merge.
