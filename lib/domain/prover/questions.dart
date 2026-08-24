@@ -74,10 +74,15 @@ class _Group {
 /// question the prover cannot even be handed would be worse than
 /// offering none.
 ///
-/// **`eqangle` / `eqratio` / `simtri` / `contri` are absent on purpose.**
-/// They take eight points, or a triangle *correspondence* — neither is
-/// something a set of selected objects expresses, and guessing the
-/// correspondence would ask a different question from the user's.
+/// **`eqratio` / `simtri` / `contri` are absent on purpose.** They take
+/// eight points, or a triangle *correspondence* — neither is something a
+/// set of selected objects expresses, and guessing the correspondence
+/// would ask a different question from the user's. `eqangle` is offered
+/// from exactly one shape, four carriers (Phase 159): four lines *are*
+/// `∠(s1,s2) = ∠(s3,s4)`, and what is left is which lines pair off —
+/// the same ambiguity four points already carry, answered the same way,
+/// by offering every reading. Phase 148's exclusion was written for
+/// point selections, where it still holds.
 ///
 /// Order is the order the questions should be offered in: the relation
 /// most selections mean first.
@@ -183,6 +188,53 @@ List<ProverQuestion> askableQuestions(
     relate(first, groupOfSelectedPoints()!);
     return out;
   }
+  // Four line-shaped things: an equality of angles. Three statements,
+  // not six and not two, and *which* three is the finding: `eqangle`'s
+  // transpose symmetry (M-P2a) makes `∠(c0,c1) = ∠(c2,c3)` the same fact
+  // as `∠(c0,c2) = ∠(c1,c3)`, so pairing the sides the way four points
+  // pair off for `para` duplicates one reading and misses another. Read
+  // each as a linear equation over line angles, `θ1 − θ0 = θ3 − θ2`,
+  // i.e. `θ1 + θ2 = θ0 + θ3`: a statement is a partition of the four
+  // lines into two pairs with equal angle *sums*, and there are three of
+  // those. Below, one oriented spelling of each; the test checks all six
+  // orientations canonicalize onto exactly these.
+  if (carriers.length == 4 && selectedPoints.isEmpty) {
+    final groups = <_Group>[];
+    for (final carrier in carriers) {
+      final group = groupFor(carrier);
+      if (group == null) return const [];
+      groups.add(group);
+    }
+    const pairings = [
+      [0, 1, 2, 3], // θ1 + θ2 = θ0 + θ3
+      [0, 1, 3, 2], // θ1 + θ3 = θ0 + θ2
+      [0, 2, 3, 1], // θ2 + θ3 = θ0 + θ1
+    ];
+    for (final [i, j, k, l] in pairings) {
+      final spellings = [
+        for (final p in groups[i].pairs)
+          for (final q in groups[j].pairs)
+            for (final r in groups[k].pairs)
+              for (final s in groups[l].pairs)
+                if (!_degenerate(p, q) &&
+                    !_degenerate(r, s) &&
+                    !_sameLines(p, q, r, s))
+                  Predicate(PredicateKind.eqangle, [
+                    p.a,
+                    p.b,
+                    q.a,
+                    q.b,
+                    r.a,
+                    r.b,
+                    s.a,
+                    s.b,
+                  ]),
+      ];
+      if (spellings.isEmpty) continue;
+      out.add(ProverQuestion(PredicateKind.eqangle, spellings));
+    }
+    return out;
+  }
   if (carriers.isNotEmpty) return const [];
 
   // Point-only selections.
@@ -243,4 +295,14 @@ bool _degenerate(_Pair first, _Pair second) {
   if (identical(first.a, first.b) || identical(second.a, second.b)) return true;
   return (identical(first.a, second.a) && identical(first.b, second.b)) ||
       (identical(first.a, second.b) && identical(first.b, second.a));
+}
+
+/// Whether the angle from [p] to [q] is the angle from [r] to [s] by
+/// spelling alone — the same two lines on both sides, in either order —
+/// which is `0 = 0` or `θ = θ` and not a question.
+bool _sameLines(_Pair p, _Pair q, _Pair r, _Pair s) {
+  bool same(_Pair x, _Pair y) =>
+      (identical(x.a, y.a) && identical(x.b, y.b)) ||
+      (identical(x.a, y.b) && identical(x.b, y.a));
+  return (same(p, r) && same(q, s)) || (same(p, s) && same(q, r));
 }

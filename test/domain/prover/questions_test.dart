@@ -8,6 +8,7 @@ import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/questions.dart';
 
@@ -129,6 +130,103 @@ void main() {
       expect(perpPairings, {'abcd', 'acbd', 'adbc'});
     });
 
+    test('four segments give the three equal-angle statements, and only '
+        'three', () {
+      final construction = Construction();
+      final a = free('a', 0, 0);
+      final b = free('b', 4, 0);
+      final c = free('c', 5, 3);
+      final d = free('d', 1, 3);
+      final sides = [
+        Segment(id: 's0', point1: a, point2: b),
+        Segment(id: 's1', point1: b, point2: c),
+        Segment(id: 's2', point1: c, point2: d),
+        Segment(id: 's3', point1: d, point2: a),
+      ];
+      for (final object in [a, b, c, d, ...sides]) {
+        construction.add(object);
+      }
+
+      final questions = ask(construction, {'s0', 's1', 's2', 's3'});
+
+      expect(questions, hasLength(3));
+      expect(kinds(questions), {PredicateKind.eqangle});
+      final offered = {for (final q in questions) Fact.of(q.canonical)};
+      expect(offered, hasLength(3), reason: 'three distinct statements');
+
+      // The check that the three are the *right* three: every way of
+      // reading four lines as ∠(x,y) = ∠(z,w) — 24 orderings, of which
+      // the 6 below cover every orbit once the first side is anchored on
+      // s0 — canonicalizes onto one of the offered facts. So nothing a
+      // user could mean is missing, and (with three offered) nothing is
+      // offered twice. The naive side-pairings (01|23, 02|13, 03|12)
+      // fail this: the first two are one fact under the transpose.
+      Fact reading(List<int> order) {
+        final points = [
+          for (final i in order) ...[sides[i].point1, sides[i].point2],
+        ];
+        return Fact.of(Predicate(PredicateKind.eqangle, points));
+      }
+
+      const orientations = [
+        [0, 1, 2, 3],
+        [0, 1, 3, 2],
+        [0, 2, 1, 3],
+        [0, 2, 3, 1],
+        [0, 3, 1, 2],
+        [0, 3, 2, 1],
+      ];
+      final covered = {for (final o in orientations) reading(o)};
+      expect(covered, hasLength(3), reason: 'D4 leaves exactly three orbits');
+      expect(covered, offered);
+
+      // The naive pairing really is a duplicate — pinned so the comment
+      // above stays true of the symmetry group, not just of this rig.
+      expect(reading([0, 1, 2, 3]), reading([0, 2, 1, 3]));
+    });
+
+    test('four carriers phrase every witness pair, and refuse a line '
+        'against itself', () {
+      final construction = Construction();
+      final a = free('a', 0, 0);
+      final b = free('b', 4, 0);
+      final c = free('c', 5, 3);
+      final d = free('d', 1, 3);
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final bc = Segment(id: 'bc', point1: b, point2: c);
+      final cd = Segment(id: 'cd', point1: c, point2: d);
+      final da = Segment(id: 'da', point1: d, point2: a);
+      for (final object in [a, b, c, d, ab, bc, cd, da]) {
+        construction.add(object);
+      }
+      // A third point on the line: it now has three names.
+      construction.add(PointOnObject(id: 'x', curve: ab, parameter: 2));
+
+      final questions = ask(construction, {'ab', 'bc', 'cd', 'da'});
+
+      expect(questions, hasLength(3));
+      for (final question in questions) {
+        expect(
+          question.spellings,
+          hasLength(3),
+          reason: 'three names for the line, one for each segment',
+        );
+        expect(
+          {for (final s in question.spellings) Fact.of(s)},
+          hasLength(3),
+          reason: 'different witness pairs are different spellings',
+        );
+      }
+
+      // Two lines each named twice: every reading is the same two lines
+      // on both sides of the equation (`θ = θ`) or one line against
+      // itself (`0 = …`), and nothing is offered — the four-carrier form
+      // of 'two carriers naming the same two points relate nothing'.
+      construction.add(Segment(id: 'bc2', point1: b, point2: c));
+      construction.add(Segment(id: 'cd2', point1: c, point2: d));
+      expect(ask(construction, {'bc', 'cd', 'bc2', 'cd2'}), isEmpty);
+    });
+
     test('selections that phrase nothing phrase nothing', () {
       final r = rig();
 
@@ -148,6 +246,23 @@ void main() {
         ask(r.construction, {'ab', 'cd', 'a'}),
         isEmpty,
         reason: 'two carriers plus a stray point is ambiguous',
+      );
+      r.construction.add(
+        Segment(
+          id: 'ad',
+          point1: r.byName['a']! as GeoPoint,
+          point2: r.byName['d']! as GeoPoint,
+        ),
+      );
+      expect(
+        ask(r.construction, {'ab', 'cd', 'ad'}),
+        isEmpty,
+        reason: 'three carriers phrase nothing (concurrency is a later box)',
+      );
+      expect(
+        ask(r.construction, {'ab', 'cd', 'ad', 'a'}),
+        isEmpty,
+        reason: 'four line-shaped things and a stray point is not four lines',
       );
     });
 

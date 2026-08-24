@@ -293,8 +293,8 @@ class ProofPanel extends ConsumerStatefulWidget {
   /// as that function's shapes are; it says nothing on an *empty*
   /// selection, where the derived list is the panel's whole purpose.
   static const String unaskableSelectionHint =
-      'Nothing to ask about this selection \u2014 select two lines, '
-      'a line and two points, or three or four points.';
+      'Nothing to ask about this selection \u2014 select two or four '
+      'lines, a line and two points, or three or four points.';
 
   const ProofPanel({super.key, this.scrollController});
 

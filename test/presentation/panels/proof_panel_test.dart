@@ -14,8 +14,10 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/angle_translation.dart';
@@ -577,8 +579,8 @@ void main() {
 
     testWidgets('a selection that phrases nothing says so', (tester) async {
       // Session 163's report: four selected segments, no chips, no
-      // explanation. Four segments are four carriers, a shape
-      // [askableQuestions] refuses (until Phase 159's eqangle box).
+      // explanation. Four segments are four carriers, which Phase 159
+      // now phrases — so the silent case here is one that stays silent.
       final rig = seedVarignon();
       final construction = container.read(constructionProvider).construction;
       final corners = [for (final m in rig.midpoints) m.point1];
@@ -601,13 +603,33 @@ void main() {
       expect(find.text('Ask about the selection'), findsNothing);
       expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
 
-      container
-          .read(selectionProvider.notifier)
-          .selectMany(sides.map((side) => side.id));
+      // Two sides and a stray corner: refused for good (half a selection
+      // silently ignored is a question nobody asked).
+      container.read(selectionProvider.notifier).selectMany([
+        sides[0].id,
+        sides[1].id,
+        corners[2].id,
+      ]);
       await tester.pump();
       expect(find.text(ProofPanel.unaskableSelectionHint), findsOneWidget);
       expect(find.text('Ask about the selection'), findsNothing);
       expect(inPanel(find.byType(ActionChip)), findsNothing);
+
+      // Session 163's four segments: three equal-angle readings, each
+      // naming its segments' points.
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(sides.map((side) => side.id));
+      await tester.pump();
+      expect(find.text(ProofPanel.unaskableSelectionHint), findsNothing);
+      expect(inPanel(find.byType(ActionChip)), findsNWidgets(3));
+      for (final question in askableQuestions(
+        construction.objects,
+        selectedIds: {for (final side in sides) side.id},
+      )) {
+        expect(question.kind, PredicateKind.eqangle);
+        expect(find.text(questionLabel(question)), findsOneWidget);
+      }
 
       // Two of them phrase perp / para / cong: chips, and the hint gone.
       container.read(selectionProvider.notifier).selectMany([
@@ -623,6 +645,75 @@ void main() {
       container.read(selectionProvider.notifier).select(corners.first.id);
       await tester.pump();
       expect(find.text(ProofPanel.unaskableSelectionHint), findsOneWidget);
+    });
+
+    testWidgets('four segments ask an equal-angle question, and the '
+        'inscribed angle answers it', (tester) async {
+      // P, Q, A, B on one circle: ∠APB = ∠AQB by `inscribed_angle`. The
+      // four segments PA, PB, QA, QB are that statement's carriers, and
+      // one of the three readings they offer is it.
+      final construction = container.read(constructionProvider).construction;
+      final o = free('o', 'O', 0, 0);
+      final a = free('a', 'A', 5, 0);
+      final circle = CircleCenterPoint(id: 'k', center: o, onCircle: a);
+      GeoPoint on(String id, String name, double t) => PointOnObject(
+        id: id,
+        curve: circle,
+        parameter: t,
+        attributes: ObjectAttributes(name: name),
+      );
+      final b = on('b', 'B', 2.0);
+      final p = on('p', 'P', 0.9);
+      final q = on('q', 'Q', 4.0);
+      final sides = [
+        Segment(id: 'pa', point1: p, point2: a),
+        Segment(id: 'pb', point1: p, point2: b),
+        Segment(id: 'qa', point1: q, point2: a),
+        Segment(id: 'qb', point1: q, point2: b),
+      ];
+      for (final object in [o, a, circle, b, p, q, ...sides]) {
+        construction.add(object);
+      }
+      await pumpEditor(tester);
+      await openPanel(tester);
+      container
+          .read(selectionProvider.notifier)
+          .selectMany(sides.map((side) => side.id));
+      await tester.pump();
+
+      final inscribed = Fact.of(
+        Predicate(PredicateKind.eqangle, [p, a, p, b, q, a, q, b]),
+      );
+      final questions = askableQuestions(
+        construction.objects,
+        selectedIds: {for (final side in sides) side.id},
+      );
+      final question = questions.singleWhere(
+        (q) => q.spellings.any((s) => Fact.of(s) == inscribed),
+      );
+      final others = questions.where((q) => !identical(q, question));
+      expect(others, hasLength(2));
+
+      await tester.tap(find.text(questionLabel(question)));
+      await tester.pumpAndSettle();
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(
+        state.answer.proof!.steps.map((step) => step.rule),
+        contains('inscribed_angle'),
+      );
+      // The other two readings are false in the figure: refuted, no run.
+      for (final other in others) {
+        await tester.tap(find.byTooltip('Back to the list'));
+        await tester.pump();
+        await tester.tap(find.text(questionLabel(other)));
+        await tester.pumpAndSettle();
+        expect(
+          (container.read(proverProvider) as ProverAnswered).answer.verdict,
+          ProverVerdict.refuted,
+        );
+      }
     });
 
     testWidgets('a selection offers what it can phrase, and asking works', (
