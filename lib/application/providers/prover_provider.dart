@@ -14,13 +14,35 @@ part 'prover_provider.g.dart';
 
 /// Rule applications per chunk between event-loop yields.
 ///
-/// Phase 140 measured the resumable shape's overhead flat from 1 000 to
-/// 500 000 applications per step, so the low end costs nothing and keeps
-/// the largest single uninterruptible slice small. Real documents reach
-/// quiescence inside one chunk — the Varignon fixpoint is 44
-/// applications — which is the point: the budget is about the
-/// pathological document, not the common one.
-const int proverChunkBudget = 1000;
+/// The chunk is the freeze — one pass is the longest slice the main
+/// thread is blocked for, and a [ProverNotifier.stop] cannot be noticed
+/// sooner — so the number comes from measuring the worst single pass per
+/// fixture (`benchmark/prover_chunk_bench.dart`, VM, 2026-08-24), not
+/// from a flat per-application cost, which Phase 145 already disproved.
+///
+/// **The budget bounds only the charged half of a pass, and the
+/// measurement's finding is that the uncharged half dominates the worst
+/// pass on half the corpus.** Worst pass at chunk 1000 / 500 / 250 / 125:
+/// `provoleas2` 53 / 36 / 24 / 18 ms, `perp-true-unproved` 58 / 54 / 52 /
+/// 51 ms (first pass; warm 7 / 4 / 2.3 / 1.8 ms), `locus3` 102 / 75 / 71 /
+/// 43 ms — but `apatitos-topos` 1 415 / 1 388 / 1 388 / 1 275 ms and
+/// `tangent-chase` 2 620 / 2 522 / 2 456 / 2 253 ms, essentially flat,
+/// because their cost is the join enumeration that yields no candidate,
+/// which is advanced without being charged as an application. No chunk
+/// budget can make those passes frame-sized; bounding the enumeration is
+/// engine work and its own phase (see Phase 156's notes in TODO).
+///
+/// **250 is the knee where the budget does bind**: on the blowup
+/// document it turns a 53 ms worst pass into 24 ms — a dropped frame,
+/// not a freeze — for a measured cost of +17 % total wall on the capped
+/// run (809 → 951 ms, the extra AR exchanges) and +7 % applications on
+/// `perp-true-unproved` (4 896 → 5 232, same fixpoint). 125 buys 6 ms
+/// more for another +20 % wall: past the knee.
+///
+/// The unyielded prologue (probe + hypotheses + seed) measures 47–430 µs
+/// across the corpus — a floor Stop cannot lower, and one that needs no
+/// lowering.
+const int proverChunkBudget = 250;
 
 /// The ceiling on one [ProverNotifier.prove] call, in rule applications.
 ///
