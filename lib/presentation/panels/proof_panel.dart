@@ -64,6 +64,13 @@ List<Fact> provableGoals(
 /// rule's name is a thing that drifts from the rule set and then lies
 /// about which rule ran. Underscores become spaces, which is mechanical
 /// and cannot drift.
+///
+/// That argument is about **strings**, and it is why this function is
+/// untouched by Phase 157 while every fact around it became prose:
+/// `readFact`'s table is over `PredicateKind`, a closed enum the
+/// compiler checks exhaustively, so a kind added without a reading is a
+/// build error rather than a silent drift. A rule name is an open string
+/// a table can quietly fall behind. Same shape, opposite safety.
 String stepReason(ProofStep step) => step.isGiven
     ? 'given'
     : '${step.rule!.replaceAll('_', ' ')} '
@@ -83,24 +90,55 @@ List<String> chaseLines(ProofStep step, Proof proof) {
   return chase.render(cite: (fact) => numbering[fact]);
 }
 
-/// The chip's wording for a question — the relation, then the points it
-/// is about.
+/// Whether any of [facts] is read under the stated convention rather
+/// than fully by its own sentence: `eqangle` is compared mod π, and
+/// `simtri`/`contri` are orientation-free (M-P1). `readFact` keeps
+/// those sentences plain — "are equal", "are similar" — and the panel
+/// states [factReadingConvention] once at the foot of a list that needs
+/// it, rather than hedging every line: Phase 157's decision, decided and
+/// not defaulted into.
+bool conventionApplies(Iterable<Fact> facts) => facts.any(
+  (fact) => switch (fact.kind) {
+    PredicateKind.eqangle ||
+    PredicateKind.simtri ||
+    PredicateKind.contri => true,
+    _ => false,
+  },
+);
+
+/// The raw spelling riding on a prose surface: a settled hover on
+/// desktop, a long-press on touch.
 ///
-/// The points are named because they disambiguate: four selected points
-/// phrase three different perpendicularity questions, and a row of
-/// chips all reading "perpendicular?" would be a coin toss.
-String questionLabel(ProverQuestion question) {
-  final points = question.canonical.points.map(describePoint).toList();
-  return switch (question.kind) {
-    PredicateKind.perp => '${points[0]}${points[1]} ⟂ ${points[2]}${points[3]}',
-    PredicateKind.para => '${points[0]}${points[1]} ∥ ${points[2]}${points[3]}',
-    PredicateKind.cong => '${points[0]}${points[1]} = ${points[2]}${points[3]}',
-    PredicateKind.coll => '${points.join('')} collinear',
-    PredicateKind.cyclic => '${points.join('')} concyclic',
-    PredicateKind.midp => '${points[0]} bisects ${points[1]}${points[2]}',
-    _ => describeFact(Fact.of(question.canonical)),
-  };
-}
+/// The wait is load-bearing, not cosmetic. A [Tooltip] shows on hover
+/// immediately by default, and in a lazy list that is an overlay
+/// attached and detached for every row that passes under a stationary
+/// pointer while the list scrolls — which trips a framework race on the
+/// web renderer (the `RawTooltip`/`OverlayPortal` descendant of
+/// flutter/flutter#133545): the mouse tracker hit-tests the overlay's
+/// deferred box before it is laid out and throws once per pointer
+/// event, which the user experiences as scrolling that sticks. With a
+/// wait, a row merely passing through never begins to show; the scroll
+/// listener in [_ProofPanelState.build] covers the other order
+/// (hover first, then scroll). VM tests cannot reproduce the crash —
+/// the two guards are pinned behaviourally instead.
+Widget rawSpellingTooltip({required String message, required Widget child}) =>
+    Tooltip(
+      message: message,
+      waitDuration: const Duration(milliseconds: 500),
+      child: child,
+    );
+
+/// The chip's wording for a question — the same sentence the derived
+/// list would use for the statement, via `readFact`.
+///
+/// One spelling across the panel (Phase 157): a chip that said `AB ⟂ CD`
+/// while the derived row for the same statement said
+/// `perp(A, B, C, D)` made the reader translate between two notations
+/// for one fact. Routing both through `readFact` also removed this
+/// function's fallback arm — the four kinds with no chip form now read
+/// as well as the six that had one.
+String questionLabel(ProverQuestion question) =>
+    readFact(Fact.of(question.canonical));
 
 /// What a verdict says, in words the reader can act on.
 ///
@@ -108,8 +146,13 @@ String questionLabel(ProverQuestion question) {
 /// failing to find a proof is *not* the statement being false, and a
 /// message that blurred them would tell a user their correct theorem was
 /// wrong.
+///
+/// The statement is quoted because it is now a sentence (`readFact`),
+/// and a sentence used as the subject of another sentence needs its
+/// boundary marked — "AB is perpendicular to CD is not true" garden-
+/// paths where "“AB is perpendicular to CD” is not true" does not.
 String verdictMessage(ProverAnswer answer) {
-  final statement = describeFact(Fact.of(answer.question.canonical));
+  final statement = '“${readFact(Fact.of(answer.question.canonical))}”';
   return switch (answer.verdict) {
     ProverVerdict.refuted =>
       '$statement is not true of this construction — it breaks when the '
@@ -240,7 +283,19 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           _header(theme, state, revision),
           const Divider(height: 1),
           if (questions.isNotEmpty) _questions(theme, questions),
-          Expanded(child: _body(theme, state, selectedIds)),
+          // No tooltip overlay may exist while list rows churn — see
+          // [rawSpellingTooltip] for the web-renderer race this guards.
+          // Dismissing on every notification is cheap: the call walks
+          // the list of *visible* tooltips, normally empty.
+          Expanded(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (_) {
+                Tooltip.dismissAllToolTips();
+                return false;
+              },
+              child: _body(theme, state, selectedIds),
+            ),
+          ),
         ],
       ),
     );
@@ -268,10 +323,16 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           runSpacing: 6,
           children: [
             for (final question in questions)
-              ActionChip(
-                label: Text(questionLabel(question)),
-                visualDensity: VisualDensity.compact,
-                onPressed: () => _ask(question),
+              // Wrapped rather than the chip's own `tooltip:` parameter,
+              // which offers no waitDuration — the chips sit right above
+              // the scrolling list and get the same guarded surface.
+              rawSpellingTooltip(
+                message: describeFact(Fact.of(question.canonical)),
+                child: ActionChip(
+                  label: Text(questionLabel(question)),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _ask(question),
+                ),
               ),
           ],
         ),
@@ -479,7 +540,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
         for (final goal in goals)
           ListTile(
             dense: true,
-            title: Text(describeFact(goal), style: theme.textTheme.bodyMedium),
+            title: rawSpellingTooltip(
+              message: describeFact(goal),
+              child: Text(readFact(goal), style: theme.textTheme.bodyMedium),
+            ),
             trailing: const Icon(Icons.chevron_right, size: 18),
             onTap: () => setState(() {
               _goal = goal;
@@ -487,6 +551,7 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
             }),
           ),
         if (!state.reachedFixpoint) _continueTile(theme, state),
+        if (conventionApplies(goals)) _conventionNote(theme),
       ],
     );
   }
@@ -518,7 +583,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
   List<Widget> _proofRows(ThemeData theme, Proof proof) => [
     Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Text(describeFact(proof.goal), style: theme.textTheme.titleSmall),
+      child: rawSpellingTooltip(
+        message: describeFact(proof.goal),
+        child: Text(readFact(proof.goal), style: theme.textTheme.titleSmall),
+      ),
     ),
     for (final step in proof.steps)
       InkWell(
@@ -548,9 +616,12 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      describeFact(step.fact),
-                      style: theme.textTheme.bodyMedium,
+                    rawSpellingTooltip(
+                      message: describeFact(step.fact),
+                      child: Text(
+                        readFact(step.fact),
+                        style: theme.textTheme.bodyMedium,
+                      ),
                     ),
                     Text(
                       stepReason(step),
@@ -580,7 +651,21 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           ),
         ),
       ),
+    if (conventionApplies([for (final step in proof.steps) step.fact]))
+      _conventionNote(theme),
   ];
+
+  /// The reading convention, said once — see [conventionApplies].
+  Widget _conventionNote(ThemeData theme) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+    child: Text(
+      factReadingConvention,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontStyle: FontStyle.italic,
+      ),
+    ),
+  );
 
   /// A one-line body — scrollable, which is not about its length.
   ///

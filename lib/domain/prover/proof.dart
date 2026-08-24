@@ -6,7 +6,8 @@ import 'fact_database.dart';
 import 'fact_naming.dart';
 import 'rule.dart';
 
-export 'fact_naming.dart' show describeFact, describePoint;
+export 'fact_naming.dart'
+    show describeFact, describePoint, factReadingConvention, readFact;
 
 /// One line of a proof: a fact, and the warrant for it.
 ///

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +23,7 @@ import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/proof.dart';
+import 'package:regula/domain/prover/questions.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
@@ -242,12 +244,14 @@ void main() {
 
       // The goal list, and the Varignon conclusion is in it. The list
       // is long enough to scroll, so reach the row the way a user does.
-      final goalText = describeFact(rig.goal);
+      final goalText = readFact(rig.goal);
       await tester.scrollUntilVisible(
         find.text(goalText),
         60,
         scrollable: inPanel(find.byType(Scrollable)),
       );
+      await tester.ensureVisible(find.text(goalText));
+      await tester.pumpAndSettle();
       expect(find.text(goalText), findsOneWidget);
 
       await tester.tap(find.text(goalText));
@@ -317,7 +321,7 @@ void main() {
       // the rendered rows are the list — and every one names M.
       expect(inPanel(find.byType(ListTile)), findsNWidgets(narrowed.length));
       for (final goal in narrowed) {
-        expect(find.text(describeFact(goal)), findsOneWidget);
+        expect(find.text(readFact(goal)), findsOneWidget);
       }
     });
 
@@ -328,11 +332,13 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text(describeFact(rig.goal)),
+        find.text(readFact(rig.goal)),
         60,
         scrollable: inPanel(find.byType(Scrollable)),
       );
-      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(readFact(rig.goal)));
       await tester.pump();
       expect(container.read(proofHighlightProvider), isEmpty);
 
@@ -340,7 +346,7 @@ void main() {
         rig.goal,
       )!;
       final step = proof.steps.first;
-      await tester.tap(find.text(describeFact(step.fact)).first);
+      await tester.tap(find.text(readFact(step.fact)).first);
       await tester.pump();
 
       expect(
@@ -353,7 +359,7 @@ void main() {
 
       // Tapping the same step again turns it off — a highlight the user
       // cannot dismiss is one they have to close the panel to escape.
-      await tester.tap(find.text(describeFact(step.fact)).first);
+      await tester.tap(find.text(readFact(step.fact)).first);
       await tester.pump();
       expect(container.read(proofHighlightProvider), isEmpty);
     });
@@ -384,16 +390,18 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text(describeFact(rig.goal)),
+        find.text(readFact(rig.goal)),
         60,
         scrollable: inPanel(find.byType(Scrollable)),
       );
-      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(readFact(rig.goal)));
       await tester.pump();
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
         rig.goal,
       )!;
-      final stepText = describeFact(proof.steps.first.fact);
+      final stepText = readFact(proof.steps.first.fact);
 
       // Nothing highlighted: the pulse is parked.
       await tester.pump(const Duration(milliseconds: 200));
@@ -425,16 +433,18 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text(describeFact(rig.goal)),
+        find.text(readFact(rig.goal)),
         60,
         scrollable: inPanel(find.byType(Scrollable)),
       );
-      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(readFact(rig.goal)));
       await tester.pump();
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
         rig.goal,
       )!;
-      await tester.tap(find.text(describeFact(proof.steps.first.fact)).first);
+      await tester.tap(find.text(readFact(proof.steps.first.fact)).first);
       await tester.pump();
       expect(container.read(proofHighlightProvider), isNotEmpty);
 
@@ -451,16 +461,18 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text(describeFact(rig.goal)),
+        find.text(readFact(rig.goal)),
         60,
         scrollable: inPanel(find.byType(Scrollable)),
       );
-      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(readFact(rig.goal)));
       await tester.pump();
       final proof = (container.read(proverProvider) as ProverReady).proofOf(
         rig.goal,
       )!;
-      await tester.tap(find.text(describeFact(proof.steps.first.fact)).first);
+      await tester.tap(find.text(readFact(proof.steps.first.fact)).first);
       await tester.pump();
       expect(container.read(proofHighlightProvider), isNotEmpty);
 
@@ -488,7 +500,8 @@ void main() {
       await tester.pump();
       expect(find.text('Ask about the selection'), findsOneWidget);
       final names = rig.goal.points.map(describePoint).toList();
-      final chip = '${names[0]}${names[1]} ∥ ${names[2]}${names[3]}';
+      final chip =
+          '${names[0]}${names[1]} is parallel to ${names[2]}${names[3]}';
       expect(find.text(chip), findsOneWidget);
 
       await tester.tap(find.text(chip));
@@ -502,7 +515,7 @@ void main() {
       expect(find.text('[1]'), findsOneWidget);
       // And it still points at the figure.
       await tester.tap(
-        find.text(describeFact(state.answer.proof!.steps.first.fact)).first,
+        find.text(readFact(state.answer.proof!.steps.first.fact)).first,
       );
       await tester.pump();
       expect(container.read(proofHighlightProvider), isNotEmpty);
@@ -529,7 +542,9 @@ void main() {
           describePoint(construction.byId(id)! as GeoPoint),
       ];
       await tester.tap(
-        find.text('${names[0]}${names[1]} ⟂ ${names[2]}${names[3]}'),
+        find.text(
+          '${names[0]}${names[1]} is perpendicular to ${names[2]}${names[3]}',
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -578,7 +593,7 @@ void main() {
       container.read(selectionProvider.notifier).selectMany([dc.id, fd.id]);
       await tester.pump();
 
-      await tester.tap(find.textContaining('⟂').first);
+      await tester.tap(find.textContaining('is perpendicular to').first);
       await tester.pumpAndSettle();
 
       final state = container.read(proverProvider) as ProverAnswered;
@@ -619,7 +634,7 @@ void main() {
       final step = proof.steps.last;
       expect(step.chase, isNotNull);
 
-      final goalRow = find.text(describeFact(goal));
+      final goalRow = find.text(readFact(goal));
       await tester.scrollUntilVisible(
         goalRow,
         60,
@@ -651,11 +666,13 @@ void main() {
       await tester.tap(find.byTooltip('Prove'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text(describeFact(rig.goal)),
+        find.text(readFact(rig.goal)),
         60,
         scrollable: inPanel(find.byType(Scrollable)),
       );
-      await tester.tap(find.text(describeFact(rig.goal)));
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(readFact(rig.goal)));
       await tester.pumpAndSettle();
 
       // Varignon reaches its parallelogram through `midp`, which the
@@ -680,7 +697,9 @@ void main() {
       await tester.pump();
       final names = rig.goal.points.map(describePoint).toList();
       await tester.tap(
-        find.text('${names[0]}${names[1]} ∥ ${names[2]}${names[3]}'),
+        find.text(
+          '${names[0]}${names[1]} is parallel to ${names[2]}${names[3]}',
+        ),
       );
       await tester.pumpAndSettle();
       expect(container.read(proverProvider), isA<ProverAnswered>());
@@ -775,14 +794,236 @@ void main() {
       // The resume row sits at the foot of a list this document fills
       // far past the fold, so it has to be scrolled to before a finder
       // can see it.
-      await tester.drag(inPanel(find.byType(Scrollable)), const Offset(0, -5000));
+      await tester.drag(
+        inPanel(find.byType(Scrollable)),
+        const Offset(0, -5000),
+      );
       await tester.pump();
       expect(
         find.text('Keep going'),
         findsOneWidget,
-        reason: 'a stopped run resumes through the same row a spent '
+        reason:
+            'a stopped run resumes through the same row a spent '
             'budget does',
       );
+    });
+
+    testWidgets('a row is a sentence; the raw spelling is its tooltip', (
+      tester,
+    ) async {
+      // Phase 157: prose is the row, and `describeFact`'s spelling —
+      // what `Proof.render()` prints — stays reachable on it without a
+      // second gesture design: a hover on desktop, a long-press on
+      // touch, which is what a Tooltip already is.
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text(readFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      expect(find.text(readFact(rig.goal)), findsOneWidget);
+      expect(
+        find.text(describeFact(rig.goal)),
+        findsNothing,
+        reason: 'the raw spelling must be the tooltip, not the row',
+      );
+      expect(find.byTooltip(describeFact(rig.goal)), findsOneWidget);
+
+      // The proof view reads the same way: prose rows, raw tooltips —
+      // on the goal header and on every step.
+      await tester.tap(find.text(readFact(rig.goal)));
+      await tester.pump();
+      final proof = (container.read(proverProvider) as ProverReady).proofOf(
+        rig.goal,
+      )!;
+      final step = proof.steps.first;
+      expect(find.text(readFact(step.fact)), findsWidgets);
+      expect(find.byTooltip(describeFact(step.fact)), findsWidgets);
+      expect(find.text(describeFact(step.fact)), findsNothing);
+    });
+
+    testWidgets('the reading convention is stated once, at the foot of a '
+        'list that needs it', (tester) async {
+      // `perp-true-unproved.rgl` derives eqangle facts, whose plain "are
+      // equal" leans on the mod-π convention — said once as a footnote,
+      // not hedged on every line.
+      final construction = decodeDocument(
+        jsonDecode(
+              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+
+      final ready = container.read(proverProvider) as ProverReady;
+      expect(
+        conventionApplies(provableGoals(ready.database)),
+        isTrue,
+        reason: 'the rig must derive an eqangle for this test to bite',
+      );
+      // The footnote sits below a list this document fills far past the
+      // fold, and the docked list materializes lazily — a single long
+      // drag stops short, so scroll until the note exists.
+      await tester.scrollUntilVisible(
+        find.text(factReadingConvention),
+        200,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      expect(find.text(factReadingConvention), findsOneWidget);
+    });
+
+    testWidgets('no note where no fact leans on the convention', (
+      tester,
+    ) async {
+      // Varignon's parallelogram proof is midp/para steps only — a
+      // footnote there would be a claim about facts the proof does not
+      // contain.
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(readFact(rig.goal)),
+        60,
+        scrollable: inPanel(find.byType(Scrollable)),
+      );
+      await tester.ensureVisible(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(readFact(rig.goal)));
+      await tester.pumpAndSettle();
+
+      final proof = (container.read(proverProvider) as ProverReady).proofOf(
+        rig.goal,
+      )!;
+      expect(
+        conventionApplies(proof.steps.map((step) => step.fact)),
+        isFalse,
+        reason: 'the rig must stay convention-free for this test to bite',
+      );
+      expect(find.text(factReadingConvention), findsNothing);
+    });
+
+    testWidgets('a raw-spelling tooltip waits out a passing pointer and '
+        'dies on scroll', (tester) async {
+      // The two guards against the web renderer's tooltip-overlay race
+      // (see rawSpellingTooltip): a row the pointer merely passes over
+      // must never begin to show, and a tooltip that is showing must be
+      // gone the moment the list scrolls. The crash itself is only
+      // reproducible under the real engine's mouse tracker — these pin
+      // the behaviour each guard exists to provide.
+      final rig = seedVarignon();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await tester.tap(find.byTooltip('Prove'));
+      await tester.pumpAndSettle();
+      final database = (container.read(proverProvider) as ProverReady).database;
+      // The first derived row — at the top of the list, no scrolling
+      // needed to hover it.
+      final goal = provableGoals(database).first;
+      expect(rig.goal, isNot(goal), reason: 'rig sanity: distinct facts');
+      final overlayText = find.text(describeFact(goal));
+
+      final mouse = await tester.createGesture(
+        kind: PointerDeviceKind.mouse,
+        pointer: 7,
+      );
+      await mouse.addPointer();
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.text(readFact(goal))));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        overlayText,
+        findsNothing,
+        reason:
+            'a pointer merely passing through must not raise the '
+            'overlay — that churn is the crash',
+      );
+
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(overlayText, findsOneWidget, reason: 'a settled hover shows it');
+
+      // A small wheel scroll: the row shifts 4 px, so the pointer stays
+      // inside it — only the scroll listener can be what dismisses.
+      final wheel = TestPointer(8, PointerDeviceKind.mouse);
+      wheel.hover(tester.getCenter(find.text(readFact(goal))));
+      await tester.sendEventToBinding(wheel.scroll(const Offset(0, 4)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        overlayText,
+        findsNothing,
+        reason: 'no tooltip overlay may exist while list rows churn',
+      );
+    });
+  });
+
+  group('one spelling across the panel', () {
+    test('questionLabel is readFact of the canonical statement', () {
+      final question = ProverQuestion(PredicateKind.perp, [
+        Predicate(PredicateKind.perp, [
+          free('a', 'A', 0, 0),
+          free('b', 'B', 1, 0),
+          free('c', 'C', 2, 1),
+          free('d', 'D', 2, 3),
+        ]),
+      ]);
+      expect(questionLabel(question), 'AB is perpendicular to CD');
+      expect(
+        questionLabel(question),
+        readFact(Fact.of(question.canonical)),
+        reason: 'the chip and the derived row must be one sentence',
+      );
+    });
+
+    test('verdictMessage quotes the sentence it judges', () {
+      final question = ProverQuestion(PredicateKind.cong, [
+        Predicate(PredicateKind.cong, [
+          free('a', 'A', 0, 0),
+          free('b', 'B', 3, 0),
+          free('c', 'C', 0, 1),
+          free('d', 'D', 3, 1),
+        ]),
+      ]);
+      final message = verdictMessage(
+        ProverAnswer(question: question, verdict: ProverVerdict.refuted),
+      );
+      // A sentence as the subject of another sentence needs its
+      // boundary marked, or the reading garden-paths.
+      expect(message, contains('“AB and CD are equal in length”'));
+      expect(message, contains('is not true of this construction'));
+    });
+
+    test('conventionApplies flags exactly the plain-read kinds', () {
+      final p = [for (var i = 0; i < 8; i++) free('$i', '', i * 1.0, 0)];
+      Fact fact(PredicateKind kind, int arity) =>
+          Fact(kind, p.sublist(0, arity));
+      expect(conventionApplies([fact(PredicateKind.eqangle, 8)]), isTrue);
+      expect(conventionApplies([fact(PredicateKind.simtri, 6)]), isTrue);
+      expect(conventionApplies([fact(PredicateKind.contri, 6)]), isTrue);
+      expect(
+        conventionApplies([
+          fact(PredicateKind.para, 4),
+          fact(PredicateKind.cong, 4),
+          fact(PredicateKind.coll, 3),
+          fact(PredicateKind.cyclic, 4),
+          fact(PredicateKind.midp, 3),
+          fact(PredicateKind.eqratio, 8),
+        ]),
+        isFalse,
+      );
+      expect(conventionApplies(const []), isFalse);
     });
   });
 
