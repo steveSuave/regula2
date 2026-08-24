@@ -1,0 +1,28 @@
+test/domain/prover/rule_test.dart
+  s_eabb8a0ad4653b::t_8f925d2708793e 7
+test/domain/prover/proof_test.dart
+  s_eabb8a0ad4653b::t_af915abed48984 258-262
+  s_eabb8a0ad4653b::t_8f925d2708793e 29-39,88
+lib/domain/prover/rule.dart
+  s_eabb8a0ad4653b::t_8f925d2708793e 133-143,183-188
+test/domain/prover/para_transitive_test.dart
+  s_eabb8a0ad4653b::t_8f925d2708793e 1-89
+test/domain/prover/rule_engine_test.dart
+  s_eabb8a0ad4653b::t_8f925d2708793e 43-53,873
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "74bb697ef68036d47a719fdc560d86e5c5a5732a",
+  "prompts": {},
+  "sessions": {
+    "s_eabb8a0ad4653b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "60250a0b-c48c-4a41-af12-3f7f6d6551cd",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
