@@ -1,9 +1,12 @@
 import 'angle_chase.dart';
 import 'angle_translation.dart';
+import 'arithmetic_chase.dart';
 import 'derivation_check.dart';
 import 'fact.dart';
 import 'fact_database.dart';
 import 'fact_naming.dart';
+import 'length_chase.dart';
+import 'length_translation.dart';
 import 'rule.dart';
 
 export 'fact_naming.dart'
@@ -40,14 +43,15 @@ class ProofStep {
   /// order `derivation_check.dart` re-matches against.
   final List<int> premiseSteps;
 
-  /// For an `angle_arithmetic` step, the relations it added up; null for
-  /// every other step, where the rule's name is already the explanation.
+  /// For an AR step — `angle_arithmetic` or `length_arithmetic` — the
+  /// relations it added up; null for every other step, where the rule's
+  /// name is already the explanation.
   ///
-  /// Null on an angle step too when the chase could not be re-derived —
-  /// a defect, and one [Proof.verify] reports in the same breath. A step
+  /// Null on an AR step too when the chase could not be re-derived — a
+  /// defect, and one [Proof.verify] reports in the same breath. A step
   /// that cannot explain itself still states its premises rather than
   /// refusing to render.
-  final AngleChase? chase;
+  final ArithmeticChase? chase;
 
   bool get isGiven => rule == null;
 }
@@ -116,9 +120,17 @@ class Proof {
             for (final premise in database.derivationOf(fact)!.premises)
               numberOf[premise]!,
           ],
-          chase: database.derivationOf(fact)!.rule == angleArithmeticRule
-              ? AngleChase.of(fact, database.derivationOf(fact)!.premises)
-              : null,
+          chase: switch (database.derivationOf(fact)!.rule) {
+            angleArithmeticRule => AngleChase.of(
+              fact,
+              database.derivationOf(fact)!.premises,
+            ),
+            lengthArithmeticRule => LengthChase.of(
+              fact,
+              database.derivationOf(fact)!.premises,
+            ),
+            _ => null,
+          },
         ),
     ]);
   }
@@ -177,9 +189,9 @@ class Proof {
   /// The proof as a numbered statement/reason list, points named the way
   /// the figure names them.
   ///
-  /// An `angle_arithmetic` step is followed by its chase, indented: the
-  /// rule name is the explanation everywhere else, and there it is a
-  /// label for a sum the reader cannot see. See [AngleChase].
+  /// An AR step is followed by its chase, indented: the rule name is the
+  /// explanation everywhere else, and there it is a label for a sum the
+  /// reader cannot see. See [AngleChase] and [LengthChase].
   String render() {
     final lines = <String>[];
     final statements = [for (final step in steps) describeFact(step.fact)];

@@ -13,6 +13,8 @@ import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/length_chase.dart';
+import 'package:regula/domain/prover/length_closure.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/prover.dart';
@@ -135,6 +137,54 @@ void main() {
       'θ(cd) = θ(ef) + π/2',
       '⟹ θ(ab) = θ(ef)',
     ]);
+  });
+
+  group('the length side, on the compile target', () {
+    test('a ℚ pivot is exact where a double would round', () {
+      // The length closure divides — that is its whole difference from
+      // the angle side — and a pivot of 1/3 taken through a double
+      // would come back 0.333… and reduce nothing to zero. `Rational`
+      // is `BigInt`-backed so it does not; this is the gate that says
+      // so on the target rather than on the VM.
+      final closure = LengthClosure()
+        ..add(LengthEquation({'a': r(3), 'b': r(-1)}))
+        ..add(LengthEquation({'b': r(1), 'c': r(-3)}));
+      expect(closure.proves(LengthEquation({'a': r(1), 'c': r(-1)})), isTrue);
+      final certificate = closure.entails(
+        LengthEquation({'a': r(1), 'c': r(-1)}),
+      );
+      expect(certificate, isNotNull);
+      expect(certificate!.values, contains(r(1, 3)));
+      expect(
+        closure.recombine(certificate),
+        LengthEquation({'a': r(1), 'c': r(-1)}),
+      );
+    });
+
+    test('a length chase renders on the compile target, glyphs and all', () {
+      // `|`, `=`, `^` and the ASCII digits are safe anywhere; `·` and
+      // `⟹` are not, and reach the page as string literals through
+      // whichever web backend is compiling. The length chase carries no
+      // fraction slash — `LengthChase` renders products, not ratios —
+      // so this is the whole character set it uses.
+      final a = FreePoint(id: 'A', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'B', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'C', position: const Vec2(2, 0));
+      final d = FreePoint(id: 'D', position: const Vec2(3, 0));
+      final e = FreePoint(id: 'E', position: const Vec2(4, 0));
+      final f = FreePoint(id: 'F', position: const Vec2(5, 0));
+      final chase = LengthChase.of(Fact(PredicateKind.cong, [a, b, e, f]), [
+        Fact(PredicateKind.eqratio, [a, b, c, d, c, d, e, f]),
+        Fact(PredicateKind.cong, [a, b, c, d]),
+      ]);
+      expect(chase, isNotNull);
+      expect(chase!.isSound, isTrue);
+      expect(chase.render(), [
+        '|CD|^2 = |AB|·|EF|',
+        '|AB|^2 = |CD|^2',
+        '⟹ |AB| = |EF|',
+      ]);
+    });
   });
 
   test('the exchange runs, and its steps verify, in the browser', () {

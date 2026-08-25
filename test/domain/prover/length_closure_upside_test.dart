@@ -18,14 +18,30 @@
 /// `provoleas2.json` to quiescence holding five `eqratio`s sharing a
 /// segment, which is the input the deferral was measured without. A
 /// ℚ-linear span over log-lengths — the deferred system itself,
-/// simulated — entails **one new `cong` there, `|AB| = |LO|`**, an
+/// simulated — entailed **one new `cong` there, `|AB| = |LO|`**, an
 /// integer combination of the intercept fact `|MO|/|ON| = |OB|/|LO|`
 /// and the similar-triangle fact `|MA|/|AO| = |AO|/|AB|` with a
 /// coefficient 2 on `l_AO` that no union-find can form, and 43
 /// `eqratio`s chained through it (2 more on `perp-true-unproved.rgl`);
 /// the midpoint constant `ln 2` adds nothing on this corpus, and the
-/// filter refuses none of it. So the deferral's premise no longer holds:
-/// this pins the numbers, and the build is recorded in `docs/TODO.md`.
+/// filter refuses none of it. So the deferral's premise no longer held.
+///
+/// **Phase 165 then built it, and this file changed job.** The `cong`
+/// column is 0 everywhere now — the exchange publishes what the closure
+/// entails, so there is no upside left to measure — and a `cong`
+/// reappearing here would be a *defect*, a document the publisher is
+/// missing. The `eqratio` column stays, because `eqratio` is answered
+/// on ask and never published; it fell from 43 to 23 on `provoleas2`
+/// when the published `cong` brought 20 of them within reach of the
+/// stored `cong`s alone.
+///
+/// **The third test is the half those two cannot state.** "Nothing is
+/// outstanding" is equally true of a publisher that never ran, so it
+/// pins what was actually published: one `cong` in the whole corpus,
+/// screened by the filter and verifying as a certificate. The fixture
+/// list is the full seven from `benchmark/prover_chunk_bench.dart`
+/// since Phase 165; it was six before, which left `tangent-chord.rgl`
+/// unmeasured here for no reason anyone recorded.
 library;
 
 import 'dart:convert';
@@ -38,9 +54,10 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
-import 'package:regula/domain/prover/fact_naming.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/length_translation.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/prover.dart';
 import 'package:regula/domain/prover/rational.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
@@ -123,6 +140,7 @@ void main() {
     'test/fixtures/perp-true-unproved.rgl',
     'test/fixtures/provoleas2.json',
     'test/fixtures/tangent-chase.rgl',
+    'test/fixtures/tangent-chord.rgl',
   ];
 
   Construction load(String path) => decodeDocument(
@@ -397,18 +415,85 @@ void main() {
     );
   }
 
-  test('the ratio half entails a cong the exchange does not hold — on '
-      'provoleas2, and only there', () {
+  test('what the publisher actually put there, per fixture', () {
+    // The other half of Phase 165's regression, and the one the two
+    // tests above cannot state: they measure what is *entailed* and
+    // find nothing outstanding, which is equally true of a publisher
+    // that never ran. This pins what it published.
+    //
+    // One fact in the whole corpus, and that is the phase's honest
+    // yield: the closure's value is not volume, it is reaching a `cong`
+    // the table cannot. Every one is screened by the same filter DD
+    // screens with, and every one verifies as a certificate.
+    const expected = {
+      'test/fixtures/locus3.json': 0,
+      'test/fixtures/apatitos-topos.rgl': 0,
+      'test/fixtures/no-locus.rgl': 0,
+      'test/fixtures/perp-true-unproved.rgl': 0,
+      'test/fixtures/provoleas2.json': 1,
+      'test/fixtures/tangent-chase.rgl': 0,
+      'test/fixtures/tangent-chord.rgl': 0,
+    };
+    for (final path in fixtures) {
+      final construction = load(path);
+      final filter = DiagramFilter.probe(construction.objects);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(construction.objects), filter);
+      Prover(database: database, filter: filter).run(maxApplications: 30000);
+
+      final published = [
+        for (final fact in database.facts)
+          if (database.derivationOf(fact)!.rule == lengthArithmeticRule) fact,
+      ];
+      expect(published, hasLength(expected[path]!), reason: path);
+      for (final fact in published) {
+        expect(
+          fact.kind,
+          PredicateKind.cong,
+          reason: '$path: only cong is published',
+        );
+        expect(
+          filter.holds(fact.statement),
+          isTrue,
+          reason: '$path: an unscreened publication',
+        );
+        expect(
+          Proof.of(fact, database).verify(),
+          isEmpty,
+          reason: '$path: the published step is not a certificate',
+        );
+      }
+    }
+  });
+
+  test('the ratio half entails no cong the exchange does not hold — '
+      'which is Phase 165 having landed', () {
     // Per fixture: new `cong`, new `eqratio` beyond what pairs of stored
-    // `cong`s already say. The zero rows are the tripwire's other half:
-    // a document that makes them move is the next measurement.
+    // `cong`s already say.
+    //
+    // **The cong column read 1 on `provoleas2` until Phase 165, and it
+    // reading 0 is the phase working**: the exchange now runs the same
+    // closure and publishes what it entails, so measuring the upside of
+    // a system that is switched on can only come back empty. The
+    // tripwire keeps its value in the other direction — a corpus change
+    // that puts a `cong` back in this column is a document the
+    // publisher is missing, which is a defect and not an opportunity.
+    //
+    // The `eqratio` column is the half that stays: it is answered on
+    // ask through `Prover.resolve` and never published, so these are
+    // statements the closure *would* confirm if a question named one.
     const expected = {
       'test/fixtures/locus3.json': (cong: 0, eqratio: 0),
       'test/fixtures/apatitos-topos.rgl': (cong: 0, eqratio: 0),
       'test/fixtures/no-locus.rgl': (cong: 0, eqratio: 0),
       'test/fixtures/perp-true-unproved.rgl': (cong: 0, eqratio: 2),
-      'test/fixtures/provoleas2.json': (cong: 1, eqratio: 43),
+      // 43 until the publisher landed. Putting `|AB| = |LO|` in the
+      // database moved 20 of them into `byCongAlone`: with that one
+      // `cong` stored, a union-find over stored `cong`s reaches them,
+      // and only 23 still need the ratio rows.
+      'test/fixtures/provoleas2.json': (cong: 0, eqratio: 23),
       'test/fixtures/tangent-chase.rgl': (cong: 0, eqratio: 0),
+      'test/fixtures/tangent-chord.rgl': (cong: 0, eqratio: 0),
     };
     for (final path in fixtures) {
       final construction = load(path);
@@ -445,10 +530,18 @@ void main() {
       );
 
       if (path.endsWith('provoleas2.json')) {
-        final cong = upside.novel.singleWhere(
-          (fact) => fact.kind == PredicateKind.cong,
+        // What used to be the one novel `cong` here is now a fact the
+        // exchange holds, under the rule that says how it got there.
+        final cong = database.facts.singleWhere(
+          (fact) =>
+              fact.kind == PredicateKind.cong &&
+              fact.points.map(describePoint).join() == 'ABLO',
         );
-        expect(cong.points.map(describePoint).join(), 'ABLO');
+        expect(
+          database.derivationOf(cong)!.rule,
+          lengthArithmeticRule,
+          reason: 'the publisher is what put |AB| = |LO| there',
+        );
       }
     }
   });

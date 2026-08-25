@@ -2,6 +2,7 @@ import '../construction/geo_object.dart';
 import 'angle_translation.dart';
 import 'fact.dart';
 import 'fact_database.dart';
+import 'length_translation.dart';
 import 'rule.dart';
 
 /// The verdict on one recorded derivation.
@@ -62,6 +63,9 @@ DerivationCheck checkDerivation(
   }
   if (derivation.rule == angleArithmeticRule) {
     return _checkAngleArithmetic(conclusion, derivation);
+  }
+  if (derivation.rule == lengthArithmeticRule) {
+    return _checkLengthArithmetic(conclusion, derivation);
   }
   final table = rules ?? ddCoreRules;
   final named = table.where((rule) => rule.name == derivation.rule);
@@ -137,6 +141,45 @@ DerivationCheck _checkAngleArithmetic(Fact conclusion, Derivation derivation) {
     return DerivationCheck.invalid(
       '${derivation.premises.join(' & ')} does not entail $conclusion '
       'in the angle algebra',
+    );
+  }
+  return const DerivationCheck.valid();
+}
+
+/// A length AR step re-derived from its own record — [_checkAngleArithmetic]
+/// over the other algebra, and separate for the reason the two closures
+/// are separate files: a ℚ pivot must not be reachable from an angle
+/// step, and sharing a checker is one refactor away from sharing one.
+///
+/// The asymmetry worth naming is the premise screen. `midp` says
+/// something about lengths, so it may be cited; it is not something the
+/// algebra may *conclude*, which is [LengthTranslation.equationOf]'s
+/// refusal and is checked below against the conclusion rather than
+/// against the premises.
+DerivationCheck _checkLengthArithmetic(Fact conclusion, Derivation derivation) {
+  if (derivation.premises.isEmpty) {
+    return const DerivationCheck.invalid(
+      'a length_arithmetic step with no premises proves nothing',
+    );
+  }
+  final translation = LengthTranslation();
+  for (final premise in derivation.premises) {
+    if (!translation.absorb(premise)) {
+      return DerivationCheck.invalid(
+        'length_arithmetic cites $premise, which says nothing about '
+        'lengths',
+      );
+    }
+  }
+  if (translation.equationOf(conclusion) == null) {
+    return DerivationCheck.invalid(
+      'length_arithmetic cannot conclude $conclusion',
+    );
+  }
+  if (translation.entailmentOf(conclusion) == null) {
+    return DerivationCheck.invalid(
+      '${derivation.premises.join(' & ')} does not entail $conclusion '
+      'in the length algebra',
     );
   }
   return const DerivationCheck.valid();

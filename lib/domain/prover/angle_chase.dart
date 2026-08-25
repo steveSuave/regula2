@@ -1,6 +1,7 @@
 import '../construction/geo_object.dart';
 import 'angle_closure.dart';
 import 'angle_translation.dart';
+import 'arithmetic_chase.dart';
 import 'fact.dart';
 import 'fact_naming.dart';
 import 'rational.dart';
@@ -31,7 +32,7 @@ import 'rational.dart';
 /// nothing is stored on the derivation, the save format does not move,
 /// and a chase that cannot be re-derived is [AngleChase.of] answering
 /// null rather than a proof rendering a claim it cannot support.
-class AngleChase {
+class AngleChase implements ArithmeticChase {
   const AngleChase._(this.lines, this.conclusion, this._names);
 
   /// Rebuilds the chase for [conclusion] from [premises], or answers
@@ -77,6 +78,7 @@ class AngleChase {
   final Map<String, String> _names;
 
   /// [conclusion] written for a reader.
+  @override
   String get conclusionText => renderAngleEquation(conclusion, _names);
 
   /// The chase as lines of text, conclusion last.
@@ -92,6 +94,7 @@ class AngleChase {
   /// insertion order, which is nearly that and not reliably that. Ties
   /// keep their certificate order, which is what makes the two lines a
   /// single `coll` contributes come out in the order it states them.
+  @override
   List<String> render({int? Function(Fact)? cite}) {
     final ordered = [for (var i = 0; i < lines.length; i++) i];
     if (cite != null) {
@@ -118,6 +121,7 @@ class AngleChase {
   /// `recombine` is its inverse — which is exactly why it is worth
   /// asserting: a rendering that quietly dropped or rescaled a line
   /// would still look like a proof.
+  @override
   bool get isSound {
     var total = AngleEquation(const {}, Rational.zero);
     for (final line in lines) {

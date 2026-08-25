@@ -4,6 +4,7 @@ import 'diagram_filter.dart';
 import 'event_loop_yield.dart';
 import 'fact.dart';
 import 'fact_database.dart';
+import 'length_translation.dart';
 import 'rule.dart';
 import 'rule_engine.dart';
 
@@ -64,6 +65,13 @@ class Prover {
 
   final ProverEngine _dd;
   final AngleTranslation angles = AngleTranslation();
+
+  /// The other half of AR (Phase 165). It publishes `cong` and answers
+  /// `eqratio` on ask — the opposite split from [angles], which
+  /// publishes `para`/`perp` and answers `eqangle`, and by the same
+  /// rule: publish what has a consumer, and only what the enumeration
+  /// can afford.
+  final LengthTranslation lengths = LengthTranslation();
 
   /// The incidence closure, which tells [AngleTranslation.conclusions] a
   /// parallel from a line and itself.
@@ -178,6 +186,7 @@ class Prover {
     for (final fact in fresh) {
       incidence.absorb(fact);
       angles.absorb(fact);
+      lengths.absorb(fact);
     }
     return fresh.length;
   }
@@ -186,17 +195,38 @@ class Prover {
     var published = 0;
     for (final conclusion in angles.conclusions(incidence).toList()) {
       if (database.contains(conclusion.fact)) continue;
-      if (!filter.holds(conclusion.fact.statement)) continue;
-      final premises = angles.sourcesOf(conclusion.certificate);
-      if (premises.any((premise) => !database.contains(premise))) continue;
-      if (database.add(
+      if (_record(
         conclusion.fact,
-        Derivation(angleArithmeticRule, premises),
+        angleArithmeticRule,
+        angles.sourcesOf(conclusion.certificate),
+      )) {
+        published++;
+      }
+    }
+    for (final conclusion in lengths.conclusions().toList()) {
+      if (database.contains(conclusion.fact)) continue;
+      if (_record(
+        conclusion.fact,
+        lengthArithmeticRule,
+        lengths.sourcesOf(conclusion.certificate),
       )) {
         published++;
       }
     }
     return published;
+  }
+
+  /// Records [fact] as an AR step under [rule], screened.
+  ///
+  /// The two screens are the same two whether the fact was enumerated or
+  /// asked for: the diagram must agree, on the no-exception rule this
+  /// class states, and every cited premise must still be present — a
+  /// certificate over inputs the database has since lost would name a
+  /// proof step that cannot be read back.
+  bool _record(Fact fact, String rule, List<Fact> premises) {
+    if (!filter.holds(fact.statement)) return false;
+    if (premises.any((premise) => !database.contains(premise))) return false;
+    return database.add(fact, Derivation(rule, premises));
   }
 
   /// Whether the exchange holds [fact].
@@ -205,12 +235,13 @@ class Prover {
   /// Whether the exchange holds [fact] *or can* — and if only the
   /// latter, holds it from now on (Phase 159).
   ///
-  /// [_publish] enumerates `para` and `perp` and deliberately never
-  /// `eqangle`: quadruples of variables are quartic, and 152e measured
-  /// 2 527 entailed statements on one fixture with no consumer for any.
-  /// An *ask* is the other direction — one membership query against the
-  /// closure — and the one statement it lands on is recorded as an
-  /// `angle_arithmetic` step exactly as a published one would be, so
+  /// [_publish] enumerates `para`, `perp` and `cong`, and deliberately
+  /// never `eqangle` or `eqratio`: quadruples of variables are quartic,
+  /// and 152e measured 2 527 entailed `eqangle` on one fixture with no
+  /// consumer for any, session 174 another 43 `eqratio`.
+  /// An *ask* is the other direction — one membership query against
+  /// each closure — and the one statement it lands on is recorded as an
+  /// arithmetic step exactly as a published one would be, so
   /// that `Proof.of` has a derivation to read and `verify` a certificate
   /// to check. Screened through the filter like every publication, and
   /// **not** handed to DD's pivot queue: the fact was asked for, not
@@ -218,11 +249,24 @@ class Prover {
   /// [isComplete] a function of what the user asked.
   bool resolve(Fact fact) {
     if (database.contains(fact)) return true;
-    final certificate = angles.entailmentOf(fact);
-    if (certificate == null) return false;
-    if (!filter.holds(fact.statement)) return false;
-    final premises = angles.sourcesOf(certificate);
-    if (premises.any((premise) => !database.contains(premise))) return false;
-    return database.add(fact, Derivation(angleArithmeticRule, premises));
+    final angleCertificate = angles.entailmentOf(fact);
+    if (angleCertificate != null &&
+        _record(
+          fact,
+          angleArithmeticRule,
+          angles.sourcesOf(angleCertificate),
+        )) {
+      return true;
+    }
+    final lengthCertificate = lengths.entailmentOf(fact);
+    if (lengthCertificate != null &&
+        _record(
+          fact,
+          lengthArithmeticRule,
+          lengths.sourcesOf(lengthCertificate),
+        )) {
+      return true;
+    }
+    return false;
   }
 }

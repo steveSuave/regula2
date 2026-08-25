@@ -313,7 +313,11 @@ void main() {
           reason: 'the angle step for $fact is still a black box',
         );
         expect(step.chase!.isSound, isTrue);
-        expect(step.chase!.lines, isNotEmpty);
+        // `ProofStep.chase` is the `ArithmeticChase` interface since
+        // Phase 165 — there are two algebras now — and this rig is
+        // about the angle one, so the cast is the claim, not a
+        // workaround.
+        expect((step.chase! as AngleChase).lines, isNotEmpty);
         angleSteps++;
       }
       expect(angleSteps, greaterThan(0));
@@ -330,7 +334,7 @@ void main() {
       final numbering = proof.numbering;
       for (final step in proof.steps) {
         final chase = step.chase;
-        if (chase == null) continue;
+        if (chase is! AngleChase) continue;
         for (final line in chase.lines) {
           final cited = numbering[line.source];
           expect(cited, isNotNull);
