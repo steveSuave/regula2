@@ -1,0 +1,40 @@
+lib/domain/prover/angle_chase.dart
+  s_d29b31706b0974::t_99913f5f8c8242 4
+  s_d29b31706b0974::t_4268a8f6220376 35,81,97,124
+lib/domain/prover/length_chase.dart
+  s_d29b31706b0974::t_9fa7eb30f444b3 1-215
+lib/domain/prover/proof.dart
+  s_d29b31706b0974::t_876db20ea20b03 3,8-9,46-48,50-51,54,123-133,192-194
+test/domain/prover/length_chase_test.dart
+  s_d29b31706b0974::t_fb888791bc5287 192-206,210-213
+  s_d29b31706b0974::t_5cebc886cbefbe 76-81
+  s_d29b31706b0974::t_841bd8e3f00ac6 88-89
+  s_d29b31706b0974::t_490fb93801c147 1-54,60-65,67-75,82-87,90-103,105-191,207-209,214-216
+  s_d29b31706b0974::t_a6ff89bb59dc18 55-59,66,104
+test/domain/prover/angle_chase_test.dart
+  s_d29b31706b0974::t_47d84f6871d4f6 316-320,337
+lib/domain/prover/arithmetic_chase.dart
+  s_d29b31706b0974::t_4268a8f6220376 1-32
+lib/presentation/panels/proof_panel.dart
+  s_d29b31706b0974::t_6944448ef75eb4 176-178,182-186,926-929
+test/web/angle_closure_web_test.dart
+  s_d29b31706b0974::t_5cebc886cbefbe 184
+  s_d29b31706b0974::t_2b294557dc29d2 16-17,142-183,185-187
+  s_d29b31706b0974::t_47af0585203232 188-189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "14289fd7c4f2f1a4fded6eca27899ad394e582fc",
+  "prompts": {},
+  "sessions": {
+    "s_d29b31706b0974": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "310c38ce-7ed1-4a07-b408-c206d2e9535c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
