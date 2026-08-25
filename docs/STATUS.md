@@ -1783,3 +1783,24 @@ Gates: analyze clean, suite **3352** green (3342 at the phase's start), 50 s wal
 - **A "new fact" is not new content**, and the whole first pass of this measurement was wrong for that reason. Anything comparing two prover runs should ask the *engine* whether the difference is entailed, not diff the fact set — the closures deliberately withhold degenerate spellings, so the fact set understates what a run knows.
 - **`o.circle != null` and `o.conic != null` are different filters** and the candidate count moves by two on `provoleas2` between them; the projective accessor is the one domain code reads, per CLAUDE.md, and it is the one in `lib/`. The scratch rig used the affine getter and under-counted.
 - The sweep is **one point at a time**. A theorem needing two auxiliary points comes back as a zero here, and JGEX constructs more than one on harder documents — stated in the test's header so the negative is not read as broader than it is.
+
+## 2026-08-25 — session 176 (continued): Phase 153 complete
+
+**Done — Phase 153 end to end, six commits on `phase-153-auxiliary-construction`.** The measurement (above), then the search the measurement designed, then the ask and the panel.
+
+- **`auxiliary_search.dart`** — goal-directed with early exit, and **resumable by cursor** on `ProverEngine`'s Phase 140 precedent, because an attempt is a whole document run. It takes the question's *spellings* and reports which it reached — they are one statement, and the proof has to be read off the spelling the run derived. Nothing is mutated: each attempt runs against the document's objects plus one **detached** point, so the goal keeps naming the user's real points. `reached` is `Prover.resolve`, not membership.
+- **The ordering claim, measured**: JGEX's midpoint of `BC` is candidate **4 of 26** on the one document with an answer, so early exit costs five runs rather than twenty-six. That is what an order buys — not a cheaper sweep, an earlier answer.
+- **`ProverNotifier.searchForPoint`**, guarded on exactly one verdict and **user-initiated, never automatic**. *Undecided* has shown nothing about reachability and wants another budget, not a hundred runs. Progress counts *candidates*, not applications. The run behind an invented point is not published — it holds facts about a figure the user does not have.
+- **The panel offers it and says what it built.** The proposal carries the document's own next automatic point name, so a step reads `perp(F, D, D, G)` and accepting it is an `AddObjectCommand` and nothing else. The disclosure sits *above* the proof, where the name it introduces is next to the steps that use it. Once a search has tried everything the offer withdraws and the message strengthens.
+- **Box 7's premise was wrong, and that is the finding.** It assumed the search would run as part of asking. It does not, so `perp-true-unproved.rgl` keeps its role as the *unproved* rig and Phase 148's three-verdict tests are untouched — the fixture is now the rig for both halves. What the box got right is that its stopgap is spent: `tangent-chase.rgl`'s `cong(P,S,P,T)` is stored in the baseline run since Phase 155.
+
+Gates: analyze clean, suite **3369** green (3342 at the phase's start), browser gate **15**.
+
+**Next.** Phase 161's decision box is the remaining engine item; the corpus is still the limiting factor, which five measurements now say. Carried: `readFact` on listed `eqangle`s can still read magnitude-false; Phase 157's and the builder's browser looks unverified; the id-based fact transfer for `Isolate.run`.
+
+**Gotchas.**
+
+- **The search is one point at a time**, and a theorem needing two comes back exhausted. Named in TODO so the negative is not read as broader than it is.
+- **`Prover.resolve` records what it confirms**, so a membership test *after* an ask sees the fact either way. A test that means to pin "the closure answered it" must assert the step's *rule*, not the fact's absence. Cost one debugging round.
+- The panel's new strings are plain ASCII, unlike the chase's `θ`/`π`/`⟹`, so nothing here needed a browser-gate entry — but the gate was run and is green at 15.
+- **None of this has been looked at in a browser.** The flow is pinned in `testWidgets`, and driving it live needs the JGEX document through the file picker, which browser automation cannot do.
