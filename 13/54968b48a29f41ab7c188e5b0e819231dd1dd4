@@ -1,0 +1,26 @@
+test/domain/prover/auxiliary_search_test.dart
+  s_99ccdb7ca9813f::t_3e1a9c1fe96ba9 247,250,253-262,264-269,271-277
+  s_99ccdb7ca9813f::t_64810505bbf27f 30,227-231,233-235
+  s_99ccdb7ca9813f::t_c150ed52f31125 1-29,31-192,239-246,248-249,251-252,263,270,278-279
+  s_99ccdb7ca9813f::t_a282598957510a 193-226,232,236-238
+lib/domain/prover/auxiliary_search.dart
+  s_99ccdb7ca9813f::t_f608854beb99c8 1-7,9-81,83-95,105-166,168-187,190-198
+  s_99ccdb7ca9813f::t_b9f010e40a72f1 8
+  s_99ccdb7ca9813f::t_3e1a9c1fe96ba9 82,96-104,167,188-189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "1354968b48a29f41ab7c188e5b0e819231dd1dd4",
+  "prompts": {},
+  "sessions": {
+    "s_99ccdb7ca9813f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e814237-bd82-479d-a95f-d75f2f2e2334",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
