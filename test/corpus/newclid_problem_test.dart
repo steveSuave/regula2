@@ -1,0 +1,417 @@
+/// The corpus translator, pinned on a subset small enough to run in the
+/// gate (Phase 167).
+///
+/// **Why a subset.** The whole corpus is 928 goals and two minutes of
+/// prover time; `CLAUDE.md`'s CI gate is `flutter analyze && flutter
+/// test && flutter test --platform chrome test/web`, and a two-minute
+/// addition to it would turn a prover slowdown into a CI timeout rather
+/// than a number. The full run lives in `benchmark/corpus_bench.dart`,
+/// which is informational like every other benchmark. What runs here is
+/// fifteen problems, inlined verbatim so the gate needs no checkout of
+/// somebody else's repository.
+///
+/// **What is actually being tested is the translator**, not the prover.
+/// The prover has its own suite. A translation can be wrong in a way no
+/// verdict would reveal — build the parallelogram where the problem
+/// meant the trapezoid, read a macro's arguments in the wrong order —
+/// and the baseline would then measure the translator's mistakes and
+/// call them the engine's limits. Three checks stand against that, and
+/// the second is the one that matters:
+///
+/// 1. hand-checked problems translate to exactly the objects expected;
+/// 2. **every hypothesis of every translated problem holds under
+///    `DiagramFilter`**, which is a real assertion rather than a
+///    tautology: `hypotheses()` reads the *parent ties*, so a statement
+///    it emits must be true in any figure those ties produce, and one
+///    that fails means the construction is not what the clause said;
+/// 3. the goal holds in the figure built for it, for the same reason.
+library;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/perpendicular_line.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/prover/diagram_filter.dart';
+import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/question_template.dart';
+
+import 'newclid_problem.dart';
+import 'newclid_translation.dart';
+
+/// Fifteen problems, copied verbatim from Newclid's corpus.
+///
+/// Chosen to cover every shape the translator has: a point on one
+/// curve and a point on two, each family of carrier, the direct kinds,
+/// the two-branch circle crossings, a clause naming several points, a
+/// goal of every arity, and the two configurations resampling exists
+/// for.
+const List<(String, String, String)> corpusSubset = [
+  (
+    'examples',
+    'orthocenter',
+    'a b c = triangle a b c; h = on_tline h b a c, on_tline h c a b '
+        '? perp a h b c',
+  ),
+  (
+    'examples',
+    'orthocenter_aux',
+    'a b c = triangle a b c; d = on_tline d b a c, on_tline d c a b; '
+        'e = on_line e a c, on_line e b d ? perp a d b c',
+  ),
+  (
+    'examples',
+    'not_always_good',
+    'a b c = triangle a b c; o = free o; m = on_circle m o b, on_line m a b; '
+        'n = on_circle n o b, on_line n a c; r = angle_bisector r b a c, '
+        'angle_bisector r m o n ? perp n m o r',
+  ),
+  (
+    'minimal',
+    'r03',
+    'a = free a; b = free b; p = free p; q = on_circum q a b p '
+        '? eqangle p a p b q a q b',
+  ),
+  (
+    'minimal',
+    'r22',
+    'a = free a; b = free b; m = midpoint m a b; o = on_tline o m a b '
+        '? cong o a o b',
+  ),
+  (
+    'minimal',
+    'r54',
+    'a b = segment a b; m = on_line m a b, on_bline m a b ? midp m a b',
+  ),
+  (
+    'minimal',
+    'r91',
+    'a b = segment a b; c = free a; d = on_pline d a b c, '
+        'eqdistance d c a b ? eqangle c a c b b c b d',
+  ),
+  ('minimal', 'r56', 'a b = segment a b; m = midpoint m a b ? coll m a b'),
+  (
+    'minimal',
+    'r19',
+    'a b c = triangle a b c; d = on_dia d a c; m = midpoint m a c '
+        '? cong a m d m',
+  ),
+  (
+    'minimal',
+    'r43',
+    'a b c = triangle a b c; d = on_tline d b a c, on_tline d c a b '
+        '? perp a d b c',
+  ),
+  (
+    'examples',
+    'incenter_a',
+    'a b c = triangle a b c; i = incenter i a b c; '
+        'f = foot f i b c ? perp i f b c',
+  ),
+  (
+    'examples',
+    'circumcentre',
+    'a b c = triangle a b c; o = circle o a b c ? cong o a o b',
+  ),
+  (
+    'examples',
+    'midline',
+    'a b c = triangle a b c; m = midpoint m a b; n = midpoint n a c '
+        '? para m n b c',
+  ),
+  (
+    'examples',
+    'test_get_two_intersections',
+    'a b = segment a b; c = eqdistance c a a b, eqdistance c b a b; '
+        'd = eqdistance d a a b, eqdistance d b a b ? perp c d a b',
+  ),
+  (
+    'examples',
+    'reflection',
+    'a b = segment a b; c = free c; d = mirror d c b ? coll c b d',
+  ),
+  (
+    'examples',
+    'centroid',
+    'a b c = triangle a b c; m = midpoint m a b; n = midpoint n a c; '
+        'k = midpoint k b c; p = intersection_ll p b n c m ? coll a p k',
+  ),
+];
+
+void main() {
+  NewclidProblem only(String name, String body, {String source = 'test'}) {
+    final problems = parseNewclidBody(name, body, source: source);
+    expect(problems, hasLength(1), reason: 'expected a single goal');
+    return problems.single;
+  }
+
+  TranslatedProblem built(String name, String body) {
+    final translation = translateNewclidProblem(only(name, body));
+    expect(
+      translation,
+      isA<TranslatedProblem>(),
+      reason: translation is UntranslatableProblem ? '$translation' : '',
+    );
+    return translation as TranslatedProblem;
+  }
+
+  group('the grammar', () {
+    test(
+      'a clause names its points on the left and its calls on the right',
+      () {
+        final problem = only(
+          'two',
+          'a b c = triangle a b c; h = on_tline h b a c, on_tline h c a b '
+              '? perp a h b c',
+        );
+        expect(problem.clauses, hasLength(2));
+        expect(problem.clauses[0].outputs, ['a', 'b', 'c']);
+        expect(problem.clauses[0].calls.single.macro, 'triangle');
+        expect(problem.clauses[1].outputs, ['h']);
+        expect(problem.clauses[1].calls, hasLength(2));
+        expect(problem.clauses[1].calls[1].arguments, ['h', 'c', 'a', 'b']);
+        expect(problem.goal.predicate, 'perp');
+        expect(problem.goal.arguments, ['a', 'h', 'b', 'c']);
+      },
+    );
+
+    test('several goals after one "?" are several problems', () {
+      final problems = parseNewclidBody(
+        'pair',
+        'a b = segment a b; m = midpoint m a b ? coll m a b; cong m a m b',
+        source: 'test',
+      );
+      expect(problems.map((p) => p.name), ['pair', 'pair#2']);
+      expect(problems[0].goal.predicate, 'coll');
+      expect(problems[1].goal.predicate, 'cong');
+      // One construction, read twice.
+      expect(problems[0].clauses.length, problems[1].clauses.length);
+    });
+
+    test('the auxiliary section is parsed and kept out of the clauses', () {
+      final problem = only(
+        'aux',
+        'a b = segment a b; m = midpoint m a b | q = midpoint q a m '
+            '? coll m a b',
+      );
+      expect(problem.clauses, hasLength(2));
+      expect(problem.auxiliary, hasLength(1));
+      expect(problem.auxiliary.single.outputs, ['q']);
+    });
+
+    test('a malformed body is reported, and costs only that body', () {
+      final file = parseNewclidProblems(
+        'good\na b = segment a b; m = midpoint m a b ? coll m a b\n'
+        'bad\na b = segment a b ? coll a b ? coll b a\n'
+        'good2\na b = segment a b; n = midpoint n a b ? coll n a b\n',
+        source: 'test',
+      );
+      expect(file.problems.map((p) => p.name), ['good', 'good2']);
+      expect(file.errors, hasLength(1));
+      expect(file.errors.single.name, 'bad');
+      expect(file.errors.single.reason, contains('"?"'));
+    });
+
+    test('a clause without an "=" is refused', () {
+      expect(
+        () =>
+            parseNewclidBody('x', 'a b segment a b ? coll a b a', source: 't'),
+        throwsA(isA<NewclidParseError>()),
+      );
+    });
+  });
+
+  group('a clause becomes the objects it says', () {
+    test('one constraint is a glued point, two are a crossing', () {
+      final problem = built(
+        'orthocenter',
+        'a b c = triangle a b c; h = on_tline h b a c, on_tline h c a b '
+            '? perp a h b c',
+      );
+      expect(problem.points.keys, containsAll(<String>['a', 'b', 'c', 'h']));
+      for (final name in ['a', 'b', 'c']) {
+        expect(problem.points[name], isA<FreePoint>(), reason: name);
+      }
+      // Two `on_tline` calls on one point are two perpendiculars, and
+      // the point is where they meet.
+      final h = problem.points['h']!;
+      expect(h, isA<IntersectionPoint>());
+      expect(
+        (h as IntersectionPoint).parents.whereType<PerpendicularLine>(),
+        hasLength(2),
+      );
+    });
+
+    test('a single constraint glues the point to that one carrier', () {
+      final problem = built(
+        'r03',
+        'a = free a; b = free b; p = free p; q = on_circum q a b p '
+            '? eqangle p a p b q a q b',
+      );
+      final q = problem.points['q']!;
+      expect(q, isA<PointOnObject>());
+      expect((q as PointOnObject).curve, isA<GeoCircle>());
+    });
+
+    test('the direct kinds are the kinds, not a crossing', () {
+      final problem = built(
+        'r22',
+        'a = free a; b = free b; m = midpoint m a b; o = on_tline o m a b '
+            '? cong o a o b',
+      );
+      expect(problem.points['m'], isA<Midpoint>());
+    });
+
+    test('angle_bisector is a bisector carrier, taken twice', () {
+      final problem = built(
+        'not_always_good',
+        'a b c = triangle a b c; o = free o; '
+            'm = on_circle m o b, on_line m a b; '
+            'n = on_circle n o b, on_line n a c; '
+            'r = angle_bisector r b a c, angle_bisector r m o n '
+            '? perp n m o r',
+      );
+      final r = problem.points['r']!;
+      expect(r, isA<IntersectionPoint>());
+      expect(
+        (r as IntersectionPoint).parents.whereType<AngleBisectorLine>(),
+        hasLength(2),
+      );
+    });
+
+    test('the same two curves, taken twice, give the two points', () {
+      // The corpus problem that pins the branch rule, and the only
+      // shape that pins it *hard*: `c` and `d` are the two crossings of
+      // one pair of circles, so a translator that took branch 0 both
+      // times would build one point twice and never produce a figure at
+      // all. Measured on the whole corpus, the rule is worth 86 of the
+      // 470 problems that build.
+      final problem = built(
+        'test_get_two_intersections',
+        'a b = segment a b; c = eqdistance c a a b, eqdistance c b a b; '
+            'd = eqdistance d a a b, eqdistance d b a b ? perp c d a b',
+      );
+      final c = problem.points['c']!;
+      final d = problem.points['d']!;
+      expect(c, isA<IntersectionPoint>());
+      expect(d, isA<IntersectionPoint>());
+      expect(
+        (c as IntersectionPoint).branchIndex,
+        isNot((d as IntersectionPoint).branchIndex),
+      );
+      expect(c.position!.distanceTo(d.position!), greaterThan(1));
+    });
+
+    test('a new point never lands on a point the figure already names', () {
+      // `on_circle m o b` and `on_line m a b` meet at `b` and at one
+      // other point. `m` is the other one — the rule that reading only
+      // the two macros which *say* so got wrong.
+      final problem = built(
+        'not_always_good',
+        'a b c = triangle a b c; o = free o; '
+            'm = on_circle m o b, on_line m a b; '
+            'n = on_circle n o b, on_line n a c; '
+            'r = angle_bisector r b a c, angle_bisector r m o n '
+            '? perp n m o r',
+      );
+      final b = problem.points['b']!.position!;
+      for (final name in ['m', 'n']) {
+        expect(
+          problem.points[name]!.position!.distanceTo(b),
+          greaterThan(1e-3),
+          reason: '$name landed on b',
+        );
+      }
+    });
+  });
+
+  group('what the translator refuses, it refuses by name', () {
+    test('a macro it does not implement', () {
+      final translation = translateNewclidProblem(
+        only(
+          'aline',
+          'a b c = triangle a b c; '
+              'd = on_aline d a b c a b ? coll a b d',
+        ),
+      );
+      expect(translation, isA<UntranslatableProblem>());
+      expect(
+        (translation as UntranslatableProblem).reason,
+        UntranslatableReason.unknownMacro,
+      );
+      expect(translation.detail, 'on_aline');
+    });
+
+    test('a goal predicate outside the vocabulary', () {
+      final translation = translateNewclidProblem(
+        only('clock', 'a b c = triangle a b c ? sameclock a b c a b c'),
+      );
+      expect(
+        (translation as UntranslatableProblem).reason,
+        UntranslatableReason.unsupportedGoal,
+      );
+    });
+
+    test('a goal at an arity the vocabulary does not have', () {
+      // `cyclic` over five points is a conjunction of facts, not one.
+      final translation = translateNewclidProblem(
+        only(
+          'five',
+          'a b c = triangle a b c; d = on_circum d a b c; '
+              'e = on_circum e a b c ? cyclic a b c d e',
+        ),
+      );
+      expect(
+        (translation as UntranslatableProblem).reason,
+        UntranslatableReason.unsupportedGoal,
+      );
+      expect(translation.detail, contains('conjunction'));
+    });
+
+    test('a line slot counts two points, not one', () {
+      // The check that refused every `perp` goal in the corpus when it
+      // compared the corpus's points against the template's *slots*.
+      expect(tapsFor(QuestionTemplate.perp), 4);
+      expect(tapsFor(QuestionTemplate.coll), 3);
+      expect(tapsFor(QuestionTemplate.eqangle), 8);
+      expect(tapsFor(QuestionTemplate.midp), 3);
+    });
+  });
+
+  group('the subset translates, and the figures are honest', () {
+    for (final (source, name, body) in corpusSubset) {
+      test('$source:$name', () {
+        final problem = built(name, body);
+        final objects = problem.construction.objects.toList();
+        final filter = DiagramFilter.probe(objects);
+
+        // The assertion that makes the corpus usable as a baseline:
+        // every statement read off the parent ties is true in the
+        // figure those ties produced.
+        final given = hypotheses(objects);
+        expect(given, isNotEmpty, reason: 'a figure that says nothing');
+        for (final hypothesis in given) {
+          expect(
+            filter.holds(hypothesis),
+            isTrue,
+            reason: '$hypothesis is false in the figure built for $name',
+          );
+        }
+
+        // And the goal itself, which is what Newclid resamples for.
+        expect(
+          filter.holds(problem.question.canonical),
+          isTrue,
+          reason: 'the goal of $name is false in its own figure',
+        );
+
+        // Every point the DSL named exists and is distinct.
+        final positions = problem.points.values.map((p) => p.position).toList();
+        expect(positions, everyElement(isNotNull));
+      });
+    }
+  });
+}
