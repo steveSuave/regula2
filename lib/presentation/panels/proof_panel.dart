@@ -173,13 +173,17 @@ String stepReason(ProofStep step) => step.isGiven
     : '${step.rule!.replaceAll('_', ' ')} '
           'from ${step.premiseSteps.map((n) => '[$n]').join(', ')}';
 
-/// The angle chase under an `angle_arithmetic` step, cited against
-/// [proof]'s own numbering — empty for every other step.
+/// The chase under an AR step — `angle_arithmetic` or
+/// `length_arithmetic` — cited against [proof]'s own numbering, and
+/// empty for every other step.
 ///
 /// `angle arithmetic from [1], [2], [4]` names what a step used and
 /// explains nothing, which is the black box PLAN refused Wu over. These
-/// are the relations it added up, one line each. See `AngleChase` for
-/// why the multiple belongs to an equation rather than to a cited fact.
+/// are the relations it added up, one line each: in θ for the angle
+/// side, and multiplicatively in `|AB|` for the length side. See
+/// `AngleChase` for why the multiple belongs to an equation rather than
+/// to a cited fact, and `LengthChase` for why lengths read as products
+/// rather than as ratios.
 List<String> chaseLines(ProofStep step, Proof proof) {
   final chase = step.chase;
   if (chase == null) return const [];
@@ -919,10 +923,10 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    // An `angle_arithmetic` step's reason is a label for
-                    // a sum, so the sum is shown. Every other step's
-                    // rule name *is* its explanation and gets no
-                    // second line — see `AngleChase`.
+                    // An AR step's reason is a label for a sum, so the
+                    // sum is shown. Every other step's rule name *is*
+                    // its explanation and gets no second line — see
+                    // `AngleChase` and `LengthChase`.
                     for (final line in chaseLines(step, proof))
                       Padding(
                         padding: const EdgeInsets.only(left: 12),
