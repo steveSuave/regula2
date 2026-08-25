@@ -9,6 +9,7 @@ import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/length_translation.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
@@ -169,6 +170,103 @@ void main() {
         ).isValid,
         isTrue,
         reason: 'the same premises do entail the real midline',
+      );
+    });
+  });
+
+  group('a length_arithmetic step is re-derived, not trusted', () {
+    final p = free('p', 0, 0);
+    final r = free('r', 1, 0);
+    final s = free('s', 2, 0);
+    final t = free('t', 3, 0);
+    final u = free('u', 4, 0);
+    final v = free('v', 5, 0);
+
+    Fact cong(List<GeoPoint> points) => Fact(PredicateKind.cong, points);
+    Fact eqratio(List<GeoPoint> points) => Fact(PredicateKind.eqratio, points);
+
+    test('a chain of congs entails the pair it closes', () {
+      expect(
+        checkDerivation(
+          cong([p, r, u, v]),
+          Derivation(lengthArithmeticRule, [
+            cong([p, r, s, t]),
+            cong([s, t, u, v]),
+          ]),
+        ).isValid,
+        isTrue,
+      );
+    });
+
+    test('a step with no premises proves nothing', () {
+      final check = checkDerivation(
+        cong([p, r, s, t]),
+        Derivation(lengthArithmeticRule, const []),
+      );
+      expect(check.isValid, isFalse);
+      expect(check.reason, contains('proves nothing'));
+    });
+
+    test('a premise with no length content is a defect in the record', () {
+      final check = checkDerivation(
+        cong([p, r, u, v]),
+        Derivation(lengthArithmeticRule, [
+          Fact(PredicateKind.para, [p, r, s, t]),
+        ]),
+      );
+      expect(check.isValid, isFalse);
+      expect(check.reason, contains('says nothing about lengths'));
+    });
+
+    test('midp may be cited and may not be concluded', () {
+      // The asymmetry `LengthTranslation.equationOf` keeps: equal
+      // halves follow from a midpoint, and a midpoint does not follow
+      // from equal halves.
+      final midpoint = Fact(PredicateKind.midp, [r, p, s]);
+      expect(
+        checkDerivation(
+          cong([p, r, r, s]),
+          Derivation(lengthArithmeticRule, [midpoint]),
+        ).isValid,
+        isTrue,
+        reason: 'a midpoint is sound input',
+      );
+      final check = checkDerivation(
+        Fact(PredicateKind.midp, [r, p, s]),
+        Derivation(lengthArithmeticRule, [
+          cong([p, r, r, s]),
+        ]),
+      );
+      expect(check.isValid, isFalse);
+      expect(check.reason, contains('cannot conclude'));
+    });
+
+    test('premises that do not entail the conclusion are refused', () {
+      final check = checkDerivation(
+        cong([p, r, u, v]),
+        Derivation(lengthArithmeticRule, [
+          cong([s, t, u, v]),
+        ]),
+      );
+      expect(check.isValid, isFalse);
+      expect(check.reason, contains('does not entail'));
+      expect(check.reason, contains('length algebra'));
+    });
+
+    test('and the ℚ step is accepted, which is the phase', () {
+      // `provoleas2`'s shape: the repeated segment in the similar-
+      // triangle eqratio carries a coefficient 2, so the combination is
+      // one no union-find over congruence classes can form. The checker
+      // rebuilds the closure and agrees.
+      expect(
+        checkDerivation(
+          cong([p, r, u, v]),
+          Derivation(lengthArithmeticRule, [
+            eqratio([s, t, p, r, p, r, u, v]),
+            cong([s, t, p, r]),
+          ]),
+        ).isValid,
+        isTrue,
       );
     });
   });
