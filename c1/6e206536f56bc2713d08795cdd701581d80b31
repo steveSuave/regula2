@@ -1,0 +1,24 @@
+test/domain/prover/auxiliary_upside_test.dart
+  s_99ccdb7ca9813f::t_5583a9dc52b6fd 128-129
+  s_99ccdb7ca9813f::t_763bdeef30aef2 1-27,29-32,37-38,47,49-50,52,61-127,130-197,199-201,206-278
+  s_99ccdb7ca9813f::t_bcff035d74b978 28,33-36,39-46,48,51,53-60
+  s_99ccdb7ca9813f::t_c8b5ecda0257e7 198,202-205
+benchmark/auxiliary_search_bench.dart
+  s_99ccdb7ca9813f::t_6c78615e091bf7 1-153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c16e206536f56bc2713d08795cdd701581d80b31",
+  "prompts": {},
+  "sessions": {
+    "s_99ccdb7ca9813f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e814237-bd82-479d-a95f-d75f2f2e2334",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
