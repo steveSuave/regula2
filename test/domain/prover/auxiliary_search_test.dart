@@ -282,12 +282,40 @@ void main() {
       'aux2',
       reason: 'the document is already using `aux`',
     );
+    expect(
+      search.pointName,
+      'A',
+      reason: 'these three points are unnamed, so A is free',
+    );
 
     // And it is the id the proposal is actually built under, which is
     // the half that would otherwise go unchecked.
     expect(search.candidates.first.build(search.pointId).id, 'aux2');
     expect(search.run(), isNull, reason: 'nothing proves a right angle here');
     expect(search.tried, 3, reason: 'three pairs, three midpoints');
+  });
+
+  test('the proposal is named the way a drawn point would be', () {
+    // A proof reading `perp(F, D, D, aux)` asks the reader to accept a
+    // step about a thing with no name. So the point carries the
+    // document's own next automatic name, which is also what makes
+    // accepting it an AddObject and nothing else: the auto-namer skips
+    // an object that already has one, so the name in the proof is the
+    // name the figure gets.
+    final construction = jgex();
+    final search = AuxiliarySearch(
+      objects: construction.objects,
+      goals: [theorem(construction)],
+    );
+    expect(search.pointName, 'G', reason: 'A–F are taken on this document');
+
+    final found = search.run();
+    expect(found!.point.attributes.name, 'G');
+    expect(
+      Proof.of(found.reachedGoal!, found.database).render(),
+      contains('G'),
+      reason: 'and the proof reads with it',
+    );
   });
 
   test('a document with no candidates is exhausted from the start', () {

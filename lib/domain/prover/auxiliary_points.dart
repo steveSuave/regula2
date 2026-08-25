@@ -1,4 +1,5 @@
 import '../construction/geo_object.dart';
+import '../construction/object_attributes.dart';
 import '../construction/objects/intersection_point.dart';
 import '../construction/objects/midpoint.dart';
 import '../construction/objects/projection_point.dart';
@@ -35,27 +36,30 @@ class AuxiliaryCandidate {
   /// Which crossing, for [AuxiliaryFamily.meet]; zero otherwise.
   final int branch;
 
-  /// The point itself, under [id].
+  /// The point itself, under [id] and [attributes].
   ///
   /// Built detached — recomputing off its parents but in no
   /// construction, which is how [auxiliaryCandidates] reads a proposal's
   /// position before deciding to offer it.
-  GeoPoint build(String id) => switch (family) {
+  GeoPoint build(String id, {ObjectAttributes? attributes}) => switch (family) {
     AuxiliaryFamily.midpoint => Midpoint(
       id: id,
       point1: parents[0] as GeoPoint,
       point2: parents[1] as GeoPoint,
+      attributes: attributes,
     ),
     AuxiliaryFamily.foot => ProjectionPoint(
       id: id,
       point: parents[0] as GeoPoint,
       line: parents[1] as GeoLine,
+      attributes: attributes,
     ),
     AuxiliaryFamily.meet => IntersectionPoint(
       id: id,
       curve1: parents[0],
       curve2: parents[1],
       branchIndex: branch,
+      attributes: attributes,
     ),
   };
 

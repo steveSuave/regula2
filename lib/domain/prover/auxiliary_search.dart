@@ -1,4 +1,6 @@
 import '../construction/geo_object.dart';
+import '../construction/object_attributes.dart';
+import '../construction/object_naming.dart';
 import 'auxiliary_points.dart';
 import 'diagram_filter.dart';
 import 'fact.dart';
@@ -88,6 +90,7 @@ class AuxiliarySearch {
   }) : goals = List.of(goals),
        _objects = List.of(objects),
        pointId = _freeId(objects),
+       pointName = _freeName(objects),
        candidates = auxiliaryCandidates(
          objects,
          families:
@@ -109,6 +112,17 @@ class AuxiliarySearch {
   /// the cursor got would be a name the user could not be told in
   /// advance.
   final String pointId;
+
+  /// The name every proposed point carries — the document's own next
+  /// automatic point name (`nextAutoName`), not a placeholder.
+  ///
+  /// A proof reading `perp(F, D, D, aux)` would be asking the reader to
+  /// accept a step about a thing with no name, and a point the user
+  /// then accepts would have to be renamed on the way in. Naming it
+  /// here makes the proof legible and makes accepting it an `AddObject`
+  /// and nothing else — the auto-namer skips an object that already has
+  /// a name, so the name the proof used is the name the figure gets.
+  final String pointName;
 
   /// The statements the search is trying to reach, any one of which
   /// ends it.
@@ -179,7 +193,10 @@ class AuxiliarySearch {
   }
 
   AuxiliaryAttempt _attempt(AuxiliaryCandidate candidate) {
-    final point = candidate.build(pointId);
+    final point = candidate.build(
+      pointId,
+      attributes: ObjectAttributes(name: pointName),
+    );
     final objects = [..._objects, point];
     final filter = DiagramFilter.probe(objects);
     final database = FactDatabase();
@@ -205,6 +222,17 @@ class AuxiliarySearch {
       database: database,
       prover: prover,
     );
+  }
+
+  /// The name a new point would get if the user had drawn it.
+  static String _freeName(Iterable<GeoObject> objects) {
+    final used = {
+      for (final object in objects)
+        if (object.attributes.name.isNotEmpty) object.attributes.name,
+    };
+    // Any `GeoPoint` picks the point pool; the object is only a kind
+    // selector here, and every candidate builds one.
+    return nextAutoName(used, objects.whereType<GeoPoint>().first);
   }
 
   /// An id no object in the document is using.

@@ -19,11 +19,14 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/proof_highlight_provider.dart';
 import '../../application/providers/prover_provider.dart';
 import '../../application/providers/question_draft_provider.dart';
 import '../../application/providers/selection_provider.dart';
+import '../../domain/commands/add_object_command.dart';
+import '../../domain/construction/geo_object.dart';
 import '../../domain/prover/carriers.dart';
 import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
@@ -31,6 +34,8 @@ import '../../domain/prover/predicate.dart';
 import '../../domain/prover/proof.dart';
 import '../../domain/prover/question_template.dart';
 import '../../domain/prover/questions.dart';
+
+import 'object_kind_label.dart';
 
 /// The statements worth offering as goals: what the run *derived*.
 ///
@@ -273,6 +278,9 @@ String verdictMessage(ProverAnswer answer) {
       '$statement is not true of this construction — it breaks when the '
           'figure is perturbed.',
     ProverVerdict.proved => '$statement — proved.',
+    ProverVerdict.unproved when answer.searchExhausted =>
+      '$statement holds in the figure, and neither these rules nor any '
+          'one extra point the prover could construct reaches it.',
     ProverVerdict.unproved =>
       '$statement holds in the figure, but these rules cannot prove it. '
           'That is a limit of the rule set, not evidence against the '
@@ -667,10 +675,19 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           'Nothing proved yet. The prover reads the construction and '
           'derives what follows from it — press play to run it.',
         );
-      case ProverRunning(:final applications):
+      case ProverRunning(:final applications, :final candidates):
         // Republished once per pass, so a long run reads as working
         // rather than frozen — the count is the same unit the stopped
-        // row below reports in.
+        // row below reports in. A search reports in *points tried*
+        // instead, because its unit is a whole document run and an
+        // application count would leap by thousands per candidate and
+        // mean something else.
+        if (candidates > 0) {
+          return _note(
+            theme,
+            'Looking for a point that would settle it… $candidates tried.',
+          );
+        }
         return _note(
           theme,
           applications == 0
@@ -741,6 +758,24 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
             title: const Text('Keep going'),
             onTap: () => ref.read(proverProvider.notifier).askMore(),
           ),
+        // Offered, never taken automatically: a search is up to one
+        // whole prover run per candidate point, so an answer that costs
+        // nothing today would start costing a minute. Withdrawn once a
+        // search has tried them all, which is a stronger answer than
+        // the verdict alone.
+        if (answer.verdict == ProverVerdict.unproved && !answer.searchExhausted)
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.add_location_alt_outlined, size: 18),
+            title: const Text('Look for a point that would settle it'),
+            subtitle: const Text(
+              'Tries points the figure does not contain. This can take a '
+              'while on a large construction.',
+            ),
+            isThreeLine: false,
+            onTap: () => ref.read(proverProvider.notifier).searchForPoint(),
+          ),
+        if (answer.auxiliary case final point?) _invented(theme, point),
         if (proof != null)
           ..._proofRows(
             theme,
@@ -749,6 +784,57 @@ class _ProofPanelState extends ConsumerState<ProofPanel> {
           ),
       ],
     );
+  }
+
+  /// What the prover built, and the offer to keep it.
+  ///
+  /// A proof whose steps cite a point the figure does not contain is
+  /// not a proof the reader can follow, so this is not decoration: it
+  /// is the sentence that makes the steps below it mean something.
+  /// JGEX says the same thing in a modal; here it sits above the proof,
+  /// where the name it introduces is next to the steps that use it.
+  Widget _invented(ThemeData theme, GeoPoint point) {
+    final parents = [
+      for (final parent in point.parents)
+        parent.attributes.name.isEmpty ? parent.id : parent.attributes.name,
+    ].join(', ');
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: ListTile(
+        dense: true,
+        leading: Icon(
+          Icons.auto_awesome_outlined,
+          size: 18,
+          color: theme.colorScheme.primary,
+        ),
+        title: Text(
+          'The proof needs ${describePoint(point)}, which your figure '
+          'does not have',
+        ),
+        subtitle: Text('${objectKindLabel(point)} of $parents'),
+        trailing: TextButton(
+          onPressed: () => _acceptInvented(point),
+          child: const Text('Add it'),
+        ),
+      ),
+    );
+  }
+
+  /// Adds the invented point as an ordinary reversible command.
+  ///
+  /// It arrives already named and already wired to the document's own
+  /// objects — the search built it against them — so there is nothing
+  /// to translate: this is the same `AddObjectCommand` a tool would
+  /// push, and one undo removes it.
+  void _acceptInvented(GeoPoint point) {
+    if (ref
+        .read(constructionProvider)
+        .construction
+        .objects
+        .any((object) => identical(object, point))) {
+      return;
+    }
+    ref.read(commandStackProvider.notifier).execute(AddObjectCommand(point));
   }
 
   IconData _verdictIcon(ProverVerdict verdict) => switch (verdict) {
