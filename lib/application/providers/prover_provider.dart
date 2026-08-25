@@ -1,7 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/construction/geo_object.dart';
+import '../../domain/prover/auxiliary_search.dart';
 import '../../domain/prover/carriers.dart';
 import '../../domain/prover/diagram_filter.dart';
+import '../../domain/prover/event_loop_yield.dart';
 import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
 import '../../domain/prover/hypotheses.dart';
@@ -105,6 +108,8 @@ class ProverAnswer {
     required this.question,
     required this.verdict,
     this.proof,
+    this.auxiliary,
+    this.searchExhausted = false,
   });
 
   final ProverQuestion question;
@@ -114,16 +119,43 @@ class ProverAnswer {
   /// whichever spelling the run happened to derive.
   final Proof? proof;
 
+  /// The point the prover had to invent to get there, when it did
+  /// (Phase 153) — built, wired to the document's real objects, and in
+  /// no construction until the user accepts it.
+  ///
+  /// Non-null only alongside [ProverVerdict.proved], and it changes what
+  /// the proof *means*: the steps cite a point the figure does not
+  /// contain, so a reader handed the proof alone cannot follow it. A
+  /// consumer that renders a proof must say what was built.
+  final GeoPoint? auxiliary;
+
+  /// Whether a search for an auxiliary point ran and tried every
+  /// candidate without finding one.
+  ///
+  /// Only meaningful beside [ProverVerdict.unproved], and it is the
+  /// difference between "the rules cannot get there" and "and no single
+  /// extra point helps either" — a stronger statement, and the one that
+  /// says not to offer the search again. False after a search the user
+  /// stopped, which has shown nothing.
+  final bool searchExhausted;
+
   @override
   bool operator ==(Object other) =>
       other is ProverAnswer &&
       identical(other.question, question) &&
       other.verdict == verdict &&
-      identical(other.proof, proof);
+      identical(other.proof, proof) &&
+      identical(other.auxiliary, auxiliary) &&
+      other.searchExhausted == searchExhausted;
 
   @override
-  int get hashCode =>
-      Object.hash(identityHashCode(question), verdict, identityHashCode(proof));
+  int get hashCode => Object.hash(
+    identityHashCode(question),
+    verdict,
+    identityHashCode(proof),
+    identityHashCode(auxiliary),
+    searchExhausted,
+  );
 
   @override
   String toString() => 'ProverAnswer(${question.kind.name}, ${verdict.name})';
@@ -152,7 +184,11 @@ class ProverIdle extends ProverState {
 
 /// A run is in flight over the construction as of [revision].
 class ProverRunning extends ProverState {
-  const ProverRunning(this.revision, {this.applications = 0});
+  const ProverRunning(
+    this.revision, {
+    this.applications = 0,
+    this.candidates = 0,
+  });
 
   final int revision;
 
@@ -161,18 +197,32 @@ class ProverRunning extends ProverState {
   /// hard". Zero until the first pass reports.
   final int applications;
 
+  /// Auxiliary points tried so far, for a
+  /// [ProverNotifier.searchForPoint] run; zero for every other run.
+  ///
+  /// A second counter rather than more applications, because they are
+  /// not the same work: a search's unit is a *whole document run*, and
+  /// adding its applications to the total would report a number that
+  /// leaps by thousands and means something else.
+  final int candidates;
+
   @override
   bool operator ==(Object other) =>
       other is ProverRunning &&
       other.revision == revision &&
-      other.applications == applications;
+      other.applications == applications &&
+      other.candidates == candidates;
 
   @override
-  int get hashCode => Object.hash(ProverRunning, revision, applications);
+  int get hashCode =>
+      Object.hash(ProverRunning, revision, applications, candidates);
 
   @override
-  String toString() =>
-      'ProverRunning(revision: $revision, applications: $applications)';
+  String toString() {
+    final extra = candidates > 0 ? ', candidates: $candidates' : '';
+    return 'ProverRunning(revision: $revision, '
+        'applications: $applications$extra)';
+  }
 }
 
 /// A finished run, and the facts it reached.
@@ -563,6 +613,80 @@ class ProverNotifier extends _$ProverNotifier {
       answer: _answerFrom(engine, question),
       revision: held.revision,
       run: _readyFrom(engine, held.revision),
+    );
+  }
+
+  /// Looks for a point the document does not contain that would settle
+  /// an [ProverVerdict.unproved] question (Phase 153 — JGEX's A2).
+  ///
+  /// **A no-op on any other verdict, and that is the whole guard.**
+  /// *Refuted* is settled. *Proved* needs nothing. *Undecided* has shown
+  /// nothing about reachability — [askMore] is what that wants, and
+  /// searching there would spend a hundred runs to learn what one more
+  /// budget would have. Only a finished run that could not get there is
+  /// evidence that the rules, as they stand, are the obstacle.
+  ///
+  /// **User-initiated, never automatic, on [askMore]'s precedent.** An
+  /// attempt is a whole document run and the search is up to one per
+  /// candidate — measured at 50 seconds on `provoleas2.json`
+  /// (`benchmark/auxiliary_search_bench.dart`) — so an answer that
+  /// costs nothing today would start costing a minute. Driven one
+  /// candidate per event-loop turn so frames survive and [stop] is
+  /// noticed within a single attempt.
+  ///
+  /// A found point is **not added to the construction**: the answer
+  /// carries it, the user accepts it. And the run behind that proof is
+  /// deliberately not published as the current [ProverReady] — it holds
+  /// facts about a point the figure does not have, and pointing
+  /// [askMore] and *Show everything derived* at it would be showing the
+  /// user a document they do not have.
+  Future<void> searchForPoint({int? applicationBudget}) async {
+    final held = state;
+    if (held is! ProverAnswered ||
+        held.answer.verdict != ProverVerdict.unproved ||
+        held.answer.searchExhausted) {
+      return;
+    }
+    final snapshot = ref.read(constructionProvider);
+    if (held.revision != snapshot.revision) return;
+    if (!snapshot.construction.kernel.absolute.isEuclidean) return;
+
+    final generation = ++_generation;
+    _cancelled = false;
+    final question = held.answer.question;
+    final search = AuxiliarySearch(
+      objects: snapshot.construction.objects,
+      goals: [for (final spelling in question.spellings) Fact.of(spelling)],
+      applicationsPerCandidate: applicationBudget ?? proverApplicationBudget,
+    );
+
+    state = ProverRunning(held.revision, candidates: 0);
+    while (!search.isComplete && !_cancelled) {
+      search.step();
+      if (generation != _generation) return;
+      state = ProverRunning(held.revision, candidates: search.tried);
+      await yieldToEventLoop();
+      if (generation != _generation) return;
+    }
+
+    final found = search.found;
+    state = ProverAnswered(
+      answer: found != null
+          ? ProverAnswer(
+              question: question,
+              verdict: ProverVerdict.proved,
+              proof: Proof.of(found.reachedGoal!, found.database),
+              auxiliary: found.point,
+            )
+          : ProverAnswer(
+              question: question,
+              verdict: ProverVerdict.unproved,
+              // Only an exhausted search has shown anything; a stopped
+              // one has shown that the user stopped it.
+              searchExhausted: search.isExhausted,
+            ),
+      revision: held.revision,
+      run: held.run,
     );
   }
 

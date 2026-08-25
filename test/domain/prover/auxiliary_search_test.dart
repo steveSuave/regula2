@@ -58,7 +58,7 @@ void main() {
     final construction = jgex();
     final search = AuxiliarySearch(
       objects: construction.objects,
-      goal: theorem(construction),
+      goals: [theorem(construction)],
     );
     expect(search.candidates, hasLength(26));
 
@@ -85,7 +85,7 @@ void main() {
     final goal = theorem(construction);
     final found = AuxiliarySearch(
       objects: construction.objects,
-      goal: goal,
+      goals: [goal],
     ).run();
 
     expect(found!.reached, isTrue);
@@ -115,11 +115,38 @@ void main() {
     );
   });
 
+  test('several spellings, any one of which ends it — and it says which', () {
+    // A question is several spellings of one statement, and which
+    // points name a line is the prover's business. So the search takes
+    // them all, and reports the one it reached: the proof has to be
+    // read off the spelling the run actually derived.
+    final construction = jgex();
+    final real = theorem(construction);
+    final unreachable = Fact(PredicateKind.coll, [
+      pointNamed(construction, 'C'),
+      pointNamed(construction, 'D'),
+      pointNamed(construction, 'F'),
+    ]);
+    final search = AuxiliarySearch(
+      objects: construction.objects,
+      goals: [unreachable, real],
+    );
+    final found = search.run();
+    expect(found, isNotNull);
+    expect(found!.reachedGoal, real);
+    expect(search.tried, 5, reason: 'the same candidate, found the same way');
+    expect(
+      () => Proof.of(found.reachedGoal!, found.database),
+      returnsNormally,
+      reason: 'which is what the reached spelling is for',
+    );
+  });
+
   test('a cursor, so the caller decides how long to wait', () {
     final construction = jgex();
     final search = AuxiliarySearch(
       objects: construction.objects,
-      goal: theorem(construction),
+      goals: [theorem(construction)],
     );
 
     expect(search.step(0), 0, reason: 'a zero slice does nothing');
@@ -148,7 +175,7 @@ void main() {
     final construction = jgex();
     final search = AuxiliarySearch(
       objects: construction.objects,
-      goal: theorem(construction),
+      goals: [theorem(construction)],
       families: {AuxiliaryFamily.foot},
     );
     expect(search.candidates, hasLength(11));
@@ -184,7 +211,7 @@ void main() {
 
     final search = AuxiliarySearch(
       objects: construction.objects,
-      goal: already,
+      goals: [already],
     );
     expect(search.run(), isNotNull);
     expect(search.tried, 1);
@@ -218,7 +245,7 @@ void main() {
 
     final search = AuxiliarySearch(
       objects: construction.objects,
-      goal: askOnly,
+      goals: [askOnly],
       families: {AuxiliaryFamily.midpoint},
     );
     expect(search.step(), 1);
@@ -247,7 +274,7 @@ void main() {
     final goal = Fact(PredicateKind.perp, [a, b, a, c]);
     final search = AuxiliarySearch(
       objects: construction.objects,
-      goal: goal,
+      goals: [goal],
       families: {AuxiliaryFamily.midpoint},
     );
     expect(
@@ -268,7 +295,9 @@ void main() {
     final construction = Construction()..add(a);
     final search = AuxiliarySearch(
       objects: construction.objects,
-      goal: Fact(PredicateKind.coll, [a, a, a]),
+      goals: [
+        Fact(PredicateKind.coll, [a, a, a]),
+      ],
     );
     expect(search.candidates, isEmpty);
     expect(search.isComplete, isTrue);

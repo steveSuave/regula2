@@ -12,7 +12,7 @@ class AuxiliaryAttempt {
   const AuxiliaryAttempt({
     required this.candidate,
     required this.point,
-    required this.reached,
+    required this.reachedGoal,
     required this.database,
     required this.prover,
   });
@@ -23,8 +23,15 @@ class AuxiliaryAttempt {
   /// but in no [Construction] — the caller adds it if the user accepts.
   final GeoPoint point;
 
-  /// Whether the exchange answered the goal with this point there.
-  final bool reached;
+  /// The goal this attempt answered, or null for none.
+  ///
+  /// *Which* goal matters and is not bookkeeping: a question has
+  /// several spellings, they are one statement, and the proof has to be
+  /// read off the spelling the run actually derived.
+  final Fact? reachedGoal;
+
+  /// Whether the exchange answered any goal with this point there.
+  bool get reached => reachedGoal != null;
 
   /// The run's facts, so a caller can read a [Proof] off it.
   final FactDatabase database;
@@ -75,10 +82,11 @@ class AuxiliaryAttempt {
 class AuxiliarySearch {
   AuxiliarySearch({
     required Iterable<GeoObject> objects,
-    required this.goal,
+    required Iterable<Fact> goals,
     Set<AuxiliaryFamily>? families,
     this.applicationsPerCandidate,
-  }) : _objects = List.of(objects),
+  }) : goals = List.of(goals),
+       _objects = List.of(objects),
        pointId = _freeId(objects),
        candidates = auxiliaryCandidates(
          objects,
@@ -102,8 +110,15 @@ class AuxiliarySearch {
   /// advance.
   final String pointId;
 
-  /// The statement the search is trying to reach.
-  final Fact goal;
+  /// The statements the search is trying to reach, any one of which
+  /// ends it.
+  ///
+  /// A list rather than one fact because a question has several
+  /// spellings and they are one statement — the same reason
+  /// `ProverNotifier` loops over them when consulting a finished run.
+  /// Which points name a line is the prover's business, and a spelling
+  /// the closure cannot address is not a different question.
+  final List<Fact> goals;
 
   /// The candidates, in the order they will be tried.
   final List<AuxiliaryCandidate> candidates;
@@ -171,14 +186,22 @@ class AuxiliarySearch {
     seedHypotheses(database, hypotheses(objects), filter);
     final prover = Prover(database: database, filter: filter)
       ..run(maxApplications: applicationsPerCandidate);
+
+    // `resolve` and not `contains`, because it is the question the
+    // user's *Ask* goes through: the length and angle closures answer
+    // `eqratio` and `eqangle` on ask and never publish them, so a
+    // membership test would call a proved goal unproved.
+    Fact? reached;
+    for (final goal in goals) {
+      if (prover.resolve(goal)) {
+        reached = goal;
+        break;
+      }
+    }
     return AuxiliaryAttempt(
       candidate: candidate,
       point: point,
-      // `resolve` and not `contains`, because it is the question the
-      // user's *Ask* goes through: the length and angle closures answer
-      // `eqratio` and `eqangle` on ask and never publish them, so a
-      // membership test would call a proved goal unproved.
-      reached: prover.resolve(goal),
+      reachedGoal: reached,
       database: database,
       prover: prover,
     );
