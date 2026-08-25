@@ -475,6 +475,172 @@ void main() {
       expect(state.run!.reachedFixpoint, isTrue);
     });
 
+    test('the search finds the point JGEX built, and offers it', () async {
+      // The other half of the fixture above: the run finishes and
+      // cannot get there, and the point it is missing is one a search
+      // over midpoints finds fifth (`auxiliary_search_test.dart`).
+      final construction = loadUnprovable();
+      container.read(constructionProvider.notifier).replace(construction);
+      final question = questionOf(PredicateKind.perp, [
+        named(construction, 'C'),
+        named(construction, 'D'),
+        named(construction, 'D'),
+        named(construction, 'F'),
+      ]);
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.ask(question);
+      expect(
+        (container.read(proverProvider) as ProverAnswered).answer.verdict,
+        ProverVerdict.unproved,
+      );
+
+      await notifier.searchForPoint();
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(state.answer.proof, isNotNull);
+      expect(state.answer.proof!.verify(), isEmpty);
+
+      final point = state.answer.auxiliary;
+      expect(point, isNotNull, reason: 'the answer says what it built');
+      expect(
+        construction.objects.contains(point),
+        isFalse,
+        reason: 'and does not add it — accepting is the user\'s move',
+      );
+      expect(
+        state.answer.proof!.deductions.any(
+          (step) => step.fact.points.any((p) => identical(p, point)),
+        ),
+        isTrue,
+        reason: 'the proof cites it, which is why the user must be told',
+      );
+    });
+
+    test('the run behind an invented point is not published', () async {
+      // It holds facts about a point the figure does not contain, so
+      // pointing *Show everything derived* and askMore at it would be
+      // showing the user a document they do not have.
+      final construction = loadUnprovable();
+      container.read(constructionProvider.notifier).replace(construction);
+      final question = questionOf(PredicateKind.perp, [
+        named(construction, 'C'),
+        named(construction, 'D'),
+        named(construction, 'D'),
+        named(construction, 'F'),
+      ]);
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.ask(question);
+      final before = (container.read(proverProvider) as ProverAnswered).run;
+
+      await notifier.searchForPoint();
+
+      final after = container.read(proverProvider) as ProverAnswered;
+      expect(
+        after.run,
+        same(before),
+        reason: 'the document\'s own run, unchanged',
+      );
+    });
+
+    test('an exhausted search says so, and is not offered twice', () async {
+      // Forced by a budget too small for any attempt to get anywhere,
+      // which is the plumbing this pins rather than a claim that no
+      // point helps — the corpus-wide version of that claim is
+      // `auxiliary_upside_test.dart`, and the `isExhausted` it rests on
+      // is pinned in `auxiliary_search_test.dart`.
+      final construction = loadUnprovable();
+      container.read(constructionProvider.notifier).replace(construction);
+      final question = questionOf(PredicateKind.perp, [
+        named(construction, 'C'),
+        named(construction, 'D'),
+        named(construction, 'D'),
+        named(construction, 'F'),
+      ]);
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.ask(question);
+
+      await notifier.searchForPoint(applicationBudget: 1);
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.unproved);
+      expect(state.answer.auxiliary, isNull);
+      expect(state.answer.searchExhausted, isTrue);
+
+      // And the guard reads it: a second search is a no-op, so a UI
+      // driven off the verdict alone cannot offer the same minute
+      // twice.
+      await notifier.searchForPoint();
+      expect(container.read(proverProvider), same(state));
+    });
+
+    test('a stopped search has shown nothing, and stays offerable', () async {
+      final construction = loadUnprovable();
+      container.read(constructionProvider.notifier).replace(construction);
+      final question = questionOf(PredicateKind.perp, [
+        named(construction, 'C'),
+        named(construction, 'D'),
+        named(construction, 'D'),
+        named(construction, 'F'),
+      ]);
+      final notifier = container.read(proverProvider.notifier);
+      await notifier.ask(question);
+
+      // `searchForPoint` runs synchronously to its first yield, so one
+      // candidate is behind us and the loop is parked when stop lands.
+      final running = notifier.searchForPoint();
+      expect(
+        container.read(proverProvider),
+        isA<ProverRunning>().having((s) => s.candidates, 'candidates', 1),
+        reason: 'progress is counted in candidates, not applications',
+      );
+      notifier.stop();
+      await running;
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.unproved);
+      expect(
+        state.answer.searchExhausted,
+        isFalse,
+        reason: 'a stopped search has shown that the user stopped it',
+      );
+    });
+
+    test('the search is a no-op on every other verdict', () async {
+      final construction = loadUnprovable();
+      container.read(constructionProvider.notifier).replace(construction);
+      final notifier = container.read(proverProvider.notifier);
+
+      // Refuted: settled by the filter, and searching cannot unsettle
+      // a statement a perturbation breaks.
+      final false_ = questionOf(PredicateKind.perp, [
+        named(construction, 'A'),
+        named(construction, 'B'),
+        named(construction, 'A'),
+        named(construction, 'C'),
+      ]);
+      await notifier.ask(false_);
+      final refuted = container.read(proverProvider) as ProverAnswered;
+      expect(refuted.answer.verdict, ProverVerdict.refuted);
+      await notifier.searchForPoint();
+      expect(container.read(proverProvider), same(refuted));
+
+      // Undecided: an unfinished run has shown nothing about
+      // reachability, so askMore is what that wants — a search there
+      // would spend a hundred runs to learn what one more budget would.
+      final real = questionOf(PredicateKind.perp, [
+        named(construction, 'C'),
+        named(construction, 'D'),
+        named(construction, 'D'),
+        named(construction, 'F'),
+      ]);
+      await notifier.ask(real, applicationBudget: 3);
+      final undecided = container.read(proverProvider) as ProverAnswered;
+      expect(undecided.answer.verdict, ProverVerdict.undecided);
+      await notifier.searchForPoint();
+      expect(container.read(proverProvider), same(undecided));
+    });
+
     test(
       'a budget too small to settle it says undecided, not unproved',
       () async {

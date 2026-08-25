@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
+import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/proof_highlight_provider.dart';
 import 'package:regula/application/providers/prover_provider.dart';
@@ -1060,6 +1061,80 @@ void main() {
       );
     });
 
+    testWidgets('and offers the point that would settle it', (tester) async {
+      // The other half of the test above, and Phase 153's user-facing
+      // half: the honest "cannot prove it" is followed by an offer, the
+      // search finds JGEX's own point, and the answer says what it
+      // built before showing steps that cite it.
+      final construction = decodeDocument(
+        jsonDecode(
+              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+      await pumpEditor(tester);
+      await openPanel(tester);
+
+      GeoPoint named(String name) => construction.objects
+          .whereType<GeoPoint>()
+          .firstWhere((point) => point.attributes.name == name);
+      final segments = construction.objects.whereType<Segment>().toList();
+      bool joins(Segment s, GeoPoint x, GeoPoint y) =>
+          (s.point1.id == x.id && s.point2.id == y.id) ||
+          (s.point1.id == y.id && s.point2.id == x.id);
+      container.read(selectionProvider.notifier).selectMany([
+        segments.firstWhere((s) => joins(s, named('D'), named('C'))).id,
+        segments.firstWhere((s) => joins(s, named('F'), named('D'))).id,
+      ]);
+      await tester.pump();
+      await tester.ensureVisible(
+        find.textContaining('is perpendicular to').first,
+      );
+      await tester.tap(find.textContaining('is perpendicular to').first);
+      await tester.pumpAndSettle();
+
+      final offer = find.text('Look for a point that would settle it');
+      expect(offer, findsOneWidget);
+      await tester.ensureVisible(offer);
+      await tester.tap(offer);
+      await tester.pumpAndSettle();
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(state.answer.auxiliary, isNotNull);
+
+      // Named like a drawn point, and said out loud — a proof whose
+      // steps cite a point the figure does not contain is not a proof
+      // the reader can follow.
+      expect(state.answer.auxiliary!.attributes.name, 'G');
+      expect(
+        find.textContaining('The proof needs G, which your figure does not'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Midpoint of B, C'), findsOneWidget);
+      expect(
+        find.text('Look for a point that would settle it'),
+        findsNothing,
+        reason: 'the offer is spent',
+      );
+
+      // And accepting it is an ordinary reversible command.
+      expect(construction.objects.contains(state.answer.auxiliary), isFalse);
+      await tester.tap(find.text('Add it'));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(constructionProvider).construction.objects,
+        contains(state.answer.auxiliary),
+      );
+      container.read(commandStackProvider.notifier).undo();
+      await tester.pumpAndSettle();
+      expect(
+        container.read(constructionProvider).construction.objects,
+        isNot(contains(state.answer.auxiliary)),
+      );
+    });
+
     testWidgets('an angle step shows the chase, not just its premises', (
       tester,
     ) async {
@@ -1887,6 +1962,33 @@ void main() {
       // boundary marked, or the reading garden-paths.
       expect(message, contains('“AB and CD are equal in length”'));
       expect(message, contains('is not true of this construction'));
+    });
+
+    test('an exhausted search is a stronger answer, and reads as one', () {
+      final question = ProverQuestion(PredicateKind.cong, [
+        Predicate(PredicateKind.cong, [
+          free('a', 'A', 0, 0),
+          free('b', 'B', 3, 0),
+          free('c', 'C', 0, 1),
+          free('d', 'D', 3, 1),
+        ]),
+      ]);
+      const verdict = ProverVerdict.unproved;
+      expect(
+        verdictMessage(ProverAnswer(question: question, verdict: verdict)),
+        contains('these rules cannot prove it'),
+      );
+      // "and no single extra point helps either" is more than the rule
+      // set's limit, so it must not read as the same sentence.
+      final exhausted = verdictMessage(
+        ProverAnswer(
+          question: question,
+          verdict: verdict,
+          searchExhausted: true,
+        ),
+      );
+      expect(exhausted, contains('nor any one extra point'));
+      expect(exhausted, isNot(contains('limit of the rule set')));
     });
 
     test('conventionApplies flags exactly the plain-read kinds', () {

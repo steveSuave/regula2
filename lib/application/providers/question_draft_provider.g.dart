@@ -21,8 +21,9 @@ part of 'question_draft_provider.dart';
 ///
 /// View state: never persisted, never undoable. Objects the draft holds
 /// are pruned when they leave the construction, slot by slot, so a
-/// deletion empties a slot rather than leaving a dangling reference; a
-/// document replaced wholesale closes the builder.
+/// deletion empties a slot rather than leaving a dangling reference, and
+/// a document replaced wholesale empties every slot (its objects are new
+/// instances, whatever their ids) and leaves the builder open.
 
 @ProviderFor(QuestionDraftNotifier)
 final questionDraftProvider = QuestionDraftNotifierProvider._();
@@ -40,8 +41,9 @@ final questionDraftProvider = QuestionDraftNotifierProvider._();
 ///
 /// View state: never persisted, never undoable. Objects the draft holds
 /// are pruned when they leave the construction, slot by slot, so a
-/// deletion empties a slot rather than leaving a dangling reference; a
-/// document replaced wholesale closes the builder.
+/// deletion empties a slot rather than leaving a dangling reference, and
+/// a document replaced wholesale empties every slot (its objects are new
+/// instances, whatever their ids) and leaves the builder open.
 final class QuestionDraftNotifierProvider
     extends $NotifierProvider<QuestionDraftNotifier, QuestionDraft?> {
   /// The question being built, or null while the builder is closed
@@ -57,8 +59,9 @@ final class QuestionDraftNotifierProvider
   ///
   /// View state: never persisted, never undoable. Objects the draft holds
   /// are pruned when they leave the construction, slot by slot, so a
-  /// deletion empties a slot rather than leaving a dangling reference; a
-  /// document replaced wholesale closes the builder.
+  /// deletion empties a slot rather than leaving a dangling reference, and
+  /// a document replaced wholesale empties every slot (its objects are new
+  /// instances, whatever their ids) and leaves the builder open.
   QuestionDraftNotifierProvider._()
     : super(
         from: null,
@@ -102,8 +105,9 @@ String _$questionDraftNotifierHash() =>
 ///
 /// View state: never persisted, never undoable. Objects the draft holds
 /// are pruned when they leave the construction, slot by slot, so a
-/// deletion empties a slot rather than leaving a dangling reference; a
-/// document replaced wholesale closes the builder.
+/// deletion empties a slot rather than leaving a dangling reference, and
+/// a document replaced wholesale empties every slot (its objects are new
+/// instances, whatever their ids) and leaves the builder open.
 
 abstract class _$QuestionDraftNotifier extends $Notifier<QuestionDraft?> {
   QuestionDraft? build();

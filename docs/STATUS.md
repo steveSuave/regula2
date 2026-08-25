@@ -1762,3 +1762,45 @@ Gates: analyze clean, suite **3342** green (3275 at the phase's start), browser 
 - `ProofStep.chase` is `ArithmeticChase` now, so `.lines` needs a cast. `angle_chase_test` does two, and each is the claim that rig is making rather than a workaround.
 - `Fact` canonicalizes its arguments, so which side of a rendered chase line a factor lands on follows the *stored* order, not the order the test wrote them. Three expectations had to be corrected to what comes out; that is a property worth knowing before writing rendering pins.
 - `length_closure_upside_test.dart` measured six fixtures and the corpus is seven — `tangent-chord.rgl` was missing for no recorded reason. Fixed here; worth checking the other corpus rigs against `benchmark/prover_chunk_bench.dart`'s list.
+
+## 2026-08-25 — session 176: Phase 153, the rig before the search
+
+**Done — two commits on `phase-153-auxiliary-construction`, four of the phase's seven boxes.** The measurement A2's checklist asked for ("a search, so it needs a budget and an order, both measured rather than chosen"), taken before the search that would use it — Phases 151b and 152e's shape a fifth time.
+
+- **`lib/domain/prover/auxiliary_points.dart`** — the candidate list, in `domain/` because both the measurement and any future engine read it and writing it twice would let them drift. Three families in the checklist's order, deterministic over the objects' own order, so index *i* names the same point in every copy of a document. **The dedup is numeric and that is the decision**: a document already naming the midpoint of `AB` is a structural coincidence, but the foot of a centre on a chord being that chord's midpoint is a *theorem*, and no structural test sees the second kind. That is the `DiagramFilter` boundary, not a breach of it — proposing is a search heuristic, and nothing there asserts a predicate. A structural incidence skip was written first and **deleted**: mutation-checking showed it failed no test the dedup was not already failing.
+- **The result: 2 unlocks of 1 fact from 276 candidates over seven documents.** Both on `perp-true-unproved.rgl`, both midpoints, both reaching `perp(C,D,D,F)` — the midpoint of `BC`, which is the point JGEX's dialog names, and the midpoint of `BF` on the same line. The proof verifies and cites the invented point. So A2 is exactly the mechanism that document needs and **nothing else in the corpus needs it**, which is Phase 152e's corpus finding again rather than an exception to it.
+- **The metric correction is most of the answer.** A first pass compared fact sets and reported unlocks on six of seven fixtures — every one a re-spelling. Adding *any* point to `no-locus.rgl` "unlocks" `para(F,G,F,B)`, which is the hypothesis `coll(F,G,B)` said in `para` language: the angle closure entails it and declines to *publish* it, a `para` sharing a point being a degeneracy. The screen is `Prover.resolve`, the question a user's *Ask* already goes through. Pinned as its own test, because reading the fact set would have made every number in the phase wrong by an order of magnitude.
+- **Order settled, budget opened.** The 87 feet and 45 intersections unlock nothing anywhere, so midpoints-first is a measurement now. And a candidate costs a *full re-run*, so an exhaustive pass is (candidates) × (baseline): 78 × 643 ms = **50 s on `provoleas2.json`** against its own 368 ms, worst single candidate **4.4 s**. The probe is 2 ms of that 50 s; the exchange is the cost. No ordering makes an exhaustive sweep cheap — what an ordering buys is finding the point *early*, which is the claim a search has to be built on.
+- **Cost split by document, deliberately.** `provoleas2` and `tangent-chase` are 67 of the sweep's 74 seconds, so the exhaustive form and the timings live in `benchmark/auxiliary_search_bench.dart` (timings not being a thing to assert) and the suite carries the other five in 12 s. Their negative was measured at a 200 000 cap with every candidate run reaching quiescence.
+
+Gates: analyze clean, suite **3352** green (3342 at the phase's start), 50 s wall clock.
+
+**Next.** The remaining three boxes: the search itself (goal-directed, early-exit, bounded in `runChunked`'s currency rather than a fact count), the modal that names an invented point and offers to add it, and a replacement *unproved* rig. Carried: `readFact` on listed `eqangle`s can still read magnitude-false; Phase 157's and the builder's browser looks unverified; Phase 161's decision box.
+
+**Gotchas.**
+
+- **`Set == Set` is identity in Dart**, and it cost a debugging round in a test that looked obviously right. Compare sorted lists, or joined keys.
+- **A "new fact" is not new content**, and the whole first pass of this measurement was wrong for that reason. Anything comparing two prover runs should ask the *engine* whether the difference is entailed, not diff the fact set — the closures deliberately withhold degenerate spellings, so the fact set understates what a run knows.
+- **`o.circle != null` and `o.conic != null` are different filters** and the candidate count moves by two on `provoleas2` between them; the projective accessor is the one domain code reads, per CLAUDE.md, and it is the one in `lib/`. The scratch rig used the affine getter and under-counted.
+- The sweep is **one point at a time**. A theorem needing two auxiliary points comes back as a zero here, and JGEX constructs more than one on harder documents — stated in the test's header so the negative is not read as broader than it is.
+
+## 2026-08-25 — session 176 (continued): Phase 153 complete
+
+**Done — Phase 153 end to end, six commits on `phase-153-auxiliary-construction`.** The measurement (above), then the search the measurement designed, then the ask and the panel.
+
+- **`auxiliary_search.dart`** — goal-directed with early exit, and **resumable by cursor** on `ProverEngine`'s Phase 140 precedent, because an attempt is a whole document run. It takes the question's *spellings* and reports which it reached — they are one statement, and the proof has to be read off the spelling the run derived. Nothing is mutated: each attempt runs against the document's objects plus one **detached** point, so the goal keeps naming the user's real points. `reached` is `Prover.resolve`, not membership.
+- **The ordering claim, measured**: JGEX's midpoint of `BC` is candidate **4 of 26** on the one document with an answer, so early exit costs five runs rather than twenty-six. That is what an order buys — not a cheaper sweep, an earlier answer.
+- **`ProverNotifier.searchForPoint`**, guarded on exactly one verdict and **user-initiated, never automatic**. *Undecided* has shown nothing about reachability and wants another budget, not a hundred runs. Progress counts *candidates*, not applications. The run behind an invented point is not published — it holds facts about a figure the user does not have.
+- **The panel offers it and says what it built.** The proposal carries the document's own next automatic point name, so a step reads `perp(F, D, D, G)` and accepting it is an `AddObjectCommand` and nothing else. The disclosure sits *above* the proof, where the name it introduces is next to the steps that use it. Once a search has tried everything the offer withdraws and the message strengthens.
+- **Box 7's premise was wrong, and that is the finding.** It assumed the search would run as part of asking. It does not, so `perp-true-unproved.rgl` keeps its role as the *unproved* rig and Phase 148's three-verdict tests are untouched — the fixture is now the rig for both halves. What the box got right is that its stopgap is spent: `tangent-chase.rgl`'s `cong(P,S,P,T)` is stored in the baseline run since Phase 155.
+
+Gates: analyze clean, suite **3369** green (3342 at the phase's start), browser gate **15**.
+
+**Next.** Phase 161's decision box is the remaining engine item; the corpus is still the limiting factor, which five measurements now say. Carried: `readFact` on listed `eqangle`s can still read magnitude-false; Phase 157's and the builder's browser looks unverified; the id-based fact transfer for `Isolate.run`.
+
+**Gotchas.**
+
+- **The search is one point at a time**, and a theorem needing two comes back exhausted. Named in TODO so the negative is not read as broader than it is.
+- **`Prover.resolve` records what it confirms**, so a membership test *after* an ask sees the fact either way. A test that means to pin "the closure answered it" must assert the step's *rule*, not the fact's absence. Cost one debugging round.
+- The panel's new strings are plain ASCII, unlike the chase's `θ`/`π`/`⟹`, so nothing here needed a browser-gate entry — but the gate was run and is green at 15.
+- **None of this has been looked at in a browser.** The flow is pinned in `testWidgets`, and driving it live needs the JGEX document through the file picker, which browser automation cannot do.
