@@ -1727,3 +1727,38 @@ The browser look is the one open box: extension not connected this session (seco
 - The rule's per-rule soundness rig (`expectRuleFires`) looks the rule up in the table, so it cannot outlive the rule; the Varignon test is what exercises the mechanics now.
 - One aborted widget test in `proof_panel_test.dart` took the **21 tests after it** down with `UnmountedRefException: Cannot use the Ref of proofHighlightProvider after it has been disposed` — a pending highlight callback outliving the test's container. Read the *first* failure in that file; the rest are cascade. (Whether the callback should be cancelled on dispose is a real question, left open — it only bites when a test dies mid-way.)
 - `flutter test 2>&1 | tail -3` in the background keeps three lines: when it fails, the failure list is gone and the suite runs again. Redirect the whole log to the scratchpad instead.
+
+## 2026-08-25 — session 175: Phase 165, the length system
+
+**Done — five code commits on `phase-165-length-closure`, phase complete (all five boxes).** The ℚ half of AR, built on the angle side's shape and sharing none of its arithmetic.
+
+- **`length_closure.dart`** — homogeneous rows over segment log-lengths, ℚ Gaussian elimination, provenance from the first line. Three decisions: **no constant term** (equalities and ratios are scale-invariant, so a length system cannot be inconsistent — `AngleAddOutcome.contradiction` has no counterpart, and `ln 2` enters as a *variable* the day a document wants the 1:2); **the basis is kept fully reduced, not echelon**, which is what makes `residual` canonical and without which 152e's n² `eqratio` trick misses pairs (mutation-checked: disabling back-substitution fails exactly the two tests that pin it); **nothing shared with the angle side**, because a ℚ pivot reaching θ is a soundness bug no test here would see.
+- **`length_translation.dart` + `Prover` + `derivation_check.dart`** — publishes `cong`, answers `eqratio` on ask. The opposite split from the angle side by the same rule (publish what has a consumer and what the enumeration can afford). Two asymmetries: `midp` may be **cited and not concluded** (equal distances do not put a point on a segment — `coll`'s treatment next door), and there is **no shared-point refusal**, since `|AB| = |AC|` is an isoceles triangle where `para` through one point is a degeneracy.
+- **`length_chase.dart`** — the step reads. The open spelling question is settled as **products, not ratios**: a chase line is an arbitrary ℚ-combination and a row with three positives and one negative has no canonical ratio split, so ratio-when-possible would be two notations in one chase. Hence no fraction slash. `ProofStep.chase` became the `ArithmeticChase` **interface** — not a base class, since the two chases share a shape and no arithmetic.
+
+**The measurement, run against the same corpus with the publisher off.** One fact of delta in the whole seven fixtures: `provoleas2.json` 118 → 119 facts, `cong` 10 → 11, applications identical (13 268), the other six byte-identical by kind. Publisher cost per pass 10–384 µs — three orders off the 1.3 s a quartic enumeration would have cost. **One fact is the phase's honest yield and not a disappointment**: the closure exists to reach a `cong` the rule table cannot.
+
+**What it proves, end to end.** `provoleas2`'s `|AB| = |LO|`, `verify()` empty, and the chase reads:
+
+```
+|OA|^2 = |OB|^2        [1]
+|OB| = |ON|            [2]
+|MO| = |MA|            [3]
+|ON|·|OB| = |MO|·|LO|  [14]
+|MA|·|AB| = |OA|^2     [21]
+⟹ |AB| = |LO|
+```
+
+The squares are the coefficient 2 no union-find over congruence classes can form. Asked through the *Equal lengths* template — four taps into two two-point segment slots — the provider answers **proved**, where before the phase it answered *unproved*.
+
+Gates: analyze clean, suite **3342** green (3275 at the phase's start), browser gate **15** (was 13).
+
+**Next.** Phase 153 (auxiliary construction) is now the large open engine item and the one PLAN says the corpus is waiting on; Phase 161's decision box is the small one. Carried: `readFact` on listed `eqangle`s can still read magnitude-false; Phase 157's and the builder's browser looks unverified.
+
+**Gotchas.**
+
+- **The browser gate caught a guessed expectation**, which is the gate doing its job for a reason that is not compilation: my first web pin asserted the *other* sound reading of one chase line (the elimination doubles the `cong` row rather than halving the `eqratio` row). VM and target agree; both now pin the row the elimination actually chose. Measure a rendering before pinning it on two platforms.
+- **A full-suite run took 13 minutes once and was pure machine contention** — `tracing_properties_test.dart` stalled, and it runs in 13 s alone. Later runs were 43 s and 69 s. Before hunting a performance regression in a suite that just got slower, re-run it.
+- `ProofStep.chase` is `ArithmeticChase` now, so `.lines` needs a cast. `angle_chase_test` does two, and each is the claim that rig is making rather than a workaround.
+- `Fact` canonicalizes its arguments, so which side of a rendered chase line a factor lands on follows the *stored* order, not the order the test wrote them. Three expectations had to be corrected to what comes out; that is a property worth knowing before writing rendering pins.
+- `length_closure_upside_test.dart` measured six fixtures and the corpus is seven — `tangent-chord.rgl` was missing for no recorded reason. Fixed here; worth checking the other corpus rigs against `benchmark/prover_chunk_bench.dart`'s list.
