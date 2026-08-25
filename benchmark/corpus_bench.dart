@@ -55,6 +55,12 @@ enum Bucket {
   unsupportedClause,
   degenerate,
   goalFalseInFigure,
+
+  /// The figure did not survive a *second* independent perturbation:
+  /// some hypothesis of the problem is false under it, so the
+  /// construction came apart rather than the statement being false.
+  unstableFigure,
+
   parseError,
 }
 
@@ -63,6 +69,7 @@ class Row {
     this.source,
     this.name,
     this.bucket, {
+    this.goal = '',
     this.applications = 0,
     this.ms = 0,
   });
@@ -70,6 +77,11 @@ class Row {
   final String source;
   final String name;
   final Bucket bucket;
+
+  /// The goal's predicate, so the baseline can be read by what was asked
+  /// as well as by where it came from.
+  final String goal;
+
   final int applications;
   final int ms;
 }
@@ -143,26 +155,46 @@ Future<Row> _measure(NewclidProblem problem, {required bool verbose}) async {
   final translation = translateNewclidProblem(problem);
   if (translation is UntranslatableProblem) {
     if (verbose) print('  skip ${problem.name}: ${translation.detail}');
-    return Row(problem.source, problem.name, switch (translation.reason) {
-      UntranslatableReason.unknownMacro => Bucket.unknownMacro,
-      UntranslatableReason.unsupportedGoal => Bucket.unsupportedGoal,
-      UntranslatableReason.unsupportedClause => Bucket.unsupportedClause,
-      UntranslatableReason.degenerate => Bucket.degenerate,
-      UntranslatableReason.goalFalseInFigure => Bucket.goalFalseInFigure,
-    });
+    return Row(
+      problem.source,
+      problem.name,
+      goal: problem.goal.predicate,
+      switch (translation.reason) {
+        UntranslatableReason.unknownMacro => Bucket.unknownMacro,
+        UntranslatableReason.unsupportedGoal => Bucket.unsupportedGoal,
+        UntranslatableReason.unsupportedClause => Bucket.unsupportedClause,
+        UntranslatableReason.degenerate => Bucket.degenerate,
+        UntranslatableReason.goalFalseInFigure => Bucket.goalFalseInFigure,
+      },
+    );
   }
   final built = translation as TranslatedProblem;
   final objects = built.construction.objects.toList();
   final clock = Stopwatch()..start();
   final filter = DiagramFilter.probe(objects);
   if (!filter.holds(built.question.canonical)) {
-    // The translator already refused a goal false in its own figure, so
-    // reaching here means the statement fails under perturbation while
-    // holding in the drawn position — which is what refutation is.
+    // The translator already screened the goal through a probe of its
+    // own, so a refusal here means a *second*, independently seeded
+    // perturbation disagrees with the first. Two things look like that
+    // and only one of them is a fact about the problem, so they are
+    // separated before either is reported: if the problem's own
+    // hypotheses also stop holding, what moved is the figure — a
+    // perturbation can carry a point across a branch and swap which
+    // intersection the construction names — and calling that "refuted"
+    // would be a claim about the corpus that the run did not earn.
+    final broken = hypotheses(objects).where((h) => !filter.holds(h)).toList();
+    final bucket = broken.isEmpty ? Bucket.refuted : Bucket.unstableFigure;
+    if (verbose) {
+      print(
+        '  ${bucket.name.padRight(10)} ${problem.name} (${problem.goal})'
+        '${broken.isEmpty ? '' : ' — ${broken.first} came apart'}',
+      );
+    }
     return Row(
       problem.source,
       problem.name,
-      Bucket.refuted,
+      bucket,
+      goal: problem.goal.predicate,
       ms: clock.elapsedMilliseconds,
     );
   }
@@ -208,6 +240,7 @@ Future<Row> _measure(NewclidProblem problem, {required bool verbose}) async {
     problem.source,
     problem.name,
     bucket,
+    goal: problem.goal.predicate,
     applications: engine.applications,
     ms: clock.elapsedMilliseconds,
   );
@@ -268,6 +301,38 @@ void _report(List<Row> rows, Duration wall) {
       '${rows.where((r) => r.bucket == Bucket.refuted).length}',
     ].map((cell) => cell.padLeft(8)).join(' '),
   );
+
+  print('');
+  print('by goal, over the problems that built');
+  final kinds = <String, List<Row>>{};
+  for (final row in rows) {
+    if (!answered.contains(row.bucket)) continue;
+    kinds.putIfAbsent(row.goal, () => []).add(row);
+  }
+  final ordered = kinds.entries.toList()
+    ..sort((a, b) => b.value.length.compareTo(a.value.length));
+  final goalHeader = [
+    'goal',
+    'built',
+    'proved',
+    'unprov',
+    'undec',
+    'refut',
+  ].map((cell) => cell.padLeft(8)).join(' ');
+  print(goalHeader);
+  print('-' * goalHeader.length);
+  for (final entry in ordered) {
+    print(
+      [
+        entry.key,
+        '${entry.value.length}',
+        '${entry.value.where((r) => r.bucket == Bucket.proved).length}',
+        '${entry.value.where((r) => r.bucket == Bucket.unproved).length}',
+        '${entry.value.where((r) => r.bucket == Bucket.undecided).length}',
+        '${entry.value.where((r) => r.bucket == Bucket.refuted).length}',
+      ].map((cell) => cell.padLeft(8)).join(' '),
+    );
+  }
 
   print('');
   print('why the rest did not build');
