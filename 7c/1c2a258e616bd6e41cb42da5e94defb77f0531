@@ -1,0 +1,33 @@
+lib/domain/prover/length_translation.dart
+  s_d29b31706b0974::t_066e37d7a4538d 1-268
+lib/domain/prover/derivation_check.dart
+  s_d29b31706b0974::t_75f6f575a48994 5,67-69,149-184
+  s_d29b31706b0974::t_8e1e475bfb3e5b 185-187
+lib/domain/prover/prover.dart
+  s_d29b31706b0974::t_75f6f575a48994 7,69-75,189,198-208,210-211,219-231,238-244,252-270
+test/domain/prover/length_translation_test.dart
+  s_d29b31706b0974::t_d106ed0f12bc85 1-64,74,76,78-247
+  s_d29b31706b0974::t_4e1cf6550510f1 65-73,75,77
+test/domain/prover/derivation_check_test.dart
+  s_d29b31706b0974::t_3c55ff107aec8b 12,176-271
+  s_d29b31706b0974::t_daf746c1dbc781 272
+test/domain/prover/length_closure_upside_test.dart
+  s_d29b31706b0974::t_dff02e4bbabd30 21,27-36,430-434
+  s_d29b31706b0974::t_e6dd029b846d82 51,409-410,412-424,472-482
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7c1c2a258e616bd6e41cb42da5e94defb77f0531",
+  "prompts": {},
+  "sessions": {
+    "s_d29b31706b0974": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "310c38ce-7ed1-4a07-b408-c206d2e9535c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
