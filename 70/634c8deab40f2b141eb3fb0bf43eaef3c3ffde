@@ -1,0 +1,34 @@
+lib/domain/prover/auxiliary_search.dart
+  s_99ccdb7ca9813f::t_a344a756402f73 189-200,204
+  s_99ccdb7ca9813f::t_9dbe2390634402 15,26-34,85,88-89,113-121
+test/application/providers/prover_provider_test.dart
+  s_99ccdb7ca9813f::t_f9f6f6afe2c7d6 478-545,609-643
+  s_99ccdb7ca9813f::t_ee7c32706be088 546-608
+lib/application/providers/prover_provider.dart
+  s_99ccdb7ca9813f::t_cc61a9f921a183 7,125,134,202,619-690
+  s_99ccdb7ca9813f::t_d2d6f02b0e5e1b 221-225,691
+  s_99ccdb7ca9813f::t_ecddcfbb812580 3-4,111-112,122-124,126-133,135-141,147-149,152-158,187-191,200-201,203-208,213-214,217-218,692
+test/domain/prover/auxiliary_search_test.dart
+  s_99ccdb7ca9813f::t_a344a756402f73 61,88,149,178,214,248,277,298-300
+  s_99ccdb7ca9813f::t_1528c8f17bc8e2 118-144
+lib/application/providers/prover_provider.g.dart
+  s_99ccdb7ca9813f::t_1c8fe234b18d89 152
+lib/application/providers/question_draft_provider.g.dart
+  s_99ccdb7ca9813f::t_1c8fe234b18d89 24-26,44-46,62-64,108-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "70634c8deab40f2b141eb3fb0bf43eaef3c3ffde",
+  "prompts": {},
+  "sessions": {
+    "s_99ccdb7ca9813f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e814237-bd82-479d-a95f-d75f2f2e2334",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
