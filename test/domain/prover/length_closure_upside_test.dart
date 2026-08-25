@@ -34,6 +34,14 @@
 /// on ask and never published; it fell from 43 to 23 on `provoleas2`
 /// when the published `cong` brought 20 of them within reach of the
 /// stored `cong`s alone.
+///
+/// **The third test is the half those two cannot state.** "Nothing is
+/// outstanding" is equally true of a publisher that never ran, so it
+/// pins what was actually published: one `cong` in the whole corpus,
+/// screened by the filter and verifying as a certificate. The fixture
+/// list is the full seven from `benchmark/prover_chunk_bench.dart`
+/// since Phase 165; it was six before, which left `tangent-chord.rgl`
+/// unmeasured here for no reason anyone recorded.
 library;
 
 import 'dart:convert';
@@ -46,10 +54,10 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
-import 'package:regula/domain/prover/fact_naming.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/length_translation.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/prover.dart';
 import 'package:regula/domain/prover/rational.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
@@ -132,6 +140,7 @@ void main() {
     'test/fixtures/perp-true-unproved.rgl',
     'test/fixtures/provoleas2.json',
     'test/fixtures/tangent-chase.rgl',
+    'test/fixtures/tangent-chord.rgl',
   ];
 
   Construction load(String path) => decodeDocument(
@@ -406,6 +415,57 @@ void main() {
     );
   }
 
+  test('what the publisher actually put there, per fixture', () {
+    // The other half of Phase 165's regression, and the one the two
+    // tests above cannot state: they measure what is *entailed* and
+    // find nothing outstanding, which is equally true of a publisher
+    // that never ran. This pins what it published.
+    //
+    // One fact in the whole corpus, and that is the phase's honest
+    // yield: the closure's value is not volume, it is reaching a `cong`
+    // the table cannot. Every one is screened by the same filter DD
+    // screens with, and every one verifies as a certificate.
+    const expected = {
+      'test/fixtures/locus3.json': 0,
+      'test/fixtures/apatitos-topos.rgl': 0,
+      'test/fixtures/no-locus.rgl': 0,
+      'test/fixtures/perp-true-unproved.rgl': 0,
+      'test/fixtures/provoleas2.json': 1,
+      'test/fixtures/tangent-chase.rgl': 0,
+      'test/fixtures/tangent-chord.rgl': 0,
+    };
+    for (final path in fixtures) {
+      final construction = load(path);
+      final filter = DiagramFilter.probe(construction.objects);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(construction.objects), filter);
+      Prover(database: database, filter: filter).run(maxApplications: 30000);
+
+      final published = [
+        for (final fact in database.facts)
+          if (database.derivationOf(fact)!.rule == lengthArithmeticRule) fact,
+      ];
+      expect(published, hasLength(expected[path]!), reason: path);
+      for (final fact in published) {
+        expect(
+          fact.kind,
+          PredicateKind.cong,
+          reason: '$path: only cong is published',
+        );
+        expect(
+          filter.holds(fact.statement),
+          isTrue,
+          reason: '$path: an unscreened publication',
+        );
+        expect(
+          Proof.of(fact, database).verify(),
+          isEmpty,
+          reason: '$path: the published step is not a certificate',
+        );
+      }
+    }
+  });
+
   test('the ratio half entails no cong the exchange does not hold — '
       'which is Phase 165 having landed', () {
     // Per fixture: new `cong`, new `eqratio` beyond what pairs of stored
@@ -433,6 +493,7 @@ void main() {
       // and only 23 still need the ratio rows.
       'test/fixtures/provoleas2.json': (cong: 0, eqratio: 23),
       'test/fixtures/tangent-chase.rgl': (cong: 0, eqratio: 0),
+      'test/fixtures/tangent-chord.rgl': (cong: 0, eqratio: 0),
     };
     for (final path in fixtures) {
       final construction = load(path);

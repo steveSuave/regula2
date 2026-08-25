@@ -18,8 +18,11 @@ import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/length_translation.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/prover.dart';
+import 'package:regula/domain/prover/question_draft.dart';
+import 'package:regula/domain/prover/question_template.dart';
 import 'package:regula/domain/prover/questions.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
@@ -391,6 +394,39 @@ void main() {
       expect(state.answer.verdict, ProverVerdict.proved);
       expect(state.answer.proof!.verify(), isEmpty);
       expect(state.run!.applications, ready.applications, reason: 'no new run');
+    });
+
+    test('a length question the builder spells is proved by the length '
+        'side', () async {
+      // Phase 165's end, asked the way a user asks it: the *Equal
+      // lengths* template, four taps into two two-point segment slots,
+      // on the document the phase was opened by. `|AB| = |LO|` is a
+      // `cong` no rule in the table concludes — it needs a ℚ
+      // combination with a coefficient 2 — and the answer is *proved*.
+      final construction = decodeDocument(
+        jsonDecode(File('test/fixtures/provoleas2.json').readAsStringSync())
+            as Map<String, dynamic>,
+      ).construction;
+      container.read(constructionProvider.notifier).replace(construction);
+
+      var draft = QuestionDraft(QuestionTemplate.cong);
+      for (final name in ['A', 'B', 'L', 'O']) {
+        final next = draft.tap(named(construction, name));
+        expect(identical(next, draft), isFalse, reason: '$name was refused');
+        draft = next;
+      }
+      final question = draft.question(construction.objects)!;
+      expect(question.kind, PredicateKind.cong);
+
+      await container.read(proverProvider.notifier).ask(question);
+
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      final proof = state.answer.proof!;
+      expect(proof.verify(), isEmpty, reason: 'a certificate, not a record');
+      expect(proof.steps.last.rule, lengthArithmeticRule);
+      expect(proof.steps.last.chase, isNotNull);
+      expect(proof.steps.last.chase!.conclusionText, '|AB| = |LO|');
     });
 
     test('a false claim is refuted without the prover running', () async {
