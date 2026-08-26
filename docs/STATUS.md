@@ -8,6 +8,24 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 163 (V2 Session 65) — 2026-08-26
+
+**Done — Phase 170: rescanned Newclid's rule catalog, ported the cheapest candidate, measured it, dropped it.** No branch merge needed (docs-only after the drop); worked directly, `flutter analyze`/`flutter test` re-run clean at each step. Suite unchanged at **3401** (the rule and its rig were both reverted after measurement).
+
+- **The rescan (forked out, ~500-word report back)**: all 92 rules in Newclid's `all_rules.py` cross-referenced against regula2's closed 10-predicate vocabulary (no negation, no `sameside`/`sameclock`, no circle-with-centre predicate, no angle/length constants) and its 27-rule table, ranked by promise on `cyclic`/`coll` per Phase 169's own "Next" pointer. R21 `cyclic_trapezoid` came back cheapest and most targeted: two premises (`cyclic`, `para`), no guard, nothing already in the table states it. R19/R20 (hypotenuse-is-diameter pair) and R44 (`pappus`, pure `coll`→`coll` but an 8-premise join in Phase 151b's blowup shape) were the next two in line.
+- **R21 ported, rigged, and it does not move the corpus.** `cyclic(a,b,c,d) & para(a,b,c,d) => eqangle(a,d,c,d,c,d,c,b)` — a cyclic trapezoid is isosceles. The numeric rig is a half-turn: `CentralReflectionPoint` of `a` and `b` through the circle's centre gives `c`, `d` automatically concyclic and automatically parallel to `ab`, no second circle construction needed. Rule fired correctly in its own test, suite green, corpus benchmark run twice (with and without, via `git stash`) for a clean before/after: **62 → 62 proved**, `cyclic` unchanged at 1 of 43.
+- **The one thing worth carrying forward: a zero corpus effect is not evidence a rule never fires, and this session checked rather than assumed it.** A throwaway instrumented script (added to `benchmark/`, run once, deleted — not committed) tagged every fact `cyclic_trapezoid` inserted across a full corpus run: **68 new `eqangle` facts across 15 problems**, none present before the rule ran. My first draft of the PLAN/TODO writeup asserted the wrong reason (guessed `inscribed_angle` already covered the same angle equality) before this check — caught before it shipped, not after. The real reason is Phase 152e's shape recurring: `eqangle`'s only consumers are `eqangle_transitive` (already subsumed by AR), the two `simtri` criteria, and the two single-premise converses, and none of those 15 problems' goals turn on one. Dropped on the `para_coll`/R50 precedent — real output, no consumer, still pays `cyclic`'s large orbit on every pivot.
+- **`rule.dart`, `docs/PLAN.md` and `docs/TODO.md` all carry the finding**; nothing else in `lib/` or `test/` changed (the rig and rule-count bump were added, measured, then reverted, per the `para_coll`/R50 disposal convention — a dropped rule leaves a comment, not dead code).
+
+**Next.** `cyclic`'s remaining unproved goals are looking like a consumer-side gap now, not a can't-state-it gap — two rules in a row (R01 indirectly, R21 directly) show the vocabulary can express what's needed and the table has nothing that reads it forward. Two directions worth trying before the next per-rule port: R49 (cong-only centre recognition, still untried per Phase 169), or a general widened `eqangle` consumer rather than another one-off producer. Then the direct/reflected `simtri` split (`sameclock`), then constants, per the benchmark's own ordering. Also still open: the id-based fact transfer for `Isolate.run`, M-P4's point-merge *Show why*, Phase 139's open box, Android/iOS smokes, the user's preferred pure route for deflation.
+
+**Gotchas.**
+
+- **Corpus proved-count parity does not mean a rule is inert** — check firings directly before writing the causal story, the way this session had to correct itself mid-draft. A rule can produce real, previously-absent facts and still move nothing if the goal shapes in the corpus never route through its output.
+- The instrumented probe script lived in `benchmark/_probe_*.dart` only for the run and was deleted before committing — worth the same pattern next time a "does X ever fire" question comes up, rather than trusting a before/after proved-count alone.
+
+---
+
 ## Session 162 (V2 Session 64) — 2026-08-22
 
 **Done — Phase 152e, which closes M-P3: one feature and four negatives.** Branch `phase-152e-angle-chase`, five commits, merged to `main` (deployed). Suite **3107** green (3083 + 24), analyze clean, browser gate 13 green.

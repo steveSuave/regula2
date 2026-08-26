@@ -14,6 +14,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 170 — cyclic_trapezoid: fires, and still measures to zero (closed: measured negative)
+
+The rescan of Newclid's ~92 rules that Phase 169's "Next" pointed at, run before picking the next candidate rather than guessing: all 92 cross-referenced against regula2's closed 10-predicate vocabulary and 27-rule table, ranked by promise on `cyclic`/`coll`. R21 came back the cheapest, most targeted first pick — two premises, no guard, nothing in the table already states it.
+
+- [x] **`cyclic_trapezoid`** (Newclid's R21): `cyclic(a,b,c,d) & para(a,b,c,d) => eqangle(a,d,c,d,c,d,c,b)` — a cyclic trapezoid is isosceles. Numeric rig: a half-turn through a circle's centre maps any chord to a parallel one and keeps the image on the same circle, so building `c`, `d` as the `CentralReflectionPoint`s of `a`, `b` through the centre makes both premises structural with no second circle needed
+- [x] **Measured on the corpus: 62 → 62 proved, unchanged.** `cyclic` stays at 1 of 43, no undecided/refuted count moves
+- [x] **Checked directly whether the rule ever fires, rather than assumed idle from the proved-count parity — it does.** A standalone instrumented run (rule added, every fact its derivation credits to `cyclic_trapezoid` logged) finds **68 new `eqangle` facts across 15 corpus problems**, every one absent from the database before the rule ran. The facts are real; nothing downstream consumes them — the same shape Phase 152e's `eqangle`-ask measurement found on the seven fixtures, now confirmed on the corpus too
+- [x] **Dropped on the `para_coll`/R50 precedent**: a rule with real output and no consumer still pays `cyclic`'s large orbit on every pivot for nothing. Written up in PLAN, no `lib/` change beyond the comment recording the measurement
+- [x] Gates: analyze clean, suite unchanged at **3401**
+
+**Next.** `cyclic`'s remaining unproved goals are a rule-table gap in `eqangle`'s *consumer* set now, not in what can state new angle equalities — R21 joins R01's own indirect route (through `inscribed_angle`/AR) as evidence the table can express what's needed and nothing reads it forward from there. R49 (cong-only centre recognition, still untried per Phase 169) is the next rule-shaped candidate; also worth revisiting whether a widened converse set (an `eqangle`-consuming rule beyond `eqangle_transitive`/`simtri`/the two single-premise converses) is a general lever rather than a per-rule one. Then the direct/reflected `simtri` split (`sameclock`), then constants, per the benchmark's ordering.
+
 ## Phase 169 — the rule Newclid's cyclic goals actually needed (done)
 
 The benchmark's ordering, next item after Phase 168's negative: the ~18 in-vocabulary rules Newclid has that this table lacks, `cyclic` first (0 of 43 proved). Newclid's own list — R01 (`cong` ×3 from a centre), R04 (the inscribed converse, already `inscribed_converse`), R49/R50 (recognising a centre) — narrowed to what needs no new predicate and no `sameclock`/`sameside` guard (the direct/reflected split is its own later item), measured one rule at a time on the corpus, the way every rule addition since Phase 150 has been.

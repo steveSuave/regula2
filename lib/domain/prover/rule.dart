@@ -223,6 +223,25 @@ final List<Rule> ddCoreRules = List.unmodifiable([
     'equidistant_cyclic',
     'cong(o,a,o,b) & cong(o,b,o,c) & cong(o,c,o,d) => cyclic(a,b,c,d)',
   ),
+  // Newclid's R21, `cyclic_trapezoid` — `cyclic(a,b,c,d) &
+  // para(a,b,c,d) => eqangle(a,d,c,d,c,d,c,b)`, a cyclic trapezoid is
+  // isosceles — is **not here** (Phase 170). Written, rigged (a
+  // half-turn through the centre maps a and b to c and d, so abcd is a
+  // structural isosceles trapezoid with no extra circle needed for
+  // either premise) and measured on the full Newclid corpus: **62 → 62
+  // proved**, `cyclic` unchanged at 1 of 43, no problem's
+  // undecided/refuted count moves either — but not because the rule is
+  // idle. Checked directly rather than assumed: it fires 68 times
+  // across 15 corpus problems, every one a genuinely new `eqangle` no
+  // other rule or AR pass had stored. **The facts are real and nobody
+  // downstream wants them** — the same shape 152e's `eqangle`-ask
+  // measurement found (its only consumers are `eqangle_transitive`,
+  // already subsumed by AR, plus the two `simtri` criteria and the two
+  // single-premise converses), and none of the 15 problems' goals turn
+  // on one of those. A rule with real output and no consumer still pays
+  // `cyclic`'s large orbit on every pivot — the `para_coll`/R50
+  // precedent: written, rigged, measured, deleted.
+  //
   // The inscribed angle theorem and its converse — DD's workhorse pair.
   Rule.parse('inscribed_angle', 'cyclic(a,b,p,q) => eqangle(p,a,p,b,q,a,q,b)'),
   Rule.parse(
