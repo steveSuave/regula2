@@ -196,6 +196,33 @@ final List<Rule> ddCoreRules = List.unmodifiable([
     'cyclic_fifth_point',
     'cyclic(a,b,c,d) & cyclic(a,b,c,e) => cyclic(b,c,d,e)',
   ),
+  // A point equidistant from four others is what "concyclic" *means* —
+  // Newclid's R01 (Phase 169), ported because the definition is not
+  // otherwise reachable here: a structural circle's centre already
+  // feeds `hypotheses` a `cong` chain and every witness pair of
+  // `cyclic` directly, so this rule earns its keep only where the four
+  // points are shown equidistant from a common point by *other*
+  // reasoning — a `cong` chain the construction did not build as one
+  // circle, which is exactly what an olympiad "prove ABCD cyclic"
+  // problem states.
+  //
+  // Zero effect on all seven fixtures (none puts four points equidistant
+  // from a point that is not their constructed centre) and the reason
+  // the corpus, not the fixtures, is what measures this family now.
+  // Measured on Newclid's corpus (Phase 169): **46 → 62 proved** of the
+  // corpus's 466 built goals — one direct `cyclic` proof, and fifteen
+  // more indirect (`inscribed_angle` reading the new `cyclic` facts
+  // into `eqangle`, which then feeds `para` through the angle closure).
+  // 0 unsound, refuted and undecided counts unchanged. Newclid's R50
+  // (a partial-evidence circumcentre recognition rule, `cyclic(a,b,c,d)
+  // & cong(o,a,o,b) & cong(o,c,o,d) => cong(o,a,o,c)`) was measured
+  // alongside it and dropped: +1 proved for +3 undecided, a worse trade
+  // than this rule's own — `cyclic`'s large orbit makes it an expensive
+  // premise to add a second time.
+  Rule.parse(
+    'equidistant_cyclic',
+    'cong(o,a,o,b) & cong(o,b,o,c) & cong(o,c,o,d) => cyclic(a,b,c,d)',
+  ),
   // The inscribed angle theorem and its converse — DD's workhorse pair.
   Rule.parse('inscribed_angle', 'cyclic(a,b,p,q) => eqangle(p,a,p,b,q,a,q,b)'),
   Rule.parse(

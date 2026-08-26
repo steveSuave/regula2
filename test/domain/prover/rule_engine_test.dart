@@ -292,6 +292,26 @@ void main() {
       );
     });
 
+    test('equidistant_cyclic', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final r = FreePoint(id: 'r', position: const Vec2(3, 0));
+      final circle = CircleCenterPoint(id: 'k', center: o, onCircle: r);
+      final a = PointOnObject(id: 'a', curve: circle, parameter: 0.9);
+      final b = PointOnObject(id: 'b', curve: circle, parameter: 2.0);
+      final c = PointOnObject(id: 'c', curve: circle, parameter: 3.4);
+      final d = PointOnObject(id: 'd', curve: circle, parameter: 5.1);
+      expectRuleFires(
+        ruleName: 'equidistant_cyclic',
+        objects: [o, r, circle, a, b, c, d],
+        seeds: [
+          Predicate(PredicateKind.cong, [o, a, o, b]),
+          Predicate(PredicateKind.cong, [o, b, o, c]),
+          Predicate(PredicateKind.cong, [o, c, o, d]),
+        ],
+        conclusion: Predicate(PredicateKind.cyclic, [a, b, c, d]),
+      );
+    });
+
     test('inscribed_angle and its converse', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
