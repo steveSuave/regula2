@@ -1,0 +1,30 @@
+test/domain/prover/rule_engine_test.dart
+  s_be0ca193cd2554::t_c84abc0a0f58ba 295-314
+docs/TODO.md
+  s_be0ca193cd2554::t_01d2adffdccbb5 17-27
+docs/PLAN.md
+  s_be0ca193cd2554::t_ad519b9f612e7c 600-601
+test/domain/prover/rule_test.dart
+  s_be0ca193cd2554::t_bbc990ec5fe679 7
+lib/domain/prover/rule.dart
+  s_be0ca193cd2554::t_f48817ae0ad2c4 200-221
+  s_be0ca193cd2554::t_d834d0044db3cf 199,222-225
+docs/STATUS.md
+  s_be0ca193cd2554::t_bfe763ef688d06 1835-1847
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "83cc4d12b908f901247bbba4cb267dc765184ed4",
+  "prompts": {},
+  "sessions": {
+    "s_be0ca193cd2554": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "82c31757-b3e7-43bd-9341-a92f5b7c20bb",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
