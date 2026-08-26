@@ -1,0 +1,26 @@
+docs/PLAN.md
+  s_b03038b2166a0f::t_4d83808e9db23c 602-603
+docs/TODO.md
+  s_b03038b2166a0f::t_33816d30fd2019 17-28
+docs/STATUS.md
+  s_b03038b2166a0f::t_54b796153171af 11-28
+lib/domain/prover/rule.dart
+  s_b03038b2166a0f::t_b88649c610f9f8 226-230,244
+  s_b03038b2166a0f::t_80f75d771df2d8 231-243
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "1836bde5da259e4ff08adc2b9c7de9241d1212ae",
+  "prompts": {},
+  "sessions": {
+    "s_b03038b2166a0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1f3b7df9-7e77-4cae-bd91-c95d23c10f29",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
