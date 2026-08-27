@@ -341,6 +341,36 @@ final List<Rule> ddCoreRules = List.unmodifiable([
     'perp(o,t,t,p) & cong(o,t,o,a) & cong(o,t,o,b) '
         '=> eqangle(t,p,t,a,b,t,b,a)',
   ),
+  // Two lines at equal inclination to a perpendicular pair are
+  // perpendicular (Phase 171, Newclid's R30). The one rule out of seven
+  // in-vocabulary `eqangle` consumers that the corpus wanted: **62 → 64
+  // proved, undecided unchanged at 19**, 0 unsound. It reaches
+  // `examples.txt:two_goals_cong_aconst` and
+  // `large_examples.txt:regular_square`, both `cong` goals.
+  //
+  // **Every fact it derives is a right angle at a shared vertex** — 24
+  // facts across 15 corpus problems, and all 24 share a point, none has
+  // four distinct points. So what it closes is a hole in the *angle
+  // closure's* publication, not in the vocabulary:
+  // `AngleTranslation.conclusions` skips every variable pair sharing a
+  // point, which is right for `para` (two lines through a point are the
+  // same line or they meet) and wrong for `perp` (a right angle at a
+  // shared vertex is the most ordinary fact in geometry).
+  //
+  // Narrowing that guard to `para` was written and measured as the
+  // alternative, because it is the more general fix — it reaches every
+  // such right angle instead of only the ones an `eqangle` premise
+  // binds. **It measured worse: 63 proved and 20 undecided, losing
+  // `complete_001_6_GDD_FULL_01-20_16.gex` its existing proof to
+  // budget.** Publishing every entailed shared-vertex `perp` is
+  // supply-side and floods any figure holding a pencil of lines through
+  // a point; the rule is demand-side. Phase 165's rule — publish what
+  // has a consumer — deciding between a closure and a rule for the
+  // first time.
+  Rule.parse(
+    'perp_from_inclination',
+    'eqangle(a,b,p,q,c,d,u,v) & perp(p,q,u,v) => perp(a,b,c,d)',
+  ),
   // **Power of the point is not what tangency was missing**, and the
   // reason is worth keeping because it is structural rather than a gap
   // in the table. `|pa|·|pb| = |ps|²` needs the similarity of `psa` and

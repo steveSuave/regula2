@@ -113,6 +113,39 @@ void main() {
       );
     });
 
+    test('perp_from_inclination', () {
+      // Turn both arms of a right angle through the same angle and it
+      // is still a right angle. `uv` is `pq` turned a quarter, `cd` is
+      // `ab` turned a quarter, so ab makes the same angle with pq that
+      // cd makes with uv — and ab ⟂ cd. Building both quarter turns as
+      // `PerpendicularLine` is what makes the two premises structural:
+      // they survive the filter's perturbation because the construction
+      // holds them, not the coordinates.
+      final p = FreePoint(id: 'p', position: const Vec2(0, 0));
+      final q = FreePoint(id: 'q', position: const Vec2(5, 1));
+      final pq = LineThroughTwoPoints(id: 'pq', point1: p, point2: q);
+      final g = FreePoint(id: 'g', position: const Vec2(1, 4));
+      final uvLine = PerpendicularLine(id: 'uvLine', through: g, reference: pq);
+      final u = PointOnObject(id: 'u', curve: uvLine, parameter: 0);
+      final v = PointOnObject(id: 'v', curve: uvLine, parameter: 3);
+      final a = FreePoint(id: 'a', position: const Vec2(2, -3));
+      final b = FreePoint(id: 'b', position: const Vec2(7, -2));
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final h = FreePoint(id: 'h', position: const Vec2(-2, 2));
+      final cdLine = PerpendicularLine(id: 'cdLine', through: h, reference: ab);
+      final c = PointOnObject(id: 'c', curve: cdLine, parameter: 0);
+      final d = PointOnObject(id: 'd', curve: cdLine, parameter: 2);
+      expectRuleFires(
+        ruleName: 'perp_from_inclination',
+        objects: [p, q, pq, g, uvLine, u, v, a, b, ab, h, cdLine, c, d],
+        seeds: [
+          Predicate(PredicateKind.eqangle, [a, b, p, q, c, d, u, v]),
+          Predicate(PredicateKind.perp, [p, q, u, v]),
+        ],
+        conclusion: Predicate(PredicateKind.perp, [a, b, c, d]),
+      );
+    });
+
     test('perp_coll', () {
       // A relation about a *line* survives being renamed by two other
       // points on it. Without this the run stalls holding the statement

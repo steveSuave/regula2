@@ -8,6 +8,28 @@ Rotation: keep roughly the last 10 sessions here; move older entries to `docs/ar
 
 ---
 
+## Session 164 (V2 Session 66) — 2026-08-27
+
+**Done — Phase 171 end to end, on `phase-171-eqangle-consumers`.** Phase 170's "Next" pointed at two options: R49 as one more per-rule coin flip, or the general question of whether *widening `eqangle`'s consumer set* is a lever. The general one was taken, measured first in the Phase 168/170 shape, and it answered **no** — while turning up a real defect on the way.
+
+- **The candidate list was read, not guessed.** All 88 rules in Newclid's `all_rules.py` parsed, the 19 with an `eqangle` premise kept, narrowed to the **seven** this vocabulary states without a new predicate and without the deferred `sameclock` guard.
+- **Three throwaway probes, run and deleted** (`benchmark/_probe_eqangle_consumers.dart`, `_probe_eqangle_firings.dart`, `_probe_perp_shape.dart`), on session 178's own precedent. Stage 1 re-ran every corpus goal that finished *quiescent and unproved* — 385 of them — with the base table plus one candidate. **2 goals of 385 moved, both from R30.** R74's and R46's apparent unlocks are `testing_minimal_rules.txt:r74` and `:r46`, Newclid's one-problem-per-rule unit suite, each rule proving its own test case; not counted.
+- **`bisector_eqratio` (R12) is the recurring shape for the third time**: 30 facts on 26 problems, real output, zero goals moved. 152e said it of `eqangle`, R21 said it again, and it is now said of `eqratio`.
+- **`perp_from_inclination` (R30) kept: corpus 62 → 64 proved, undecided unchanged at 19**, 0 unsound, 0 refuted. Reaches `examples.txt:two_goals_cong_aconst` and `large_examples.txt:regular_square`. Table 27 → 28, per-rule rig built from two quarter-turns so both premises are structural rather than coordinate luck.
+- **The phase's real finding is what R30 turned out to be.** All 24 facts it derives across 15 problems are right angles at a **shared vertex**; none has four distinct points. `AngleTranslation.conclusions` skips every variable pair sharing a point — right for `para`, wrong for `perp`. Narrowing that guard to `para` is the *more general* fix, so it was written, pinned, mutation-checked and measured against the rule as a third arm: **63 proved / 20 undecided, losing `complete_001_6_GDD_FULL_01-20_16.gex` a proof it already had**, against the rule's 64 / 19 and no loss. Publishing every entailed shared-vertex `perp` is supply-side and floods a figure holding a pencil of lines through one point; the rule is demand-side. **Phase 165's "publish what has a consumer" deciding between a closure and a rule for the first time.** Reverted, with the measurement recorded as a comment in `angle_translation.dart` and in the rule's own doc — the `para_coll`/R50 disposal convention.
+- **Gates: analyze clean, suite 3402 (3401 + the per-rule rig), browser gate 15.** The fixture suite is unchanged, which confirms rather than assumes the zero-fixtures claim.
+
+**Next.** The seven-candidate sweep was the last cheap rule-shaped lever on `eqangle`. What is left of the ~18-rule estimate needs either **`sameclock`** — the direct/reflected `simtri` split, which is eight of the nineteen `eqangle` consumers by itself and which `rule.dart` already names as the blocker for power-of-a-point — or **constants**. The split is the larger and better-evidenced of the two and is the benchmark's own next item. `cyclic` stands at 1 of 43 and `coll` at 1 of 59, both untouched here and both consistent with this phase's finding that the gap is not in what the vocabulary can state. `imo_102_requires_aux.txt` (44 built, 0 proved) is still the rig Phase 153's auxiliary search never had. Also still open: the id-based fact transfer for `Isolate.run`, M-P4's point-merge *Show why*, Phase 139's open box, Android/iOS smokes, `readFact` on listed `eqangle`s reading magnitude-false.
+
+**Gotchas.**
+
+- **`Proof.verify()` resolves rule names against `ddCoreRules` unless given `rules:`** — session 174 recorded this and it bit anyway. A probe running a widened table reported **5 unsound proofs**; every one was a proof citing a candidate rule the verifier could not look up. Passing `rules:` gave 0. Any harness that measures a non-default rule table has to hand the same table to `verify()`.
+- **`runChunked` with `stopWhen` leaves `isComplete` false**, because it stops the moment the goal is reached. A probe column meant to count budget exhaustions counted proved-early runs instead, and the numbers coincided closely enough to look like a finding. Count `!reached && !complete`, and take budget deltas from a full `corpus_bench` run instead.
+- **A more general fix is not automatically the better one, and only a third arm shows it.** Comparing base against the closure fix gave +1 proved / +1 undecided and looked like an acceptable trade; the per-problem diff showed it was +2 and −1, a *lost proof*, and measuring the rule as its own arm showed +2 and no loss. Diff per problem, not per total — a flat count hides a swap.
+- `testing_minimal_rules.txt` is Newclid's per-rule unit suite, one problem per rule. A ported rule proving its own test problem there is not corpus evidence and should be excluded by name from any unlock count.
+
+---
+
 ## Session 163 (V2 Session 65) — 2026-08-26
 
 **Done — Phase 170: rescanned Newclid's rule catalog, ported the cheapest candidate, measured it, dropped it.** No branch merge needed (docs-only after the drop); worked directly, `flutter analyze`/`flutter test` re-run clean at each step. Suite unchanged at **3401** (the rule and its rig were both reverted after measurement).

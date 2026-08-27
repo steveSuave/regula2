@@ -273,6 +273,20 @@ class AngleTranslation {
   /// point are skipped for the same reason — they are either the same
   /// line or they meet, and neither is news.
   ///
+  /// **That skip is a real gap for `perp`, and it is deliberate**
+  /// (Phase 171). A `perp` between two lines through a common point is
+  /// a right angle at a shared vertex, which is no degeneracy at all,
+  /// and the closure entails many it does not publish: Newclid's R30
+  /// (`perp_from_inclination`, see [ddCoreRules]) derives 24 such facts
+  /// across 15 corpus problems, every one of them sharing a point.
+  /// Narrowing the guard to `para` here was written and measured as the
+  /// more general fix and **measured worse** — 63 proved / 20 undecided
+  /// against the rule's 64 / 19, losing one problem its existing proof
+  /// to budget. Publishing every entailed shared-vertex `perp` is
+  /// supply-side and floods a figure holding a pencil of lines through
+  /// one point. The rule reaches the same facts on demand, so the gap
+  /// is closed there and this guard stays as it is.
+  ///
   /// **`eqangle` is deliberately not enumerated.** Pairs of variables
   /// are quadratic and quadruples are quartic, so AR publishing every
   /// entailed `eqangle` would be worse than the blowup it exists to
