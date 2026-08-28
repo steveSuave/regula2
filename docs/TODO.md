@@ -14,6 +14,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 176 — re-attempt the comparison (open; blocked on upstream)
+
+**The stated goal this serves:** regula2 should not be out-proved by Newclid or any comparable reference prover on a shared corpus. Phase 175 could not establish where the two stand, so this stays open until it can.
+
+Everything needed is in `benchmark/comparator/` — `README.md` has a copy-paste re-run recipe, `patch_newclid.py` re-applies the three unambiguous fixes to a fresh venv idempotently, and `run_newclid.py` is the runner. Nothing here needs rebuilding; the block is upstream.
+
+- [ ] **Check the trigger first: has Newclid shipped past 3.0.1, or fixed either unpatched crash class?** `pip index versions newclid`, or the Newclid repository. The two are `NotImplementedError: LengthEquationPredicate is not implemented` (its AR deductor emitting a predicate its own handler lacks) and a pydantic `ValidationError` on the degenerate `simtri c b d c b d` its own matcher generates. They are 105 of the 117 errors in the sample, so fixing them is most of the 89% loss
+- [ ] **If it has: re-run and diff.** ~25 min for a 150-key seeded sample, ~2 h for all 466. Sample, do not take an alphabetical prefix (`imo.txt` sorts early and is the hardest file). Exclude `testing_minimal_rules.txt` from any headline — it is a per-rule unit suite and has inflated a comparison twice, both times on `r46`
+- [ ] **If it has not**, the honest options are to wait, or to report the parity question as open. Repairing those two crash classes ourselves means writing new reasoning into someone else's prover, at which point it stops being the reference — Phase 175's line, and it should hold
+- [ ] **Either way, record the bias direction.** Crashes are concentrated in AR and similarity matching, so survivors skew toward what Newclid finds easy: "the reference proves few of ours" is conservative and safe, "it proves many" is inflated and is not evidence on its own
+- [ ] Consider a third comparator if Newclid stays broken. JGEX solves its own `.gex` corpus and is a different implementation lineage, but its examples are binary Java serialization (see the reference memory), so the harness would be a bigger build than this one was
+
 ## Phase 175 — the reference comparator, set up and found unusable (closed: could not be measured)
 
 Phase 174 named the one measurement that separates the three surviving explanations for the corpus's 379 quiescent-unproved goals: **run Newclid over the same corpus and diff the proved sets.** The environment is now built and the harness is in `benchmark/comparator/`. The comparison itself cannot be made, and why is the phase's result.

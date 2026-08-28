@@ -5,6 +5,45 @@ the three surviving explanations for the corpus's 379 quiescent-unproved
 goals: **run the reference implementation over the same corpus and diff
 the proved sets.** This is the harness for that.
 
+## Re-running it later — the short version
+
+```sh
+# 1. environment (skip if ~/Code/var/Newclid/.venv already exists)
+cd ~/Code/var/Newclid
+/opt/homebrew/bin/python3.12 -m venv .venv        # NOT 3.14 — see below
+.venv/bin/pip install ./newclid
+
+# 2. check first whether the two unpatched blockers are gone upstream
+.venv/bin/pip index versions newclid              # was 3.0.1, the latest
+python3 <regula2>/benchmark/comparator/patch_newclid.py ~/Code/var/Newclid/.venv
+
+# 3. regula2's side: the built set, source-qualified
+cd <regula2>
+dart run benchmark/corpus_bench.dart --verbose > /tmp/regula.log
+grep -oE "^  (proved|unproved|undecided|refuted) +\S+" /tmp/regula.log \
+  | awk '{print $2}' > /tmp/built_keys.txt
+
+# 4. the comparator (~25 min for 150 keys at NC_TIMEOUT=30)
+cd ~/Code/var/Newclid && NC_TIMEOUT=30 .venv/bin/python \
+  <regula2>/benchmark/comparator/run_newclid.py \
+  newclid/problems_datasets /tmp/nc.json /tmp/built_keys.txt
+```
+
+**Sample, do not prefix.** The corpus files are alphabetical and
+`imo.txt` sorts early and is the hardest, so a partial run of the full
+list is not a sample of it. Shuffle `built_keys.txt` with a fixed seed
+and take a slice.
+
+**Exclude `testing_minimal_rules.txt` from any headline.** It is
+Newclid's own per-rule unit suite — one problem per rule, which that
+rule proves by construction. It has now inflated a comparison twice
+(Phase 171, then Phase 175, both on `r46`).
+
+**What would make this worth re-attempting.** The cap is the two
+unpatched crash classes, not the harness. If a Newclid past 3.0.1 ships,
+or those two are fixed upstream, the verdict rate should jump from ~11%
+and the comparison becomes available. That is the trigger to watch for.
+
 ## Setup
 
 Newclid's dependencies are not installed in the checkout, and its
