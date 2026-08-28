@@ -154,7 +154,9 @@ Future<void> main(List<String> args) async {
 Future<Row> _measure(NewclidProblem problem, {required bool verbose}) async {
   final translation = translateNewclidProblem(problem);
   if (translation is UntranslatableProblem) {
-    if (verbose) print('  skip ${problem.name}: ${translation.detail}');
+    if (verbose) {
+      print('  skip ${problem.source}:${problem.name}: ${translation.detail}');
+    }
     return Row(
       problem.source,
       problem.name,
@@ -186,7 +188,8 @@ Future<Row> _measure(NewclidProblem problem, {required bool verbose}) async {
     final bucket = broken.isEmpty ? Bucket.refuted : Bucket.unstableFigure;
     if (verbose) {
       print(
-        '  ${bucket.name.padRight(10)} ${problem.name} (${problem.goal})'
+        '  ${bucket.name.padRight(10)} ${problem.source}:${problem.name} '
+        '(${problem.goal})'
         '${broken.isEmpty ? '' : ' — ${broken.first} came apart'}',
       );
     }
@@ -232,7 +235,7 @@ Future<Row> _measure(NewclidProblem problem, {required bool verbose}) async {
   }
   if (verbose) {
     print(
-      '  ${bucket.name.padRight(10)} ${problem.name} '
+      '  ${bucket.name.padRight(10)} ${problem.source}:${problem.name} '
       '(${engine.applications} apps, ${clock.elapsedMilliseconds} ms)',
     );
   }
