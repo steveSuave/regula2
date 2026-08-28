@@ -260,6 +260,82 @@ void main() {
       expect(emitted, hasFact(Predicate(PredicateKind.perp, [s, f, a, b])));
     });
 
+    test('a translated point closes a parallelogram — both pairs of '
+        'sides (Phase 173)', () {
+      final s = FreePoint(id: 's', position: const Vec2(2, 4));
+      final from = FreePoint(id: 'f', position: const Vec2(1, 1));
+      final to = FreePoint(id: 't', position: const Vec2(3, 2));
+      final t = TranslatedPoint(
+        id: 'tr',
+        point: s,
+        vectorFrom: from,
+        vectorTo: to,
+      );
+
+      final emitted = extractAndPin([s, from, to, t]);
+
+      // The displacement, which the kind already stated.
+      expect(emitted, hasFact(Predicate(PredicateKind.cong, [s, t, from, to])));
+      expect(emitted, hasFact(Predicate(PredicateKind.para, [s, t, from, to])));
+      // The other pair of sides — the same tie rearranged, since
+      // `t - s == to - from` is `from - s == to - t`. Newclid's
+      // `parallelogram` states all four; 56 of the 121 hypotheses Phase
+      // 173 found the corpus's constructions guarantee and the runs
+      // never had were these.
+      expect(emitted, hasFact(Predicate(PredicateKind.cong, [s, from, t, to])));
+      expect(emitted, hasFact(Predicate(PredicateKind.para, [s, from, t, to])));
+    });
+
+    test('the incentre is equidistant from its touch points '
+        '(Phase 173)', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(6, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(1, 4));
+      final i = Incenter(id: 'i', vertex1: a, vertex2: b, vertex3: c);
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final bc = LineThroughTwoPoints(id: 'bc', point1: b, point2: c);
+      final ca = LineThroughTwoPoints(id: 'ca', point1: c, point2: a);
+      final z = ProjectionPoint(id: 'z', point: i, line: ab);
+      final x = ProjectionPoint(id: 'x', point: i, line: bc);
+      final y = ProjectionPoint(id: 'y', point: i, line: ca);
+
+      final emitted = extractAndPin([a, b, c, i, ab, bc, ca, z, x, y]);
+
+      // The chain, in the construction's own order — `cong(i,z,i,y)`
+      // follows from these two and is deliberately not emitted, which
+      // is the chain Newclid's `incenter2` states.
+      expect(emitted, hasFact(Predicate(PredicateKind.cong, [i, z, i, x])));
+      expect(emitted, hasFact(Predicate(PredicateKind.cong, [i, x, i, y])));
+    });
+
+    test('a foot of the incentre on a line that is not a side of its '
+        'triangle says nothing', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(6, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(1, 4));
+      final d = FreePoint(id: 'd', position: const Vec2(5, 5));
+      final i = Incenter(id: 'i', vertex1: a, vertex2: b, vertex3: c);
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final ad = LineThroughTwoPoints(id: 'ad', point1: a, point2: d);
+      final z = ProjectionPoint(id: 'z', point: i, line: ab);
+      final w = ProjectionPoint(id: 'w', point: i, line: ad);
+
+      final emitted = extractAndPin([a, b, c, d, i, ab, ad, z, w]);
+
+      // `ad` carries one vertex, so `w` is not a touch point and the
+      // inradius argument does not reach it — a distance that is
+      // simply not equal. The structural test is what refuses it; the
+      // filter would refuse it too, but only after the claim was made.
+      expect(
+        emitted,
+        isNot(hasFact(Predicate(PredicateKind.cong, [i, z, i, w]))),
+      );
+      expect(
+        emitted,
+        isNot(hasFact(Predicate(PredicateKind.cong, [i, w, i, z]))),
+      );
+    });
+
     test('triangle centers emit their defining relations', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(6, 0));
