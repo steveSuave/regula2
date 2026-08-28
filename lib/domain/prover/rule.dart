@@ -269,6 +269,23 @@ final List<Rule> ddCoreRules = List.unmodifiable([
   // ratio invariant but negates every mod-π angle, and deriving eqangle
   // from simtri would be unsound until the direct/reflected split
   // exists. eqratio survives reflection and is safe.
+  //
+  // **Phase 172 measured the split rather than building it, and it buys
+  // nothing here.** Newclid guards R52/R53 with `sameclock`, a
+  // *numerical* predicate it never derives, which is the screen this
+  // table already relies on for its ncoll side conditions — so both
+  // arms were handed to the engine and the screen left to keep whichever
+  // holds, which is exactly what the split does. Over all 383 corpus
+  // goals that finish quiescent and unproved: **0 moved, 0 facts new**.
+  // The rules fire on every one of the 40 simtri/contri facts those
+  // fixpoints hold, and of the 2 880 conclusion-instances that produces,
+  // 1 440 are already in the database and 1 440 are numerically false —
+  // a perfect halving, because the angle set a similarity would
+  // republish is the one `aa_simtri` matched to derive it. R52's
+  // remaining orientation-free eqratio was measured as a control and is
+  // also 0. The supply is the reason: simtri/contri appear at all in 11
+  // of those 383 problems. Dropped on the para_coll / R50 / R21
+  // precedent.
   Rule.parse(
     'sas_simtri',
     'eqratio(a,b,a,c,d,e,d,f) & eqangle(a,b,a,c,d,e,d,f) '
