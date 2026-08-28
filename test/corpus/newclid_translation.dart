@@ -179,11 +179,16 @@ NewclidTranslation translateNewclidProblem(
   NewclidProblem problem, {
   int seed = 0,
   int attempts = defaultSampleAttempts,
+  bool withAuxiliary = false,
 }) {
   var lastDegeneracy = 'no attempt ran';
   var lastReason = UntranslatableReason.degenerate;
   for (var attempt = 1; attempt <= attempts; attempt++) {
-    final builder = _Builder(problem, math.Random(seed + attempt * 7919));
+    final builder = _Builder(
+      problem,
+      math.Random(seed + attempt * 7919),
+      withAuxiliary: withAuxiliary,
+    );
     final failure = builder.run();
     if (failure != null) {
       // A macro or goal this translator cannot *read* fails the same way
@@ -224,10 +229,14 @@ const Set<UntranslatableReason> _resamplable = {
 };
 
 class _Builder {
-  _Builder(this.problem, this.random);
+  _Builder(this.problem, this.random, {this.withAuxiliary = false});
 
   final NewclidProblem problem;
   final math.Random random;
+
+  /// Whether the `|` section is built too — the answer key, and off by
+  /// default. See [run].
+  final bool withAuxiliary;
 
   final Construction construction = Construction();
   final Map<String, GeoPoint> points = {};
@@ -248,6 +257,19 @@ class _Builder {
     for (final clause in problem.clauses) {
       final failure = _clause(clause);
       if (failure != null) return failure;
+    }
+    // The `|` section, built only when a caller asks for it. Phase 167
+    // refuses it by default and that stands — handing the prover the
+    // construction it was supposed to find measures the corpus's
+    // authors, not the prover. It is buildable here for the one
+    // question where that is the *point*: what a perfect auxiliary
+    // search would reach is the ceiling Phase 153's machinery is
+    // measured against, and only the corpus knows the answer key.
+    if (withAuxiliary) {
+      for (final clause in problem.auxiliary) {
+        final failure = _clause(clause);
+        if (failure != null) return failure;
+      }
     }
     final degenerate = _checkGeneric();
     if (degenerate != null) {

@@ -202,6 +202,35 @@ void main() {
       expect(problem.auxiliary.single.outputs, ['q']);
     });
 
+    test('the auxiliary section is built only when a caller asks '
+        '(Phase 174)', () {
+      final problem = only(
+        'aux',
+        'a b = segment a b; m = midpoint m a b | q = midpoint q a m '
+            '? coll m a b',
+      );
+
+      final without = translateNewclidProblem(problem) as TranslatedProblem;
+      final with_ =
+          translateNewclidProblem(problem, withAuxiliary: true)
+              as TranslatedProblem;
+
+      // Off by default, which is the benchmark's contract: handing the
+      // prover the construction it was supposed to find would measure
+      // the corpus's authors. The flag exists for the one question
+      // where that is the point — what a perfect auxiliary search would
+      // reach (Phase 174's ceiling), which came back zero.
+      expect(without.points.keys, isNot(contains('q')));
+      expect(with_.points.keys, contains('q'));
+      expect(with_.points.length, without.points.length + 1);
+      // And the extra point brings its own hypotheses, which is what
+      // makes the ceiling measurement mean anything.
+      expect(
+        hypotheses(with_.construction.objects).length,
+        greaterThan(hypotheses(without.construction.objects).length),
+      );
+    });
+
     test('a malformed body is reported, and costs only that body', () {
       final file = parseNewclidProblems(
         'good\na b = segment a b; m = midpoint m a b ? coll m a b\n'

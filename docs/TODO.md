@@ -14,6 +14,21 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 174 — the ceiling for auxiliary construction (closed: measured negative)
+
+Phase 173 closed both cheap explanations for the corpus's 379 quiescent-unproved runs — not the rule table, not the hypotheses — and named auxiliary construction as what was left. Before spending a phase on the cost model Phase 153's search needs, this asks the prior question: **would a perfect auxiliary search help?** The corpus states its own auxiliary points after a `|`, which is an answer key, and Phase 167 parses them and refuses to build them. Lifting that refusal is the ceiling measurement.
+
+- [x] **Correcting Phase 173's own "Next": `imo_102_requires_aux.txt` states no auxiliary sections at all.** Its 44 problems *need* auxiliary points; the file does not say which, so it is not the rig that entry called it. Corpus-wide only **17** problems state one, 16 in `imo.txt` and 1 in `imo_sl.txt`
+- [x] **`withAuxiliary` on `translateNewclidProblem`, off by default** — Phase 167's refusal stands as the benchmark's contract, and the flag exists for the one question where handing over the answer key is the point. Pinned in `newclid_problem_test.dart`: the point appears only with the flag, and it brings hypotheses with it
+- [x] **The result: 0 of 17, and 0 of the 8 that build.** Nine of the seventeen do not build for translation reasons (4 `unknownMacro`, 3 `unsupportedGoal`, 1 `degenerate`, and those refusals are identical in both arms). Every one of the remaining eight is `unproved` before and `unproved` after
+- [x] **Not because nothing happened — the mechanism fires, and that is what makes the zero mean something** (Phase 170's correction, applied a third time). Every one of the eight gains facts: `imo_sl_2015_g5_constr` **139 → 354**, `2019_p6` 119 → 180, `2009_p2` 38 → 70, the smallest gain 12. The answer key adds real deductive content — up to 2.5× the fixpoint — and closes nothing
+- [x] **And it is not the budget.** Re-run at 10× (300 000 applications) all eight reach *quiescence*, including `2008_p1a`, which was the one undecided at the provider's own budget. A quiescent unproved run has exhausted its closure, so no budget rescues it
+- [x] **So the upper bound is zero, and that is the useful shape of the finding.** A search that has to *find* the points is strictly weaker than being handed them, so whatever Phase 153's machinery would score on these eight, it is ≤ 0. The cost model is not worth solving for this
+- [x] **Stated with its n.** Eight problems, all IMO, which is the corpus's hard tail rather than a sample of the 379. This is evidence that points are not what *these* runs lack; it is not evidence about the whole unproved set, and it cannot be, because the corpus does not record the answer key anywhere else
+- [x] Gates: analyze clean, suite **3406** (3405 + 1)
+
+**Next.** Three explanations survive for the 379, and one measurement separates all three: **run the reference implementation over the same corpus and diff the proved sets.** If Newclid also fails on these, this prover is at parity and the limit is DDAR's method — which would make constants (`aconst` 12 goals, `rconst` 9, `lconst` 6, the last item in the benchmark's ordering) the only remaining lever worth its cost. If Newclid proves a large share, there is a concrete target list and the gap is in this implementation. That run needs a Python environment Newclid can import — its deps are not installed in the checkout — so it is an install decision to make before it is a measurement.
+
 ## Phase 173 — is the prover told what the problem says? (done)
 
 Four rule-shaped levers measured since Phase 167, three of them zero. Every one asked *which rule is missing*. This asks the input-side question none of them did, and it is the first half of the "shape of the search" item Phase 172's Next named: **`hypotheses()` reads parent ties off a `Construction`; Newclid's `JGEXDefinition.clauses` states, per macro, the predicates that macro asserts.** Two independent routes to the same set, so the diff is a measurement of whether the runs were ever given what their problems state.
