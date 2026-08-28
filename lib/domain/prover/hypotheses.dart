@@ -155,6 +155,15 @@ List<Predicate> hypotheses(
       case final TranslatedPoint t:
         emit(PredicateKind.cong, [t.point, t, t.vectorFrom, t.vectorTo]);
         emit(PredicateKind.para, [t.point, t, t.vectorFrom, t.vectorTo]);
+        // The *other* pair of sides, which is the same tie read the
+        // other way: `t - point == vectorTo - vectorFrom` rearranges to
+        // `vectorFrom - point == vectorTo - t`, so the four points are
+        // a parallelogram and not merely two equal parallel segments.
+        // Phase 173 found this missing — it is 56 of the 121 stated
+        // hypotheses the corpus's constructions guarantee and the run
+        // never had.
+        emit(PredicateKind.cong, [t.point, t.vectorFrom, t, t.vectorTo]);
+        emit(PredicateKind.para, [t.point, t.vectorFrom, t, t.vectorTo]);
       case final ReflectedPoint r:
         for (final q in onCurve(r.mirror)) {
           emit(PredicateKind.cong, [q, r.point, q, r]);
@@ -199,6 +208,33 @@ List<Predicate> hypotheses(
           i.vertex3,
           i.vertex2,
         ]);
+        // The inradius. The incentre is equidistant from all three
+        // sides, so the feet of its perpendiculars onto them are
+        // equidistant from *it* — the incircle's touch points, stated
+        // without the incircle needing to be drawn. This reads the
+        // construction rather than `i`'s own parents because a foot is
+        // a separate object per side, the cross-object shape
+        // `ReflectedPoint` already uses; a `ProjectionPoint` on its own
+        // knows only its `coll` and its `perp`.
+        //
+        // Emitted as the chain `cong(i,f0,i,f1)`, `cong(i,f1,i,f2)`
+        // rather than all three pairs: the third follows, and it is
+        // the chain Newclid's `incenter2` states. Phase 173 found this
+        // missing — 64 of the 121.
+        final feet = <GeoPoint>[
+          for (final other in all)
+            if (other is ProjectionPoint &&
+                identical(other.point, i) &&
+                _carriesTwoOf(onCurve(other.line), [
+                  i.vertex1,
+                  i.vertex2,
+                  i.vertex3,
+                ]))
+              other,
+        ];
+        for (var f = 0; f + 1 < feet.length; f++) {
+          emit(PredicateKind.cong, [i, feet[f], i, feet[f + 1]]);
+        }
       case final CircleCenter o when isCircleByConstruction(o.circle):
         for (final pair in pairsOn(o.circle)) {
           emit(PredicateKind.cong, [o, pair[0], o, pair[1]]);
@@ -389,6 +425,19 @@ GeoPoint? _structuralCenter(GeoCircle circle) => switch (circle) {
 };
 
 /// The k-element subsets of [items], in lexicographic index order.
+/// Whether [on] holds at least two of [vertices] — "this line is a side
+/// of that triangle", asked structurally, which is what lets an
+/// [Incenter]'s touch points be recognised without the sides having
+/// been built by any particular kind.
+bool _carriesTwoOf(List<GeoPoint> on, List<GeoPoint> vertices) {
+  var found = 0;
+  for (final vertex in vertices) {
+    if (on.any((point) => identical(point, vertex))) found++;
+    if (found >= 2) return true;
+  }
+  return false;
+}
+
 List<List<GeoPoint>> _choose(List<GeoPoint> items, int k) {
   final out = <List<GeoPoint>>[];
   final indices = List.generate(k, (i) => i);
