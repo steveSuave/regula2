@@ -1970,3 +1970,16 @@ Gates: analyze clean, suite unchanged at **3406**.
 - **Patching the reference to make it run is legitimate only while the fix is the one its authors plainly intended**, and the line is worth stating: three of these were type declarations and sibling call sites agreeing against a single wrong line; the other two would have been me writing new reasoning and calling the result "the reference". Everything patched is tabulated in the README.
 - **Patch the venv's installed copy, never the checkout.** `pip install ./newclid` copies the source, so the two are separable and the user's repository stays clean.
 - **`testing_minimal_rules.txt` is a per-rule unit suite, not a benchmark**, and it has now inflated a result twice — Phase 171 caught it and this phase caught it again on the same rule, `r46`. Any future comparison should exclude that file up front.
+
+## 2026-08-28 — session 179 (end): the comparison, kept re-runnable
+
+**Session close.** Four phases landed and merged today — 172 (the direct/reflected split, measured and dropped), 173 (121 stated hypotheses the runs never had, two `hypotheses()` gaps closed), 174 (the auxiliary ceiling, zero), 175 (the comparator, set up and found unusable). This last commit is the notes, because the comparison is the one thing left unfinished and the user's standing goal is that **regula2 should not be out-proved by Newclid or any comparable reference prover on a shared corpus** — now recorded in PLAN, since it decides whether an unanswerable question gets closed or kept open. It is kept open.
+
+- **`benchmark/comparator/patch_newclid.py`** — the three unambiguous fixes, idempotent, reporting each as applied / already-present / **NOT FOUND** (which on a fresh install means the line moved or upstream fixed it). Round-trip tested: reverted one fix, re-ran, it re-applied and Newclid still solves. Without this the repairs lived only in a venv that a `rm -rf` would erase.
+- **The README now opens with a copy-paste re-run recipe** — venv, version check, patcher, regula2's built set, the runner — plus the two traps already paid for (an alphabetical prefix is not a sample; exclude `testing_minimal_rules.txt`) and the bias direction.
+- **Phase 176 is open in TODO**, blocked on upstream rather than on us. The trigger to watch is a Newclid past 3.0.1 or either unpatched crash class being fixed; those two are **105 of the 117 sampled errors**, so they are most of the 89% loss. Repairing them ourselves would mean writing new reasoning into someone else's prover, which is where Phase 175 drew the line and where it should stay.
+- **Memory updated**: `reference-provers-and-corpus` now covers the venv and the harness, and `newclid-cannot-run-its-own-corpus` records the block, the trigger and the two traps.
+
+Gates: analyze clean, suite **3406**.
+
+**Next session.** Either the comparator (if the trigger has fired — check `pip index versions newclid` first, it is one command) or constants, the benchmark's last untried lever: `aconst` 12 corpus goals, `rconst` 9, `lconst` 6. Measure before building, as with the four levers before it. Standing caveat on constants: 27 goals is a small prize against `cong`'s 259 and `coll`'s 131, so it is worth asking whether the corpus is still the right thing to optimise against before spending a phase on it.
