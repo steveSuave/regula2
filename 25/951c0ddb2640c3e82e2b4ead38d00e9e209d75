@@ -1,0 +1,27 @@
+docs/PLAN.md
+  s_f982bd0384d692::t_1bd21aade6c93b 618-621
+benchmark/comparator/README.md
+  s_f982bd0384d692::t_087fde5004c267 1-71
+benchmark/corpus_bench.dart
+  s_f982bd0384d692::t_3e1b262c8fadf6 157-159,191-192,238
+docs/TODO.md
+  s_f982bd0384d692::t_1bd21aade6c93b 17-30
+benchmark/comparator/run_newclid.py
+  s_f982bd0384d692::t_087fde5004c267 1-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "25951c0ddb2640c3e82e2b4ead38d00e9e209d75",
+  "prompts": {},
+  "sessions": {
+    "s_f982bd0384d692": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9104801d-0364-4c1c-a756-e05a1b269502",
+        "model": "claude-opus-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
