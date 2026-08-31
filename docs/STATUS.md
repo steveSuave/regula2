@@ -2016,3 +2016,21 @@ Gates: analyze clean; no `lib/`/`test/` change, suite stands at **3410** from th
 **Gotchas.**
 
 - **An "undecided" bucket can be almost entirely edge-of-budget**: 87% of these quiesced within 37% more applications. Before treating undecided counts as a search-depth signal, check how far past the budget they actually needed to go.
+
+## 2026-08-31 — session 180 (continued): Phase 179, the rule that was a negative and the bug that was not
+
+**Done — one commit on `phase-179-r49-congonly`, phase closed at +2 proved, neither of them from the rule it set out to measure.** The candidate was R49 cong-only (`cong(o,a,o,b) & cong(o,b,o,c) & cyclic(a,b,c,d) => cong(o,a,o,d)`), the one rule-shaped lever the fixpoint-composition argument did not cover — Phase 169 dismissed it as subsumed by R50's negative instead of measuring it.
+
+- **The measurement flagged an UNSOUND proof, and that flag was itself wrong — which is the finding.** `regular_hexagon`'s proof carried an angle step whose recorded premises "did not entail" its conclusion. The certificate was in fact valid (recombine == query; it scales one perp by 4 and another by 2, wiping their ½s mod 1). The false refusal came from `AngleClosure.add`'s Bézout branch: it continued elimination with a determinant-|y| combination of the two merged rows — **non-unimodular, so the row basis silently generated a sublattice of the inputs**. Consequences ran both directions: the verifier could report sound steps unsound, and the live engine could miss entailed facts. Pre-existing since the closure was written; R49's only real contribution was producing the first proof whose verification walked the lossy path.
+- **Fix: the classic unimodular complement** (`(theirs/g)·current − (mine/g)·old`, determinant −1), with a regression test distilled to the exact seven equations in citation order — failing before, passing after. **The fix alone: 67 → 69 proved** (`regular_hexagon`, which Phase 177 had measured as out of reach, and a JGEX book problem), no losses, 0 unsound, no pinned fixture moved.
+- **R49 itself, measured on the repaired engine: R50's trade restated** — +1 genuine (`point_on_circle_eqdistant_from_center`, the rule's own statement as a problem) for +3 undecided, the same `cyclic`-premise join cost. Reverted on the R50 protocol; recorded in the rule table's doc comment.
+
+Gates: analyze clean, suite **3411** (3410 + 1). Corpus baseline: **469 / 69 / 377 / 23 / 0 unsound**.
+
+**Next.** The rule-side ledger is now fully settled: every Newclid rule candidate is measured, kept, or recorded-and-declined. What remains is the session report's decision list — the constants stack (largest build, unmeasured joint yield over 44 macro-gated problems), the app-facing `aconst` reader, the Phase 176 trigger, or the plateau. One new thread the bug opens: **the closure was under-proving for its whole life, and Phase 172/174-style "measured at the fixpoint" zeros that consulted `entails` are worth a skeptical re-glance** — the published `para`/`perp` conclusions went through the same lossy basis. Phase 172's split and Phase 174's ceiling used fact-set/goal checks, not raw `entails`, so their zeros likely stand; Phase 177's threefold-root finding was re-confirmed against the *fixed* closure by the regular_hexagon flip only in part. Cheap to re-ask if anything ever hinges on them.
+
+**Gotchas.**
+
+- **An UNSOUND flag can indict the checker rather than the proof.** Verify the certificate (`recombine == query`) before believing either side — here the proof was right and the verifier's fresh rebuild was the broken party, and the asymmetry was pure luck of insertion order.
+- **Integer-lattice row reduction must be unimodular at every step**, and the Bézout shortcut that stores the gcd row and reduces with it is the textbook way to lose that: the determinant of (replacement, current−k·replacement) against (current, old) is −y, not ±1. If a closure ever gains another elimination branch, check the determinant first.
+- **A rule can look like it proves a problem when it is actually routing around a bug.** R49 "proved" regular_hexagon on the broken engine; the fixed engine proves it with no new rule. Without separating the two changes into two bench runs, R49 would have been credited +2 and kept.

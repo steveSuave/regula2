@@ -224,13 +224,29 @@ class AngleClosure {
       // variable is their gcd, and Bézout says which combination
       // reaches it. This is the step Gaussian elimination replaces with
       // a division, and the step that keeps every coefficient whole.
+      //
+      // The continuation must be the *complement* — `(theirs/g)·current
+      // − (mine/g)·old` — so that the pair (replacement, complement)
+      // is a determinant −1 transformation of (current, old) and the
+      // rows keep generating the whole input lattice. Continuing with
+      // `current − (mine/g)·replacement` instead has determinant −y:
+      // the basis silently shrinks to a sublattice, later [entails]
+      // calls answer false noes for combinations that exist over the
+      // inputs, and the verifier reports sound angle steps as unsound
+      // (found on `regular_hexagon`, Phase 179 — the certificate
+      // scaled two perps by 4 and 2, wiping their halves mod 1).
       final (x, y) = _extendedGcd(mine, theirs);
+      final gcd = x * mine + y * theirs;
       final replacement = current.scaled(x) + row.equation.scaled(y);
       final replacementSupport = _combine(_scale(support, x), row.support, y);
       _rows[variable] = _Row(replacement, replacementSupport);
-      final factor = mine ~/ replacement.coefficients[variable]!;
-      current = current - replacement.scaled(factor);
-      support = _combine(support, replacementSupport, -factor);
+      current =
+          current.scaled(theirs ~/ gcd) - row.equation.scaled(mine ~/ gcd);
+      support = _combine(
+        _scale(support, theirs ~/ gcd),
+        row.support,
+        -(mine ~/ gcd),
+      );
     }
   }
 

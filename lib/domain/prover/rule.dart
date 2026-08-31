@@ -223,6 +223,19 @@ final List<Rule> ddCoreRules = List.unmodifiable([
     'equidistant_cyclic',
     'cong(o,a,o,b) & cong(o,b,o,c) & cong(o,c,o,d) => cyclic(a,b,c,d)',
   ),
+  // Newclid's R49 in cong-only form — `cong(o,a,o,b) & cong(o,b,o,c) &
+  // cyclic(a,b,c,d) => cong(o,a,o,d)`, this rule's converse direction —
+  // is **not here** (Phase 179, where it was the last rule-shaped
+  // candidate with an unmeasured status: Phase 169 dismissed it as
+  // subsumed by R50's negative rather than measuring it). On the
+  // lattice-repaired closure it is R50's trade restated: +1 proved —
+  // `examples.txt:point_on_circle_eqdistant_from_center`, which is the
+  // rule's own statement posed as a problem — for +3 undecided
+  // (`imo_sl_2022_g7` twice, `imo_sl_2010_g2b_constr`), the same
+  // expensive `cyclic`-premise join both times. Measured with the full
+  // before/after name diff, reverted on the R50 protocol. Its one other
+  // apparent gain, `regular_hexagon`, was the angle closure's Bézout
+  // defect all along: the fixed closure proves it with no new rule.
   // Newclid's R21, `cyclic_trapezoid` — `cyclic(a,b,c,d) &
   // para(a,b,c,d) => eqangle(a,d,c,d,c,d,c,b)`, a cyclic trapezoid is
   // isosceles — is **not here** (Phase 170). Written, rigged (a
