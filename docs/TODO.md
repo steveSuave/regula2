@@ -14,6 +14,24 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 181 — the length system's constant column (open)
+
+First implementation phase of the constants stack (PLAN §"The constants stack"). Self-contained and immediately paying: `rconst`/`lconst` goals exist whose problems already build. The angle side waits for Phase 182's macros, on the supply theorem PLAN states — today's hypothesis constants are all 0 or ½, so an `aconst` ask has zero reachable targets until a macro can state π/3.
+
+- [ ] **`LengthEquation` gains its constant column** as a formal ℚ-vector over `{ln p}` (`Map<BigInt, Rational>`, prime → exponent) — never a plain rational, since ℚ-row-scaling forces fractional exponents. The system becomes inconsistency-capable; give it the flag the angle side has, and take the "cannot be inconsistent" and `ln 2` sentences out of `length_closure.dart`'s header
+- [ ] **The `rconst` and `lconst` fact kinds**, value as part of the fact's canonical identity (invert `rconst`'s ratio with its pair swap; `lconst` already canonical). Matched by no rule — absorption into `LengthTranslation` and ask via entailment are their only consumers
+- [ ] **`Midpoint` emits `rconst(a,m,a,b; ½)`** — Newclid's R51 as hypothesis emission, since a multiplicative log system cannot derive it from `cong` + `coll` (length addition is outside the algebra). Cross-check the emission against the corpus's `midpoint` macro
+- [ ] **Goal templates + question spelling** for both kinds; extend `_respelled` to pass genuinely-constant values through to the new templates instead of refusing
+- [ ] **Measure**: `midpoint_splits_in_two` and `obm_1fase_2006_p15` are the named targets (+ `r51` in the unit file); full corpus run with name diff, fixtures untouched, `Proof.verify()` on everything new. Tests per the no-new-public-API rule throughout
+- [ ] Gates: analyze, suite, corpus baseline restated from one run
+
+## Phase 180 — the constants stack, designed before built (closed: PLAN §, decomposition)
+
+The user chose the constants stack as the prover's next direction (session 180). PLAN §"The constants stack — vocabulary as payload, algebra as reader" records the design: value-carrying fact kinds no rule matches; the ℤ-module line held against root-screening (eq_triangle's goals stay named incompletenesses); the supply theorem that forces macros-before-ask on the angle side; the prime-log constant column reversing Phase 165's omission at the cost it predicted; macros as real construction objects per the `on_aline` line. Phases 181–183 decomposed there.
+
+- [x] PLAN section written, argued against the pinned sections it touches (ℤ-module, Phase 165's length decisions, the benchmark's `on_aline` ruling, §"A shape is not an angle")
+- [x] Phase 181 opened with the length column; 182 (macros + `aconst`) and 183 (the measurement's verdict) outlined in PLAN
+
 ## Phase 179 — R49 cong-only: the rule reverted, and the kernel bug it flushed out fixed (closed: +2 proved)
 
 Phase 169's "Next" left one loose end the fixpoint-composition argument does not cover: **R49 in cong-only form was dismissed as subsumed by R50's negative result rather than measured on its own** — and R50 was dropped on *cost* (+1 proved, +3 undecided), not on a fixpoint zero, so nothing proved R49 shared its fate. The form: `cong(o,a,o,b) & cong(o,b,o,c) & cyclic(a,b,c,d) => cong(o,a,o,d)` — full-evidence centre recognition, R01's converse direction; no `ncoll` guard needed since `cyclic` already means a genuine circle.
