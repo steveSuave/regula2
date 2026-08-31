@@ -2000,3 +2000,19 @@ Gates: analyze clean, suite **3406**.
 - **A goal outside the vocabulary is not always a missing feature — check its stated value first.** Three "constant" goals were `perp` and `cong` wearing Newclid's spelling, provable all along. The corpus states `aconst`/`rconst` at whatever value the figure has, including values that collapse into plainer predicates.
 - **The angle closure holds more than `entails` admits at face value: scale the query.** `x ≡ k` failing while `3x ≡ 3k` holds is the signature of a root ambiguity, not absence — mod-1 linear algebra cannot divide. Asking only the unscaled equation would have read "pinned up to finitely many candidates" as "unreachable".
 - **`translateNewclidProblem` orders its refusals: `unknownMacro` fires before `unsupportedGoal`, and `unsupportedGoal` fires only after the whole figure built.** That makes the translator itself the honest classifier for "what is the sole blocker" — no static macro-list needed for the goal-side question (the probe kept one only for the corpus-wide supply counts).
+
+## 2026-08-31 — session 180 (continued): Phase 178, budget was not a lever either
+
+**Done — one commit on `phase-178-undecided-budget`, phase closed as a measured negative that completes a claim.** The session report named the 23 undecided as the one pocket where "more of the same" was untested — they exhausted the 30 000-application budget rather than their closure, so no reach claim covered them. One throwaway probe (Phase 168 pattern, deleted): the exact 23 source-qualified rows of the Phase 177 bench run, re-run at 300 000 applications, same chunking, same stop-on-proved.
+
+- **0 proved, 23 quiescent-unproved, 0 still undecided.** No corpus number moves; the headline at the provider's own budget stays 469 / 67 / 379 / 23.
+- **20 of 23 quiesce within 33–41 k applications** — they were just over the line, not mid-explosion. Only two shapes needed real headroom: the one jgex problem (210 k) and `1995_p1` (133 k). Duplicates across corpus files land on bitwise-identical apps/facts counts.
+- **The claim this completes: every buildable unproved corpus problem — 402 of 402 — exhausts its deductive closure under this table.** Budget is not a lever on this corpus, full stop. That also answers the corpus-side arm of Phase 161's decision box: application budgets are a latency/fairness question, not a proving-power one.
+
+Gates: analyze clean; no `lib/`/`test/` change, suite stands at **3410** from this session's Phase 177 run.
+
+**Next.** With budget closed, the remaining prover options are exactly the session report's list: (1) the Phase 176 trigger check each session (`pip index versions newclid` — still 3.0.1 today); (2) the constants stack as a deliberate decision — the only dismissed lever whose *combined* yield (44 macro-gated problems) is unmeasured, and the largest build; (3) the app-facing `aconst` reader, whose value is the user question "what is this angle?" rather than its +2; (4) otherwise the corpus number is a plateau and the kernel/UI track resumes. Carried: `readFact` on listed `eqangle`s can still read magnitude-false; Phase 161's decision box (now minus its corpus arm).
+
+**Gotchas.**
+
+- **An "undecided" bucket can be almost entirely edge-of-budget**: 87% of these quiesced within 37% more applications. Before treating undecided counts as a search-depth signal, check how far past the budget they actually needed to go.

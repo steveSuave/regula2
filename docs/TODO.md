@@ -14,6 +14,14 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 178 — the 23 undecided at 10× budget (closed: measured negative, and it closes the corpus question)
+
+Every lever in the benchmark's ordering is measured, and the 379 quiescent-unproved are beyond the closure's reach. The **23 undecided were the one pocket that claim did not cover**: they ran out of budget, not out of closure, so "more of the same" was still an untested explanation there — Phase 174 had converted exactly one undecided to quiescent at 10× (and it went quiescent-*unproved*). One probe pass, Phase 168 pattern, probe deleted.
+
+- [x] **Re-run exactly the 23 undecided rows** at `maxApplications` 300 000, same chunking, same stop-on-proved: **0 proved, 23 quiescent-unproved, 0 still undecided.** No proof to verify; the corpus headline at the provider's own budget stands (469 built / 67 proved / 379 unproved / 23 undecided)
+- [x] **The shape of the zero is the finding**: 20 of 23 quiesce within 33–41 k applications — barely past the 30 k line, not deep in an explosion; only `complete_016…M021-64.gex` (210 k) and `1995_p1` (133 k, both copies identically) needed real headroom. Duplicated problems across files land on identical apps/facts counts, which is the determinism behaving
+- [x] **So the claim extends corpus-wide with no budget caveat**: every buildable, unproved corpus problem exhausts its deductive closure under this table — 402 of 402 measured quiescent. Budget is not a lever on this corpus, which also answers the "raise the budget" arm of Phase 161's decision box for the corpus's part: charging or yielding remains a *latency* question, not a proving-power one
+
 ## Phase 177 — constants, measured before built (closed: +3 from a respelling; the rest priced and declined)
 
 The benchmark's ordering ends here: `aconst` / `rconst` / `lconst`, the last untried lever, measured the way the four levers before it were. Two facts framed the measurement before it ran. Newclid's own rule table touches constants in exactly **one** rule (R51, midpoint ⇒ `rconst 1/2`) — its constants come from construction macros (`s_angle`, `lconst`, `rconst`, `rconst2`, `l2const`, `triangle12`) and from AR, not from DD — and this repo's translator supports **none of those macros**. And the two AR systems are not symmetric: `AngleEquation` already carries a rational constant in units of π (it is how `perp` enters as ½), while `length_closure.dart` deliberately has no constant term and says so at its head.
