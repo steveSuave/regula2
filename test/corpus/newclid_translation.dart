@@ -163,6 +163,48 @@ int tapsFor(QuestionTemplate template) => template.slots.fold(
   (sum, slot) => sum + (slot.type == SlotType.point ? 1 : 2),
 );
 
+/// A constant goal whose stated value makes it a plain predicate of the
+/// ten-word vocabulary, respelled as that predicate — everything else
+/// answers unchanged.
+///
+/// `aconst a b c d k` says the angle from line ab to line cd is k mod π,
+/// which at k = π/2 *is* `perp a b c d`; `rconst a b c d n/d` says
+/// |ab|/|cd| = n/d, which at 1 *is* `cong a b c d`. The respelling is a
+/// biconditional, not an approximation, so refusing these as
+/// `unsupportedGoal` would misreport goals the vocabulary already
+/// states (Phase 177 measured three in the corpus, all three proved).
+/// A genuinely constant value — π/3, a ratio of 2 — has no respelling
+/// and still refuses.
+NewclidGoal _respelled(NewclidGoal goal) {
+  if (goal.arguments.length != 5) return goal;
+  final points = goal.arguments.sublist(0, 4);
+  final value = goal.arguments[4];
+  switch (goal.predicate) {
+    case 'aconst':
+      // `Npi/D` in units of π, or `No` in degrees; a right angle is
+      // N/D ≡ 1/2 (mod 1), i.e. 2N ≡ D (mod 2D), or 90° (mod 180°).
+      final pi = RegExp(r'^(\d+)pi/(\d+)$').firstMatch(value);
+      if (pi != null) {
+        final n = int.parse(pi.group(1)!);
+        final d = int.parse(pi.group(2)!);
+        if (d > 0 && (2 * n) % (2 * d) == d) {
+          return NewclidGoal('perp', points);
+        }
+      }
+      final degrees = RegExp(r'^(\d+)o$').firstMatch(value);
+      if (degrees != null && int.parse(degrees.group(1)!) % 180 == 90) {
+        return NewclidGoal('perp', points);
+      }
+    case 'rconst':
+      final ratio = RegExp(r'^(\d+)/(\d+)$').firstMatch(value);
+      if (ratio != null &&
+          int.parse(ratio.group(1)!) == int.parse(ratio.group(2)!)) {
+        return NewclidGoal('cong', points);
+      }
+  }
+  return goal;
+}
+
 /// How many figures to sample before giving up on a problem.
 ///
 /// Newclid resamples the whole problem up to **100** times until the
@@ -994,24 +1036,25 @@ class _Builder {
   /// under-report the prover: PLAN §M-P4 records that a run can hold the
   /// statement under a different name.
   UntranslatableProblem? _goal() {
-    final template = goalTemplates[problem.goal.predicate];
+    final goal = _respelled(problem.goal);
+    final template = goalTemplates[goal.predicate];
     if (template == null) {
       return _fail(
         UntranslatableReason.unsupportedGoal,
-        'no template for ${problem.goal.predicate}',
+        'no template for ${goal.predicate}',
       );
     }
     final expected = tapsFor(template);
-    if (problem.goal.arguments.length != expected) {
+    if (goal.arguments.length != expected) {
       return _fail(
         UntranslatableReason.unsupportedGoal,
-        '${problem.goal.predicate} over ${problem.goal.arguments.length} '
+        '${goal.predicate} over ${goal.arguments.length} '
         'points is not the $expected the template takes — an arity the '
         'vocabulary does not have is a conjunction, not one fact',
       );
     }
     final taps = <GeoObject>[];
-    for (final name in problem.goal.arguments) {
+    for (final name in goal.arguments) {
       final point = _known(name);
       if (point == null) {
         return _fail(

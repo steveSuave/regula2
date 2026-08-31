@@ -37,6 +37,7 @@ import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/question_template.dart';
 
 import 'newclid_problem.dart';
@@ -407,6 +408,47 @@ void main() {
       expect(tapsFor(QuestionTemplate.coll), 3);
       expect(tapsFor(QuestionTemplate.eqangle), 8);
       expect(tapsFor(QuestionTemplate.midp), 3);
+    });
+  });
+
+  group('a constant goal the vocabulary already states is respelled', () {
+    // Phase 177: `aconst` at π/2 *is* perp and `rconst` at 1 *is* cong —
+    // biconditionals, not approximations — and refusing them as
+    // `unsupportedGoal` misreported three corpus goals the prover
+    // proves. A genuinely constant value still refuses.
+    const square =
+        'a b = segment a b; c = on_tline c b a b, eqdistance c b a b; '
+        'd = on_circum d a b c, eqdistance d c a b';
+
+    test('aconst at a right angle is perp', () {
+      final problem = built('square_turn', '$square ? aconst d a a b 1pi/2');
+      expect(problem.question.canonical.kind, PredicateKind.perp);
+    });
+
+    test('aconst at 90 degrees is the same right angle', () {
+      final problem = built('square_turn_o', '$square ? aconst d a a b 90o');
+      expect(problem.question.canonical.kind, PredicateKind.perp);
+    });
+
+    test('rconst at one is cong', () {
+      final problem = built(
+        'halves',
+        'a b = segment a b; m = midpoint m a b ? rconst a m b m 1/1',
+      );
+      expect(problem.question.canonical.kind, PredicateKind.cong);
+    });
+
+    test('a genuinely constant value still refuses', () {
+      final translation = translateNewclidProblem(
+        only(
+          'sixty',
+          'b c = segment b c; a = eq_triangle a b c ? aconst a b a c 1pi/3',
+        ),
+      );
+      expect(
+        (translation as UntranslatableProblem).reason,
+        UntranslatableReason.unsupportedGoal,
+      );
     });
   });
 
