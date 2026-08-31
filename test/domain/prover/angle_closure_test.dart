@@ -215,6 +215,55 @@ void main() {
       }
     });
 
+    test('the Bézout replacement keeps the whole lattice', () {
+      // Distilled from `large_examples.txt:regular_hexagon` (Phase 179):
+      // the seven premises of a recorded angle step, absorbed in the
+      // order the step cited them, and the step's own conclusion. The
+      // entailment is real — its certificate scales one perp by 4 and
+      // another by 2, wiping their halves mod 1 — but the old Bézout
+      // step continued elimination with a determinant-|y| combination
+      // of the two rows it merged, so the surviving basis generated a
+      // sublattice and `entails` answered a false no. The verifier
+      // then reported a sound proof as unsound, which is how this was
+      // found.
+      final closure = AngleClosure()
+        ..add(
+          AngleEquation({
+            'a': -BigInt.one,
+            'c': BigInt.two,
+            'e': -BigInt.one,
+          }, Rational.zero),
+        )
+        ..add(perp('c', 'f'))
+        ..add(
+          AngleEquation({
+            'a': -BigInt.one,
+            'd': -BigInt.one,
+            'f': BigInt.two,
+          }, Rational.zero),
+        )
+        ..add(perp('d', 'g'))
+        ..add(perp('b', 'h'))
+        ..add(
+          AngleEquation({
+            'a': -BigInt.two,
+            'c': BigInt.one,
+            'e': BigInt.one,
+          }, Rational.zero),
+        )
+        ..add(
+          AngleEquation({
+            'b': -BigInt.one,
+            'c': -BigInt.one,
+            'g': BigInt.two,
+          }, Rational.zero),
+        );
+      final goal = perp('a', 'h');
+      final certificate = closure.entails(goal);
+      expect(certificate, isNotNull);
+      expect(closure.recombine(certificate!), goal);
+    });
+
     test('the gcd step reaches what two coarse rows share', () {
       // Neither 2θ nor 3θ divides the other, and their lattice contains
       // θ itself — Bézout, which is the step Gaussian elimination
