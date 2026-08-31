@@ -1,0 +1,28 @@
+lib/domain/prover/rule.dart
+  s_b33dd80a614d66::t_0b6dfab3674a3b 226-238
+test/domain/prover/angle_closure_test.dart
+  s_b33dd80a614d66::t_b654f11ff51c82 218-266
+lib/domain/prover/angle_closure.dart
+  s_b33dd80a614d66::t_941a33eb63b591 227-237,239,243-249
+docs/TODO.md
+  s_b33dd80a614d66::t_1593b2f2aaff50 18,20,26
+  s_b33dd80a614d66::t_4a049a1c36afb2 17,19,21-25
+docs/STATUS.md
+  s_b33dd80a614d66::t_89654da8335f10 2019-2036
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c342bae65de8659d64840107e006deb9bef3ed3d",
+  "prompts": {},
+  "sessions": {
+    "s_b33dd80a614d66": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f12e9ff4-e4a0-46a7-b479-e9d25cbd61cc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
