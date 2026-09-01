@@ -55,9 +55,11 @@ import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
+import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/question_draft.dart';
 import 'package:regula/domain/prover/question_template.dart';
 import 'package:regula/domain/prover/questions.dart';
+import 'package:regula/domain/prover/rational.dart';
 
 import 'newclid_problem.dart';
 
@@ -173,8 +175,11 @@ int tapsFor(QuestionTemplate template) => template.slots.fold(
 /// biconditional, not an approximation, so refusing these as
 /// `unsupportedGoal` would misreport goals the vocabulary already
 /// states (Phase 177 measured three in the corpus, all three proved).
-/// A genuinely constant value — π/3, a ratio of 2 — has no respelling
-/// and still refuses.
+/// The plainer spelling wins even now that constants are askable: `cong`
+/// has DD consumers where `rconst(·,·; 1)` has none. A genuinely
+/// constant ratio or length passes through unchanged and is phrased by
+/// `_constantGoal` (Phase 181); a genuinely constant *angle* still
+/// refuses until Phase 182's `aconst`.
 NewclidGoal _respelled(NewclidGoal goal) {
   if (goal.arguments.length != 5) return goal;
   final points = goal.arguments.sublist(0, 4);
@@ -1037,6 +1042,9 @@ class _Builder {
   /// statement under a different name.
   UntranslatableProblem? _goal() {
     final goal = _respelled(problem.goal);
+    if (goal.predicate == 'rconst' || goal.predicate == 'lconst') {
+      return _constantGoal(goal);
+    }
     final template = goalTemplates[goal.predicate];
     if (template == null) {
       return _fail(
@@ -1081,6 +1089,69 @@ class _Builder {
     question = asked;
     return null;
   }
+
+  /// A value-carrying goal (`rconst a b c d n/d`, `lconst a b n`),
+  /// phrased directly rather than through a template: the builder's
+  /// templates have no value slot (Phase 181's stated exclusion), and a
+  /// length is named by the pair that bounds it — so the corpus's own
+  /// points are the one spelling there is, with the value on it. Facts
+  /// this shape resolve through the length closure's entailment like any
+  /// other ask. A `_respelled` goal never reaches here: a value that
+  /// collapses into `cong` keeps the plainer spelling, which has DD
+  /// consumers.
+  UntranslatableProblem? _constantGoal(NewclidGoal goal) {
+    final kind = goal.predicate == 'rconst'
+        ? PredicateKind.rconst
+        : PredicateKind.lconst;
+    if (goal.arguments.length != kind.arity + 1) {
+      return _fail(
+        UntranslatableReason.unsupportedGoal,
+        '${goal.predicate} takes ${kind.arity} points and a value, got '
+        '${goal.arguments.length} arguments',
+      );
+    }
+    final value = _parseRational(goal.arguments.last);
+    if (value == null || value.isZero || value.isNegative) {
+      return _fail(
+        UntranslatableReason.unsupportedGoal,
+        '${goal.arguments.last} is not a positive rational value',
+      );
+    }
+    final taps = <GeoPoint>[];
+    for (final name in goal.arguments.sublist(0, kind.arity)) {
+      final point = _known(name);
+      if (point == null) {
+        return _fail(
+          UntranslatableReason.unsupportedGoal,
+          'the goal names $name, which the construction never builds',
+        );
+      }
+      taps.add(point);
+    }
+    final asked = ProverQuestion(kind, [Predicate(kind, taps, value: value)]);
+    if (!_filter!.holds(asked.canonical)) {
+      return _fail(
+        UntranslatableReason.goalFalseInFigure,
+        '${problem.goal} is false in the figure built for it',
+      );
+    }
+    question = asked;
+    return null;
+  }
+}
+
+/// `N/D` or a plain integer `N` as an exact rational — the two spellings
+/// the corpus uses for stated values — or null for anything else.
+Rational? _parseRational(String text) {
+  final fraction = RegExp(r'^(\d+)/(\d+)$').firstMatch(text);
+  if (fraction != null) {
+    final denominator = int.parse(fraction.group(2)!);
+    if (denominator == 0) return null;
+    return Rational.fromInts(int.parse(fraction.group(1)!), denominator);
+  }
+  final whole = RegExp(r'^\d+$').firstMatch(text);
+  if (whole != null) return Rational.whole(int.parse(text));
+  return null;
 }
 
 /// A curve a point is constrained to, and the point the macro already
