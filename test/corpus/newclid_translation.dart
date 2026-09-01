@@ -497,13 +497,22 @@ class _Builder {
   /// argument survives as a tie-break for the rare figure where two
   /// branches are equally new.
   ///
-  /// Where nothing is excluded — two lines cross once; `eq_triangle` may
-  /// take either apex — branch 0 is canonical and either answer is a
-  /// correct instance of the problem.
+  /// Where nothing is excluded — `eq_triangle` may take either apex,
+  /// two circles either crossing — **the branch is part of the sample**:
+  /// one surviving branch is drawn with the attempt's own generator, so
+  /// resampling explores instances the way it explores positions.
+  /// Branch 0 was canonical here until Phase 181's measurement showed
+  /// the claim "either answer is a correct instance" false on
+  /// `obm_1fase_2006_p15`: its goal |bd| = 2|fg| holds exactly when its
+  /// two eqdistance apexes take *consistent* orientations, and Newclid's
+  /// own semantics — resample until the goals hold numerically — make
+  /// the goal-true branch the instance the problem means. A fixed
+  /// branch made that instance unreachable at any number of samples.
   UntranslatableProblem? _cross(String name, _Constraint a, _Constraint b) {
     final shared = a.shared ?? b.shared;
     IntersectionPoint? best;
     var bestDistance = -1.0;
+    final fresh = <IntersectionPoint>[];
     var met = false;
     var allTaken = true;
     for (var branch = 0; branch < IntersectionPoint.maxBranchCount; branch++) {
@@ -525,12 +534,20 @@ class _Builder {
       if (_alreadyNamed(here)) continue;
       allTaken = false;
       final away = shared?.position;
-      final distance = away == null ? 0.0 : here.distanceTo(away);
+      if (away == null) {
+        fresh.add(candidate);
+        continue;
+      }
+      final distance = here.distanceTo(away);
       if (best == null || distance > bestDistance) {
         bestDistance = distance;
         best = candidate;
       }
-      if (away == null) break;
+    }
+    if (fresh.isNotEmpty) {
+      best = fresh.length == 1
+          ? fresh.single
+          : fresh[random.nextInt(fresh.length)];
     }
     if (best == null) {
       return _fail(

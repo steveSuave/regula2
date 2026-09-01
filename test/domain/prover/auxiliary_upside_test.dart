@@ -148,7 +148,9 @@ void main() {
       for (final fact in run.database.facts) {
         final ids = [for (final point in fact.points) point.id];
         if (ids.any((id) => !basePoints.containsKey(id))) continue;
-        final here = Fact(fact.kind, [for (final id in ids) basePoints[id]!]);
+        final here = Fact(fact.kind, [
+          for (final id in ids) basePoints[id]!,
+        ], value: fact.value);
         if (baseline.prover.resolve(here)) continue;
         novel.add(here);
       }
