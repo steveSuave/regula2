@@ -9,6 +9,7 @@ import '../construction/objects/circumcenter.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/diameter_circle.dart';
 import '../construction/objects/five_point_conic.dart';
+import '../construction/objects/fixed_angle_line.dart';
 import '../construction/objects/fixed_radius_circle.dart';
 import '../construction/objects/focal_conic.dart';
 import '../construction/objects/harmonic_conjugate_point.dart';
@@ -22,10 +23,13 @@ import '../construction/objects/perpendicular_line.dart';
 import '../construction/objects/polar_line.dart';
 import '../construction/objects/projection_point.dart';
 import '../construction/objects/radical_axis_line.dart';
+import '../construction/objects/ratio_apollonius_circle.dart';
 import '../construction/objects/reflected_point.dart';
 import '../construction/objects/rotated_point.dart';
+import '../construction/objects/scaled_compass_circle.dart';
 import '../construction/objects/sector.dart';
 import '../construction/objects/segment_ratio_point.dart';
+import '../construction/objects/stated_radius_circle.dart';
 import '../construction/objects/tangent_line.dart';
 import '../construction/objects/translated_point.dart';
 import '../construction/objects/two_line_bisector_line.dart';
@@ -67,7 +71,10 @@ import 'predicate.dart';
 ///
 /// Kinds with no pointwise statement contribute nothing, deliberately:
 /// `Centroid` (its medians need the side midpoints, which the diagram may
-/// not name), `FixedRadiusCircle`'s numeric radius, `HomotheticPoint` and
+/// not name), `FixedRadiusCircle`'s numeric radius (a float parameter is
+/// not a stated value — `StatedRadiusCircle` is the kind that *states*
+/// one, and the other constant-stating carriers of Phase 182 emit their
+/// `aconst`/`rconst`/`lconst` the same way), `HomotheticPoint` and
 /// `SegmentRatioPoint` beyond collinearity (their ratios are params, not
 /// points — except the exact-half `SegmentRatioPoint`, which is `midp`),
 /// the conic-valued kinds (`FivePointConic`, `BifocalConic`,
@@ -265,6 +272,48 @@ List<Predicate> hypotheses(
         for (final pair in pairsOn(o.circle)) {
           emit(PredicateKind.cong, [o, pair[0], o, pair[1]]);
         }
+      case final FixedAngleLine l:
+        // The defining constant (Phase 182): the angle from the
+        // reference to this line is the stated turn, one `aconst` per
+        // witness-pair spelling — the `ParallelLine` shape with the
+        // value carried. Argument order is the fact's own: reference
+        // pair first, since aconst(r…, s…; v) reads θ_s − θ_r ≡ v.
+        for (final ownPair in pairsOn(l)) {
+          for (final referencePair in pairsOn(l.reference)) {
+            emit(PredicateKind.aconst, [
+              ...referencePair,
+              ...ownPair,
+            ], value: l.turn);
+          }
+        }
+      case final StatedRadiusCircle k:
+        // The defining constant: every named point on the circle is at
+        // the stated distance from the centre. The generic circle arm
+        // above already turned pairs into `cong`; this is the value the
+        // length closure can carry further.
+        for (final point in onCurve(k)) {
+          emit(PredicateKind.lconst, [point, k.center], value: k.radius);
+        }
+      case final ScaledCompassCircle k:
+        // |p·centre| = factor·|span|, spelled as the ratio fact.
+        for (final point in onCurve(k)) {
+          emit(PredicateKind.rconst, [
+            point,
+            k.center,
+            k.radiusPoint1,
+            k.radiusPoint2,
+          ], value: k.factor);
+        }
+      case final RatioApolloniusCircle k:
+        // |p·A| / |p·B| = ratio for every named point of the locus.
+        for (final point in onCurve(k)) {
+          emit(PredicateKind.rconst, [
+            point,
+            k.point1,
+            point,
+            k.point2,
+          ], value: k.ratio);
+        }
       case final ParallelLine l:
         for (final ownPair in pairsOn(l)) {
           for (final referencePair in pairsOn(l.reference)) {
@@ -446,7 +495,10 @@ GeoPoint? _structuralCenter(GeoCircle circle) => switch (circle) {
   CircleCenterPoint() => circle.center,
   CompassCircle() => circle.center,
   FixedRadiusCircle() => circle.center,
+  StatedRadiusCircle() => circle.center,
+  ScaledCompassCircle() => circle.center,
   Sector() => circle.center,
+  // A RatioApolloniusCircle's centre is derived, not a named point.
   _ => null,
 };
 
