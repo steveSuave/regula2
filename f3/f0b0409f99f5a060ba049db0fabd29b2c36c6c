@@ -1,0 +1,63 @@
+lib/domain/prover/hypotheses.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 32
+test/domain/prover/angle_chase_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 10
+lib/domain/prover/length_closure.dart
+  s_18b2d157ec57e9::t_37d46c7be1557b 1
+test/domain/prover/length_chase_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 13
+lib/domain/prover/length_translation.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 2
+lib/domain/prover/fact.dart
+  s_18b2d157ec57e9::t_37d46c7be1557b 2
+lib/domain/prover/predicate.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 2
+test/domain/prover/rational_test.dart
+  s_18b2d157ec57e9::t_37d46c7be1557b 2
+test/web/angle_closure_web_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 9
+test/corpus/newclid_translation.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 55
+lib/domain/prover/fact_naming.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 2
+test/domain/prover/fact_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 6
+test/domain/prover/length_translation_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 10
+test/domain/prover/angle_closure_test.dart
+  s_18b2d157ec57e9::t_37d46c7be1557b 2
+test/domain/prover/hypotheses_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 35
+test/domain/prover/length_closure_test.dart
+  s_18b2d157ec57e9::t_37d46c7be1557b 17
+test/domain/prover/length_closure_upside_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 54
+lib/domain/prover/angle_closure.dart
+  s_18b2d157ec57e9::t_37d46c7be1557b 1
+lib/domain/prover/angle_chase.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 2
+test/corpus/newclid_problem_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 38
+test/domain/prover/angle_translation_test.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 4
+lib/domain/prover/angle_translation.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 2
+lib/domain/prover/length_chase.dart
+  s_18b2d157ec57e9::t_69f1e7dd66c8e6 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f3f0b0409f99f5a060ba049db0fabd29b2c36c6c",
+  "prompts": {},
+  "sessions": {
+    "s_18b2d157ec57e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3148ad66-f170-48cf-8db1-2099098a6d65",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
