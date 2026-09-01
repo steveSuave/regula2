@@ -1,4 +1,4 @@
-import 'rational.dart';
+import '../math/rational.dart';
 
 /// One linear relation between segment log-lengths:
 /// `Σ cᵥ·lᵥ + Σ kₚ·ln p = 0`, where `lᵥ = log|v|` for a segment `v` and

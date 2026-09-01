@@ -1,7 +1,7 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import '../math/vec2.dart';
 import 'numeric_checks.dart' as checks;
-import 'rational.dart';
 
 /// The prover's predicate vocabulary (PLAN §M-P1) — the relations DD
 /// forward chaining ranges over, each with its fixed arity in points.

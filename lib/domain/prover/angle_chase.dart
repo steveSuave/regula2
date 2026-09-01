@@ -1,10 +1,10 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'angle_closure.dart';
 import 'angle_translation.dart';
 import 'arithmetic_chase.dart';
 import 'fact.dart';
 import 'fact_naming.dart';
-import 'rational.dart';
 
 /// An `angle_arithmetic` step written out as the angle chase it is
 /// (PLAN §M-P3, and §"Proofs must read" — the reason Wu and Gröbner were

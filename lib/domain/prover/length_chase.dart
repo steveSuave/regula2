@@ -1,10 +1,10 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'arithmetic_chase.dart';
 import 'fact.dart';
 import 'fact_naming.dart';
 import 'length_closure.dart';
 import 'length_translation.dart';
-import 'rational.dart';
 
 /// A `length_arithmetic` step written out as the chase it is — the
 /// length half of `AngleChase`, and its three decisions carried over

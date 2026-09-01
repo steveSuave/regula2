@@ -1,8 +1,8 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'fact.dart';
 import 'length_closure.dart';
 import 'predicate.dart';
-import 'rational.dart';
 
 /// The name an AR step over lengths is recorded under, beside
 /// `angleArithmeticRule` and for the same reason: the step *is* "these

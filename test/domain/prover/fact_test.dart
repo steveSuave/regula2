@@ -3,10 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/predicate.dart';
-import 'package:regula/domain/prover/rational.dart';
 
 /// Ids in alphabetical order, so a canonical form is easy to read off by
 /// eye and the sort has something to do.

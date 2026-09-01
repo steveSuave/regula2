@@ -32,13 +32,13 @@ import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
-import 'package:regula/domain/prover/rational.dart';
 
 void main() {
   Construction build(Iterable<GeoObject> objects) {

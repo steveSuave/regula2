@@ -52,6 +52,7 @@ import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
@@ -59,7 +60,6 @@ import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/question_draft.dart';
 import 'package:regula/domain/prover/question_template.dart';
 import 'package:regula/domain/prover/questions.dart';
-import 'package:regula/domain/prover/rational.dart';
 
 import 'newclid_problem.dart';
 

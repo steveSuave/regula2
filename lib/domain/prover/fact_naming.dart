@@ -1,7 +1,7 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'fact.dart';
 import 'predicate.dart';
-import 'rational.dart';
 
 /// How a fact is spelled for a reader, in one place.
 ///

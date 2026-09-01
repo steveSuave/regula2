@@ -29,9 +29,9 @@ import '../construction/objects/segment_ratio_point.dart';
 import '../construction/objects/tangent_line.dart';
 import '../construction/objects/translated_point.dart';
 import '../construction/objects/two_line_bisector_line.dart';
+import '../math/rational.dart';
 import '../projective/absolute.dart';
 import 'predicate.dart';
-import 'rational.dart';
 
 /// Reads the DD hypotheses off a construction (PLAN §M-P2b): every
 /// predicate the construction *guarantees* by its parent ties, never by

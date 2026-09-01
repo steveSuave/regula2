@@ -1,9 +1,9 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'angle_closure.dart';
 import 'carriers.dart';
 import 'fact.dart';
 import 'predicate.dart';
-import 'rational.dart';
 
 /// The name an AR step is recorded under, where DD records a rule's.
 ///

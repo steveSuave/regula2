@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:regula/domain/prover/rational.dart';
+import 'package:regula/domain/math/rational.dart';
 
 void main() {
   Rational r(int n, [int d = 1]) => Rational.fromInts(n, d);

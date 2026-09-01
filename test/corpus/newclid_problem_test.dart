@@ -35,11 +35,11 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/question_template.dart';
-import 'package:regula/domain/prover/rational.dart';
 
 import 'newclid_problem.dart';
 import 'newclid_translation.dart';

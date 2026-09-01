@@ -1,6 +1,6 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'predicate.dart';
-import 'rational.dart';
 
 /// A predicate reduced to the one form that stands for every way of
 /// writing the same statement — the fact database's key (PLAN §M-P2).
