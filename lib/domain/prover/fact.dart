@@ -27,19 +27,21 @@ import 'rational.dart';
 /// independent, which is what keeps a proof reproducible; it presupposes
 /// the ids being unique, which `Construction` guarantees.
 class Fact {
-  /// Canonicalizes [points] — and, for a value-carrying kind, [value]
-  /// with them: `rconst`'s pair swap inverts the ratio, so
-  /// `rconst(a,b,c,d; q)` and `rconst(c,d,a,b; 1/q)` land on one form.
+  /// Canonicalizes [points] — and, for a value-carrying kind whose
+  /// symmetry moves its value, [value] with them: `rconst`'s pair swap
+  /// inverts the ratio, so `rconst(a,b,c,d; q)` and `rconst(c,d,a,b; 1/q)`
+  /// land on one form; `aconst`'s pair swap negates the angle mod 1, so
+  /// `aconst(a,b,c,d; r)` and `aconst(c,d,a,b; 1−r)` do.
   ///
   /// Throws [ArgumentError] on the wrong number of points or a value
-  /// whose presence or sign does not match the kind, the same
+  /// whose presence or range does not match the kind, the same
   /// programmer-error contract as [Predicate] (which the delegated
   /// construction below enforces).
   factory Fact(PredicateKind kind, List<GeoPoint> points, {Rational? value}) {
     // Predicate owns the arity/value contract; building one applies it.
     Predicate(kind, points, value: value);
-    if (kind == PredicateKind.rconst) {
-      final (canonical, kept) = _canonicalRconst(points, value!);
+    if (kind == PredicateKind.rconst || kind == PredicateKind.aconst) {
+      final (canonical, kept) = _canonicalValueCoupled(kind, points, value!);
       return Fact._(kind, List.unmodifiable(canonical), kept);
     }
     return Fact._(
@@ -96,13 +98,18 @@ class Fact {
       '${value == null ? '' : '; $value'})';
 }
 
-/// `rconst`'s canonical spelling: both segments sorted within, then the
-/// lexicographically lesser pair order — **inverting the value when the
-/// swap wins**, since `|s1|/|s2| = q` and `|s2|/|s1| = 1/q` are one
-/// statement. When the two orders tie (the same segment twice), the
-/// lesser value breaks the tie, so `rconst(s,s; q)` and its swapped
-/// spelling `rconst(s,s; 1/q)` still land on one form.
-(List<GeoPoint>, Rational) _canonicalRconst(
+/// The canonical spelling of the two kinds whose pair swap transforms
+/// the value: both pairs sorted within, then the lexicographically
+/// lesser pair order — **transforming the value when the swap wins**.
+/// `rconst`'s swap inverts (`|s1|/|s2| = q` and `|s2|/|s1| = 1/q` are
+/// one statement); `aconst`'s negates mod 1 (the angle from l₂ to l₁ is
+/// the angle from l₁ to l₂ taken backwards). When the two orders tie
+/// (the same pair twice), the lesser value breaks the tie, so
+/// `rconst(s,s; q)` / `rconst(s,s; 1/q)` — and `aconst`'s fixed points
+/// 0 and ½, where negation returns the value itself — still land on one
+/// form.
+(List<GeoPoint>, Rational) _canonicalValueCoupled(
+  PredicateKind kind,
   List<GeoPoint> points,
   Rational value,
 ) {
@@ -110,10 +117,12 @@ class Fact {
   final second = _sorted(points.sublist(2, 4));
   final kept = [...first, ...second];
   final swapped = [...second, ...first];
-  final inverse = Rational.one / value;
+  final transformed = kind == PredicateKind.rconst
+      ? Rational.one / value
+      : (-value).modOne();
   final order = _compareIds(swapped, kept);
-  if (order < 0 || (order == 0 && inverse.compareTo(value) < 0)) {
-    return (swapped, inverse);
+  if (order < 0 || (order == 0 && transformed.compareTo(value) < 0)) {
+    return (swapped, transformed);
   }
   return (kept, value);
 }
@@ -170,13 +179,17 @@ List<List<GeoPoint>> orbitArguments(PredicateKind kind, List<GeoPoint> points) {
     PredicateKind.simtri ||
     PredicateKind.contri => [for (final form in _triangleForms(points)) form],
     // The value-carrying kinds list their **value-preserving** forms
-    // only: rconst's pair swap transforms the value, which a point list
-    // cannot express. No rule matches these kinds (PLAN §"The constants
-    // stack"), so the matcher never binds them; the forms here exist for
-    // the contract's sake and are honest as far as they go.
-    PredicateKind.rconst => _segmentOrbit(points, const [
-      [0, 1],
-    ]),
+    // only: rconst's and aconst's pair swaps transform the value, which
+    // a point list cannot express. No rule matches these kinds (PLAN
+    // §"The constants stack"), so the matcher never binds them; the
+    // forms here exist for the contract's sake and are honest as far as
+    // they go.
+    PredicateKind.aconst || PredicateKind.rconst => _segmentOrbit(
+      points,
+      const [
+        [0, 1],
+      ],
+    ),
     PredicateKind.lconst => [
       points,
       [points[1], points[0]],
@@ -244,8 +257,9 @@ List<List<GeoPoint>> _permutations(List<GeoPoint> points) {
 ///   follows it.
 /// - **`eqangle`, `eqratio`** — see [_matrixForms].
 /// - **`lconst`** — one unordered segment; the value rides along
-///   unchanged. `rconst` is the one kind whose symmetry moves its value
-///   and is canonicalized in [Fact]'s factory, not here.
+///   unchanged. `rconst` and `aconst` are the kinds whose symmetries
+///   move their values and are canonicalized in [Fact]'s factory, not
+///   here.
 List<GeoPoint> _canonicalArguments(PredicateKind kind, List<GeoPoint> points) {
   if (points.length != kind.arity) {
     throw ArgumentError.value(
@@ -264,12 +278,13 @@ List<GeoPoint> _canonicalArguments(PredicateKind kind, List<GeoPoint> points) {
     PredicateKind.eqratio => _leastOf(_matrixForms(points)),
     PredicateKind.simtri ||
     PredicateKind.contri => _leastOf(_triangleForms(points)),
-    // `lconst` names one unordered segment; `rconst` never reaches this
-    // switch — its pair swap moves the value too, so [Fact]'s factory
-    // canonicalizes it through [_canonicalRconst] instead.
+    // `lconst` names one unordered segment; `rconst` and `aconst` never
+    // reach this switch — their pair swaps move the value too, so
+    // [Fact]'s factory canonicalizes them through
+    // [_canonicalValueCoupled] instead.
     PredicateKind.lconst => _sorted(points),
-    PredicateKind.rconst => throw StateError(
-      'rconst canonicalizes with its value',
+    PredicateKind.aconst || PredicateKind.rconst => throw StateError(
+      '${kind.name} canonicalizes with its value',
     ),
   };
 }

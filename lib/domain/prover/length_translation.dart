@@ -183,6 +183,7 @@ class LengthTranslation {
       case PredicateKind.para:
       case PredicateKind.perp:
       case PredicateKind.eqangle:
+      case PredicateKind.aconst:
       case PredicateKind.coll:
       case PredicateKind.cyclic:
       case PredicateKind.simtri:

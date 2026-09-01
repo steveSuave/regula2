@@ -416,7 +416,8 @@ void main() {
     // Phase 177: `aconst` at π/2 *is* perp and `rconst` at 1 *is* cong —
     // biconditionals, not approximations — and refusing them as
     // `unsupportedGoal` misreported three corpus goals the prover
-    // proves. A genuinely constant value still refuses.
+    // proves. A genuinely constant value phrases with its value since
+    // Phases 181–182; the plainer spelling still wins where one exists.
     const square =
         'a b = segment a b; c = on_tline c b a b, eqdistance c b a b; '
         'd = on_circum d a b c, eqdistance d c a b';
@@ -431,6 +432,13 @@ void main() {
       expect(problem.question.canonical.kind, PredicateKind.perp);
     });
 
+    test('aconst at zero is para', () {
+      // Opposite sides of the square: a zero angle between two named
+      // lines is parallelism wearing the constant spelling.
+      final problem = built('square_para', '$square ? aconst d c a b 0pi/1');
+      expect(problem.question.canonical.kind, PredicateKind.para);
+    });
+
     test('rconst at one is cong', () {
       final problem = built(
         'halves',
@@ -438,27 +446,54 @@ void main() {
       );
       expect(problem.question.canonical.kind, PredicateKind.cong);
     });
+  });
 
-    test('a genuinely constant angle still refuses, until aconst', () {
+  group('a genuinely constant angle, ratio or length is phrased with '
+      'its value', () {
+    // Phases 181–182: `rconst`/`lconst`/`aconst` goals stop refusing —
+    // the fact kinds exist, so the goal is one value-carrying spelling
+    // over the corpus's own points (a length is named by the pair that
+    // bounds it), resolved through the matching closure's entailment.
+    test('aconst at a real angle carries the residue', () {
+      // The eq_triangle threefold-root problem of Phase 177: it now
+      // phrases and builds; proving it stays a named incompleteness
+      // (the closure pins 3·Δθ, and mod-1 algebra cannot divide).
+      final problem = built(
+        'sixty',
+        'b c = segment b c; a = eq_triangle a b c ? aconst a b a c 1pi/3',
+      );
+      final canonical = problem.question.canonical;
+      expect(canonical.kind, PredicateKind.aconst);
+      expect(canonical.value, Rational.fromInts(1, 3));
+    });
+
+    test('an aconst value in a ratio spelling is not an angle', () {
       final translation = translateNewclidProblem(
         only(
-          'sixty',
-          'b c = segment b c; a = eq_triangle a b c ? aconst a b a c 1pi/3',
+          'unitless',
+          'b c = segment b c; a = eq_triangle a b c ? aconst a b a c 1/3',
         ),
       );
       expect(
         (translation as UntranslatableProblem).reason,
         UntranslatableReason.unsupportedGoal,
       );
+      expect(translation.detail, contains('angle value'));
     });
-  });
 
-  group('a genuinely constant ratio or length is phrased with its '
-      'value', () {
-    // Phase 181: `rconst`/`lconst` goals stop refusing — the fact kinds
-    // exist, so the goal is one value-carrying spelling over the
-    // corpus's own points (a length is named by the pair that bounds
-    // it), resolved through the length closure's entailment.
+    test('a false stated angle is the figure\'s refusal', () {
+      final translation = translateNewclidProblem(
+        only(
+          'wrong_angle',
+          'b c = segment b c; a = eq_triangle a b c ? aconst a b a c 1pi/5',
+        ),
+      );
+      expect(
+        (translation as UntranslatableProblem).reason,
+        UntranslatableReason.goalFalseInFigure,
+      );
+    });
+
     test('rconst at a real ratio carries the value', () {
       final problem = built(
         'halved',

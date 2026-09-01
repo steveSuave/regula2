@@ -57,6 +57,8 @@ const Map<PredicateKind, List<(double, double)>> _trueRigs = {
   PredicateKind.simtri: [(0, 0), (3, 0), (0, 4), (10, 0), (16, 0), (10, 8)],
   // The same triangle, translated.
   PredicateKind.contri: [(0, 0), (3, 0), (0, 4), (10, 1), (13, 1), (10, 5)],
+  // ∠(ab, cd) = 45°: ab horizontal, cd at 45°, stated value 1/4 of π.
+  PredicateKind.aconst: [(0, 0), (2, 0), (0, 1), (1, 2)],
   // |ab| / |cd| = 2 / 1, at the stated value 2.
   PredicateKind.rconst: [(0, 0), (2, 0), (1, 4), (1, 5)],
   // |ab| = 3, at the stated value 3.
@@ -65,6 +67,7 @@ const Map<PredicateKind, List<(double, double)>> _trueRigs = {
 
 /// The stated value each value-carrying rig is true at.
 final Map<PredicateKind, Rational> _rigValues = {
+  PredicateKind.aconst: Rational.fromInts(1, 4),
   PredicateKind.rconst: Rational.fromInts(2, 1),
   PredicateKind.lconst: Rational.fromInts(3, 1),
 };
@@ -126,9 +129,10 @@ List<List<int>> _orbit(PredicateKind kind) => switch (kind) {
     ],
   ],
   // The **value-preserving** forms only: rconst's pair swap inverts its
-  // value, a rewrite no index permutation expresses — the value-carrying
-  // kinds' own group below tests the value-coupled symmetry directly.
-  PredicateKind.rconst => const [
+  // value and aconst's negates it mod 1, rewrites no index permutation
+  // expresses — the value-carrying kinds' own group below tests the
+  // value-coupled symmetry directly.
+  PredicateKind.aconst || PredicateKind.rconst => const [
     [0, 1, 2, 3],
     [1, 0, 2, 3],
     [0, 1, 3, 2],
@@ -367,6 +371,7 @@ void main() {
       PredicateKind.contri: 12,
       // Value-preserving forms only — the value-coupled symmetry cannot
       // be a point permutation. See the value-carrying group.
+      PredicateKind.aconst: 4,
       PredicateKind.rconst: 4,
       PredicateKind.lconst: 2,
     };
@@ -400,13 +405,15 @@ void main() {
       // The canonicalizer enumerates a reduced set (segments pre-sorted);
       // this pins that reduction against the full orbit the matcher
       // sees, so the two can never disagree about which spelling is
-      // canonical. `rconst` is the one exclusion: its full orbit is
-      // value-coupled, so `orbitArguments` lists only the value-
-      // preserving half and the least element can live in the other.
+      // canonical. `rconst` and `aconst` are the exclusions: their full
+      // orbits are value-coupled, so `orbitArguments` lists only the
+      // value-preserving half and the least element can live in the
+      // other.
       String key(List<GeoPoint> form) => form.map((p) => p.id).join(',');
       final random = math.Random(7);
       for (final kind in PredicateKind.values.where(
-        (kind) => kind != PredicateKind.rconst,
+        (kind) =>
+            kind != PredicateKind.rconst && kind != PredicateKind.aconst,
       )) {
         final rig = rigFor(kind);
         for (var round = 0; round < 5; round++) {
@@ -479,6 +486,74 @@ void main() {
       expect(
         Fact(PredicateKind.rconst, twice, value: q(2)),
         Fact(PredicateKind.rconst, twice, value: q(1, 2)),
+      );
+    });
+
+    test('aconst\'s value is a residue mod 1, and the range is '
+        'enforced', () {
+      final rig = rigFor(PredicateKind.aconst);
+      expect(
+        () => Fact(PredicateKind.aconst, rig, value: q(1)),
+        throwsArgumentError,
+      );
+      expect(
+        () => Fact(PredicateKind.aconst, rig, value: q(-1, 4)),
+        throwsArgumentError,
+      );
+      expect(
+        () => Fact(PredicateKind.aconst, rig, value: q(5, 4)),
+        throwsArgumentError,
+      );
+      // Zero is a residue like any other — the plainer spelling is
+      // `para`, but that precedence is the translator's, not the kind's.
+      expect(
+        Fact(PredicateKind.aconst, rig, value: Rational.zero).value,
+        Rational.zero,
+      );
+    });
+
+    test('aconst\'s pair swap negates the value mod 1 — one fact, and '
+        'numerically one statement', () {
+      final rig = rigFor(PredicateKind.aconst);
+      final swapped = [rig[2], rig[3], rig[0], rig[1]];
+      // ∠(ab → cd) = π/4, so ∠(cd → ab) = 3π/4.
+      expect(
+        Fact(PredicateKind.aconst, swapped, value: q(3, 4)),
+        Fact(PredicateKind.aconst, rig, value: q(1, 4)),
+      );
+      expect(
+        Predicate(PredicateKind.aconst, swapped, value: q(3, 4)).holdsNow,
+        isTrue,
+      );
+      // And the swap *without* the negation is a different, false
+      // statement — the rewrite that must not be keyed as a symmetry.
+      expect(
+        Fact(PredicateKind.aconst, swapped, value: q(1, 4)),
+        isNot(Fact(PredicateKind.aconst, rig, value: q(1, 4))),
+      );
+      expect(
+        Predicate(PredicateKind.aconst, swapped, value: q(1, 4)).holdsNow,
+        isFalse,
+      );
+    });
+
+    test('aconst\'s fixed points survive the swap unchanged', () {
+      // Negation mod 1 fixes 0 and ½ — a right angle spelled from
+      // either side is one fact at one value.
+      final rig = rigFor(PredicateKind.perp);
+      final swapped = [rig[2], rig[3], rig[0], rig[1]];
+      final half = Rational.fromInts(1, 2);
+      expect(
+        Fact(PredicateKind.aconst, swapped, value: half),
+        Fact(PredicateKind.aconst, rig, value: half),
+      );
+      expect(
+        Predicate(PredicateKind.aconst, rig, value: half).holdsNow,
+        isTrue,
+      );
+      expect(
+        Predicate(PredicateKind.aconst, swapped, value: half).holdsNow,
+        isTrue,
       );
     });
 

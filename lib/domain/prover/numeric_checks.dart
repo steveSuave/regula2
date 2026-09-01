@@ -194,6 +194,21 @@ bool equalRatios(
       predicateTolerance * math.max(1.0, math.max(left, right));
 }
 
+/// aconst(a, b, c, d; r) — the angle from line ab to line cd is r·π,
+/// for a stated r in units of π reduced into [0, 1).
+///
+/// The same directed-mod-π reading as [equalAngles], compared against
+/// the stated value instead of a second pair; same degeneracy rule — a
+/// zero direction is no line and makes no angle.
+bool angleIs(Vec2 a, Vec2 b, Vec2 c, Vec2 d, double r) {
+  final u = b - a;
+  final v = d - c;
+  if (u.normSquared == 0 || v.normSquared == 0) {
+    return false;
+  }
+  return _lineAnglesAgree(_lineAngle(u, v), r * math.pi);
+}
+
 /// rconst(a, b, c, d; q) — |ab| / |cd| = q, for a stated q.
 ///
 /// Compared cross-multiplied like [equalRatios] and by the same

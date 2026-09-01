@@ -25,16 +25,20 @@ void main() {
   Fact perp(List<GeoPoint> p) => fact(PredicateKind.perp, p);
   Fact coll(List<GeoPoint> p) => fact(PredicateKind.coll, p);
   Fact eqangle(List<GeoPoint> p) => fact(PredicateKind.eqangle, p);
+  Fact aconst(List<GeoPoint> p, int n, int d) =>
+      Fact(PredicateKind.aconst, p, value: Rational.fromInts(n, d));
 
   CarrierIndex carriersOver(Iterable<Fact> facts) => CarrierIndex.over(facts);
 
   group('what it reads and what it leaves alone', () {
-    test('para, perp, eqangle and coll speak; nothing else does', () {
+    test('para, perp, eqangle, aconst and coll speak; nothing else '
+        'does', () {
       final translation = AngleTranslation();
       expect(translation.absorb(para([a, b, c, d])), isTrue);
       expect(translation.absorb(perp([a, b, e, f])), isTrue);
       expect(translation.absorb(eqangle([a, b, c, d, e, f, g, h])), isTrue);
       expect(translation.absorb(coll([a, b, c])), isTrue);
+      expect(translation.absorb(aconst([a, b, g, h], 1, 3)), isTrue);
 
       // The length system's, and the ones about points.
       expect(
@@ -116,6 +120,47 @@ void main() {
         ..absorb(para([e, f, g, h]));
       expect(translation.closure.inputs[0].constant, Rational.fromInts(1, 2));
       expect(translation.closure.inputs[1].constant, Rational.zero);
+    });
+
+    test('aconst is one row whose constant is its stated value, signed '
+        'first line to second', () {
+      // aconst(a,b,c,d; r) is θ_cd − θ_ab ≡ r — Newclid's convention,
+      // and the sign matters for every value other than 0 and ½.
+      final translation = AngleTranslation()..absorb(aconst([a, b, c, d], 1, 3));
+      final row = translation.closure.inputs.single;
+      expect(row.coefficients, {
+        AngleTranslation.lineVariable(a, b): -BigInt.one,
+        AngleTranslation.lineVariable(c, d): BigInt.one,
+      });
+      expect(row.constant, Rational.fromInts(1, 3));
+
+      // The swapped spelling canonicalizes to the same points with the
+      // negated value, so its row says the same thing.
+      final swapped = aconst([c, d, a, b], 2, 3);
+      expect(translation.equationOf(swapped), row);
+
+      // A degenerate pair names no line and says nothing.
+      expect(translation.absorb(aconst([a, a, c, d], 1, 3)), isFalse);
+      expect(translation.equationOf(aconst([e, e, g, h], 1, 3)), isNull);
+    });
+
+    test('stated angles chain by Chasles, and a half is perp', () {
+      final translation = AngleTranslation()
+        ..absorb(aconst([a, b, c, d], 1, 6))
+        ..absorb(aconst([c, d, e, f], 1, 3));
+      expect(
+        translation.entailmentOf(aconst([a, b, e, f], 1, 2)),
+        isNotNull,
+        reason: '1/6 + 1/3 = 1/2, added as rows',
+      );
+      expect(
+        translation.entailmentOf(aconst([a, b, e, f], 1, 6)),
+        isNull,
+        reason: 'a different stated value is a different statement',
+      );
+      // And the half *is* perp — the respelling biconditional, held
+      // inside the algebra rather than only in the translator.
+      expect(translation.entailmentOf(perp([a, b, e, f])), isNotNull);
     });
 
     test('coll contributes two equalities, not three', () {

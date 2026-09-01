@@ -41,6 +41,7 @@ void main() {
         'Midpoints',
         'Similar triangles',
         'Congruent triangles',
+        'Stated angles',
         'Stated ratios',
         'Stated lengths',
       ]);

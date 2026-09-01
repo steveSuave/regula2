@@ -176,29 +176,24 @@ int tapsFor(QuestionTemplate template) => template.slots.fold(
 /// `unsupportedGoal` would misreport goals the vocabulary already
 /// states (Phase 177 measured three in the corpus, all three proved).
 /// The plainer spelling wins even now that constants are askable: `cong`
-/// has DD consumers where `rconst(·,·; 1)` has none. A genuinely
-/// constant ratio or length passes through unchanged and is phrased by
-/// `_constantGoal` (Phase 181); a genuinely constant *angle* still
-/// refuses until Phase 182's `aconst`.
+/// has DD consumers where `rconst(·,·; 1)` has none, and `perp`/`para`
+/// likewise trump `aconst` at ½ and 0. A genuinely constant angle,
+/// ratio or length passes through unchanged and is phrased by
+/// `_constantGoal` (Phases 181–182).
 NewclidGoal _respelled(NewclidGoal goal) {
   if (goal.arguments.length != 5) return goal;
   final points = goal.arguments.sublist(0, 4);
   final value = goal.arguments[4];
   switch (goal.predicate) {
     case 'aconst':
-      // `Npi/D` in units of π, or `No` in degrees; a right angle is
-      // N/D ≡ 1/2 (mod 1), i.e. 2N ≡ D (mod 2D), or 90° (mod 180°).
-      final pi = RegExp(r'^(\d+)pi/(\d+)$').firstMatch(value);
-      if (pi != null) {
-        final n = int.parse(pi.group(1)!);
-        final d = int.parse(pi.group(2)!);
-        if (d > 0 && (2 * n) % (2 * d) == d) {
-          return NewclidGoal('perp', points);
-        }
-      }
-      final degrees = RegExp(r'^(\d+)o$').firstMatch(value);
-      if (degrees != null && int.parse(degrees.group(1)!) % 180 == 90) {
+      // A right angle is N/D ≡ 1/2 (mod 1), i.e. 2N ≡ D (mod 2D), or
+      // 90° (mod 180°); a zero angle between two named lines is `para`.
+      final residue = _parseAngle(value);
+      if (residue == Rational.fromInts(1, 2)) {
         return NewclidGoal('perp', points);
+      }
+      if (residue == Rational.zero) {
+        return NewclidGoal('para', points);
       }
     case 'rconst':
       final ratio = RegExp(r'^(\d+)/(\d+)$').firstMatch(value);
@@ -1059,7 +1054,9 @@ class _Builder {
   /// statement under a different name.
   UntranslatableProblem? _goal() {
     final goal = _respelled(problem.goal);
-    if (goal.predicate == 'rconst' || goal.predicate == 'lconst') {
+    if (goal.predicate == 'aconst' ||
+        goal.predicate == 'rconst' ||
+        goal.predicate == 'lconst') {
       return _constantGoal(goal);
     }
     final template = goalTemplates[goal.predicate];
@@ -1107,19 +1104,21 @@ class _Builder {
     return null;
   }
 
-  /// A value-carrying goal (`rconst a b c d n/d`, `lconst a b n`),
-  /// phrased directly rather than through a template: the builder's
-  /// templates have no value slot (Phase 181's stated exclusion), and a
-  /// length is named by the pair that bounds it — so the corpus's own
-  /// points are the one spelling there is, with the value on it. Facts
-  /// this shape resolve through the length closure's entailment like any
-  /// other ask. A `_respelled` goal never reaches here: a value that
-  /// collapses into `cong` keeps the plainer spelling, which has DD
-  /// consumers.
+  /// A value-carrying goal (`aconst a b c d Npi/D`, `rconst a b c d
+  /// n/d`, `lconst a b n`), phrased directly rather than through a
+  /// template: the builder's templates have no value slot (Phase 181's
+  /// stated exclusion), and a length is named by the pair that bounds it
+  /// — so the corpus's own points are the one spelling there is, with
+  /// the value on it. Facts this shape resolve through the matching
+  /// closure's entailment like any other ask. A `_respelled` goal never
+  /// reaches here: a value that collapses into `cong`, `perp` or `para`
+  /// keeps the plainer spelling, which has DD consumers.
   UntranslatableProblem? _constantGoal(NewclidGoal goal) {
-    final kind = goal.predicate == 'rconst'
-        ? PredicateKind.rconst
-        : PredicateKind.lconst;
+    final kind = switch (goal.predicate) {
+      'aconst' => PredicateKind.aconst,
+      'rconst' => PredicateKind.rconst,
+      _ => PredicateKind.lconst,
+    };
     if (goal.arguments.length != kind.arity + 1) {
       return _fail(
         UntranslatableReason.unsupportedGoal,
@@ -1127,11 +1126,16 @@ class _Builder {
         '${goal.arguments.length} arguments',
       );
     }
-    final value = _parseRational(goal.arguments.last);
-    if (value == null || value.isZero || value.isNegative) {
+    final value = kind == PredicateKind.aconst
+        ? _parseAngle(goal.arguments.last)
+        : _parseRational(goal.arguments.last);
+    if (value == null ||
+        (kind != PredicateKind.aconst && (value.isZero || value.isNegative))) {
       return _fail(
         UntranslatableReason.unsupportedGoal,
-        '${goal.arguments.last} is not a positive rational value',
+        kind == PredicateKind.aconst
+            ? '${goal.arguments.last} is not an angle value'
+            : '${goal.arguments.last} is not a positive rational value',
       );
     }
     final taps = <GeoPoint>[];
@@ -1155,6 +1159,23 @@ class _Builder {
     question = asked;
     return null;
   }
+}
+
+/// A stated angle — `Npi/D` in units of π, or `No` in degrees, the two
+/// spellings Newclid's own parser takes — as an exact rational in units
+/// of π reduced mod 1 into `[0, 1)`, or null for anything else.
+Rational? _parseAngle(String text) {
+  final pi = RegExp(r'^(\d+)pi/(\d+)$').firstMatch(text);
+  if (pi != null) {
+    final denominator = int.parse(pi.group(2)!);
+    if (denominator == 0) return null;
+    return Rational.fromInts(int.parse(pi.group(1)!), denominator).modOne();
+  }
+  final degrees = RegExp(r'^(\d+)o$').firstMatch(text);
+  if (degrees != null) {
+    return Rational.fromInts(int.parse(degrees.group(1)!), 180).modOne();
+  }
+  return null;
 }
 
 /// `N/D` or a plain integer `N` as an exact rational — the two spellings
