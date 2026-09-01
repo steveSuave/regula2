@@ -5,6 +5,7 @@ import 'objects/bifocal_conic.dart';
 import 'objects/circle_center_point.dart';
 import 'objects/diameter_circle.dart';
 import 'objects/five_point_conic.dart';
+import 'objects/fixed_angle_line.dart';
 import 'objects/intersection_point.dart';
 import 'objects/line_through_two_points.dart';
 import 'objects/midpoint.dart';
@@ -145,6 +146,13 @@ bool coincidentCarriers(GeoLine a, GeoLine b) {
       identical(x.point, y.point) &&
           identical(x.circle, y.circle) &&
           (x.branch == y.branch || structurallyIncident(x.circle, x.point)),
+    // Before the generic RelativeLine case, which would otherwise merge
+    // two stated angles through one point over one reference: the turn
+    // is part of the carrier's identity.
+    (final FixedAngleLine x, final FixedAngleLine y) =>
+      x.turn == y.turn &&
+          identical(x.through, y.through) &&
+          coincidentCarriers(x.reference, y.reference),
     (final RelativeLine x, final RelativeLine y) =>
       x.runtimeType == y.runtimeType &&
           identical(x.through, y.through) &&

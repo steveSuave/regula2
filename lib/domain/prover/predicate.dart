@@ -1,16 +1,17 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import '../math/vec2.dart';
 import 'numeric_checks.dart' as checks;
-import 'rational.dart';
 
 /// The prover's predicate vocabulary (PLAN §M-P1) — the relations DD
 /// forward chaining ranges over, each with its fixed arity in points.
 ///
-/// The two [carriesValue] kinds are Phase 181's constants
-/// (PLAN §"The constants stack"): facts that state a number as part of
-/// their identity. **No DD rule matches them** — hypotheses state them,
-/// the length translation absorbs them, asks answer them by entailment —
-/// so forward chaining still ranges over the ten point-pure relations.
+/// The three [carriesValue] kinds are the constants stack's vocabulary
+/// (PLAN §"The constants stack", Phases 181–182): facts that state a
+/// number as part of their identity. **No DD rule matches them** —
+/// hypotheses state them, the AR translations absorb them, asks answer
+/// them by entailment — so forward chaining still ranges over the ten
+/// point-pure relations.
 enum PredicateKind {
   /// coll(a, b, c) — collinear.
   coll(3),
@@ -41,6 +42,11 @@ enum PredicateKind {
 
   /// contri(a, b, c, d, e, f) — congruent triangles (orientation-free).
   contri(6),
+
+  /// aconst(a, b, c, d; r) — the angle from line ab to line cd is r,
+  /// stated in units of π and reduced mod 1 into `[0, 1)` (Newclid's
+  /// convention: θ_cd − θ_ab ≡ r·π mod π).
+  aconst(4, carriesValue: true),
 
   /// rconst(a, b, c, d; q) — |ab| / |cd| = q, for a stated q ∈ ℚ⁺.
   rconst(4, carriesValue: true),
@@ -74,9 +80,12 @@ enum PredicateKind {
 class Predicate {
   /// Throws [ArgumentError] when [points] does not match [kind.arity],
   /// when [value]'s presence does not match [PredicateKind.carriesValue],
-  /// or when a carried value is not positive — a malformed predicate is
-  /// a programmer error, like a degenerate `LineEq`, never a value to
-  /// evaluate conservatively.
+  /// or when a carried value is out of the kind's range — positive for a
+  /// stated length or ratio, reduced into `[0, 1)` for a stated angle
+  /// (the residue is the value, so an unreduced spelling is two names
+  /// for one statement). A malformed predicate is a programmer error,
+  /// like a degenerate `LineEq`, never a value to evaluate
+  /// conservatively.
   Predicate(this.kind, List<GeoPoint> points, {this.value})
     : points = List.unmodifiable(points) {
     if (points.length != kind.arity) {
@@ -96,12 +105,22 @@ class Predicate {
       );
     }
     final v = value;
-    if (v != null && (v.isZero || v.isNegative)) {
-      throw ArgumentError.value(
-        value,
-        'value',
-        'a stated length or ratio is positive',
-      );
+    if (v != null) {
+      if (kind == PredicateKind.aconst) {
+        if (v != v.modOne()) {
+          throw ArgumentError.value(
+            value,
+            'value',
+            'a stated angle is a residue mod 1, in [0, 1)',
+          );
+        }
+      } else if (v.isZero || v.isNegative) {
+        throw ArgumentError.value(
+          value,
+          'value',
+          'a stated length or ratio is positive',
+        );
+      }
     }
   }
 
@@ -177,6 +196,13 @@ class Predicate {
         p[3],
         p[4],
         p[5],
+      ),
+      PredicateKind.aconst => checks.angleIs(
+        p[0],
+        p[1],
+        p[2],
+        p[3],
+        value!.toDouble(),
       ),
       PredicateKind.rconst => checks.ratioIs(
         p[0],

@@ -6,6 +6,7 @@ import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -14,10 +15,14 @@ import 'package:regula/domain/construction/objects/line_through_two_points.dart'
 import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/ratio_apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
+import 'package:regula/domain/construction/objects/scaled_compass_circle.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/drag_session.dart';
 
@@ -104,6 +109,29 @@ void main() {
       expect(locus.sampleCount, 16);
       expect(locus.center, 0.5);
       expect(locus.halfSpan, 40);
+    });
+
+    test('preserves the constant-stating carriers\' rational params '
+        'exactly', () {
+      // Thirds, deliberately: not binary doubles, so a codec that
+      // rounded the value through a JSON number would fail here.
+      final decoded = roundTrip(buildPostV1Kinds()).construction;
+      expect(
+        (decoded.byId('fal')! as FixedAngleLine).turn,
+        Rational.fromInts(1, 3),
+      );
+      expect(
+        (decoded.byId('src')! as StatedRadiusCircle).radius,
+        Rational.fromInts(5, 3),
+      );
+      expect(
+        (decoded.byId('scc')! as ScaledCompassCircle).factor,
+        Rational.fromInts(2, 3),
+      );
+      expect(
+        (decoded.byId('rac')! as RatioApolloniusCircle).ratio,
+        Rational.fromInts(1, 3),
+      );
     });
 
     test('a Locus with absent params decodes to the defaults', () {

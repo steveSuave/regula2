@@ -1,7 +1,7 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'fact.dart';
 import 'predicate.dart';
-import 'rational.dart';
 
 /// How a fact is spelled for a reader, in one place.
 ///
@@ -45,6 +45,7 @@ String predicateKindLabel(PredicateKind kind) => switch (kind) {
   PredicateKind.midp => 'Midpoints',
   PredicateKind.simtri => 'Similar triangles',
   PredicateKind.contri => 'Congruent triangles',
+  PredicateKind.aconst => 'Stated angles',
   PredicateKind.rconst => 'Stated ratios',
   PredicateKind.lconst => 'Stated lengths',
 };
@@ -107,9 +108,20 @@ String _read(PredicateKind kind, List<GeoPoint> points, Rational? value) {
     PredicateKind.simtri => 'triangles ${tri(0)} and ${tri(3)} are similar',
     PredicateKind.contri => 'triangles ${tri(0)} and ${tri(3)} are congruent',
     PredicateKind.eqangle => _readEqangle(points, names, separator),
+    PredicateKind.aconst =>
+      'the angle from ${seg(0)} to ${seg(2)} is ${_multipleOfPi(value!)}',
     PredicateKind.rconst => '${seg(0)} : ${seg(2)} = $value',
     PredicateKind.lconst => '${seg(0)} has length $value',
   };
+}
+
+/// A stated angle's value — a rational in units of π, in `[0, 1)` — as
+/// the multiple of π a reader expects: `1/2` is `π/2`, `2/3` is `2π/3`,
+/// zero is `0`.
+String _multipleOfPi(Rational value) {
+  if (value.isZero) return '0';
+  final n = value.numerator == BigInt.one ? '' : '${value.numerator}';
+  return '$nπ/${value.denominator}';
 }
 
 /// The convention [readFact]'s plain wording leaves implicit, to be

@@ -9,6 +9,7 @@ import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/diameter_circle.dart';
 import 'package:regula/domain/construction/objects/five_point_conic.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
@@ -24,21 +25,24 @@ import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polar_line.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/radical_axis_line.dart';
+import 'package:regula/domain/construction/objects/ratio_apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
+import 'package:regula/domain/construction/objects/scaled_compass_circle.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
-import 'package:regula/domain/prover/rational.dart';
 
 void main() {
   Construction build(Iterable<GeoObject> objects) {
@@ -590,6 +594,165 @@ void main() {
       final emitted = extractAndPin([p, q, o, circle, x]);
 
       expect(emitted, hasFact(Predicate(PredicateKind.cong, [o, x, p, q])));
+    });
+  });
+
+  group('the constant-stating carriers (Phase 182)', () {
+    // Each emission is value-carrying, and `extractAndPin` is the sign
+    // pin: an `aconst` emitted with the turn measured the wrong way
+    // round would be false in the very figure its carrier drew.
+    test('FixedAngleLine emits aconst through witness pairs', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final reference = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final c = FreePoint(id: 'c', position: const Vec2(1, 2));
+      final line = FixedAngleLine(
+        id: 'fal',
+        through: c,
+        reference: reference,
+        turn: Rational.fromInts(1, 3),
+      );
+      final x = PointOnObject(id: 'x', curve: line, parameter: 2.0);
+
+      final emitted = extractAndPin([a, b, reference, c, line, x]);
+
+      expect(
+        emitted,
+        hasFact(
+          Predicate(PredicateKind.aconst, [
+            a,
+            b,
+            c,
+            x,
+          ], value: Rational.fromInts(1, 3)),
+        ),
+      );
+    });
+
+    test('the s_angle shape: a vertex on the reference spells the '
+        'three-point angle', () {
+      // Newclid's `s_angle a b x y` is `aconst a b b x y` — the carrier
+      // through b over line ab, with b a witness on both.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final reference = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final line = FixedAngleLine(
+        id: 'fal',
+        through: b,
+        reference: reference,
+        turn: Rational.fromInts(1, 6),
+      );
+      final x = PointOnObject(id: 'x', curve: line, parameter: 3.0);
+
+      final emitted = extractAndPin([a, b, reference, line, x]);
+
+      expect(
+        emitted,
+        hasFact(
+          Predicate(PredicateKind.aconst, [
+            a,
+            b,
+            b,
+            x,
+          ], value: Rational.fromInts(1, 6)),
+        ),
+      );
+    });
+
+    test('a FixedAngleLine with only its through-point says nothing', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final reference = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final c = FreePoint(id: 'c', position: const Vec2(1, 2));
+      final line = FixedAngleLine(
+        id: 'fal',
+        through: c,
+        reference: reference,
+        turn: Rational.fromInts(1, 3),
+      );
+
+      final emitted = extractAndPin([a, b, reference, c, line]);
+
+      expect(emitted.where((p) => p.kind == PredicateKind.aconst), isEmpty);
+    });
+
+    test('StatedRadiusCircle states lconst for every point on it', () {
+      final o = FreePoint(id: 'o', position: const Vec2(1, -1));
+      final circle = StatedRadiusCircle(
+        id: 'k',
+        center: o,
+        radius: Rational.fromInts(5, 2),
+      );
+      final x = PointOnObject(id: 'x', curve: circle, parameter: 0.8);
+      final y = PointOnObject(id: 'y', curve: circle, parameter: 2.9);
+
+      final emitted = extractAndPin([o, circle, x, y]);
+
+      expect(
+        emitted,
+        hasFact(
+          Predicate(PredicateKind.lconst, [
+            x,
+            o,
+          ], value: Rational.fromInts(5, 2)),
+        ),
+      );
+      // And the generic circle arm still turns the pair into cong.
+      expect(emitted, hasFact(Predicate(PredicateKind.cong, [o, x, o, y])));
+    });
+
+    test('ScaledCompassCircle states its rconst against the span', () {
+      final p = FreePoint(id: 'p', position: const Vec2(0, 0));
+      final q = FreePoint(id: 'q', position: const Vec2(3, 0));
+      final o = FreePoint(id: 'o', position: const Vec2(7, 2));
+      final circle = ScaledCompassCircle(
+        id: 'k',
+        center: o,
+        radiusPoint1: p,
+        radiusPoint2: q,
+        factor: Rational.fromInts(2, 3),
+      );
+      final x = PointOnObject(id: 'x', curve: circle, parameter: 1.0);
+
+      final emitted = extractAndPin([p, q, o, circle, x]);
+
+      expect(
+        emitted,
+        hasFact(
+          Predicate(PredicateKind.rconst, [
+            x,
+            o,
+            p,
+            q,
+          ], value: Rational.fromInts(2, 3)),
+        ),
+      );
+    });
+
+    test('RatioApolloniusCircle states its rconst about both anchors', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(3, 0));
+      final circle = RatioApolloniusCircle(
+        id: 'k',
+        point1: a,
+        point2: b,
+        ratio: Rational.fromInts(2, 1),
+      );
+      final x = PointOnObject(id: 'x', curve: circle, parameter: 1.3);
+
+      final emitted = extractAndPin([a, b, circle, x]);
+
+      expect(
+        emitted,
+        hasFact(
+          Predicate(PredicateKind.rconst, [
+            x,
+            a,
+            x,
+            b,
+          ], value: Rational.fromInts(2, 1)),
+        ),
+      );
     });
   });
 

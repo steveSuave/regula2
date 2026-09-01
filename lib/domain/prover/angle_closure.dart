@@ -1,4 +1,4 @@
-import 'rational.dart';
+import '../math/rational.dart';
 
 /// One linear relation between line directions:
 /// `Σ cᵥ·θᵥ ≡ constant (mod π)`, with the constant measured **in units

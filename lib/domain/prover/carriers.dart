@@ -99,9 +99,10 @@ class Carrier {
 ///
 /// The claims, in the order of the switch:
 ///
-/// - **`para`, `perp`** — both pairs name lines. `ab ∥ cd` is a
-///   statement about two directions, and every pair on line `ab` has
-///   that direction.
+/// - **`para`, `perp`, `aconst`** — both pairs name lines. `ab ∥ cd` is
+///   a statement about two directions, and every pair on line `ab` has
+///   that direction; a stated angle is the same statement with the
+///   difference named, read mod π like the rest.
 /// - **`eqangle`** — all four pairs name lines. The predicate is
 ///   `∠(ab, cd) = ∠(ef, gh)` read **mod π**, which is the angle between
 ///   *lines*; that is the same reading `Fact`'s column swap already
@@ -119,7 +120,7 @@ class Carrier {
 ///   what builds the closure, so resolving them through it would be
 ///   circular rather than merely wrong.
 List<List<int>> lineSlots(PredicateKind kind) => switch (kind) {
-  PredicateKind.para || PredicateKind.perp => const [
+  PredicateKind.para || PredicateKind.perp || PredicateKind.aconst => const [
     [0, 1],
     [2, 3],
   ],

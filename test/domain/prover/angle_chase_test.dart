@@ -7,6 +7,7 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/angle_chase.dart';
 import 'package:regula/domain/prover/angle_closure.dart';
@@ -18,7 +19,6 @@ import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/prover.dart';
-import 'package:regula/domain/prover/rational.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
 void main() {

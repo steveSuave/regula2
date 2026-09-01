@@ -1,9 +1,9 @@
 import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'angle_closure.dart';
 import 'carriers.dart';
 import 'fact.dart';
 import 'predicate.dart';
-import 'rational.dart';
 
 /// The name an AR step is recorded under, where DD records a rule's.
 ///
@@ -97,10 +97,11 @@ class AngleTranslation {
   /// Feeds [fact] to the closure, answering whether it said anything
   /// about directions.
   ///
-  /// `para`, `perp` and `eqangle` become one relation each; `coll`
-  /// becomes the θ-equalities its three pairs license. Every other kind
-  /// answers false and is left to DD — `cong` and `eqratio` are the
-  /// length system's, and the rest are about points.
+  /// `para`, `perp`, `eqangle` and `aconst` become one relation each
+  /// (`aconst` is the one whose constant is its own stated value);
+  /// `coll` becomes the θ-equalities its three pairs license. Every
+  /// other kind answers false and is left to DD — `cong` and `eqratio`
+  /// are the length system's, and the rest are about points.
   bool absorb(Fact fact) {
     final equations = _equationsOf(fact, name: _register);
     if (equations.isEmpty) return false;
@@ -140,6 +141,18 @@ class AngleTranslation {
             name(points[0], points[1]),
             name(points[2], points[3]),
             fact.kind == PredicateKind.perp ? rightAngle : Rational.zero,
+          ),
+        ];
+      case PredicateKind.aconst:
+        // The angle from line ab to line cd is r·π: θ_cd − θ_ab ≡ r.
+        if (points[0].id == points[1].id || points[2].id == points[3].id) {
+          return const [];
+        }
+        return [
+          AngleEquation.difference(
+            name(points[2], points[3]),
+            name(points[0], points[1]),
+            fact.value!,
           ),
         ];
       case PredicateKind.eqangle:
@@ -235,9 +248,9 @@ class AngleTranslation {
   }
 
   /// The row form of [fact], or null when the kind has no *single* row
-  /// — `para`, `perp` and `eqangle` are one relation each; `coll` is
-  /// two and is not a row; the rest have no angle content — or the fact
-  /// is degenerate.
+  /// — `para`, `perp`, `eqangle` and `aconst` are one relation each;
+  /// `coll` is two and is not a row; the rest have no angle content —
+  /// or the fact is degenerate.
   ///
   /// Unlike [absorb] this registers nothing: asking what a fact *would*
   /// say is not saying it.
@@ -246,6 +259,7 @@ class AngleTranslation {
       case PredicateKind.para:
       case PredicateKind.perp:
       case PredicateKind.eqangle:
+      case PredicateKind.aconst:
         final equations = _equationsOf(fact, name: lineVariable);
         return equations.isEmpty ? null : equations.single;
       default:
