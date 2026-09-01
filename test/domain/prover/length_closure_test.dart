@@ -53,13 +53,18 @@ void main() {
       expect(cong('a', 'a').leading, isNull);
     });
 
-    test('there is no contradictory emptiness', () {
-      // Every row is homogeneous, so an empty row is always `0 = 0` —
-      // a length system cannot be inconsistent, and the all-lengths-
-      // equal assignment is the witness.
+    test('empty is trivial without a constant, contradictory with one', () {
       final trivial = LengthEquation(const {});
       expect(trivial.isTrivial, isTrue);
+      expect(trivial.isContradictory, isFalse);
       expect(trivial.evaluate(const {}), Rational.zero);
+      // `0 = ln 2`: every variable cancelled and a constant survived.
+      // `ln` of distinct primes being ℚ-independent, nothing satisfies
+      // it — the state a homogeneous system could not express.
+      final impossible = LengthEquation(const {}, constant: {BigInt.two: q(1)});
+      expect(impossible.isTrivial, isFalse);
+      expect(impossible.isContradictory, isTrue);
+      expect(impossible.leading, isNull);
     });
 
     test('scaling takes the whole relation, and ℚ scaling is allowed', () {
@@ -97,17 +102,147 @@ void main() {
 
     test('midp contributes its equal halves, and not its 1:2', () {
       // `midp(m, a, b)` says |ma| = |mb|, which is a cong; it also says
-      // |ab| = 2|ma|, whose row needs an `ln 2` variable. Session 174
-      // measured that constant as buying nothing on the corpus, so the
-      // translation leaves it out — and the closure needs no change on
-      // the day it comes back, because it enters as a variable.
+      // |ab| = 2|ma|, which is a constant-carrying row — `rconst`'s
+      // shape, stated by a hypothesis rather than implied by this
+      // translation (Phase 181; `Midpoint.hypotheses` is where the 1:2
+      // enters).
       expect(cong('ma', 'mb'), row({'ma': 1, 'mb': -1}));
-      final withConstant = LengthEquation.fromTerms([
-        ('ab', Rational.one),
-        ('ma', -Rational.one),
-        ('ln 2', -Rational.one),
-      ]);
-      expect(withConstant.variables, ['ab', 'ln 2', 'ma']);
+      expect(
+        LengthEquation.rconst('ab', 'ma', q(2)),
+        LengthEquation(
+          {'ab': q(1), 'ma': q(-1)},
+          constant: {BigInt.two: q(-1)},
+        ),
+      );
+    });
+  });
+
+  group('the constant column — a stated value is part of the relation', () {
+    test('ln of a rational is its prime exponent vector, exactly', () {
+      expect(LengthEquation.logOf(q(12, 5)), {
+        BigInt.two: q(2),
+        BigInt.from(3): q(1),
+        BigInt.from(5): q(-1),
+      });
+      expect(LengthEquation.logOf(q(1)), isEmpty);
+      expect(() => LengthEquation.logOf(Rational.zero), throwsArgumentError);
+      expect(() => LengthEquation.logOf(q(-2)), throwsArgumentError);
+    });
+
+    test('zero constant entries are dropped, and equality sees the rest', () {
+      expect(
+        LengthEquation({'a': q(1)}, constant: {BigInt.two: Rational.zero}),
+        row({'a': 1}),
+      );
+      final stated = LengthEquation.rconst('a', 'b', q(2));
+      expect(stated == cong('a', 'b'), isFalse);
+      expect({stated, LengthEquation.rconst('a', 'b', q(2))}.length, 1);
+    });
+
+    test('rconst inverts with its pair swap — one relation, two '
+        'spellings', () {
+      // |a|/|b| = 2 and |b|/|a| = ½ are the same statement, and the
+      // canonical-identity rule for the `rconst` fact kind rests on the
+      // rows agreeing.
+      expect(
+        -LengthEquation.rconst('a', 'b', q(2)),
+        LengthEquation.rconst('b', 'a', q(1, 2)),
+      );
+    });
+
+    test('ℚ-scaling halves the exponent, not the number', () {
+      // The reason the column is a formal vector: a rational constant
+      // would have nowhere to put `ln √2`. The exponent map does.
+      final halved = LengthEquation.rconst('a', 'b', q(2)).scaled(q(1, 2));
+      expect(halved.constant, {BigInt.two: q(-1, 2)});
+      expect(halved.scaled(q(2)), LengthEquation.rconst('a', 'b', q(2)));
+    });
+
+    test('a repeated segment collapses to what the value says', () {
+      expect(LengthEquation.rconst('a', 'a', q(1)).isTrivial, isTrue);
+      expect(LengthEquation.rconst('a', 'a', q(2)).isContradictory, isTrue);
+    });
+  });
+
+  group('closure with constants — and the inconsistency they make '
+      'sayable', () {
+    test('stated ratios chain, and the values multiply', () {
+      final closure = LengthClosure()
+        ..add(LengthEquation.rconst('a', 'b', q(2)))
+        ..add(LengthEquation.rconst('b', 'c', q(3)));
+      expect(closure.proves(LengthEquation.rconst('a', 'c', q(6))), isTrue);
+      expect(closure.proves(LengthEquation.rconst('a', 'c', q(5))), isFalse);
+      expect(closure.proves(cong('a', 'c')), isFalse);
+    });
+
+    test('two stated lengths entail their ratio, with a certificate', () {
+      final closure = LengthClosure()
+        ..add(LengthEquation.lconst('a', q(2)))
+        ..add(LengthEquation.lconst('b', q(3)));
+      final goal = LengthEquation.rconst('a', 'b', q(2, 3));
+      final certificate = closure.entails(goal)!;
+      expect(closure.recombine(certificate), goal);
+    });
+
+    test('a cong carries a stated length across', () {
+      final closure = LengthClosure()
+        ..add(cong('a', 'b'))
+        ..add(LengthEquation.lconst('a', q(2)));
+      expect(closure.proves(LengthEquation.lconst('b', q(2))), isTrue);
+      expect(closure.proves(LengthEquation.lconst('b', q(3))), isFalse);
+    });
+
+    test('a value the closure does not reach is refused, not rounded', () {
+      // cong says the ratio is 1; asking for 2 reduces to `0 = ln 2`,
+      // which is non-trivial and therefore refused.
+      final closure = LengthClosure()..add(cong('a', 'b'));
+      expect(closure.entails(LengthEquation.rconst('a', 'b', q(2))), isNull);
+      expect(
+        closure.residual(LengthEquation.rconst('a', 'b', q(2))).isContradictory,
+        isTrue,
+      );
+      expect(closure.proves(LengthEquation.rconst('a', 'b', q(1))), isTrue);
+    });
+
+    test('disagreeing values are a contradiction, and the flag latches', () {
+      final closure = LengthClosure();
+      expect(
+        closure.add(LengthEquation.lconst('a', q(2))),
+        LengthAddOutcome.added,
+      );
+      expect(closure.isInconsistent, isFalse);
+      expect(
+        closure.add(LengthEquation.lconst('a', q(3))),
+        LengthAddOutcome.contradiction,
+      );
+      expect(closure.isInconsistent, isTrue);
+      // The contradictory row is an input (positions must not shift)
+      // but not a basis row, and entailment stays conservative: no ex
+      // falso quodlibet.
+      expect(closure.inputs.length, 2);
+      expect(closure.rank, 1);
+      expect(closure.proves(LengthEquation.lconst('a', q(2))), isTrue);
+      expect(closure.proves(cong('a', 'z')), isFalse);
+    });
+
+    test('a contradiction can arrive through the variables', () {
+      final closure = LengthClosure()
+        ..add(cong('a', 'b'))
+        ..add(LengthEquation.lconst('a', q(2)));
+      expect(
+        closure.add(LengthEquation.lconst('b', q(3))),
+        LengthAddOutcome.contradiction,
+      );
+      expect(closure.isInconsistent, isTrue);
+    });
+
+    test('restating a value is redundant, not contradictory', () {
+      final closure = LengthClosure()..add(LengthEquation.lconst('a', q(2)));
+      expect(
+        closure.add(LengthEquation.lconst('a', q(2))),
+        LengthAddOutcome.redundant,
+      );
+      expect(closure.isInconsistent, isFalse);
     });
   });
 
@@ -150,15 +285,17 @@ void main() {
       expect(closure.inputs.length, 4);
     });
 
-    test('no input contradicts another', () {
-      // The angle side's `contradiction` outcome has no counterpart:
-      // `l_a = l_b` and `l_a = l_c` and `l_b ≠ l_c` is not sayable, so
-      // the closure only ever learns or does not learn.
+    test('homogeneous inputs never contradict one another', () {
+      // With no constant in sight the all-zero assignment satisfies
+      // every row at once, so the homogeneous vocabulary only ever
+      // learns or does not learn — contradiction takes a stated value,
+      // see the constants group.
       final closure = LengthClosure()
         ..add(cong('a', 'b'))
         ..add(row({'a': 1, 'b': -1, 'c': 1}));
       expect(closure.proves(row({'c': 1})), isTrue);
       expect(closure.rank, 2);
+      expect(closure.isInconsistent, isFalse);
     });
 
     test('the constrained variables are the ones the rows mention', () {
@@ -488,6 +625,111 @@ void main() {
         expect(refused, greaterThan(0));
       });
     }
+
+    test('with constants: the closure proves exactly what vanishes, '
+        'componentwise', () {
+      // A formal assignment gives each variable a rational part plus
+      // rational multiples of ln 2 and ln 3; a relation holds when the
+      // rational component and both prime components vanish — the
+      // componentwise check `evaluate`'s doc describes. The span
+      // theorem is unchanged: the rows vanishing at one assignment form
+      // an (n−1)-dimensional space, the constant being determined
+      // linearly by the coefficients, so at full rank the closure's
+      // answer and the evaluator's must agree in both directions.
+      final random = Random(21);
+      Rational pick() =>
+          Rational.fromInts(random.nextInt(11) - 5, random.nextInt(4) + 1);
+      Rational nonZero() {
+        while (true) {
+          final value = pick();
+          if (!value.isZero) return value;
+        }
+      }
+
+      final two = BigInt.two;
+      final three = BigInt.from(3);
+      final rationalPart = {for (final s in segments) s: nonZero()};
+      final ln2Part = {for (final s in segments) s: pick()};
+      final ln3Part = {for (final s in segments) s: pick()};
+      final last = segments.last;
+
+      bool holds(LengthEquation target) =>
+          target.evaluate(rationalPart).isZero &&
+          (target.evaluate(ln2Part) + (target.constant[two] ?? Rational.zero))
+              .isZero &&
+          (target.evaluate(ln3Part) + (target.constant[three] ?? Rational.zero))
+              .isZero;
+
+      /// Coefficients `l_s − (r_s/r_last)·l_last` vanish the rational
+      /// part; the constant the prime parts force then makes the whole
+      /// row hold.
+      LengthEquation basis(String s) {
+        final coefficients = {
+          s: Rational.one,
+          last: -(rationalPart[s]! / rationalPart[last]!),
+        };
+        Rational forced(Map<String, Rational> part) {
+          var total = Rational.zero;
+          for (final entry in coefficients.entries) {
+            total = total + entry.value * part[entry.key]!;
+          }
+          return -total;
+        }
+
+        return LengthEquation(
+          coefficients,
+          constant: {two: forced(ln2Part), three: forced(ln3Part)},
+        );
+      }
+
+      final spanning = [
+        for (final s in segments.take(segments.length - 1)) basis(s),
+      ];
+      for (final b in spanning) {
+        expect(holds(b), isTrue, reason: 'spanning row must hold: $b');
+      }
+
+      final closure = LengthClosure();
+      for (var i = 0; i < 9; i++) {
+        var combination = LengthEquation(const {});
+        for (final b in spanning) {
+          combination = combination + b.scaled(pick());
+        }
+        closure.add(combination);
+      }
+      expect(closure.rank, segments.length - 1, reason: 'degenerate draw');
+      expect(closure.isInconsistent, isFalse);
+
+      var proved = 0;
+      var refused = 0;
+      for (var trial = 0; trial < 60; trial++) {
+        var target = LengthEquation(const {});
+        if (trial.isEven) {
+          for (final b in spanning) {
+            target = target + b.scaled(pick());
+          }
+        } else {
+          target = LengthEquation(
+            {for (final s in segments) s: pick()},
+            constant: {two: pick(), three: pick()},
+          );
+        }
+        final certificate = closure.entails(target);
+        expect(
+          certificate != null,
+          holds(target),
+          reason: 'closure and evaluator disagree on $target',
+        );
+        if (certificate == null) {
+          refused++;
+        } else {
+          proved++;
+          expect(closure.recombine(certificate), target);
+        }
+      }
+      expect(proved, greaterThan(0));
+      expect(refused, greaterThan(0));
+    });
 
     test('residuals agree exactly when the difference is entailed', () {
       final random = Random(99);
