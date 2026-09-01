@@ -1,0 +1,69 @@
+lib/domain/prover/length_translation.dart
+  s_18b2d157ec57e9::t_ab30497ec635c0 186
+lib/domain/prover/fact_naming.dart
+  s_18b2d157ec57e9::t_d67e1cf983c3b1 124
+  s_18b2d157ec57e9::t_e9c1da0256dae3 48
+  s_18b2d157ec57e9::t_09272c6daa736f 111-112,118-123
+  s_18b2d157ec57e9::t_6aafd508a30af3 125-126
+test/domain/prover/fact_naming_test.dart
+  s_18b2d157ec57e9::t_2bafa0f1b73323 44
+test/domain/prover/angle_translation_test.dart
+  s_18b2d157ec57e9::t_45e7c1a5c92aa4 125-165
+  s_18b2d157ec57e9::t_431cf58e7b41e7 34-35,41
+  s_18b2d157ec57e9::t_e758df0de379bf 28-29
+lib/domain/prover/carriers.dart
+  s_18b2d157ec57e9::t_441a90242d5d43 102-105
+  s_18b2d157ec57e9::t_b748122e5448e9 123
+lib/domain/prover/predicate.dart
+  s_18b2d157ec57e9::t_939cabb55c3c27 46-50
+  s_18b2d157ec57e9::t_e336fa1e5768fc 200-206
+  s_18b2d157ec57e9::t_4d094f5562e006 83-88,108-123
+  s_18b2d157ec57e9::t_62ab6115ed9e4d 9-14
+lib/domain/prover/fact.dart
+  s_18b2d157ec57e9::t_06fd879e6dfa4a 30-34,37,43-44
+  s_18b2d157ec57e9::t_b18d9e82bba3fe 281-284,286-287
+  s_18b2d157ec57e9::t_a600eb5e60d825 101-112,120-122,124-125
+  s_18b2d157ec57e9::t_0e36adb32f6680 182-192
+  s_18b2d157ec57e9::t_0c29cb62415603 260-262
+test/domain/prover/fact_test.dart
+  s_18b2d157ec57e9::t_40cae48f0a6051 60-61,70
+  s_18b2d157ec57e9::t_ba5bb4b9c41eac 132-135
+  s_18b2d157ec57e9::t_f9442a874b4cf2 492-559
+  s_18b2d157ec57e9::t_8ae6a4305d0f2b 408-411,415-416
+  s_18b2d157ec57e9::t_18563e37a4c55c 374
+test/corpus/newclid_translation.dart
+  s_18b2d157ec57e9::t_be48a3cad3fc33 179-182,189-192,195-196
+  s_18b2d157ec57e9::t_7202be754ff73b 1164-1180
+  s_18b2d157ec57e9::t_4d2d20d39816ae 1057-1059
+  s_18b2d157ec57e9::t_f263a0a1103c6b 1107-1115,1117-1121,1129-1133,1136-1138
+  s_18b2d157ec57e9::t_88242871449d1e 197
+lib/domain/prover/rule_engine.dart
+  s_18b2d157ec57e9::t_3653a3b759c20c 338-340
+lib/domain/prover/angle_translation.dart
+  s_18b2d157ec57e9::t_e03cc514841016 251-253,262
+  s_18b2d157ec57e9::t_815c5d0bd3aa2b 100-104
+  s_18b2d157ec57e9::t_2deccdbdc3e8a6 146-157
+test/corpus/newclid_problem_test.dart
+  s_18b2d157ec57e9::t_36d4155b57e4ec 419-420
+  s_18b2d157ec57e9::t_f139bb959ead9f 435-441
+  s_18b2d157ec57e9::t_915f38e69a02b3 451-470,473-474,481-494
+  s_18b2d157ec57e9::t_bcb15aba39db96 449
+lib/domain/prover/numeric_checks.dart
+  s_18b2d157ec57e9::t_d16fbf0361104d 197-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "2b8aced3c11828ed9b723d42c570a3d9a216c605",
+  "prompts": {},
+  "sessions": {
+    "s_18b2d157ec57e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3148ad66-f170-48cf-8db1-2099098a6d65",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
