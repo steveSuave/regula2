@@ -183,26 +183,50 @@ class LengthChaseLine {
   String toString() => '$multiple × $equation from $source';
 }
 
-/// `Σ cᵥ·lᵥ = 0` as a reader would write it: exponentiated, so that
-/// everything with a positive coefficient multiplies out on the left and
-/// everything else on the right.
+/// `Σ cᵥ·lᵥ + Σ kₚ·ln p = 0` as a reader would write it: exponentiated,
+/// so that everything with a positive coefficient multiplies out on the
+/// left and everything else on the right.
 ///
 /// So `l₁ − l₂ = 0` reads `|AB| = |CD|`, an `eqratio`'s four terms read
 /// cross-multiplied as `|AB|·|GH| = |CD|·|EF|`, and a coefficient other
 /// than 1 becomes an exponent: `|AO|^2`, or `|AO|^1/2` where the
 /// elimination halved a row.
 ///
-/// Both sides are always non-empty for a relation the vocabulary can
-/// produce — every input row's coefficients sum to zero and sums of such
-/// rows do too, so a non-trivial row has terms of both signs. `1` is the
-/// honest rendering if one ever were empty, being the empty product, and
-/// is not expected to appear.
+/// The constant column exponentiates to a plain number and leads its
+/// side — `l_ab − l_ma − ln 2 = 0` reads `|AB| = 2·|MA|`, the way a
+/// geometer writes a stated ratio. Whole prime exponents multiply out
+/// into one number per side; a fractional exponent — a ℚ-scaled row —
+/// stays symbolic as `2^1/2`, exactly like a segment's.
+///
+/// A side with no factor at all renders as `1`, the empty product —
+/// unreachable from the homogeneous vocabulary, whose coefficients sum
+/// to zero, but exactly right for a stated length: `lconst`'s
+/// `|AB| = 3/2` has row `l_ab − ln 3 + ln 2 = 0` and reads
+/// `2·|AB| = 3`, and at value 1 the row is `l_ab = 0`, read `|AB| = 1`.
 String renderLengthEquation(
   LengthEquation equation,
   Map<String, String> names,
 ) {
   final left = <String>[];
   final right = <String>[];
+  var leftNumber = BigInt.one;
+  var rightNumber = BigInt.one;
+  final cap = BigInt.from(64);
+  for (final entry in equation.constant.entries) {
+    final exponent = entry.value.abs;
+    if (exponent.denominator == BigInt.one && exponent.numerator <= cap) {
+      final power = entry.key.pow(exponent.numerator.toInt());
+      if (entry.value.isNegative) {
+        rightNumber *= power;
+      } else {
+        leftNumber *= power;
+      }
+    } else {
+      (entry.value.isNegative ? right : left).add('${entry.key}^$exponent');
+    }
+  }
+  if (leftNumber != BigInt.one) left.insert(0, '$leftNumber');
+  if (rightNumber != BigInt.one) right.insert(0, '$rightNumber');
   for (final entry in equation.coefficients.entries) {
     final term = _factor(entry.value.abs, names[entry.key] ?? entry.key);
     (entry.value.isNegative ? right : left).add(term);

@@ -135,7 +135,9 @@ List<List<int>> lineSlots(PredicateKind kind) => switch (kind) {
   PredicateKind.eqratio ||
   PredicateKind.midp ||
   PredicateKind.simtri ||
-  PredicateKind.contri => const [],
+  PredicateKind.contri ||
+  PredicateKind.rconst ||
+  PredicateKind.lconst => const [],
 };
 
 /// The incidence closure: lines and circles merged by union-find over

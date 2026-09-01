@@ -1,9 +1,16 @@
 import '../construction/geo_object.dart';
 import '../math/vec2.dart';
 import 'numeric_checks.dart' as checks;
+import 'rational.dart';
 
-/// The prover's predicate vocabulary (PLAN §M-P1) — the ten relations DD
+/// The prover's predicate vocabulary (PLAN §M-P1) — the relations DD
 /// forward chaining ranges over, each with its fixed arity in points.
+///
+/// The two [carriesValue] kinds are Phase 181's constants
+/// (PLAN §"The constants stack"): facts that state a number as part of
+/// their identity. **No DD rule matches them** — hypotheses state them,
+/// the length translation absorbs them, asks answer them by entailment —
+/// so forward chaining still ranges over the ten point-pure relations.
 enum PredicateKind {
   /// coll(a, b, c) — collinear.
   coll(3),
@@ -33,12 +40,24 @@ enum PredicateKind {
   simtri(6),
 
   /// contri(a, b, c, d, e, f) — congruent triangles (orientation-free).
-  contri(6);
+  contri(6),
 
-  const PredicateKind(this.arity);
+  /// rconst(a, b, c, d; q) — |ab| / |cd| = q, for a stated q ∈ ℚ⁺.
+  rconst(4, carriesValue: true),
+
+  /// lconst(a, b; q) — |ab| = q, for a stated q ∈ ℚ⁺ in the document's
+  /// own units.
+  lconst(2, carriesValue: true);
+
+  const PredicateKind(this.arity, {this.carriesValue = false});
 
   /// How many points the predicate takes.
   final int arity;
+
+  /// Whether a statement of this kind carries a rational value as part
+  /// of its identity — `rconst(a,b,c,d; 2)` and `rconst(a,b,c,d; 3)` are
+  /// different statements about the same points.
+  final bool carriesValue;
 }
 
 /// One predicate instance over the diagram's points: a [kind] applied to
@@ -53,16 +72,35 @@ enum PredicateKind {
 /// database's concern and arrive with M-P2 — a `Predicate` compares by
 /// identity like any object.
 class Predicate {
-  /// Throws [ArgumentError] when [points] does not match [kind.arity] —
-  /// a malformed predicate is a programmer error, like a degenerate
-  /// `LineEq`, never a value to evaluate conservatively.
-  Predicate(this.kind, List<GeoPoint> points)
+  /// Throws [ArgumentError] when [points] does not match [kind.arity],
+  /// when [value]'s presence does not match [PredicateKind.carriesValue],
+  /// or when a carried value is not positive — a malformed predicate is
+  /// a programmer error, like a degenerate `LineEq`, never a value to
+  /// evaluate conservatively.
+  Predicate(this.kind, List<GeoPoint> points, {this.value})
     : points = List.unmodifiable(points) {
     if (points.length != kind.arity) {
       throw ArgumentError.value(
         points,
         'points',
         '${kind.name} takes ${kind.arity} points, got ${points.length}',
+      );
+    }
+    if ((value != null) != kind.carriesValue) {
+      throw ArgumentError.value(
+        value,
+        'value',
+        kind.carriesValue
+            ? '${kind.name} states a value'
+            : '${kind.name} carries no value',
+      );
+    }
+    final v = value;
+    if (v != null && (v.isZero || v.isNegative)) {
+      throw ArgumentError.value(
+        value,
+        'value',
+        'a stated length or ratio is positive',
       );
     }
   }
@@ -72,6 +110,10 @@ class Predicate {
   /// The arguments, in the kind's documented order. Fixed for the
   /// predicate's lifetime.
   final List<GeoPoint> points;
+
+  /// The stated value — non-null exactly for a [PredicateKind.carriesValue]
+  /// kind, and always positive.
+  final Rational? value;
 
   /// Numeric truth over explicit positions, parallel to [points]. A null
   /// position — an undefined point in that configuration — makes every
@@ -136,6 +178,14 @@ class Predicate {
         p[4],
         p[5],
       ),
+      PredicateKind.rconst => checks.ratioIs(
+        p[0],
+        p[1],
+        p[2],
+        p[3],
+        value!.toDouble(),
+      ),
+      PredicateKind.lconst => checks.lengthIs(p[0], p[1], value!.toDouble()),
     };
   }
 
@@ -145,5 +195,7 @@ class Predicate {
   bool get holdsNow => holdsOn([for (final point in points) point.position]);
 
   @override
-  String toString() => '${kind.name}(${points.map((p) => p.id).join(', ')})';
+  String toString() =>
+      '${kind.name}(${points.map((p) => p.id).join(', ')}'
+      '${value == null ? '' : '; $value'})';
 }

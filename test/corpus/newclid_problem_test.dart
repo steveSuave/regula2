@@ -39,6 +39,7 @@ import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/question_template.dart';
+import 'package:regula/domain/prover/rational.dart';
 
 import 'newclid_problem.dart';
 import 'newclid_translation.dart';
@@ -438,7 +439,7 @@ void main() {
       expect(problem.question.canonical.kind, PredicateKind.cong);
     });
 
-    test('a genuinely constant value still refuses', () {
+    test('a genuinely constant angle still refuses, until aconst', () {
       final translation = translateNewclidProblem(
         only(
           'sixty',
@@ -448,6 +449,76 @@ void main() {
       expect(
         (translation as UntranslatableProblem).reason,
         UntranslatableReason.unsupportedGoal,
+      );
+    });
+  });
+
+  group('a genuinely constant ratio or length is phrased with its '
+      'value', () {
+    // Phase 181: `rconst`/`lconst` goals stop refusing — the fact kinds
+    // exist, so the goal is one value-carrying spelling over the
+    // corpus's own points (a length is named by the pair that bounds
+    // it), resolved through the length closure's entailment.
+    test('rconst at a real ratio carries the value', () {
+      final problem = built(
+        'halved',
+        'a b = segment a b; m = midpoint m a b ? rconst a b a m 2/1',
+      );
+      final canonical = problem.question.canonical;
+      expect(canonical.kind, PredicateKind.rconst);
+      expect(canonical.value, Rational.fromInts(2, 1));
+      expect(problem.question.spellings, hasLength(1));
+    });
+
+    test('an lconst goal reaches the filter, which answers for the '
+        'figure', () {
+      // No supported macro can state an absolute length yet (Phase
+      // 182's `lconst` construction), so a generic segment refuses as
+      // false-in-figure — the parse and the phrasing worked, and the
+      // refusal is the figure's, not the vocabulary's.
+      final translation = translateNewclidProblem(
+        only('measured', 'a b = segment a b ? lconst a b 2'),
+      );
+      expect(
+        (translation as UntranslatableProblem).reason,
+        UntranslatableReason.goalFalseInFigure,
+      );
+    });
+
+    test('a malformed or non-positive value refuses by name', () {
+      final zero = translateNewclidProblem(
+        only(
+          'zeroed',
+          'a b = segment a b; m = midpoint m a b ? rconst a b a m 0/1',
+        ),
+      );
+      expect(
+        (zero as UntranslatableProblem).reason,
+        UntranslatableReason.unsupportedGoal,
+      );
+      expect(zero.detail, contains('positive rational'));
+      final garbled = translateNewclidProblem(
+        only(
+          'garbled',
+          'a b = segment a b; m = midpoint m a b ? rconst a b a m 2pi/3',
+        ),
+      );
+      expect(
+        (garbled as UntranslatableProblem).reason,
+        UntranslatableReason.unsupportedGoal,
+      );
+    });
+
+    test('a false stated ratio is the figure\'s refusal', () {
+      final translation = translateNewclidProblem(
+        only(
+          'wrong_ratio',
+          'a b = segment a b; m = midpoint m a b ? rconst a b a m 3/1',
+        ),
+      );
+      expect(
+        (translation as UntranslatableProblem).reason,
+        UntranslatableReason.goalFalseInFigure,
       );
     });
   });

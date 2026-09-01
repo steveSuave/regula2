@@ -194,6 +194,30 @@ bool equalRatios(
       predicateTolerance * math.max(1.0, math.max(left, right));
 }
 
+/// rconst(a, b, c, d; q) — |ab| / |cd| = q, for a stated q.
+///
+/// Compared cross-multiplied like [equalRatios] and by the same
+/// totality argument: `|ab| = q·|cd|` holds for a zero pair only when
+/// both sides vanish. Tolerance relative to the lengths, floored at 1.
+bool ratioIs(Vec2 a, Vec2 b, Vec2 c, Vec2 d, double q) {
+  final left = a.distanceTo(b);
+  final right = q * c.distanceTo(d);
+  return (left - right).abs() <=
+      predicateTolerance * math.max(1.0, math.max(left.abs(), right.abs()));
+}
+
+/// lconst(a, b; q) — |ab| = q, in the document's own units.
+///
+/// The one comparison here that is not scale-relative between figure
+/// quantities, because the statement itself is not: a stated length
+/// names a number in the figure's coordinates, and rescaling the figure
+/// genuinely changes its truth.
+bool lengthIs(Vec2 a, Vec2 b, double q) {
+  final length = a.distanceTo(b);
+  return (length - q).abs() <=
+      predicateTolerance * math.max(1.0, math.max(length, q.abs()));
+}
+
 /// simtri(a, b, c, d, e, f) — triangles abc and def are similar.
 ///
 /// Side-ratio equality, `|ab|/|de| = |bc|/|ef| = |ca|/|fd|`, compared

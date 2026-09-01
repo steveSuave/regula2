@@ -16,10 +16,12 @@ import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/fact_database.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/length_chase.dart';
+import 'package:regula/domain/prover/length_closure.dart';
 import 'package:regula/domain/prover/length_translation.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/proof.dart';
 import 'package:regula/domain/prover/prover.dart';
+import 'package:regula/domain/prover/rational.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
 void main() {
@@ -126,6 +128,51 @@ void main() {
         '|CD| = |EF|',
         '⟹ |AB| = |EF|',
       ]);
+    });
+  });
+
+  group('a stated value renders as its number', () {
+    Rational q(int n, [int d = 1]) => Rational.fromInts(n, d);
+
+    test('a ratio leads its side as a plain number', () {
+      expect(
+        renderLengthEquation(LengthEquation.rconst('ab', 'ma', q(2)), {
+          'ab': 'AB',
+          'ma': 'MA',
+        }),
+        '|AB| = 2·|MA|',
+      );
+    });
+
+    test('a stated length can leave a side to the empty product', () {
+      // The `1` the class doc calls unreachable from the homogeneous
+      // vocabulary is exactly right for an lconst.
+      expect(
+        renderLengthEquation(LengthEquation.lconst('ab', q(3, 2)), {
+          'ab': 'AB',
+        }),
+        '2·|AB| = 3',
+      );
+      expect(
+        renderLengthEquation(LengthEquation.lconst('ab', q(1)), {'ab': 'AB'}),
+        '|AB| = 1',
+      );
+    });
+
+    test('whole exponents multiply out; a ℚ-scaled one stays symbolic', () {
+      expect(
+        renderLengthEquation(LengthEquation.lconst('ab', q(1, 6)), {
+          'ab': 'AB',
+        }),
+        '6·|AB| = 1',
+      );
+      expect(
+        renderLengthEquation(
+          LengthEquation.rconst('ab', 'ma', q(2)).scaled(q(1, 2)),
+          {'ab': 'AB', 'ma': 'MA'},
+        ),
+        '|AB|^1/2 = 2^1/2·|MA|^1/2',
+      );
     });
   });
 

@@ -1,6 +1,7 @@
 import '../construction/geo_object.dart';
 import 'fact.dart';
 import 'predicate.dart';
+import 'rational.dart';
 
 /// How a fact is spelled for a reader, in one place.
 ///
@@ -13,7 +14,8 @@ import 'predicate.dart';
 /// A fact written for a reader: the kind, and each point by the name the
 /// figure gives it, falling back to its id where it has none.
 String describeFact(Fact fact) =>
-    '${fact.kind.name}(${fact.points.map(describePoint).join(', ')})';
+    '${fact.kind.name}(${fact.points.map(describePoint).join(', ')}'
+    '${fact.value == null ? '' : '; ${fact.value}'})';
 
 /// A point's user-facing name, or its id when it is unnamed.
 String describePoint(GeoPoint point) =>
@@ -43,6 +45,8 @@ String predicateKindLabel(PredicateKind kind) => switch (kind) {
   PredicateKind.midp => 'Midpoints',
   PredicateKind.simtri => 'Similar triangles',
   PredicateKind.contri => 'Congruent triangles',
+  PredicateKind.rconst => 'Stated ratios',
+  PredicateKind.lconst => 'Stated lengths',
 };
 
 /// A fact as a sentence — the prose renderer, beside [describeFact] and
@@ -72,7 +76,7 @@ String predicateKindLabel(PredicateKind kind) => switch (kind) {
 /// that could drift from it: decided once per fact, `AB` when every
 /// name is a single character, `A,B` otherwise — "angle p17p3p9" would
 /// run three names into one.
-String readFact(Fact fact) => _read(fact.kind, fact.points);
+String readFact(Fact fact) => _read(fact.kind, fact.points, fact.value);
 
 /// [readFact] for a predicate *as spelled* (Phase 162).
 ///
@@ -84,9 +88,9 @@ String readFact(Fact fact) => _read(fact.kind, fact.points);
 /// angles of different magnitude. Canonicalizing before reading would
 /// hand the user a sentence they did not ask and would not believe.
 String readPredicate(Predicate predicate) =>
-    _read(predicate.kind, predicate.points);
+    _read(predicate.kind, predicate.points, predicate.value);
 
-String _read(PredicateKind kind, List<GeoPoint> points) {
+String _read(PredicateKind kind, List<GeoPoint> points, Rational? value) {
   final names = points.map(describePoint).toList();
   final separator = names.every((name) => name.length == 1) ? '' : ',';
   String seg(int i) => '${names[i]}$separator${names[i + 1]}';
@@ -103,6 +107,8 @@ String _read(PredicateKind kind, List<GeoPoint> points) {
     PredicateKind.simtri => 'triangles ${tri(0)} and ${tri(3)} are similar',
     PredicateKind.contri => 'triangles ${tri(0)} and ${tri(3)} are congruent',
     PredicateKind.eqangle => _readEqangle(points, names, separator),
+    PredicateKind.rconst => '${seg(0)} : ${seg(2)} = $value',
+    PredicateKind.lconst => '${seg(0)} has length $value',
   };
 }
 
