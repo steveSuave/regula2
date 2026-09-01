@@ -1,0 +1,25 @@
+test/corpus/newclid_problem_test.dart
+  s_18b2d157ec57e9::t_82df145d55ec39 33-34,40-42,45
+  s_18b2d157ec57e9::t_f233baf2ae0631 421-626
+test/corpus/newclid_translation.dart
+  s_18b2d157ec57e9::t_81a3fabbcf049b 841-977
+  s_18b2d157ec57e9::t_6d960258b999af 1064-1088
+  s_18b2d157ec57e9::t_f441d06baee1aa 1347-1371
+  s_18b2d157ec57e9::t_3b91e299834c93 41,53,55-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "8ce3448b7cb6e565284d62b25890affe448d1b65",
+  "prompts": {},
+  "sessions": {
+    "s_18b2d157ec57e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3148ad66-f170-48cf-8db1-2099098a6d65",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
