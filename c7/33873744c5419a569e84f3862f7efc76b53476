@@ -1,0 +1,55 @@
+test/kitchen_sink.dart
+  s_18b2d157ec57e9::t_3261473a99c9a2 354-356
+  s_18b2d157ec57e9::t_d2623e12716b2b 21,45,49,54,60
+  s_18b2d157ec57e9::t_12e4b8141c3ee6 350-353,357-398
+test/application/persistence/construction_codec_test.dart
+  s_18b2d157ec57e9::t_c5221109e5e801 114-136
+  s_18b2d157ec57e9::t_7bbc6232f5a05d 9,18,20,22,25
+test/domain/construction/objects/scaled_compass_circle_test.dart
+  s_18b2d157ec57e9::t_9e85f59516d833 1-84
+lib/application/persistence/construction_codec.dart
+  s_18b2d157ec57e9::t_a673c60709ecc3 527-544
+  s_18b2d157ec57e9::t_d45a3548df1689 20
+  s_18b2d157ec57e9::t_ebcdd99d1b3f69 44
+  s_18b2d157ec57e9::t_85908d32f59025 59
+  s_18b2d157ec57e9::t_d47aaa4af40592 53
+  s_18b2d157ec57e9::t_de5ce779bf1751 1044-1068
+  s_18b2d157ec57e9::t_1ae29b27fe3108 48
+  s_18b2d157ec57e9::t_1436fddaa3bf80 870-897
+lib/domain/construction/objects/fixed_angle_line.dart
+  s_18b2d157ec57e9::t_8e59c392e1483a 1-80
+lib/domain/construction/objects/scaled_compass_circle.dart
+  s_18b2d157ec57e9::t_ea70afd934046a 64-65
+  s_18b2d157ec57e9::t_9eab87e9c4c13e 1-63,66-77
+lib/domain/construction/objects/stated_radius_circle.dart
+  s_18b2d157ec57e9::t_b67d211efd78aa 1-67
+test/domain/construction/objects/stated_radius_circle_test.dart
+  s_18b2d157ec57e9::t_de7d98a3c17af6 1-59
+test/domain/construction/objects/ratio_apollonius_circle_test.dart
+  s_18b2d157ec57e9::t_bd3438006ede5a 40,55-56
+  s_18b2d157ec57e9::t_f529e55942c869 1-39,41-54,57-119
+lib/domain/construction/objects/ratio_apollonius_circle.dart
+  s_18b2d157ec57e9::t_9611dada052de6 1-94
+test/domain/construction/objects/fixed_angle_line_test.dart
+  s_18b2d157ec57e9::t_1fc300f5507a75 33-38
+  s_18b2d157ec57e9::t_29b425aff6af60 1-32,39-126
+lib/domain/construction/incidence.dart
+  s_18b2d157ec57e9::t_916d11d3b1cd70 149-155
+  s_18b2d157ec57e9::t_8010dbc1591cc3 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c733873744c5419a569e84f3862f7efc76b53476",
+  "prompts": {},
+  "sessions": {
+    "s_18b2d157ec57e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3148ad66-f170-48cf-8db1-2099098a6d65",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
