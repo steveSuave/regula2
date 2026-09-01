@@ -18,6 +18,7 @@ import 'package:regula/domain/construction/objects/diameter_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/five_point_conic.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/focal_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
@@ -41,18 +42,22 @@ import 'package:regula/domain/construction/objects/polar_line.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/radical_axis_line.dart';
+import 'package:regula/domain/construction/objects/ratio_apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
+import 'package:regula/domain/construction/objects/scaled_compass_circle.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/slope_measurement.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 /// A construction using every concrete [GeoObject] kind at least once,
@@ -340,6 +345,55 @@ Construction buildPostV1Kinds() {
         point: on,
         difference: true,
         attributes: const ObjectAttributes(dashPeriod: 6),
+      ),
+    );
+
+  // The constant-stating carriers (Phase 182). Values chosen so the
+  // exactness pin bites: 1/3 is not a binary double, so a codec that
+  // rounded through one would fail the params test.
+  final anchorA = FreePoint(id: 'csa', position: const Vec2(6, 0));
+  final anchorB = FreePoint(id: 'csb', position: const Vec2(8, 0));
+  final anchorC = FreePoint(id: 'csc', position: const Vec2(6, 3));
+  final baseline = LineThroughTwoPoints(
+    id: 'cline',
+    point1: anchorA,
+    point2: anchorB,
+  );
+  construction
+    ..add(anchorA)
+    ..add(anchorB)
+    ..add(anchorC)
+    ..add(baseline)
+    ..add(
+      FixedAngleLine(
+        id: 'fal',
+        through: anchorC,
+        reference: baseline,
+        turn: Rational.fromInts(1, 3),
+      ),
+    )
+    ..add(
+      StatedRadiusCircle(
+        id: 'src',
+        center: anchorA,
+        radius: Rational.fromInts(5, 3),
+      ),
+    )
+    ..add(
+      ScaledCompassCircle(
+        id: 'scc',
+        center: anchorC,
+        radiusPoint1: anchorA,
+        radiusPoint2: anchorB,
+        factor: Rational.fromInts(2, 3),
+      ),
+    )
+    ..add(
+      RatioApolloniusCircle(
+        id: 'rac',
+        point1: anchorA,
+        point2: anchorB,
+        ratio: Rational.fromInts(1, 3),
       ),
     );
   return construction;

@@ -17,6 +17,7 @@ import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/five_point_conic.dart';
+import '../../domain/construction/objects/fixed_angle_line.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
 import '../../domain/construction/objects/focal_conic.dart';
 import '../../domain/construction/objects/free_point.dart';
@@ -40,18 +41,22 @@ import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/polygon.dart';
 import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
+import '../../domain/construction/objects/ratio_apollonius_circle.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/reflected_point.dart';
 import '../../domain/construction/objects/rotated_point.dart';
+import '../../domain/construction/objects/scaled_compass_circle.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/slope_measurement.dart';
+import '../../domain/construction/objects/stated_radius_circle.dart';
 import '../../domain/construction/objects/tangent_line.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
+import '../../domain/math/rational.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/projective/complex.dart';
 import '../../domain/projective/proj_point.dart';
@@ -519,6 +524,24 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
       'FixedRadiusCircle',
       {'radius': radius},
     ),
+    // The constant-stating carriers (Phase 182). Their exact rational
+    // params ride as canonical `n` / `n/d` strings — a double would
+    // betray the statement the kind exists to make. Additive kinds, so
+    // still a v1 document: a v1 reader refuses an unknown type outright
+    // rather than misreading it — see the note on `FivePointConic`.
+    FixedAngleLine(:final turn) => ('FixedAngleLine', {'turn': '$turn'}),
+    StatedRadiusCircle(:final radius) => (
+      'StatedRadiusCircle',
+      {'radius': '$radius'},
+    ),
+    ScaledCompassCircle(:final factor) => (
+      'ScaledCompassCircle',
+      {'factor': '$factor'},
+    ),
+    RatioApolloniusCircle(:final ratio) => (
+      'RatioApolloniusCircle',
+      {'ratio': '$ratio'},
+    ),
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
     Polygon() => ('Polygon', const {}),
@@ -844,6 +867,34 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       center: point(2),
       attributes: attributes,
     ),
+    'FixedAngleLine' => FixedAngleLine(
+      id: id,
+      through: point(0),
+      reference: line(1),
+      turn: _rationalParam(id, params, 'turn'),
+      attributes: attributes,
+    ),
+    'StatedRadiusCircle' => StatedRadiusCircle(
+      id: id,
+      center: point(0),
+      radius: _rationalParam(id, params, 'radius'),
+      attributes: attributes,
+    ),
+    'ScaledCompassCircle' => ScaledCompassCircle(
+      id: id,
+      center: point(0),
+      radiusPoint1: point(1),
+      radiusPoint2: point(2),
+      factor: _rationalParam(id, params, 'factor'),
+      attributes: attributes,
+    ),
+    'RatioApolloniusCircle' => RatioApolloniusCircle(
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      ratio: _rationalParam(id, params, 'ratio'),
+      attributes: attributes,
+    ),
     'FixedRadiusCircle' => FixedRadiusCircle(
       id: id,
       center: point(0),
@@ -988,6 +1039,31 @@ double _doubleParam(String id, Map<String, dynamic> params, String key) {
     throw FormatException('Object "$id": missing numeric param "$key"');
   }
   return value.toDouble();
+}
+
+/// An exact rational param, written as the canonical `n` or `n/d`
+/// string [Rational.toString] prints — never a JSON number, which would
+/// round the value the kind exists to state exactly.
+Rational _rationalParam(String id, Map<String, dynamic> params, String key) {
+  final value = params[key];
+  if (value is String) {
+    final parts = value.split('/');
+    try {
+      if (parts.length == 1) {
+        return Rational(BigInt.parse(parts[0]), BigInt.one);
+      }
+      if (parts.length == 2) {
+        return Rational(BigInt.parse(parts[0]), BigInt.parse(parts[1]));
+      }
+    } on FormatException {
+      // Falls through to the shared throw below.
+    } on ArgumentError {
+      // A zero denominator — same answer.
+    }
+  }
+  throw FormatException(
+    'Object "$id": invalid rational param "$key" (expected "n" or "n/d")',
+  );
 }
 
 String _stringParam(String id, Map<String, dynamic> params, String key) {
