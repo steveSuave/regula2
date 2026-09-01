@@ -1,0 +1,48 @@
+test/domain/prover/length_closure_test.dart
+  s_de9eb170bb1910::t_70a96c8e9a95e5 105-108,110-116
+  s_de9eb170bb1910::t_9c66ea0c9dd9d7 64,209-212,660
+  s_de9eb170bb1910::t_b5209a3d312fdd 56,59,61-63,65-67
+  s_de9eb170bb1910::t_d56524a4a63dea 118,120-208,213-245
+  s_de9eb170bb1910::t_ee2401c7c922f1 117,629-659,661-733
+  s_de9eb170bb1910::t_b54e14ac0b08a1 288-292,298
+  s_de9eb170bb1910::t_45f7e5a9e237fc 119
+lib/domain/prover/length_chase.dart
+  s_de9eb170bb1910::t_65a255c0e461c6 204-205
+  s_de9eb170bb1910::t_b24c66ec9a1a49 186-188,195-203,212-229
+lib/domain/prover/length_closure.dart
+  s_de9eb170bb1910::t_392fb9c9bd4753 43,45,47-50,55-62,65,73-76,81
+  s_de9eb170bb1910::t_43ea5e40962d2f 106-159,163-168,172-174
+  s_de9eb170bb1910::t_543893defa5cb5 254-255,261-263,270,273-274,285-292,295
+  s_de9eb170bb1910::t_0f97e128775369 4-5,12,14-25
+  s_de9eb170bb1910::t_9c66ea0c9dd9d7 160-162,216
+  s_de9eb170bb1910::t_aac53a7941b8a5 293
+  s_de9eb170bb1910::t_ae10d5285334cc 395-398
+  s_de9eb170bb1910::t_f2f1a832da8708 306-312
+  s_de9eb170bb1910::t_b3291f2bc99be9 335-342
+  s_de9eb170bb1910::t_697ae9f72e2058 230-232,234-242
+  s_de9eb170bb1910::t_ff105573c25a3a 199-204,211-215,217-220
+  s_de9eb170bb1910::t_8966acc670621b 368-371
+  s_de9eb170bb1910::t_536dd6c11ec3f8 181-189
+  s_de9eb170bb1910::t_bce8b939d59aac 175,294
+test/domain/prover/length_chase_test.dart
+  s_de9eb170bb1910::t_0dc9a705493e93 19
+  s_de9eb170bb1910::t_9c66ea0c9dd9d7 170-173
+  s_de9eb170bb1910::t_6b665c7bb0d7c2 134-169,174-178
+  s_de9eb170bb1910::t_8afb01e09c43dc 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "20fd32810a333e1671aa6deeabf2706854b9f6ad",
+  "prompts": {},
+  "sessions": {
+    "s_de9eb170bb1910": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e408d48e-4385-4f9b-b73e-70cc7a01540e",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
