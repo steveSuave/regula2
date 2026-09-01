@@ -1,0 +1,25 @@
+test/domain/prover/hypotheses_test.dart
+  s_18b2d157ec57e9::t_93285622a0a296 600-758
+  s_18b2d157ec57e9::t_66f9bd91e0cae3 12,28,31,34
+lib/domain/prover/hypotheses.dart
+  s_18b2d157ec57e9::t_67a74b54b0dc9b 275-316
+  s_18b2d157ec57e9::t_cd9615b3e932a7 12,26,29,32
+  s_18b2d157ec57e9::t_8601d61bb85188 74-77
+  s_18b2d157ec57e9::t_f507e44815f734 498-499,501
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9fc85651ed60cc32385d77bfd3757f1d5083c454",
+  "prompts": {},
+  "sessions": {
+    "s_18b2d157ec57e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3148ad66-f170-48cf-8db1-2099098a6d65",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
