@@ -38,6 +38,7 @@ import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/rational.dart';
 
 void main() {
   Construction build(Iterable<GeoObject> objects) {
@@ -125,7 +126,7 @@ void main() {
   });
 
   group('point kinds', () {
-    test('Midpoint emits midp', () {
+    test('Midpoint emits midp, and its 1:2 as an rconst', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(6, 2));
       final m = Midpoint(id: 'm', point1: a, point2: b);
@@ -133,9 +134,24 @@ void main() {
       final emitted = extractAndPin([a, b, m]);
 
       expect(emitted, hasFact(Predicate(PredicateKind.midp, [m, a, b])));
+      // Newclid's R51 as hypothesis emission (Phase 181): the log
+      // algebra cannot derive |am|/|ab| = ½ from cong + coll, and the
+      // construction guarantees it.
+      expect(
+        emitted,
+        hasFact(
+          Predicate(PredicateKind.rconst, [
+            a,
+            m,
+            a,
+            b,
+          ], value: Rational.fromInts(1, 2)),
+        ),
+      );
     });
 
-    test('SegmentRatioPoint is collinear; the exact half is midp', () {
+    test('SegmentRatioPoint is collinear; the exact half is midp '
+        'and rconst ½', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(6, 2));
       final third = SegmentRatioPoint(
@@ -152,8 +168,26 @@ void main() {
       expect(emitted, hasFact(Predicate(PredicateKind.midp, [half, a, b])));
       expect(
         emitted,
+        hasFact(
+          Predicate(PredicateKind.rconst, [
+            a,
+            half,
+            a,
+            b,
+          ], value: Rational.fromInts(1, 2)),
+        ),
+      );
+      expect(
+        emitted,
         isNot(hasFact(Predicate(PredicateKind.midp, [third, a, b]))),
         reason: 'a quarter point is not a midpoint',
+      );
+      expect(
+        emitted.where((p) => p.kind == PredicateKind.rconst).length,
+        1,
+        reason:
+            'a param ratio is not a stated rational — only the '
+            'exact half speaks',
       );
     });
 
@@ -228,8 +262,19 @@ void main() {
       expect(emitted, hasFact(Predicate(PredicateKind.cong, [a, s, a, r])));
       expect(emitted, hasFact(Predicate(PredicateKind.cong, [b, s, b, r])));
       expect(emitted, hasFact(Predicate(PredicateKind.perp, [s, r, a, b])));
-      // Central reflection: the center is the midpoint.
+      // Central reflection: the center is the midpoint, with its 1:2.
       expect(emitted, hasFact(Predicate(PredicateKind.midp, [o, s, central])));
+      expect(
+        emitted,
+        hasFact(
+          Predicate(PredicateKind.rconst, [
+            s,
+            o,
+            s,
+            central,
+          ], value: Rational.fromInts(1, 2)),
+        ),
+      );
       // Rotation preserves the distance to the center.
       expect(
         emitted,

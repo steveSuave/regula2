@@ -31,6 +31,7 @@ import '../construction/objects/translated_point.dart';
 import '../construction/objects/two_line_bisector_line.dart';
 import '../projective/absolute.dart';
 import 'predicate.dart';
+import 'rational.dart';
 
 /// Reads the DD hypotheses off a construction (PLAN §M-P2b): every
 /// predicate the construction *guarantees* by its parent ties, never by
@@ -93,8 +94,9 @@ List<Predicate> hypotheses(
   }
   final all = List.of(objects);
   final out = <Predicate>[];
-  void emit(PredicateKind kind, List<GeoPoint> args) =>
-      out.add(Predicate(kind, args));
+  void emit(PredicateKind kind, List<GeoPoint> args, {Rational? value}) =>
+      out.add(Predicate(kind, args, value: value));
+  final half = Rational.fromInts(1, 2);
 
   // The points the construction puts on a carrier, in insertion order —
   // across coincident copies of a line too (Phase 164), so a `coll`
@@ -134,10 +136,28 @@ List<Predicate> hypotheses(
     switch (object) {
       case final Midpoint m:
         emit(PredicateKind.midp, [m, m.point1, m.point2]);
+        // |p₁m| / |p₁p₂| = ½ — Newclid's R51 as hypothesis emission
+        // (Phase 181): the multiplicative log algebra cannot derive the
+        // 1:2 from `cong` + `coll`, length *addition* being outside it,
+        // and the construction guarantees it structurally. One half
+        // suffices — the other follows from `midp`'s cong in the
+        // closure.
+        emit(PredicateKind.rconst, [
+          m.point1,
+          m,
+          m.point1,
+          m.point2,
+        ], value: half);
       case final SegmentRatioPoint r:
         emit(PredicateKind.coll, [r, r.point1, r.point2]);
         if (r.ratio == 0.5) {
           emit(PredicateKind.midp, [r, r.point1, r.point2]);
+          emit(PredicateKind.rconst, [
+            r.point1,
+            r,
+            r.point1,
+            r.point2,
+          ], value: half);
         }
       case final HomotheticPoint h:
         emit(PredicateKind.coll, [h, h.center, h.point]);
@@ -150,6 +170,12 @@ List<Predicate> hypotheses(
         ]);
       case final CentralReflectionPoint r:
         emit(PredicateKind.midp, [r.center, r.point, r]);
+        emit(PredicateKind.rconst, [
+          r.point,
+          r.center,
+          r.point,
+          r,
+        ], value: half);
       case final RotatedPoint r:
         emit(PredicateKind.cong, [r.center, r.point, r.center, r]);
       case final TranslatedPoint t:
