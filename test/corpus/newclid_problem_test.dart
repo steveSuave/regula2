@@ -30,13 +30,19 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
+import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/ratio_apollonius_circle.dart';
+import 'package:regula/domain/construction/objects/scaled_compass_circle.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
+import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/hypotheses.dart';
 import 'package:regula/domain/prover/predicate.dart';
 import 'package:regula/domain/prover/question_template.dart';
@@ -409,6 +415,212 @@ void main() {
       expect(tapsFor(QuestionTemplate.coll), 3);
       expect(tapsFor(QuestionTemplate.eqangle), 8);
       expect(tapsFor(QuestionTemplate.midp), 3);
+    });
+  });
+
+  group('the constant-stating macros (Phase 182)', () {
+    // Each macro is a point on a carrier that embodies its constant, so
+    // the pin is threefold: the carrier kind exists in the construction,
+    // `hypotheses()` states the constant, and the goal phrases. Proving
+    // is the corpus benchmark's business, not this suite's (see the
+    // file header).
+    Matcher statesFact(Predicate expected) =>
+        contains(predicate((Predicate p) => Fact.of(p) == Fact.of(expected)));
+
+    test('s_angle: a point on the fixed-angle carrier through the '
+        'vertex, stating aconst a b b x', () {
+      final problem = built(
+        'turned',
+        'a b = segment a b; c = s_angle a b c 108o ? aconst a b b c 108o',
+      );
+      final points = problem.points;
+      expect(
+        problem.construction.objects.whereType<FixedAngleLine>(),
+        hasLength(1),
+      );
+      expect(
+        hypotheses(problem.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.aconst, [
+            points['a']!,
+            points['b']!,
+            points['b']!,
+            points['c']!,
+          ], value: Rational.fromInts(3, 5)),
+        ),
+      );
+      expect(problem.question.canonical.kind, PredicateKind.aconst);
+      expect(problem.question.canonical.value, Rational.fromInts(3, 5));
+    });
+
+    test('the aconst macro: the same carrier through its own vertex '
+        'point', () {
+      final problem = built(
+        'turned_far',
+        'a b = segment a b; c = free c; x = aconst a b c x 2pi/3 '
+            '? aconst a b c x 2pi/3',
+      );
+      final points = problem.points;
+      expect(
+        hypotheses(problem.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.aconst, [
+            points['a']!,
+            points['b']!,
+            points['c']!,
+            points['x']!,
+          ], value: Rational.fromInts(2, 3)),
+        ),
+      );
+    });
+
+    test('lconst: a point on the stated-radius circle', () {
+      final problem = built('measured', 'a = free a; b = lconst b a 4 '
+          '? lconst a b 4');
+      final points = problem.points;
+      expect(
+        problem.construction.objects.whereType<StatedRadiusCircle>(),
+        hasLength(1),
+      );
+      expect(
+        hypotheses(problem.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.lconst, [
+            points['b']!,
+            points['a']!,
+          ], value: Rational.fromInts(4, 1)),
+        ),
+      );
+    });
+
+    test('l2const states the square: a perfect square works, anything '
+        'else refuses', () {
+      // The corpus's one use, verbatim: |ba|² = 4 is |ba| = 2.
+      final problem = built(
+        'test_l2const',
+        'a = free a; b = l2const b a 4 ? lconst a b 2',
+      );
+      final points = problem.points;
+      expect(
+        hypotheses(problem.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.lconst, [
+            points['b']!,
+            points['a']!,
+          ], value: Rational.fromInts(2, 1)),
+        ),
+      );
+      // √2 is not rational, and lconst states a rational — refused
+      // rather than rounded.
+      final irrational = translateNewclidProblem(
+        only('root_two', 'a = free a; b = l2const b a 2 ? lconst a b 2'),
+      );
+      expect(irrational, isA<UntranslatableProblem>());
+    });
+
+    test('rconst: the scaled compass circle, and 1/1 is the plain '
+        'compass', () {
+      final problem = built(
+        'scaled',
+        'a b = segment a b; c = free c; d = rconst a b c d 2/1 '
+            '? rconst a b c d 2/1',
+      );
+      final points = problem.points;
+      expect(
+        problem.construction.objects.whereType<ScaledCompassCircle>(),
+        hasLength(1),
+      );
+      // |ab|/|cd| = 2 and the emitted |dc|/|ab| = ½ are one fact.
+      expect(
+        hypotheses(problem.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.rconst, [
+            points['a']!,
+            points['b']!,
+            points['c']!,
+            points['d']!,
+          ], value: Rational.fromInts(2, 1)),
+        ),
+      );
+
+      final unit = built(
+        'unit_ratio',
+        'a b = segment a b; c = free c; d = rconst a b c d 1/1 '
+            '? cong a b c d',
+      );
+      expect(
+        unit.construction.objects.whereType<ScaledCompassCircle>(),
+        isEmpty,
+      );
+      expect(
+        unit.construction.objects.whereType<CompassCircle>(),
+        hasLength(1),
+      );
+    });
+
+    test('rconst2: the stated-ratio Apollonius circle, and 1/1 is the '
+        'perpendicular bisector', () {
+      final problem = built(
+        'apollo',
+        'a b = segment a b; f = rconst2 f a b 1/2 ? rconst f a f b 1/2',
+      );
+      final points = problem.points;
+      expect(
+        problem.construction.objects.whereType<RatioApolloniusCircle>(),
+        hasLength(1),
+      );
+      expect(
+        hypotheses(problem.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.rconst, [
+            points['f']!,
+            points['a']!,
+            points['f']!,
+            points['b']!,
+          ], value: Rational.fromInts(1, 2)),
+        ),
+      );
+
+      final unit = built(
+        'equidistant',
+        'a b = segment a b; f = rconst2 f a b 1/1 ? cong f a f b',
+      );
+      expect(
+        unit.construction.objects.whereType<RatioApolloniusCircle>(),
+        isEmpty,
+      );
+      expect(
+        hypotheses(unit.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.cong, [
+            unit.points['f']!,
+            unit.points['a']!,
+            unit.points['f']!,
+            unit.points['b']!,
+          ]),
+        ),
+      );
+    });
+
+    test('triangle12: two free points and the third at twice the base', () {
+      // A corpus problem verbatim (examples.txt).
+      final problem = built(
+        'triangle12',
+        'a b c = triangle12 a b c; m = midpoint m a c ? cong a m a b',
+      );
+      final points = problem.points;
+      expect(
+        hypotheses(problem.construction.objects),
+        statesFact(
+          Predicate(PredicateKind.rconst, [
+            points['a']!,
+            points['b']!,
+            points['a']!,
+            points['c']!,
+          ], value: Rational.fromInts(1, 2)),
+        ),
+      );
+      expect(problem.question.canonical.kind, PredicateKind.cong);
     });
   });
 

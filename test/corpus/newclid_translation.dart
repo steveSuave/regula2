@@ -38,6 +38,7 @@ import 'package:regula/domain/construction/objects/central_reflection_point.dart
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/diameter_circle.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -49,7 +50,10 @@ import 'package:regula/domain/construction/objects/perpendicular_bisector_line.d
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
+import 'package:regula/domain/construction/objects/ratio_apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
+import 'package:regula/domain/construction/objects/scaled_compass_circle.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/math/rational.dart';
@@ -834,6 +838,143 @@ class _Builder {
             return built;
           }),
         );
+      // The constant-stating macros (Phase 182): each is a point on a
+      // carrier that embodies its constant, so the constant reaches
+      // `hypotheses()` as the carrier's own aconst/rconst/lconst
+      // emission — the `on_aline` ruling, applied.
+      //
+      // aconst a b c x r: the angle from line ab to line cx is r — x on
+      // the fixed-angle carrier through c. s_angle a b x y is the same
+      // carrier through b itself (Newclid's clause is `aconst a b b x
+      // y`).
+      case 'aconst':
+      case 's_angle':
+        final vertexIndex = call.macro == 's_angle' ? 1 : 2;
+        final valueIndex = call.macro == 's_angle' ? 3 : 4;
+        if (args.length != valueIndex + 1) return null;
+        final turn = _parseAngle(args[valueIndex]);
+        if (turn == null) return null;
+        final vertex = _known(args[vertexIndex]);
+        final reference = line(0, 1);
+        if (vertex == null || reference is! GeoLine) return null;
+        return on(
+          _named(
+            'aconst:${_orderKey(args[0], args[1])}:${args[vertexIndex]}:$turn',
+            () {
+              final built = FixedAngleLine(
+                id: _id('l'),
+                through: vertex,
+                reference: reference,
+                turn: turn,
+              );
+              construction.add(built);
+              return built;
+            },
+          ),
+        );
+      // rconst a b c x r: |ab|/|cx| = r — x on the circle about c of
+      // radius |ab|/r. At r = 1 that is the compass circle (the
+      // eqdistance case's key, so the two macros share one carrier),
+      // whose cong is the plainer statement.
+      case 'rconst':
+        if (args.length != 5) return null;
+        final stated = _parseRational(args[4]);
+        if (stated == null || stated.isZero || stated.isNegative) return null;
+        final centre = _known(args[2]);
+        final from = _known(args[0]);
+        final to = _known(args[1]);
+        if (centre == null || from == null || to == null) return null;
+        if (stated == Rational.one) {
+          return on(
+            _named('compass:${args[2]}:${args[0]}:${args[1]}', () {
+              final built = CompassCircle(
+                id: _id('c'),
+                center: centre,
+                radiusPoint1: from,
+                radiusPoint2: to,
+              );
+              construction.add(built);
+              return built;
+            }),
+          );
+        }
+        final factor = Rational.one / stated;
+        return on(
+          _named('scaled:${args[2]}:${args[0]}:${args[1]}:$factor', () {
+            final built = ScaledCompassCircle(
+              id: _id('c'),
+              center: centre,
+              radiusPoint1: from,
+              radiusPoint2: to,
+              factor: factor,
+            );
+            construction.add(built);
+            return built;
+          }),
+        );
+      // rconst2 x a b r: |xa|/|xb| = r — x on the stated-ratio
+      // Apollonius circle. At r = 1 the locus is the perpendicular
+      // bisector (the on_bline case's key), whose cong is the plainer
+      // statement.
+      case 'rconst2':
+        if (args.length != 4) return null;
+        final ratio = _parseRational(args[3]);
+        if (ratio == null || ratio.isZero || ratio.isNegative) return null;
+        final anchor1 = _known(args[1]);
+        final anchor2 = _known(args[2]);
+        if (anchor1 == null || anchor2 == null) return null;
+        if (ratio == Rational.one) {
+          return on(
+            _named('bline:${_orderKey(args[1], args[2])}', () {
+              final built = PerpendicularBisectorLine(
+                id: _id('l'),
+                point1: anchor1,
+                point2: anchor2,
+              );
+              construction.add(built);
+              return built;
+            }),
+          );
+        }
+        return on(
+          _named('apollo:${args[1]}:${args[2]}:$ratio', () {
+            final built = RatioApolloniusCircle(
+              id: _id('c'),
+              point1: anchor1,
+              point2: anchor2,
+              ratio: ratio,
+            );
+            construction.add(built);
+            return built;
+          }),
+        );
+      // lconst x a l: |xa| = l — x on the circle about a of the stated
+      // radius. l2const states the *square*: supported exactly when √l
+      // is rational (the corpus's one use is `l2const b a 4`), since
+      // the vocabulary's lconst states a rational value.
+      case 'lconst':
+      case 'l2const':
+        if (args.length != 3) return null;
+        final parsed = _parseRational(args[2]);
+        final radius = parsed == null
+            ? null
+            : call.macro == 'l2const'
+            ? _rationalSqrt(parsed)
+            : parsed;
+        if (radius == null || radius.isZero || radius.isNegative) return null;
+        final around = _known(args[1]);
+        if (around == null) return null;
+        return on(
+          _named('stated:${args[1]}:$radius', () {
+            final built = StatedRadiusCircle(
+              id: _id('c'),
+              center: around,
+              radius: radius,
+            );
+            construction.add(built);
+            return built;
+          }),
+        );
       // x seeing ab at a right angle: the circle on ab as diameter.
       case 'on_dia':
         final a = _known(args[1]);
@@ -919,6 +1060,31 @@ class _Builder {
         );
         construction.add(apex);
         points[clause.outputs[2]] = apex;
+        return const _ShapeOutcome(null);
+      // triangle12 a b c: rconst a b a c 1/2 — a free triangle with
+      // |ac| = 2|ab|: c on the circle about a of twice the compassed
+      // |ab| (Phase 182's scaled carrier, so the 1:2 reaches
+      // `hypotheses()` as its rconst emission).
+      case 'triangle12':
+        if (clause.outputs.length != 3) return _shapeArity(call, 3);
+        final base1 = _free(clause.outputs[0]);
+        final base2 = _free(clause.outputs[1]);
+        final doubled = ScaledCompassCircle(
+          id: _id('c'),
+          center: base1,
+          radiusPoint1: base1,
+          radiusPoint2: base2,
+          factor: Rational.fromInts(2, 1),
+        );
+        construction.add(doubled);
+        final far = PointOnObject(
+          id: _id('p'),
+          curve: doubled,
+          parameter: _parameterOn(doubled),
+          attributes: ObjectAttributes(name: clause.outputs[2]),
+        );
+        construction.add(far);
+        points[clause.outputs[2]] = far;
         return const _ShapeOutcome(null);
       // r_triangle a b c: perp a b a c — c on the perpendicular to ab
       // at a.
@@ -1174,6 +1340,31 @@ Rational? _parseAngle(String text) {
   final degrees = RegExp(r'^(\d+)o$').firstMatch(text);
   if (degrees != null) {
     return Rational.fromInts(int.parse(degrees.group(1)!), 180).modOne();
+  }
+  return null;
+}
+
+/// The exact rational square root of [value], or null when there is
+/// none — √(n/d) is rational exactly when n and d are both perfect
+/// squares, the components being coprime.
+Rational? _rationalSqrt(Rational value) {
+  if (value.isNegative) return null;
+  final n = _bigIntSqrt(value.numerator);
+  final d = _bigIntSqrt(value.denominator);
+  return n == null || d == null ? null : Rational(n, d);
+}
+
+BigInt? _bigIntSqrt(BigInt value) {
+  if (value.isNegative) return null;
+  final estimate = BigInt.from(math.sqrt(value.toDouble()).round());
+  for (final candidate in [
+    estimate - BigInt.one,
+    estimate,
+    estimate + BigInt.one,
+  ]) {
+    if (!candidate.isNegative && candidate * candidate == value) {
+      return candidate;
+    }
   }
   return null;
 }
