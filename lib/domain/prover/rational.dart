@@ -97,6 +97,10 @@ class Rational implements Comparable<Rational> {
 
   Rational get abs => isNegative ? -this : this;
 
+  /// The nearest double — for handing a stated value to a numeric
+  /// screen, never for the exact arithmetic everything else here is.
+  double toDouble() => numerator.toDouble() / denominator.toDouble();
+
   /// This value scaled by the integer [factor] — the angle system's only
   /// multiplication, and the reason it never needs a general product.
   Rational scaled(BigInt factor) => Rational(numerator * factor, denominator);

@@ -333,6 +333,13 @@ bool _admissibleConclusion(PredicateKind kind, List<GeoPoint> points) {
     case PredicateKind.perp:
     case PredicateKind.cong:
       return distinct([0, 1]) && distinct([2, 3]) && !sameSegment(0, 1);
+    // No rule concludes a value-carrying kind (PLAN §"The constants
+    // stack"), so these cases are contract completeness: the same
+    // shape conditions as cong, and one real segment for lconst.
+    case PredicateKind.rconst:
+      return distinct([0, 1]) && distinct([2, 3]) && !sameSegment(0, 1);
+    case PredicateKind.lconst:
+      return distinct([0, 1]);
     case PredicateKind.eqangle:
     case PredicateKind.eqratio:
       for (var segment = 0; segment < 4; segment++) {

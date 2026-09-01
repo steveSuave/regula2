@@ -186,6 +186,8 @@ class AngleTranslation {
       case PredicateKind.midp:
       case PredicateKind.simtri:
       case PredicateKind.contri:
+      case PredicateKind.rconst:
+      case PredicateKind.lconst:
         return const [];
     }
   }

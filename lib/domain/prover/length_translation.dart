@@ -48,8 +48,10 @@ class LengthConclusion {
 /// the key is the sorted id pair, `carriers.dart`'s spelling, and that
 /// is the end of it.
 ///
-/// **Three predicates speak here and the rest do not.** `cong` and
-/// `eqratio` are the length vocabulary; `midp` contributes its equal
+/// **Five predicates speak here and the rest do not.** `cong` and
+/// `eqratio` are the homogeneous length vocabulary; `rconst` and
+/// `lconst` are the constant-carrying one (Phase 181), each absorbing
+/// as the row its stated value makes; `midp` contributes its equal
 /// halves and is the only fact that gives the algebra something it did
 /// not ask for. Everything else — `para`, `perp`, `eqangle`, `coll`,
 /// `cyclic` — is about directions or incidence and belongs to the angle
@@ -152,9 +154,9 @@ class LengthTranslation {
           ),
         ];
       case PredicateKind.midp:
-        // `midp(m, a, b)`: |ma| = |mb|. The 1:2 it also states needs an
-        // `ln 2` variable, measured as buying nothing — see
-        // `LengthClosure`.
+        // `midp(m, a, b)`: |ma| = |mb|. The 1:2 it also states is an
+        // `rconst`'s row, stated by `Midpoint.hypotheses` rather than
+        // duplicated here — one fact, one statement of it.
         if (points[0].id == points[1].id || points[0].id == points[2].id) {
           return const [];
         }
@@ -164,6 +166,20 @@ class LengthTranslation {
             name(points[0], points[2]),
           ),
         ];
+      case PredicateKind.rconst:
+        // |ab|/|cd| = q ⟺ l_ab − l_cd = ln q.
+        if (degenerate(2)) return const [];
+        return [
+          LengthEquation.rconst(
+            name(points[0], points[1]),
+            name(points[2], points[3]),
+            fact.value!,
+          ),
+        ];
+      case PredicateKind.lconst:
+        // |ab| = q ⟺ l_ab = ln q.
+        if (degenerate(1)) return const [];
+        return [LengthEquation.lconst(name(points[0], points[1]), fact.value!)];
       case PredicateKind.para:
       case PredicateKind.perp:
       case PredicateKind.eqangle:
@@ -209,14 +225,17 @@ class LengthTranslation {
   /// The row form of [fact] **as a conclusion**, or null when the kind
   /// is not one the algebra may conclude.
   ///
-  /// `cong` and `eqratio` are the two, and `midp` is deliberately not:
-  /// its row is a consequence of it, not equivalent to it. Unlike
-  /// [absorb] this registers nothing — asking what a fact *would* say is
-  /// not saying it.
+  /// `cong`, `eqratio`, `rconst` and `lconst` are the four — each is
+  /// *equivalent* to its row over positive lengths — and `midp` is
+  /// deliberately not: its row is a consequence of it, not equivalent to
+  /// it. Unlike [absorb] this registers nothing — asking what a fact
+  /// *would* say is not saying it.
   LengthEquation? equationOf(Fact fact) {
     switch (fact.kind) {
       case PredicateKind.cong:
       case PredicateKind.eqratio:
+      case PredicateKind.rconst:
+      case PredicateKind.lconst:
         final equations = _equationsOf(fact, name: segmentVariable);
         return equations.isEmpty ? null : equations.single;
       default:

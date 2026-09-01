@@ -6,6 +6,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/rational.dart';
 
 /// Ids in alphabetical order, so a canonical form is easy to read off by
 /// eye and the sort has something to do.
@@ -56,6 +57,16 @@ const Map<PredicateKind, List<(double, double)>> _trueRigs = {
   PredicateKind.simtri: [(0, 0), (3, 0), (0, 4), (10, 0), (16, 0), (10, 8)],
   // The same triangle, translated.
   PredicateKind.contri: [(0, 0), (3, 0), (0, 4), (10, 1), (13, 1), (10, 5)],
+  // |ab| / |cd| = 2 / 1, at the stated value 2.
+  PredicateKind.rconst: [(0, 0), (2, 0), (1, 4), (1, 5)],
+  // |ab| = 3, at the stated value 3.
+  PredicateKind.lconst: [(0, 0), (3, 0)],
+};
+
+/// The stated value each value-carrying rig is true at.
+final Map<PredicateKind, Rational> _rigValues = {
+  PredicateKind.rconst: Rational.fromInts(2, 1),
+  PredicateKind.lconst: Rational.fromInts(3, 1),
 };
 
 /// Every rewrite of the argument list that names the same statement, as
@@ -114,6 +125,19 @@ List<List<int>> _orbit(PredicateKind kind) => switch (kind) {
       [for (final i in sigma) i + 3, ...sigma],
     ],
   ],
+  // The **value-preserving** forms only: rconst's pair swap inverts its
+  // value, a rewrite no index permutation expresses — the value-carrying
+  // kinds' own group below tests the value-coupled symmetry directly.
+  PredicateKind.rconst => const [
+    [0, 1, 2, 3],
+    [1, 0, 2, 3],
+    [0, 1, 3, 2],
+    [1, 0, 3, 2],
+  ],
+  PredicateKind.lconst => const [
+    [0, 1],
+    [1, 0],
+  ],
 };
 
 /// The sixteen ways to reverse a subset of four segments.
@@ -145,6 +169,14 @@ void main() {
     for (final i in form) points[i],
   ];
 
+  // The generic sweeps below run over every kind, so they hand a
+  // value-carrying kind its rig value; a rewrite from the (value-
+  // preserving) [_orbit] table never changes it.
+  Fact factOf(PredicateKind kind, List<GeoPoint> points) =>
+      Fact(kind, points, value: _rigValues[kind]);
+  Predicate predicateOf(PredicateKind kind, List<GeoPoint> points) =>
+      Predicate(kind, points, value: _rigValues[kind]);
+
   test('arity is enforced, the Predicate contract', () {
     final a = FreePoint(id: 'a', position: Vec2.zero);
     expect(() => Fact(PredicateKind.coll, [a, a]), throwsArgumentError);
@@ -159,7 +191,7 @@ void main() {
       final rig = rigFor(kind);
       expect(rig.length, kind.arity, reason: '${kind.name} rig arity');
       expect(
-        Predicate(kind, rig).holdsNow,
+        predicateOf(kind, rig).holdsNow,
         isTrue,
         reason: '${kind.name} rig should hold',
       );
@@ -170,10 +202,10 @@ void main() {
     for (final kind in PredicateKind.values) {
       test(kind.name, () {
         final rig = rigFor(kind);
-        final canonical = Fact(kind, rig);
+        final canonical = factOf(kind, rig);
         for (final form in _orbit(kind)) {
           expect(
-            Fact(kind, reorder(rig, form)),
+            factOf(kind, reorder(rig, form)),
             canonical,
             reason: '${kind.name} form $form',
           );
@@ -191,7 +223,12 @@ void main() {
     // and against a broken rig, so both answers are exercised.
     final rng = math.Random(1729);
 
-    for (final kind in PredicateKind.values) {
+    // `lconst` is deliberately absent from the similarity sweep: a
+    // stated length is the vocabulary's one non-scale-invariant
+    // statement, and its own group below pins exactly that.
+    for (final kind in PredicateKind.values.where(
+      (kind) => kind != PredicateKind.lconst,
+    )) {
       test(kind.name, () {
         final base = _trueRigs[kind]!;
         for (var trial = 0; trial < 24; trial++) {
@@ -209,7 +246,7 @@ void main() {
           final points = pointsAt(moved);
           for (final form in _orbit(kind)) {
             expect(
-              Predicate(kind, reorder(points, form)).holdsNow,
+              predicateOf(kind, reorder(points, form)).holdsNow,
               isTrue,
               reason: '${kind.name} form $form, trial $trial',
             );
@@ -222,10 +259,10 @@ void main() {
           ...base.sublist(0, base.length - 1),
           (base.last.$1 + 0.7, base.last.$2 - 0.4),
         ]);
-        expect(Predicate(kind, broken).holdsNow, isFalse);
+        expect(predicateOf(kind, broken).holdsNow, isFalse);
         for (final form in _orbit(kind)) {
           expect(
-            Predicate(kind, reorder(broken, form)).holdsNow,
+            predicateOf(kind, reorder(broken, form)).holdsNow,
             isFalse,
             reason: '${kind.name} broken form $form',
           );
@@ -238,8 +275,8 @@ void main() {
     for (final kind in PredicateKind.values) {
       final rig = rigFor(kind);
       for (final form in _orbit(kind)) {
-        final once = Fact(kind, reorder(rig, form));
-        expect(Fact(kind, once.points).points, once.points);
+        final once = factOf(kind, reorder(rig, form));
+        expect(Fact(kind, once.points, value: once.value).points, once.points);
         expect(Fact.of(once.statement), once);
       }
     }
@@ -328,6 +365,10 @@ void main() {
       PredicateKind.eqratio: 128,
       PredicateKind.simtri: 12,
       PredicateKind.contri: 12,
+      // Value-preserving forms only — the value-coupled symmetry cannot
+      // be a point permutation. See the value-carrying group.
+      PredicateKind.rconst: 4,
+      PredicateKind.lconst: 2,
     };
 
     test('the orbit sizes are the groups\' orders', () {
@@ -343,11 +384,11 @@ void main() {
     test('every form keys to the same fact and evaluates true', () {
       for (final kind in PredicateKind.values) {
         final rig = rigFor(kind);
-        final fact = Fact(kind, rig);
+        final fact = factOf(kind, rig);
         for (final form in orbitArguments(kind, rig)) {
-          expect(Fact(kind, form), fact, reason: '$kind $form');
+          expect(factOf(kind, form), fact, reason: '$kind $form');
           expect(
-            Predicate(kind, form).holdsNow,
+            predicateOf(kind, form).holdsNow,
             isTrue,
             reason: '${kind.name} orbit form must be the same statement',
           );
@@ -359,10 +400,14 @@ void main() {
       // The canonicalizer enumerates a reduced set (segments pre-sorted);
       // this pins that reduction against the full orbit the matcher
       // sees, so the two can never disagree about which spelling is
-      // canonical.
+      // canonical. `rconst` is the one exclusion: its full orbit is
+      // value-coupled, so `orbitArguments` lists only the value-
+      // preserving half and the least element can live in the other.
       String key(List<GeoPoint> form) => form.map((p) => p.id).join(',');
       final random = math.Random(7);
-      for (final kind in PredicateKind.values) {
+      for (final kind in PredicateKind.values.where(
+        (kind) => kind != PredicateKind.rconst,
+      )) {
         final rig = rigFor(kind);
         for (var round = 0; round < 5; round++) {
           final tuple = List<GeoPoint>.of(rig)..shuffle(random);
@@ -370,9 +415,119 @@ void main() {
             kind,
             tuple,
           ).map(key).reduce((a, b) => a.compareTo(b) <= 0 ? a : b);
-          expect(key(Fact(kind, tuple).points), least, reason: kind.name);
+          expect(key(factOf(kind, tuple).points), least, reason: kind.name);
         }
       }
+    });
+  });
+
+  group('the value-carrying kinds — the value is part of the identity', () {
+    Rational q(int n, [int d = 1]) => Rational.fromInts(n, d);
+
+    test('the value contract is enforced, both ways and positive', () {
+      final rig = rigFor(PredicateKind.rconst);
+      expect(() => Fact(PredicateKind.rconst, rig), throwsArgumentError);
+      expect(
+        () => Fact(PredicateKind.cong, rig, value: q(2)),
+        throwsArgumentError,
+      );
+      expect(
+        () => Fact(PredicateKind.rconst, rig, value: Rational.zero),
+        throwsArgumentError,
+      );
+      expect(
+        () => Fact(PredicateKind.rconst, rig, value: q(-2)),
+        throwsArgumentError,
+      );
+    });
+
+    test('different values over the same points are different facts', () {
+      final rig = rigFor(PredicateKind.rconst);
+      final atTwo = Fact(PredicateKind.rconst, rig, value: q(2));
+      expect(atTwo, isNot(Fact(PredicateKind.rconst, rig, value: q(3))));
+      expect({atTwo, Fact(PredicateKind.rconst, rig, value: q(2))}.length, 1);
+    });
+
+    test('rconst\'s pair swap inverts the value — one fact, and '
+        'numerically one statement', () {
+      final rig = rigFor(PredicateKind.rconst);
+      final swapped = [rig[2], rig[3], rig[0], rig[1]];
+      expect(
+        Fact(PredicateKind.rconst, swapped, value: q(1, 2)),
+        Fact(PredicateKind.rconst, rig, value: q(2)),
+      );
+      expect(
+        Predicate(PredicateKind.rconst, swapped, value: q(1, 2)).holdsNow,
+        isTrue,
+      );
+      // And the swap *without* the inversion is a different, false
+      // statement — the rewrite that must not be keyed as a symmetry.
+      expect(
+        Fact(PredicateKind.rconst, swapped, value: q(2)),
+        isNot(Fact(PredicateKind.rconst, rig, value: q(2))),
+      );
+      expect(
+        Predicate(PredicateKind.rconst, swapped, value: q(2)).holdsNow,
+        isFalse,
+      );
+    });
+
+    test('the same segment twice ties on points and the value breaks '
+        'it', () {
+      final rig = rigFor(PredicateKind.rconst);
+      final twice = [rig[0], rig[1], rig[0], rig[1]];
+      expect(
+        Fact(PredicateKind.rconst, twice, value: q(2)),
+        Fact(PredicateKind.rconst, twice, value: q(1, 2)),
+      );
+    });
+
+    test('lconst sorts its pair and keeps its value', () {
+      final rig = rigFor(PredicateKind.lconst);
+      final fact = Fact(PredicateKind.lconst, [rig[1], rig[0]], value: q(3));
+      expect(fact.points.map((p) => p.id), ['a', 'b']);
+      expect(fact.value, q(3));
+      expect(fact, Fact(PredicateKind.lconst, rig, value: q(3)));
+    });
+
+    test('a stated length is the one non-scale-invariant statement', () {
+      // Rotation and translation preserve it; scaling genuinely changes
+      // its truth, which is why the similarity sweep above excludes it —
+      // and why `rconst`, a ratio, is not excluded.
+      final rig = _trueRigs[PredicateKind.lconst]!;
+      final rotated = pointsAt([for (final (x, y) in rig) (-y + 5, x - 2)]);
+      expect(
+        Predicate(PredicateKind.lconst, rotated, value: q(3)).holdsNow,
+        isTrue,
+      );
+      final scaled = pointsAt([for (final (x, y) in rig) (2 * x, 2 * y)]);
+      expect(
+        Predicate(PredicateKind.lconst, scaled, value: q(3)).holdsNow,
+        isFalse,
+      );
+      expect(
+        Predicate(PredicateKind.lconst, scaled, value: q(6)).holdsNow,
+        isTrue,
+      );
+      final rconstRig = _trueRigs[PredicateKind.rconst]!;
+      final rconstScaled = pointsAt([
+        for (final (x, y) in rconstRig) (2 * x, 2 * y),
+      ]);
+      expect(
+        Predicate(PredicateKind.rconst, rconstScaled, value: q(2)).holdsNow,
+        isTrue,
+      );
+    });
+
+    test('the value survives the round trip through statement', () {
+      final fact = Fact(
+        PredicateKind.rconst,
+        rigFor(PredicateKind.rconst),
+        value: q(2),
+      );
+      expect(fact.statement.value, fact.value);
+      expect(Fact.of(fact.statement), fact);
+      expect('$fact', 'rconst(a, b, c, d; 2)');
     });
   });
 }

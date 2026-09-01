@@ -59,11 +59,24 @@ void main() {
   ];
 
   group('the templates', () {
-    test('every kind in the vocabulary has a template that produces it', () {
+    test('every point-pure kind has a template that produces it', () {
+      // The value-carrying kinds (`rconst`/`lconst`, Phase 181) are the
+      // stated exclusion: a template's slots are figure objects, and a
+      // *value* needs an input surface the builder does not have — the
+      // app-facing constants ask is its own phase (PLAN §"The constants
+      // stack"). Until then they are stated by hypotheses and asked by
+      // the corpus rig, never phrased from a selection.
       expect(
         {for (final t in QuestionTemplate.values) t.kind},
-        containsAll(PredicateKind.values),
+        containsAll(PredicateKind.values.where((kind) => !kind.carriesValue)),
         reason: 'any question can be asked with no selection at all',
+      );
+      expect(
+        {
+          for (final t in QuestionTemplate.values) t.kind,
+        }.any((kind) => kind.carriesValue),
+        isFalse,
+        reason: 'no template can fill a value slot it does not have',
       );
     });
 

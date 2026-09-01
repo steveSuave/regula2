@@ -41,6 +41,8 @@ void main() {
         'Midpoints',
         'Similar triangles',
         'Congruent triangles',
+        'Stated ratios',
+        'Stated lengths',
       ]);
     });
 

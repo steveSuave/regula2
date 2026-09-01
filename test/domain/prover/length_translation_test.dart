@@ -12,6 +12,7 @@ import 'package:regula/domain/prover/fact.dart';
 import 'package:regula/domain/prover/length_closure.dart';
 import 'package:regula/domain/prover/length_translation.dart';
 import 'package:regula/domain/prover/predicate.dart';
+import 'package:regula/domain/prover/rational.dart';
 
 void main() {
   FreePoint free(String id) => FreePoint(id: id, position: Vec2.zero);
@@ -55,7 +56,8 @@ void main() {
   });
 
   group('what it reads and what it leaves alone', () {
-    test('cong, eqratio and midp speak; nothing else does', () {
+    test('cong, eqratio and midp speak; the angle and incidence kinds '
+        'do not', () {
       final translation = LengthTranslation();
       expect(translation.absorb(cong([a, b, c, d])), isTrue);
       expect(translation.absorb(eqratio([a, b, c, d, e, f, g, h])), isTrue);
@@ -119,6 +121,79 @@ void main() {
         ),
         reason: 'midp contributes its equal halves',
       );
+    });
+  });
+
+  group('the constant kinds speak, at their stated value', () {
+    Rational q(int n, [int d = 1]) => Rational.fromInts(n, d);
+    Fact rconst(List<GeoPoint> p, Rational value) =>
+        Fact(PredicateKind.rconst, p, value: value);
+    Fact lconst(List<GeoPoint> p, Rational value) =>
+        Fact(PredicateKind.lconst, p, value: value);
+
+    test('rconst and lconst absorb as the rows their values make', () {
+      final translation = LengthTranslation();
+      expect(translation.absorb(rconst([a, b, c, d], q(2))), isTrue);
+      expect(translation.absorb(lconst([e, f], q(3))), isTrue);
+      expect(
+        translation.closure.inputs[0],
+        LengthEquation.rconst(
+          LengthTranslation.segmentVariable(a, b),
+          LengthTranslation.segmentVariable(c, d),
+          q(2),
+        ),
+      );
+      expect(
+        translation.closure.inputs[1],
+        LengthEquation.lconst(LengthTranslation.segmentVariable(e, f), q(3)),
+      );
+    });
+
+    test('two stated lengths entail their cong exactly at equality', () {
+      final translation = LengthTranslation()
+        ..absorb(lconst([a, b], q(2)))
+        ..absorb(lconst([c, d], q(2)));
+      expect(translation.entailmentOf(cong([a, b, c, d])), isNotNull);
+      final unequal = LengthTranslation()
+        ..absorb(lconst([a, b], q(2)))
+        ..absorb(lconst([c, d], q(3)));
+      expect(unequal.entailmentOf(cong([a, b, c, d])), isNull);
+    });
+
+    test('rconst and lconst are conclusions, with certificates', () {
+      final translation = LengthTranslation()
+        ..absorb(lconst([a, b], q(2)))
+        ..absorb(lconst([c, d], q(3)));
+      final goal = rconst([a, b, c, d], q(2, 3));
+      final certificate = translation.entailmentOf(goal)!;
+      expect(
+        translation.closure.recombine(certificate),
+        translation.equationOf(goal),
+      );
+      // A cong carries a stated length across, and only the true value.
+      final carried = LengthTranslation()
+        ..absorb(lconst([a, b], q(2)))
+        ..absorb(cong([a, b, c, d]));
+      expect(carried.entailmentOf(lconst([c, d], q(2))), isNotNull);
+      expect(carried.entailmentOf(lconst([c, d], q(5))), isNull);
+    });
+
+    test('a degenerate constant fact states nothing', () {
+      final translation = LengthTranslation();
+      expect(translation.absorb(rconst([a, a, c, d], q(2))), isFalse);
+      expect(translation.absorb(lconst([a, a], q(2))), isFalse);
+      expect(translation.closure.inputs, isEmpty);
+    });
+
+    test('disagreeing stated lengths make the closure inconsistent', () {
+      final translation = LengthTranslation()
+        ..absorb(lconst([a, b], q(2)))
+        ..absorb(lconst([a, b], q(3)));
+      expect(translation.closure.isInconsistent, isTrue);
+      // Both are still inputs with sources — certificates index by
+      // position, and the contradiction is part of the record.
+      expect(translation.closure.inputs.length, 2);
+      expect(translation.sources.length, 2);
     });
   });
 
