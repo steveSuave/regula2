@@ -771,4 +771,57 @@ void main() {
       expect(differed, greaterThan(0));
     });
   });
+
+  group('constantOf and antilog — the reader (Phase 185)', () {
+    test('reads a stated ratio back out of the constant column', () {
+      final closure = LengthClosure()
+        ..add(LengthEquation.lconst('ab', q(5, 2)))
+        ..add(LengthEquation.rconst('cd', 'ab', q(3)));
+      expect(
+        LengthEquation.antilog(closure.constantOf(row({'ab': 1}))!),
+        q(5, 2),
+      );
+      expect(
+        LengthEquation.antilog(closure.constantOf(cong('cd', 'ab'))!),
+        q(3),
+      );
+      expect(
+        LengthEquation.antilog(closure.constantOf(row({'cd': 1}))!),
+        q(15, 2),
+        reason: '3 · 5/2, composed through the rows',
+      );
+      expect(
+        LengthEquation.antilog(closure.constantOf(cong('ab', 'cd'))!),
+        q(1, 3),
+      );
+    });
+
+    test('an undetermined variable part reads null', () {
+      final closure = LengthClosure()..add(cong('ab', 'cd'));
+      expect(closure.constantOf(row({'ab': 1})), isNull);
+      expect(closure.constantOf(cong('ab', 'ef')), isNull);
+      // Determined, and homogeneous: ratio 1, an empty constant.
+      expect(closure.constantOf(cong('ab', 'cd')), isEmpty);
+      expect(LengthEquation.antilog(const {}), Rational.one);
+    });
+
+    test('antilog answers only where the value is rational', () {
+      expect(LengthEquation.antilog(LengthEquation.logOf(q(12, 5))), q(12, 5));
+      expect(
+        LengthEquation.antilog({BigInt.two: q(1, 2)}),
+        isNull,
+        reason: '√2 is carried exactly and stated by nothing',
+      );
+      // Half of a squared length is a length the vocabulary cannot say.
+      final closure = LengthClosure()
+        ..add(
+          LengthEquation.fromTerms([
+            ('ab', q(2)),
+          ], constant: LengthEquation.logOf(q(1, 2))),
+        );
+      final constant = closure.constantOf(row({'ab': 1}))!;
+      expect(constant, {BigInt.two: q(1, 2)});
+      expect(LengthEquation.antilog(constant), isNull);
+    });
+  });
 }

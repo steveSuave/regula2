@@ -6,8 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/angle_translation.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
@@ -460,6 +465,141 @@ void main() {
       final reasons = Proof.of(claim, scratch).verify();
       expect(reasons, isNotEmpty);
       expect(reasons.first, contains('says nothing about'));
+    });
+  });
+
+  group('reading a constant the closures entail (Phase 185)', () {
+    /// Line AB, C off it, the 60° line through C with a named point P
+    /// on it, a stated-radius circle about A through the named R, and
+    /// M the midpoint of AB.
+    ({Construction construction, Map<String, GeoPoint> at}) constants() {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(1, 1));
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final sixty = FixedAngleLine(
+        id: 'sixty',
+        through: c,
+        reference: ab,
+        turn: Rational.fromInts(1, 3),
+      );
+      final p = PointOnObject(id: 'p', curve: sixty, parameter: 2);
+      final circle = StatedRadiusCircle(
+        id: 'k',
+        center: a,
+        radius: Rational.fromInts(5, 2),
+      );
+      final r = PointOnObject(id: 'r', curve: circle, parameter: 0.7);
+      final m = Midpoint(id: 'm', point1: a, point2: b);
+      final construction = build([a, b, c, ab, sixty, p, circle, r, m]);
+      return (
+        construction: construction,
+        at: {
+          for (final object in construction.objects)
+            if (object is GeoPoint) object.id: object,
+        },
+      );
+    }
+
+    test('an angle, a length and a ratio read as their stated values', () {
+      final rig = constants();
+      final joint = exchange(rig.construction);
+      final at = rig.at;
+      final prover = joint.prover;
+      expect(
+        prover.readConstant(PredicateKind.aconst, [
+          at['a']!,
+          at['b']!,
+          at['c']!,
+          at['p']!,
+        ]),
+        Rational.fromInts(1, 3),
+      );
+      expect(
+        prover.readConstant(PredicateKind.aconst, [
+          at['c']!,
+          at['p']!,
+          at['a']!,
+          at['b']!,
+        ]),
+        Rational.fromInts(2, 3),
+        reason: 'the turn back is the complement',
+      );
+      expect(
+        prover.readConstant(PredicateKind.lconst, [at['r']!, at['a']!]),
+        Rational.fromInts(5, 2),
+      );
+      expect(
+        prover.readConstant(PredicateKind.rconst, [
+          at['a']!,
+          at['b']!,
+          at['a']!,
+          at['m']!,
+        ]),
+        Rational.whole(2),
+        reason: 'the midpoint states its half, and the half inverts',
+      );
+    });
+
+    test('what the closures do not determine reads null, records '
+        'nothing, and the value read is then proved on ask', () {
+      final rig = constants();
+      final joint = exchange(rig.construction);
+      final at = rig.at;
+      final before = joint.database.length;
+      expect(
+        joint.prover.readConstant(PredicateKind.aconst, [
+          at['a']!,
+          at['b']!,
+          at['a']!,
+          at['c']!,
+        ]),
+        isNull,
+        reason: 'AC is at no stated angle to AB',
+      );
+      expect(
+        joint.prover.readConstant(PredicateKind.lconst, [at['a']!, at['b']!]),
+        isNull,
+      );
+      expect(
+        joint.database.length,
+        before,
+        reason: 'a reading records nothing',
+      );
+
+      final value = joint.prover.readConstant(PredicateKind.aconst, [
+        at['a']!,
+        at['b']!,
+        at['c']!,
+        at['p']!,
+      ])!;
+      final fact = Fact(PredicateKind.aconst, [
+        at['a']!,
+        at['b']!,
+        at['c']!,
+        at['p']!,
+      ], value: value);
+      expect(joint.prover.resolve(fact), isTrue);
+      expect(Proof.of(fact, joint.database).verify(), isEmpty);
+    });
+
+    test('a point-pure kind has no value to read', () {
+      final rig = constants();
+      final joint = exchange(rig.construction);
+      final at = rig.at;
+      expect(
+        () => joint.prover.readConstant(PredicateKind.para, [
+          at['a']!,
+          at['b']!,
+          at['c']!,
+          at['p']!,
+        ]),
+        throwsArgumentError,
+      );
+      expect(
+        () => joint.prover.readConstant(PredicateKind.lconst, [at['a']!]),
+        throwsArgumentError,
+      );
     });
   });
 }

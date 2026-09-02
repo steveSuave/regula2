@@ -280,6 +280,23 @@ class AngleTranslation {
     return closure.entails(equation);
   }
 
+  /// The angle from line [a][b] to line [c][d] the closure entails, as
+  /// the residue an `aconst` would state — or null when the closure
+  /// does not determine it, or a pair names no line (Phase 185, the
+  /// "what is this angle?" reader). Registers nothing, like
+  /// [equationOf]: reading is not saying. `entailmentOf` the `aconst`
+  /// with the value read here answers with the certificate.
+  Rational? readAngle(GeoPoint a, GeoPoint b, GeoPoint c, GeoPoint d) {
+    if (a.id == b.id || c.id == d.id) return null;
+    return closure.constantOf(
+      AngleEquation.difference(
+        lineVariable(c, d),
+        lineVariable(a, b),
+        Rational.zero,
+      ),
+    );
+  }
+
   /// Every `para` and `perp` the closure entails between distinct
   /// variables, with certificates.
   ///

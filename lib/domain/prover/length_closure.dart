@@ -162,6 +162,26 @@ class LengthEquation {
     };
   }
 
+  /// The inverse of [logOf] where one exists: the positive rational
+  /// `∏ p^e` for a formal constant whose every exponent is a whole
+  /// number, and null otherwise — `{2: ½}` is `√2`, which the algebra
+  /// carries exactly and the vocabulary cannot state (Phase 185).
+  static Rational? antilog(Map<BigInt, Rational> constant) {
+    var numerator = BigInt.one;
+    var denominator = BigInt.one;
+    for (final entry in constant.entries) {
+      final exponent = entry.value;
+      if (!exponent.isInteger) return null;
+      final power = entry.key.pow(exponent.numerator.abs().toInt());
+      if (exponent.isNegative) {
+        denominator *= power;
+      } else {
+        numerator *= power;
+      }
+    }
+    return Rational(numerator, denominator);
+  }
+
   static Map<BigInt, Rational> _negated(Map<BigInt, Rational> constant) => {
     for (final entry in constant.entries) entry.key: -entry.value,
   };
@@ -426,6 +446,26 @@ class LengthClosure {
   Map<int, Rational>? entails(LengthEquation equation) {
     final (reduced, support) = _reduce(equation, {});
     return reduced.isTrivial ? _negate(support) : null;
+  }
+
+  /// The formal constant [equation]'s variable part is entailed to
+  /// equal — the `k` with `Σ cᵥ·lᵥ = k` over `{ln p}` in the ℚ-span of
+  /// the inputs — or null when the closure does not determine it
+  /// (Phase 185, the length side of the reader). [equation]'s own
+  /// constant is ignored, as `AngleClosure.constantOf` ignores its:
+  /// the question is what the left-hand side *is*.
+  ///
+  /// A row reads `Σ cᵥ·lᵥ + constant = 0`, and the query is
+  /// `Σ cᵥ·lᵥ` with no constant; where reduction cancels the variables
+  /// it leaves `query − Σ fᵢ·rowᵢ = k`, and every row is zero, so the
+  /// variable part *is* `k`. (The angle side negates, because its rows
+  /// keep the constant on the right-hand side.) [LengthEquation.antilog]
+  /// turns the answer into a length or a ratio where it is one, and
+  /// answers null where it is `√2`.
+  Map<BigInt, Rational>? constantOf(LengthEquation equation) {
+    final (reduced, _) = _reduce(LengthEquation(equation.coefficients), {});
+    if (reduced.coefficients.isNotEmpty) return null;
+    return reduced.constant;
   }
 
   /// Whether [equation] follows — [entails] without the certificate.

@@ -278,6 +278,38 @@ class AngleClosure {
     }
   }
 
+  /// The constant [equation]'s variable part is entailed to equal —
+  /// the `c` with `Σ cᵥ·θᵥ ≡ c` in the ℤ-span of the inputs — or null
+  /// when the closure does not determine it (Phase 185, the "what is
+  /// this angle?" reader). [equation]'s own constant is ignored: the
+  /// question is what the left-hand side *is*, not whether a stated
+  /// right-hand side holds.
+  ///
+  /// The same downward pass as [entails], ending in the residual
+  /// constant instead of a test of it: reduction leaves `0 ≡ k` where
+  /// `Σ cᵥ·θᵥ − Σ fᵢ·rowᵢ` cancelled, so the variable part equals the
+  /// rows' constants combined, which is `−k`. And the same divisibility
+  /// refusal, which is the ℤ-module line held for a reader too: when
+  /// the closure knows `2Δθ ≡ 0` and is asked for `Δθ`, the answer is
+  /// null — not one of the two roots, and not the one the diagram
+  /// happens to sit on (PLAN §"AR is a ℤ-module, not a ℚ-vector
+  /// space"). `entails(equation with that constant)` then answers with
+  /// the certificate, so a value read here is provable by the ordinary
+  /// ask and never an oracle verdict.
+  Rational? constantOf(AngleEquation equation) {
+    var current = AngleEquation(equation.coefficients, Rational.zero);
+    while (true) {
+      final variable = current.leading;
+      if (variable == null) return (-current.constant).modOne();
+      final row = _rows[variable];
+      if (row == null) return null;
+      final mine = current.coefficients[variable]!;
+      final theirs = row.equation.coefficients[variable]!;
+      if (mine % theirs != BigInt.zero) return null;
+      current = current - row.equation.scaled(mine ~/ theirs);
+    }
+  }
+
   /// Whether [equation] follows — [entails] without the certificate.
   bool proves(AngleEquation equation) => entails(equation) != null;
 
