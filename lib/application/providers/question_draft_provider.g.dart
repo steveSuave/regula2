@@ -90,7 +90,7 @@ final class QuestionDraftNotifierProvider
 }
 
 String _$questionDraftNotifierHash() =>
-    r'9fd523ef78583572016f9b2214e53219e23309db';
+    r'38d6e81ba98820993a9a9e8286d7b7eba98cb12d';
 
 /// The question being built, or null while the builder is closed
 /// (Phase 160, PLAN §"The question builder").
@@ -113,7 +113,7 @@ abstract class _$QuestionDraftNotifier extends $Notifier<QuestionDraft?> {
   QuestionDraft? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<QuestionDraft?, QuestionDraft?>;
     final element =
         ref.element
@@ -123,7 +123,7 @@ abstract class _$QuestionDraftNotifier extends $Notifier<QuestionDraft?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
