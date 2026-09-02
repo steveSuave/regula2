@@ -14,16 +14,17 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 187 — the toolchain upgrade: Flutter 3.41.9 → 3.47.2 (open)
+## Phase 187 — the toolchain upgrade: Flutter 3.41.9 → 3.47.2 (closed)
 
 PLAN §"Deferred decisions" booked this for after M-P, and CI has proved the tree on `channel: stable` (3.47.2, commit `d3b14c8`) on every push since it shipped. What CI does not cover is where the work lands: the local SDK, the `dart format` version, goldens, the dependency pins the old SDK held (`riverpod` 3.4.2, `analyzer` ≥ 10 want Dart ≥ 3.12 and `meta ^1.18`), the newer analyzer's lint set, and the renderer look. The Phase 120c rule holds: a reformat is its own commit, landed before any behaviour change.
 
-- [ ] **The SDK moved**: `flutter upgrade` on the stable clone to the commit CI runs; `environment.sdk` raised to the Dart the SDK ships, so the tree states what it is developed against
-- [ ] **Format first, alone**: `dart format lib test benchmark` under the new `dart_style`, committed by itself if it moves anything
-- [ ] **The pins released**: `flutter pub upgrade`, the packages the old SDK held now at their constraints' heads, `build_runner` regenerated, generated files committed
-- [ ] **The lint sweep** under the newer analyzer, mechanical fixes in their own commit; any rule the sweep argues against recorded in `analysis_options.yaml` with the reason
-- [ ] Gates: analyze clean, suite green at the Phase 185 count (**3541**) or above, browser gate green, **goldens** re-run and every moved one regenerated and eyeballed (the renderer moved; a moved golden is a finding to record, not a failure to silence), `flutter build web --wasm --release` compiles, deployed look checked after merge
-- [ ] Docs: PLAN §"Deferred decisions" rewritten to the new pin and the dependency-drift note dated; STATUS entry
+- [x] **The SDK moved**: `flutter upgrade` on the stable clone to `d3b14c8`, the commit CI runs — Flutter 3.47.2 / Dart 3.13.2; `environment.sdk` raised to `^3.13.0`, so the tree states what it is developed against
+- [x] **Format first, alone**: 62 files, one commit. A dry run before the sdk floor moved touched 16; the floor raised the language version and brought the formatter's version-gated rules in — the floor decides the reformat's size, not the SDK
+- [x] **The pins released**: `flutter pub upgrade --major-versions`, 40 packages moved, the one constraint change `freezed` ^3 → ^4 (the lock had held a `-dev.1` prerelease); `riverpod` 3.4.2, `analyzer` 13.3.0; `build_runner` regenerated ten providers and one freezed class. `file_picker_platform_interface` 3.3.0 added `darwinOptions` and `PlatformFile.lengthSync`, so the test fake grew both
+- [x] **The lint sweep**: one rule, eight sites — `prefer_initializing_formals`, now firing because Dart 3.13 admits a private field as a named initializing formal (`Construction({this._kernel})` is exposed as `kernel:`). Applied; nothing to argue against. `analysis_options.yaml` gained the tool's own `build/android/ios/web` excludes on first `pub get`
+- [x] Gates: analyze clean, suite **3541** (3509 + 32 goldens, unchanged from Phase 185), browser gate green (15), **4 of 32 goldens moved** — markers and measures, dark and light, 93–114 px (0.03–0.04 %), every differing pixel on the two free edges of the right-angle square, anti-aliasing weight moving between the rows either side of the stroke centre: the rasterizer, not our arithmetic; regenerated, 28 byte-identical. `flutter build web --wasm --release` compiles
+- [x] Docs: PLAN §"Deferred decisions" rewritten to the new pin, with the rule for the next one (CI's `stable` moving past the local SDK); the dependency-drift note dated; STATUS entry
+- [ ] Deployed look after merge (the renderer moved; the wasm build compiles, the browser is what shows it)
 
 ## Phase 186 — the kernel track resumes (open)
 

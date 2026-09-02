@@ -2127,3 +2127,23 @@ Gates: analyze clean, suite 3489, fixtures untouched, full name diff both ways.
 - **A `const Key` on a wrapper widget is not a key on its `TextField`** — `tester.widget<TextField>(find.byKey(...))` casts the wrapper and throws; find the field as a descendant.
 - **`ref.read` from a post-frame callback scheduled in `dispose`** can run after the container is gone. Guard with `ref.mounted` in the notifier, not in the widget.
 
+
+## 2026-09-02 — session 184: Phase 187, the toolchain upgrade — Flutter 3.41.9 → 3.47.2, and it cost less than the deferral feared
+
+**Done — Phase 186's decision box ticked (the toolchain first, as recommended), Phase 187 opened, built and closed: six commits on `phase-187-toolchain`.** Suite **3541** (unchanged: 3509 + 32 goldens), analyze clean, browser gate 15, wasm release build compiles. No behaviour change anywhere; the corpus is untouched.
+
+- **The SDK moved to what CI had been running.** `flutter upgrade` on the stable clone landed on `d3b14c8`, exactly the `stable-3.47.2` the last CI run resolved — Flutter 3.47.2 / Dart 3.13.2. `environment.sdk` raised to `^3.13.0`.
+- **The reformat was 62 files, and the sdk floor is what sized it.** A `dart format` dry run under the new SDK but the old floor touched 16 files; after the floor moved to 3.13 it touched 62. The formatter's rules are gated on the *language version*, not the tool version — object-pattern and argument-list splitting came in with 3.13. Own commit, per the Phase 120c rule.
+- **The pins released.** `flutter pub upgrade --major-versions`: 40 packages, one constraint change (`freezed` ^3 → ^4; the lock had held a `3.2.6-dev.1` prerelease). `riverpod` 3.4.2, `riverpod_generator` 4.0.8, `analyzer` 13.3.0. `build_runner` regenerated ten providers and one freezed class; freezed 4's `==`/`hashCode` read fields through a local self-cast, no API change. `file_picker_platform_interface` 3.3.0 added `darwinOptions` to `pickFile` and `PlatformFile.lengthSync`, which broke the test fake and nothing in `lib/`; the fake grew both.
+- **One lint, eight sites.** `prefer_initializing_formals` started firing because Dart 3.13 admits a private field as a *named* initializing formal — `Construction({this._kernel = const DocumentKernel()})` is exposed as `kernel:`. Applied everywhere it asked (two in `lib/domain/`, six in test stubs).
+- **Four of 32 goldens moved, and the diff is one shape.** markers and measures, dark and light, 93–114 px each (0.03–0.04 %). Every differing pixel lies on the top and right edges of the right-angle square — the two edges not overdrawn by the angle's arms — with anti-aliasing weight moving between the rows either side of the stroke centre and the centre row unchanged. A sub-pixel rasterizer shift on a stroked axis-aligned path; nothing in our arithmetic. Regenerated; the other 28 are byte-identical.
+- **PLAN §"Deferred decisions" rewritten**: the pin is now 3.47.2 / 3.13.2, and the rule for the next upgrade is stated — it is due when CI's `stable` moves past the local SDK, and a red CI on an untouched tree is the signal the interval has run out.
+
+**Next session: merge, then the deployed look** (the one open box — the renderer moved and the wasm build only proves it compiles). Then Phase 186's next decision among the three kernel items, oldest first: the chart-free line orientation (Phase 137's left-open), the join budget unit (Phase 161's box), the locus starve (Phase 139's left-open). Carried, unchanged: `readFact` magnitude-false; the skeptical re-glance; the Phase 176 trigger (3.0.1 as of today); `regular_hexagon#2`'s asterisk.
+
+**Gotchas.**
+
+- **Raise the sdk floor *before* the format dry run**, or the dry run under-reports. The formatter keys its rules on the language version the floor sets.
+- **The first browser-gate run after the SDK move failed to compile** — `Undefined name 'main'` in the generated `test_0` harness for `test/web/` — and the immediate re-run was clean. A stale web test cache from the old SDK is the likely cause; if it recurs, `flutter clean` before believing it.
+- **Do not run two `flutter test` processes at once**; they share `.dart_tool/` and the build cache. The suite ran in the background while the goldens ran in the foreground and got away with it, but the browser gate is a compile and would not.
+- **`flutter pub get` under 3.47 edits `analysis_options.yaml` on its own** (adds `build/`, `android/`, `ios/`, `web/` excludes). Commit it; it comes back otherwise.
