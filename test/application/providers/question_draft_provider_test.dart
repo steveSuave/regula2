@@ -55,11 +55,10 @@ void main() {
       expect(draft().template, QuestionTemplate.perp);
       expect((draft().values[0]! as CarrierValue).line, same(ab));
       expect((draft().values[1]! as CarrierValue).line, same(ac));
-      expect(
-        container.read(selectionProvider),
-        {'ac', 'ab'},
-        reason: 'the selection is read, never written',
-      );
+      expect(container.read(selectionProvider), {
+        'ac',
+        'ab',
+      }, reason: 'the selection is read, never written');
     });
 
     test('tap fills the next slot; put and clearSlot address one', () {

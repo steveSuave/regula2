@@ -152,9 +152,8 @@ void main() {
   GeoPoint loadPerpFixture({required String name}) {
     final construction = decodeDocument(
       jsonDecode(
-            File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-          )
-          as Map<String, dynamic>,
+        File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+      ) as Map<String, dynamic>,
     ).construction;
     container.read(constructionProvider.notifier).replace(construction);
     return construction.objects.whereType<GeoPoint>().firstWhere(
@@ -1021,9 +1020,8 @@ void main() {
       // question is about and ask. The honest answer is the middle one.
       final construction = decodeDocument(
         jsonDecode(
-              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-            )
-            as Map<String, dynamic>,
+          File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+        ) as Map<String, dynamic>,
       ).construction;
       container.read(constructionProvider.notifier).replace(construction);
       await pumpEditor(tester);
@@ -1068,9 +1066,8 @@ void main() {
       // built before showing steps that cite it.
       final construction = decodeDocument(
         jsonDecode(
-              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-            )
-            as Map<String, dynamic>,
+          File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+        ) as Map<String, dynamic>,
       ).construction;
       container.read(constructionProvider.notifier).replace(construction);
       await pumpEditor(tester);
@@ -1144,9 +1141,8 @@ void main() {
       // them, so this is the real thing rather than a rig.
       final construction = decodeDocument(
         jsonDecode(
-              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-            )
-            as Map<String, dynamic>,
+          File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+        ) as Map<String, dynamic>,
       ).construction;
       container.read(constructionProvider.notifier).replace(construction);
       await pumpEditor(tester);
@@ -1305,9 +1301,8 @@ void main() {
       // enough to tap.
       final construction = decodeDocument(
         jsonDecode(
-              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-            )
-            as Map<String, dynamic>,
+          File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+        ) as Map<String, dynamic>,
       ).construction;
       container.read(constructionProvider.notifier).replace(construction);
       await pumpEditor(tester);
@@ -1404,9 +1399,8 @@ void main() {
       // not hedged on every line.
       final construction = decodeDocument(
         jsonDecode(
-              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-            )
-            as Map<String, dynamic>,
+          File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+        ) as Map<String, dynamic>,
       ).construction;
       container.read(constructionProvider.notifier).replace(construction);
       await pumpEditor(tester);
@@ -1763,9 +1757,8 @@ void main() {
     ) async {
       final construction = decodeDocument(
         jsonDecode(
-              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-            )
-            as Map<String, dynamic>,
+          File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+        ) as Map<String, dynamic>,
       ).construction;
       container.read(constructionProvider.notifier).replace(construction);
       await pumpEditor(tester);

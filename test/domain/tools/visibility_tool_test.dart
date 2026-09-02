@@ -41,11 +41,9 @@ void main() {
       final command = tapAndApply(tool, ToolInput(Vec2.zero, hit: a));
 
       expect(a.attributes.visible, isFalse);
-      expect(
-        command.newAttributes.keys,
-        ['a'],
-        reason: 'exactly the tapped object, nothing batched',
-      );
+      expect(command.newAttributes.keys, [
+        'a',
+      ], reason: 'exactly the tapped object, nothing batched');
 
       command.undo(construction);
       expect(a.attributes.visible, isTrue);

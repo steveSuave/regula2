@@ -108,15 +108,13 @@ void main() {
     final tool = IntersectionTool(newId: newId);
     tool.onInput(ToolInput(const Vec2(5, 0), hit: k, objects: []));
     // The four meets are (±3.436…, ±2.906…); tap near the first quadrant.
-    final result =
-        tool.onInput(
-              ToolInput(
-                const Vec2(3.4, 2.9),
-                hit: circle,
-                objects: construction.objects.toList(),
-              ),
-            )
-            as ToolCommitted;
+    final result = tool.onInput(
+      ToolInput(
+        const Vec2(3.4, 2.9),
+        hit: circle,
+        objects: construction.objects.toList(),
+      ),
+    ) as ToolCommitted;
 
     final point =
         (result.command as AddObjectCommand).object as IntersectionPoint;
@@ -156,15 +154,13 @@ void main() {
 
     final tool = IntersectionTool(newId: newId);
     tool.onInput(ToolInput(const Vec2(5, 0), hit: k, objects: []));
-    final result =
-        tool.onInput(
-              ToolInput(
-                const Vec2(99, 0),
-                hit: far,
-                objects: construction.objects.toList(),
-              ),
-            )
-            as ToolCommitted;
+    final result = tool.onInput(
+      ToolInput(
+        const Vec2(99, 0),
+        hit: far,
+        objects: construction.objects.toList(),
+      ),
+    ) as ToolCommitted;
     result.command.apply(construction);
 
     final point = construction.objects.last as IntersectionPoint;

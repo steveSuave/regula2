@@ -87,17 +87,15 @@ void main() {
           // reopened is the same construction, object for object. Once the
           // encoder emits v2 this is the v1 → v2 migration itself.
           final before = decodeDocument(_read(file));
-          final reencoded =
-              jsonDecode(
-                    jsonEncode(
-                      encodeDocument(
-                        before.construction,
-                        viewport: before.viewport,
-                        settings: before.settings,
-                      ),
-                    ),
-                  )
-                  as Map<String, dynamic>;
+          final reencoded = jsonDecode(
+            jsonEncode(
+              encodeDocument(
+                before.construction,
+                viewport: before.viewport,
+                settings: before.settings,
+              ),
+            ),
+          ) as Map<String, dynamic>;
           final after = decodeDocument(reencoded);
 
           expect(after.viewport, before.viewport);

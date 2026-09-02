@@ -201,9 +201,9 @@ void main() {
       final tool = TransformObjectTool.reflectAboutPoint(newId: newId);
 
       tool.onInput(ToolInput(p.position, hit: p));
-      final result =
-          tool.onInput(ToolInput(const Vec2(2, 0.1), hit: seg))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(const Vec2(2, 0.1), hit: seg),
+      ) as ToolCommitted;
 
       final macro = result.command as MacroCommand;
       expect(macro.commands, hasLength(2));
@@ -237,9 +237,9 @@ void main() {
         tool.onInput(ToolInput(const Vec2(2, 1.5), hit: seg)),
         isA<ToolAccepted>(),
       );
-      final result =
-          tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(const Vec2(2, 0), hit: xAxis),
+      ) as ToolCommitted;
 
       final macro = result.command as MacroCommand;
       expect(macro.commands, hasLength(3), reason: '2 image points + segment');
@@ -369,9 +369,9 @@ void main() {
       final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
       tool.onInput(ToolInput(const Vec2(1, 2), hit: circle));
-      final result =
-          tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(const Vec2(2, 0), hit: xAxis),
+      ) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as ThreePointCircle;
@@ -409,9 +409,9 @@ void main() {
       final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
       tool.onInput(ToolInput(points.first.position, hit: conic));
-      final result =
-          tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(const Vec2(2, 0), hit: xAxis),
+      ) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as FivePointConic;
@@ -565,9 +565,9 @@ void main() {
       final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
       tool.onInput(ToolInput(const Vec2(1, 2), hit: arc));
-      final result =
-          tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(const Vec2(2, 0), hit: xAxis),
+      ) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as Arc;
@@ -597,9 +597,9 @@ void main() {
       final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
       tool.onInput(ToolInput(const Vec2(1, 1), hit: angle));
-      final result =
-          tool.onInput(ToolInput(const Vec2(2, 0), hit: xAxis))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(const Vec2(2, 0), hit: xAxis),
+      ) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as VertexAngle;
@@ -805,11 +805,10 @@ void main() {
       final fresh = TransformObjectTool.translate(newId: newId);
       fresh.onInput(const ToolInput(Vec2(2, 1)));
       fresh.onInput(const ToolInput(Vec2(0, 0)));
-      expect(
-        fresh.previewPositions,
-        [const Vec2(2, 1), const Vec2(0, 0)],
-        reason: 'new free points are not in the construction yet',
-      );
+      expect(fresh.previewPositions, [
+        const Vec2(2, 1),
+        const Vec2(0, 0),
+      ], reason: 'new free points are not in the construction yet');
       expect(fresh.previewObjectIds, isEmpty);
     });
   });
@@ -895,11 +894,9 @@ void main() {
         isA<ToolIgnored>(),
         reason: 'the commit would add nothing',
       );
-      expect(
-        tool.previewObjectIds,
-        ['ab'],
-        reason: 'the refused center tap unwinds; the transformee stays',
-      );
+      expect(tool.previewObjectIds, [
+        'ab',
+      ], reason: 'the refused center tap unwinds; the transformee stays');
 
       expect(
         tool.onInput(tapOn(c, c.position)),
@@ -963,11 +960,9 @@ void main() {
         // Line first: the committing point tap is refused and unwound.
         tool.onInput(tapOn(xAxis, const Vec2(2, 0)));
         expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>());
-        expect(
-          tool.previewObjectIds,
-          ['x'],
-          reason: 'the point tap unwound, the pending mirror stays',
-        );
+        expect(tool.previewObjectIds, [
+          'x',
+        ], reason: 'the point tap unwound, the pending mirror stays');
         expect(
           tool.onInput(tapOn(c, c.position)),
           isA<ToolCommitted>(),

@@ -219,9 +219,10 @@ void main() {
       );
 
       final without = translateNewclidProblem(problem) as TranslatedProblem;
-      final with_ =
-          translateNewclidProblem(problem, withAuxiliary: true)
-              as TranslatedProblem;
+      final with_ = translateNewclidProblem(
+        problem,
+        withAuxiliary: true,
+      ) as TranslatedProblem;
 
       // Off by default, which is the benchmark's contract: handing the
       // prover the construction it was supposed to find would measure
@@ -475,8 +476,11 @@ void main() {
     });
 
     test('lconst: a point on the stated-radius circle', () {
-      final problem = built('measured', 'a = free a; b = lconst b a 4 '
-          '? lconst a b 4');
+      final problem = built(
+        'measured',
+        'a = free a; b = lconst b a 4 '
+            '? lconst a b 4',
+      );
       final points = problem.points;
       expect(
         problem.construction.objects.whereType<StatedRadiusCircle>(),

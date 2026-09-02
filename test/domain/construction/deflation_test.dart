@@ -497,9 +497,9 @@ void main() {
 
   group('the reported document (no-locus.rgl)', () {
     Construction load() {
-      final json =
-          jsonDecode(File('test/fixtures/no-locus.rgl').readAsStringSync())
-              as Map<String, dynamic>;
+      final json = jsonDecode(
+        File('test/fixtures/no-locus.rgl').readAsStringSync(),
+      ) as Map<String, dynamic>;
       return decodeDocument(json).construction;
     }
 

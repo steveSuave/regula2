@@ -5,13 +5,12 @@ import 'multi_point_tool.dart';
 /// Signature shared by the four triangle-center constructors — pass a
 /// tear-off (`Centroid.new`, `Orthocenter.new`, `Incenter.new`,
 /// `Circumcenter.new`) to [TriangleCenterTool].
-typedef TriangleCenterBuilder =
-    TriangleCenterPoint Function({
-      required String id,
-      required GeoPoint vertex1,
-      required GeoPoint vertex2,
-      required GeoPoint vertex3,
-    });
+typedef TriangleCenterBuilder = TriangleCenterPoint Function({
+  required String id,
+  required GeoPoint vertex1,
+  required GeoPoint vertex2,
+  required GeoPoint vertex3,
+});
 
 /// Collects three vertices, then emits one triangle center. Input
 /// handling (existing points vs new free points, single undo unit,

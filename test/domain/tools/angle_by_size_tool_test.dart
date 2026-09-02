@@ -67,9 +67,9 @@ void main() {
       final tool = toolFor(-math.pi / 4);
 
       tool.onInput(ToolInput(arm.position, hit: arm));
-      final result =
-          tool.onInput(ToolInput(vertex.position, hit: vertex))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(vertex.position, hit: vertex),
+      ) as ToolCommitted;
       final construction = Construction()
         ..add(arm)
         ..add(vertex);
@@ -125,9 +125,9 @@ void main() {
       final tool = toolFor(math.pi / 6);
 
       tool.onInput(ToolInput(arm.position, hit: arm));
-      final result =
-          tool.onInput(ToolInput(vertex.position, hit: vertex))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(vertex.position, hit: vertex),
+      ) as ToolCommitted;
       result.command.apply(construction);
 
       construction.moveFreePoint('a', const Vec2(0, 5));
@@ -149,9 +149,9 @@ void main() {
       final tool = toolFor(1);
 
       tool.onInput(ToolInput(arm.position, hit: arm));
-      final result =
-          tool.onInput(ToolInput(vertex.position, hit: vertex))
-              as ToolCommitted;
+      final result = tool.onInput(
+        ToolInput(vertex.position, hit: vertex),
+      ) as ToolCommitted;
       result.command.apply(construction);
 
       construction.moveFreePoint('a', const Vec2(0, 0));

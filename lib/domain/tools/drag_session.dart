@@ -111,13 +111,9 @@ abstract class DragSession {
     if (points.isEmpty) {
       return null;
     }
-    return _TranslateDragSession(
-      construction,
-      target is FreePoint,
-      grabStart,
-      [...points],
-      gridSnapStep: target is FreePoint ? gridSnapStep : 0,
-    );
+    return _TranslateDragSession(construction, target is FreePoint, grabStart, [
+      ...points,
+    ], gridSnapStep: target is FreePoint ? gridSnapStep : 0);
   }
 
   /// Previews the gesture at [pointer] (world coordinates).
@@ -760,8 +756,9 @@ class _SlideDragSession implements DragSession {
     final project = switch (curve) {
       GeoLine(:final line?) => line.parameterAt,
       GeoCircle(:final circle?) => circle.angleAt,
-      GeoCircle() when shape != null && shape.isParameterized =>
-        (Vec2 p) => shape.parameterNear(p) ?? target.parameter,
+      GeoCircle() when shape != null && shape.isParameterized => (
+        Vec2 p,
+      ) => shape.parameterNear(p) ?? target.parameter,
       _ => null,
     };
     if (project == null) {

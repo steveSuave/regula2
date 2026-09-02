@@ -269,12 +269,11 @@ void main() {
       },
     );
 
-    Glados(any.complex).test('conjugate symmetry: cos(conj z) = conj(cos z)', (
-      z,
-    ) {
-      if (z.im.abs() > 20) return;
-      expect(z.conj.cos, closeToComplex(z.cos.conj));
-      expect(z.conj.sin, closeToComplex(z.sin.conj));
-    });
+    Glados(any.complex)
+        .test('conjugate symmetry: cos(conj z) = conj(cos z)', (z) {
+          if (z.im.abs() > 20) return;
+          expect(z.conj.cos, closeToComplex(z.cos.conj));
+          expect(z.conj.sin, closeToComplex(z.sin.conj));
+        });
   });
 }

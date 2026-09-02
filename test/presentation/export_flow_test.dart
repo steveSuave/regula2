@@ -14,6 +14,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/region_pick_overlay.dart';
+
 import '../wide_window.dart';
 
 /// Captures the export save instead of touching the real platform.

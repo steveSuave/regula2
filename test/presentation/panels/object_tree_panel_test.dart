@@ -16,6 +16,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/attributes_inspector.dart';
 import 'package:regula/presentation/panels/object_tree_panel.dart';
+
 import '../../wide_window.dart';
 
 void main() {

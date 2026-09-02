@@ -56,12 +56,10 @@ void main() {
       expect(zero.normalized, zero);
     });
 
-    Glados(any.projPoint).test(
-      'normalized is projectively equal to the input',
-      (p) {
-        expect(p.normalized.closeTo(p, eps), isTrue);
-      },
-    );
+    Glados(any.projPoint)
+        .test('normalized is projectively equal to the input', (p) {
+          expect(p.normalized.closeTo(p, eps), isTrue);
+        });
   });
 
   group('projective equality (closeTo)', () {

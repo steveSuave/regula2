@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
@@ -108,11 +109,10 @@ void main() {
         reason: 'no centre-and-radius projection to frame it by',
       );
 
-      expect(
-        visibleWorldBounds([centre, rim]),
-        (min: const Vec2(0.2, 0), max: const Vec2(0.5, 0)),
-        reason: 'the two points alone frame a segment of the x axis',
-      );
+      expect(visibleWorldBounds([centre, rim]), (
+        min: const Vec2(0.2, 0),
+        max: const Vec2(0.5, 0),
+      ), reason: 'the two points alone frame a segment of the x axis');
 
       final bounds = visibleWorldBounds(construction.objects)!;
       expect(

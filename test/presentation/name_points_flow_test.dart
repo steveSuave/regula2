@@ -7,6 +7,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+
 import '../wide_window.dart';
 
 /// The Phase 53 name-points flow end to end: activation through the

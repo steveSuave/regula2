@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/main.dart';
+
 import '../wide_window.dart';
 
 /// The Phase 36 axes/grid popup: checked items over the per-document

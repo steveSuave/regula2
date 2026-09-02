@@ -11,8 +11,11 @@ import 'multi_point_tool.dart';
 ///   build: (id, a, b) => CircleCenterPoint(id: id, center: a, onCircle: b),
 /// )
 /// ```
-typedef TwoPointBuilder =
-    GeoObject Function(String id, GeoPoint first, GeoPoint second);
+typedef TwoPointBuilder = GeoObject Function(
+  String id,
+  GeoPoint first,
+  GeoPoint second,
+);
 
 /// Collects two points, then emits one two-point object — line, segment,
 /// circle (center + rim point), midpoint. Tap order is [TwoPointBuilder]

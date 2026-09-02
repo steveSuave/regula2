@@ -99,11 +99,9 @@ void main() {
         closeTo(0, 1e-12),
         reason: 'the hit point only donates its position',
       );
-      expect(
-        b.parents,
-        [construction.objects.whereType<FixedRadiusCircle>().single],
-        reason: 'B is constrained to the circle, not to the tapped point',
-      );
+      expect(b.parents, [
+        construction.objects.whereType<FixedRadiusCircle>().single,
+      ], reason: 'B is constrained to the circle, not to the tapped point');
     });
 
     test('a direction tap exactly on the endpoint falls back to angle 0', () {

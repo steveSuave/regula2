@@ -79,13 +79,12 @@ void main() {
       expect(circularPointI.closeTo(circularPointJ), isFalse);
     });
 
-    Glados(any.circleEq).test('every lifted circle passes through I and J', (
-      c,
-    ) {
-      final conic = ConicMatrix.lift(c);
-      expect(conic.containsPoint(circularPointI), isTrue);
-      expect(conic.containsPoint(circularPointJ), isTrue);
-    });
+    Glados(any.circleEq)
+        .test('every lifted circle passes through I and J', (c) {
+          final conic = ConicMatrix.lift(c);
+          expect(conic.containsPoint(circularPointI), isTrue);
+          expect(conic.containsPoint(circularPointJ), isTrue);
+        });
 
     test('isCircularPoint recognizes I and J at solver-noise tilt', () {
       expect(isCircularPoint(circularPointI), isTrue);
@@ -189,12 +188,11 @@ void main() {
   });
 
   group('evaluate, polarLine, containsPoint', () {
-    Glados(any.circleEq).test('polar of the center is the line at infinity', (
-      c,
-    ) {
-      final polar = ConicMatrix.lift(c).polarLine(ProjPoint.lift(c.center));
-      expect(polar.closeTo(ProjLine.infinity), isTrue);
-    });
+    Glados(any.circleEq)
+        .test('polar of the center is the line at infinity', (c) {
+          final polar = ConicMatrix.lift(c).polarLine(ProjPoint.lift(c.center));
+          expect(polar.closeTo(ProjLine.infinity), isTrue);
+        });
 
     Glados2(any.circleEq, any.angle).test(
       'polar at an on-circle point is the tangent there',
@@ -344,9 +342,8 @@ void main() {
         final conic = ConicMatrix.linePair(g, h);
         if (conic.isZero) return;
         // A point on g: meet with a generic second line through v.
-        final other = ProjPoint.lift(
-          v,
-        ).join(ProjPoint.lift(v + const Vec2(1, 1)));
+        final other = ProjPoint.lift(v)
+            .join(ProjPoint.lift(v + const Vec2(1, 1)));
         for (final line in [g, h]) {
           final p = line.meet(other);
           if (p.isZero) continue;
@@ -370,20 +367,18 @@ void main() {
       },
     );
 
-    Glados(any.smallCircle).test(
-      'the fitted conic contains its five defining points',
-      (c) {
-        final angles = [0.3, 1.4, 2.8, 4.1, 5.5];
-        final points = [
-          for (final theta in angles) ProjPoint.lift(c.pointAt(theta)),
-        ];
-        final conic = ConicMatrix.throughFivePoints(points);
-        expect(conic, isNotNull);
-        for (final p in points) {
-          expect(conic!.containsPoint(p, 1e-7), isTrue);
-        }
-      },
-    );
+    Glados(any.smallCircle)
+        .test('the fitted conic contains its five defining points', (c) {
+          final angles = [0.3, 1.4, 2.8, 4.1, 5.5];
+          final points = [
+            for (final theta in angles) ProjPoint.lift(c.pointAt(theta)),
+          ];
+          final conic = ConicMatrix.throughFivePoints(points);
+          expect(conic, isNotNull);
+          for (final p in points) {
+            expect(conic!.containsPoint(p, 1e-7), isTrue);
+          }
+        });
 
     test('a repeated point yields null', () {
       final p = ProjPoint.real(1, 2);

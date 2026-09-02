@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -572,11 +573,9 @@ void main() {
         ..add(FreePoint(id: 'out', position: const Vec2(5, 5)));
 
       expect(inRect(construction, Vec2.zero, const Vec2(2, 2)), ['in']);
-      expect(
-        inRect(construction, const Vec2(2, 2), Vec2.zero),
-        ['in'],
-        reason: 'a band dragged up-left spans the same rect',
-      );
+      expect(inRect(construction, const Vec2(2, 2), Vec2.zero), [
+        'in',
+      ], reason: 'a band dragged up-left spans the same rect');
     });
 
     test('segment needs both endpoints inside; lines and rays never fit', () {
@@ -590,16 +589,14 @@ void main() {
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
         ..add(Ray(id: 'r', origin: a, through: b));
 
-      expect(
-        inRect(construction, Vec2.zero, const Vec2(4, 2)),
-        ['a', 'b', 's'],
-        reason: 'the infinite carriers escape any finite band',
-      );
-      expect(
-        inRect(construction, Vec2.zero, const Vec2(2, 2)),
-        ['a'],
-        reason: 'a band crossing the segment does not take it',
-      );
+      expect(inRect(construction, Vec2.zero, const Vec2(4, 2)), [
+        'a',
+        'b',
+        's',
+      ], reason: 'the infinite carriers escape any finite band');
+      expect(inRect(construction, Vec2.zero, const Vec2(2, 2)), [
+        'a',
+      ], reason: 'a band crossing the segment does not take it');
     });
 
     test('circle needs its full disc bounds inside', () {
@@ -682,11 +679,10 @@ void main() {
         ..add(arm2)
         ..add(VertexAngle(id: 'g', arm1: arm1, vertex: vertex, arm2: arm2));
 
-      expect(
-        inRect(construction, const Vec2(-1, -1), const Vec2(1, 1)),
-        ['v', 'g'],
-        reason: 'the marker is screen-sized; the arms are not the angle',
-      );
+      expect(inRect(construction, const Vec2(-1, -1), const Vec2(1, 1)), [
+        'v',
+        'g',
+      ], reason: 'the marker is screen-sized; the arms are not the angle');
     });
 
     test('polygon needs every vertex inside the band', () {
@@ -876,11 +872,9 @@ void main() {
         for (final object in tester.objectsInRect([withGap, allGap], c1, c2))
           object.id,
       ];
-      expect(
-        banded(Vec2.zero, const Vec2(4, 2)),
-        ['loc'],
-        reason: 'gaps are fine, an all-gap locus is never banded',
-      );
+      expect(banded(Vec2.zero, const Vec2(4, 2)), [
+        'loc',
+      ], reason: 'gaps are fine, an all-gap locus is never banded');
       expect(
         banded(Vec2.zero, const Vec2(2.5, 2)),
         isEmpty,

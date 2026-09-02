@@ -382,9 +382,8 @@ class QuestionDraft {
     final g = template.groupOf(index);
     for (var i = 0; i < values.length; i++) {
       if (i == index || template.groupOf(i) != g) continue;
-      if (values[i] case PointValue(
-        point: final held,
-      ) when identical(held, point)) {
+      if (values[i] case PointValue(point: final held)
+          when identical(held, point)) {
         return true;
       }
     }

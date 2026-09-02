@@ -110,19 +110,18 @@ void main() {
       },
     );
 
-    Glados(any.vec2).test('homothety fixes its center; ratio 1 is identity', (
-      c,
-    ) {
-      final center = ProjPoint.lift(c);
-      expect(
-        ProjTransform.homothety(center, 7.5).apply(center).closeTo(center),
-        isTrue,
-      );
-      expect(
-        ProjTransform.homothety(center, 1).closeTo(ProjTransform.identity),
-        isTrue,
-      );
-    });
+    Glados(any.vec2)
+        .test('homothety fixes its center; ratio 1 is identity', (c) {
+          final center = ProjPoint.lift(c);
+          expect(
+            ProjTransform.homothety(center, 7.5).apply(center).closeTo(center),
+            isTrue,
+          );
+          expect(
+            ProjTransform.homothety(center, 1).closeTo(ProjTransform.identity),
+            isTrue,
+          );
+        });
   });
 
   group('composition and adjugate', () {
@@ -138,13 +137,11 @@ void main() {
       },
     );
 
-    Glados(any.similarity).test(
-      'a similarity composed with its adjugate is the identity',
-      (m) {
-        expect(m.compose(m.adjugate).closeTo(ProjTransform.identity), isTrue);
-        expect(m.adjugate.compose(m).closeTo(ProjTransform.identity), isTrue);
-      },
-    );
+    Glados(any.similarity)
+        .test('a similarity composed with its adjugate is the identity', (m) {
+          expect(m.compose(m.adjugate).closeTo(ProjTransform.identity), isTrue);
+          expect(m.adjugate.compose(m).closeTo(ProjTransform.identity), isTrue);
+        });
 
     Glados2(any.similarity, any.projPoint).test('adjugate round-trips points', (
       m,
@@ -237,13 +234,11 @@ void main() {
   });
 
   group('the circular points under Euclidean maps', () {
-    Glados(any.similarity).test(
-      'direct similarities fix I and J individually',
-      (m) {
-        expect(m.apply(circularPointI).closeTo(circularPointI), isTrue);
-        expect(m.apply(circularPointJ).closeTo(circularPointJ), isTrue);
-      },
-    );
+    Glados(any.similarity)
+        .test('direct similarities fix I and J individually', (m) {
+          expect(m.apply(circularPointI).closeTo(circularPointI), isTrue);
+          expect(m.apply(circularPointJ).closeTo(circularPointJ), isTrue);
+        });
 
     Glados2(any.vec2, any.vec2).test('reflections swap I and J', (p, q) {
       if (p.closeTo(q, 1e-3)) {

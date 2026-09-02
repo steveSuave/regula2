@@ -20,6 +20,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+
 import '../wide_window.dart';
 
 /// Captures saves and replays canned open results instead of touching the

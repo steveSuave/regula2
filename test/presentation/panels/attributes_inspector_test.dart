@@ -23,6 +23,7 @@ import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/attributes_inspector.dart';
+
 import '../../wide_window.dart';
 
 void main() {

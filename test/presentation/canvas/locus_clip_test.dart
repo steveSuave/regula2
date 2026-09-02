@@ -34,9 +34,9 @@ void main() {
   const size = Size(986, 620);
 
   Construction load() {
-    final json =
-        jsonDecode(File('test/fixtures/no-locus.rgl').readAsStringSync())
-            as Map<String, dynamic>;
+    final json = jsonDecode(
+      File('test/fixtures/no-locus.rgl').readAsStringSync(),
+    ) as Map<String, dynamic>;
     return decodeDocument(json).construction;
   }
 
