@@ -53,6 +53,37 @@ class Rational implements Comparable<Rational> {
   factory Rational.fromInts(int numerator, int denominator) =>
       Rational(BigInt.from(numerator), BigInt.from(denominator));
 
+  /// Parses an exact rational from user text: an optionally signed
+  /// integer (`3`, `-2`), a decimal (`2.5`, `.75` — exact, since a
+  /// decimal *is* a fraction over a power of ten), or a fraction of
+  /// integers (`1/3`, `-45/2`). Surrounding whitespace is ignored, and so
+  /// is whitespace beside the slash. Null for anything else — `sqrt(2)`,
+  /// `pi`, `1/0`, an empty string — which is the "garbage reads as
+  /// cancel" convention the numeric dialogs already follow.
+  ///
+  /// Deliberately narrower than the expression parser the float dialogs
+  /// use: what comes out of here is *stated* in a hypothesis a proof
+  /// will cite, so it has to be a number the prover's arithmetic can
+  /// carry exactly. An irrational is refused rather than rounded — the
+  /// same line `l2const`'s translation draws at `√2`.
+  static Rational? tryParse(String text) {
+    final s = text.trim();
+    final fraction = RegExp(r'^([+-]?\d+)\s*/\s*(\d+)$').firstMatch(s);
+    if (fraction != null) {
+      final denominator = BigInt.parse(fraction.group(2)!);
+      if (denominator == BigInt.zero) return null;
+      return Rational(BigInt.parse(fraction.group(1)!), denominator);
+    }
+    final decimal = RegExp(r'^([+-]?)(\d*)(?:\.(\d+))?$').firstMatch(s);
+    if (decimal == null) return null;
+    final whole = decimal.group(2)!;
+    final places = decimal.group(3) ?? '';
+    if (whole.isEmpty && places.isEmpty) return null;
+    final digits = BigInt.parse('${whole.isEmpty ? '0' : whole}$places');
+    final value = Rational(digits, BigInt.from(10).pow(places.length));
+    return decimal.group(1) == '-' ? -value : value;
+  }
+
   /// Always coprime with [denominator]; carries the sign.
   final BigInt numerator;
 
