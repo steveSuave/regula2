@@ -1,0 +1,23 @@
+analysis_options.yaml
+  s_a9d1761818649f::t_ca7e804d9f87b1 18-21
+pubspec.lock
+  s_a9d1761818649f::t_2e8f4ec00af245 447,450,463,466,804,807,812,815,820,823,844,847,937
+pubspec.yaml
+  s_a9d1761818649f::t_e434f2ebe0c78a 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "d707363ac4cb012d44b229ee3b61562ba4cc9fd1",
+  "prompts": {},
+  "sessions": {
+    "s_a9d1761818649f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "97095338-2210-4f46-b715-5cdd5c794b3a",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
