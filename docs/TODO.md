@@ -14,12 +14,32 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 183 — the constants stack's verdict (open)
+## Phase 185 — the constants ask: value templates and the "what is this angle?" reader (open)
 
-Phase 180's decomposition ends here: the measurement is in (Phase 182: **+45 problems out of `unknownMacro`, 42 built, +19 proved, 0 lost, 3 exposed as corpus defects**), and this phase decides what it means for what comes next. Candidates on the table from the session-180 report, updated by the number: the app-facing `aconst` reader/tools for the four new carrier kinds (the prover can now *state* a fixed angle but no user can draw one); the Phase 176 trigger (check `pip index versions newclid` each session — still 3.0.1 as of 2026-09-01); or the corpus number is a plateau at 92/525 and the kernel/UI track resumes.
+The other half of the verdict (PLAN §"The constants stack's verdict"). Phase 184 made the four carrier kinds drawable; this phase makes their statements askable. Two pieces, the second the one with user value.
 
-- [ ] Decide, with the user: app-facing constants (tools + inspector for `FixedAngleLine` / `StatedRadiusCircle` / `ScaledCompassCircle` / `RatioApolloniusCircle`, and the "what is this angle?" reader), plateau-and-return-to-kernel, or another prover thread
-- [ ] Whichever way: record the verdict in PLAN §"The constants stack" and open the next phase
+- [ ] **Value-carrying templates**: `aconst` (two lines + a degrees field), `rconst` (two segments + a ratio field), `lconst` (a segment + a length field) in `QuestionTemplate`, with a value input surface in the builder bar. The template test's "no template can fill a value slot it does not have" exclusion flips to its positive. Exact input through `Rational.tryParse`, like the tools
+- [ ] **The reader**: `AngleClosure`/`LengthClosure` answer "what constant does this pair entail?" — the `entails` reduction returning the residual constant instead of checking it is zero (null when the variable part does not vanish). ℤ-module line held: no root screening, so a `3Δθ ≡ 0` closure answers null for Δθ, not one of three roots. Length side answers a `Rational` only when every `ln p` exponent is an integer
+- [ ] **Wire the reader as a fill**: an `aconst`/`rconst`/`lconst` draft with an empty value asks the prover to read it; the read value fills the slot and the ordinary ask proves it, so the answer comes with a proof rather than as an oracle verdict
+- [ ] Gates: analyze clean, suite green, corpus baseline unchanged (**525 / 92 / 409 / 24 / 0**), fixtures untouched
+
+## Phase 184 — the constant tools: the app draws what the prover reads (closed)
+
+The drawing half of the verdict (PLAN §"The constants stack's verdict"). Four tools, exact-rational dialogs, chords, kind labels; no prover change.
+
+- [x] **`Rational.tryParse`** — integers, decimals (exact over a power of ten) and integer fractions; everything else null. The dialogs' "garbage reads as cancel" convention, with `sqrt(2)` and `pi` deliberately on the garbage side: what comes out is stated in a hypothesis
+- [x] **Four tools**: `FixedAngleLineTool` (a `PointAndLineTool` subclass, refusing non-Euclidean input in `onInput` since the base class has no `availableUnder`), `StatedRadiusCircleTool`, `ScaledCompassCircleTool` (span, span, centre — the compass order; factor 1 builds `CompassCircle`), `RatioApolloniusCircleTool` (A then B; ratio 1 builds `PerpendicularBisectorLine`). All check their value's contract when picked, not on the tap
+- [x] **Dialogs and chords**: `_RationalDialog` behind four asks — stated angle in degrees stored as the residue (`(deg/180).modOne()`), radius/scale/ratio positive. `G ⇧ D`, `G ⇧ R`, `G ⇧ O`, `G ⇧ Q`; rows in the Lines and Circles flyouts beside their float twins; `main.dart` dispatch through one `_activateAfterAsking`
+- [x] **Euclidean-only rows** — `euclideanOnlyConstants` beside `euclideanOnlyMacros`, passed to the Lines and Circles groups, cross-checked against the tools' refusals in `toolbar_test`
+- [x] **Kind labels carry the exact value**: `Line at 60°` / `Line at 45/2°`, `Circle of radius 5/2`, `Compass circle × 3/2`, `Apollonius circle, ratio 2`
+- [x] Gates: analyze clean, suite **3517** (3489 + 28), corpus untouched, fixtures untouched
+
+## Phase 183 — the constants stack's verdict (closed: app-facing constants)
+
+Phase 180's decomposition ends here: the measurement is in (Phase 182: **+45 problems out of `unknownMacro`, 42 built, +19 proved, 0 lost, 3 exposed as corpus defects**), and this phase decides what it means for what comes next. Candidates on the table from the session-180 report, updated by the number: the app-facing `aconst` reader/tools for the four new carrier kinds (the prover can now *state* a fixed angle but no user can draw one); the Phase 176 trigger (check `pip index versions newclid` each session — still 3.0.1 as of 2026-09-02); or the corpus number is a plateau at 92/525 and the kernel/UI track resumes.
+
+- [x] Decide, with the user: **app-facing constants** — chosen in session 183 on the asymmetry that the app's own constant tools (`FixedRadiusCircle`, `RotatedPoint`) emit no hypothesis while the four exact carriers no user could draw
+- [x] Recorded in PLAN §"The constants stack's verdict"; Phase 184 (draw) and Phase 185 (ask) opened
 
 ## Phase 182 — the constant-stating macros + `aconst`, landed together (closed: +42 built, +19 proved, 0 lost)
 
