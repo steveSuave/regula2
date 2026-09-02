@@ -68,7 +68,7 @@ abstract class _$ToolNotifier extends $Notifier<ActiveToolState> {
   ActiveToolState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ActiveToolState, ActiveToolState>;
     final element =
         ref.element
@@ -78,6 +78,6 @@ abstract class _$ToolNotifier extends $Notifier<ActiveToolState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

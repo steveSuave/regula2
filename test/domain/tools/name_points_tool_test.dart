@@ -50,11 +50,9 @@ void main() {
 
       expect(p.attributes.name, 'A');
       expect(p.attributes.labelVisible, isTrue);
-      expect(
-        command.newAttributes.keys,
-        ['p'],
-        reason: 'exactly the tapped point, nothing batched',
-      );
+      expect(command.newAttributes.keys, [
+        'p',
+      ], reason: 'exactly the tapped point, nothing batched');
     });
 
     test('successive taps walk the alphabet', () {

@@ -149,7 +149,7 @@ final class ProverNotifierProvider
   }
 }
 
-String _$proverNotifierHash() => r'1e04cb0fe5205e8107df7460f057c18a465a87de';
+String _$proverNotifierHash() => r'5f4ab899bf29360a46799c706cdf27dc440deeea';
 
 /// Runs the DD prover over the live construction, and holds what it
 /// derived (PLAN §M-P4).
@@ -192,7 +192,7 @@ abstract class _$ProverNotifier extends $Notifier<ProverState> {
   ProverState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ProverState, ProverState>;
     final element =
         ref.element
@@ -202,6 +202,6 @@ abstract class _$ProverNotifier extends $Notifier<ProverState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

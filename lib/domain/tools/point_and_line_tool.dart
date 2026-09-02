@@ -10,12 +10,11 @@ import 'tool.dart';
 /// `PerpendicularLine.new` / `ParallelLine.new` tear-offs slot in
 /// directly (the extra optional `attributes` parameter doesn't hurt
 /// assignability).
-typedef PointAndLineBuilder =
-    GeoObject Function({
-      required String id,
-      required GeoPoint through,
-      required GeoLine reference,
-    });
+typedef PointAndLineBuilder = GeoObject Function({
+  required String id,
+  required GeoPoint through,
+  required GeoLine reference,
+});
 
 /// Collects one point and one line — in either order — then builds one
 /// object on them (perpendicular line, parallel line).

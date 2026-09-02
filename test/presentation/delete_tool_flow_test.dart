@@ -14,6 +14,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+
 import '../wide_window.dart';
 
 /// The Phase 41 delete flows, all through the app-bar hide/delete

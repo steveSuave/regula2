@@ -90,7 +90,7 @@ final class ProofHighlightNotifierProvider
 }
 
 String _$proofHighlightNotifierHash() =>
-    r'08caf922e5a11fff2f8f26fc4ba053d12d02e6af';
+    r'e6ea05314029b6db24039a0f36d855532484c507';
 
 /// The objects one proof step is talking about (PLAN §M-P4).
 ///
@@ -113,7 +113,7 @@ abstract class _$ProofHighlightNotifier extends $Notifier<Set<String>> {
   Set<String> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<Set<String>, Set<String>>;
     final element =
         ref.element
@@ -123,6 +123,6 @@ abstract class _$ProofHighlightNotifier extends $Notifier<Set<String>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

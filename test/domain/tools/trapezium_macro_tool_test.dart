@@ -86,11 +86,9 @@ void main() {
         const Vec2(1, 2),
         reason: 'the hit point only donates its position',
       );
-      expect(
-        cornerOf(construction).parents,
-        [construction.objects.whereType<ParallelLine>().single],
-        reason: 'D is constrained to the parallel, not to the tapped point',
-      );
+      expect(cornerOf(construction).parents, [
+        construction.objects.whereType<ParallelLine>().single,
+      ], reason: 'D is constrained to the parallel, not to the tapped point');
 
       result.command.undo(construction);
       expect(construction.objects, [

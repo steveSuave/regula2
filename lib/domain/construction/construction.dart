@@ -37,8 +37,7 @@ import 'trace_acceptance.dart';
 /// import Flutter (see CLAUDE.md); the application layer bridges this to
 /// Riverpod.
 class Construction {
-  Construction({DocumentKernel kernel = const DocumentKernel()})
-    : _kernel = kernel;
+  Construction({this._kernel = const DocumentKernel()});
 
   /// The geometry this document is drawn in — the absolute every metric
   /// recompute is founded on (PLAN §"M-CK — Cayley–Klein").

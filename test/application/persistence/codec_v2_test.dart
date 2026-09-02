@@ -25,13 +25,9 @@ void main() {
   // The kernel now rides on the construction rather than on the encode
   // call — a document cannot be written under an absolute other than the
   // one its objects were computed in.
-  Map<String, dynamic> encode(Construction construction) =>
-      jsonDecode(
-            jsonEncode(
-              encodeDocument(construction, viewport: const ViewportState()),
-            ),
-          )
-          as Map<String, dynamic>;
+  Map<String, dynamic> encode(Construction construction) => jsonDecode(
+    jsonEncode(encodeDocument(construction, viewport: const ViewportState())),
+  ) as Map<String, dynamic>;
 
   group('version stamp', () {
     test('an ordinary document is still written as v1', () {
@@ -176,11 +172,9 @@ void main() {
           kernel: const DocumentKernel(metric: FundamentalConic.hyperbolic),
         ),
       );
-      expect(
-        unit['kernel'],
-        <String, dynamic>{'metric': 'hyperbolic'},
-        reason: 'a unit-radius document is exactly the v2 file it was',
-      );
+      expect(unit['kernel'], <String, dynamic>{
+        'metric': 'hyperbolic',
+      }, reason: 'a unit-radius document is exactly the v2 file it was');
       expect(unit['version'], 2);
 
       final sized = encode(
@@ -381,9 +375,9 @@ void main() {
     const triple = [Complex(1.5, -2.25), Complex(0, 3), Complex(-7, 0)];
 
     test('round-trips component for component, through JSON', () {
-      final params =
-          jsonDecode(jsonEncode({'p': encodeHomogeneousParam(triple)}))
-              as Map<String, dynamic>;
+      final params = jsonDecode(
+        jsonEncode({'p': encodeHomogeneousParam(triple)}),
+      ) as Map<String, dynamic>;
       expect(homogeneousParam('x', params, 'p', length: 3), triple);
     });
 

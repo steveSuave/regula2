@@ -76,6 +76,7 @@ import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/trace_stats_overlay.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../wide_window.dart';
 
 /// Widget tests for the keyboard shortcut wiring: key events go in, the

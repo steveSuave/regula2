@@ -103,9 +103,9 @@ class _RegionPickOverlayState extends State<RegionPickOverlay> {
                             'Drag to select the export region — Esc to '
                             'cancel',
                             style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onInverseSurface,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onInverseSurface,
                             ),
                           ),
                         ),

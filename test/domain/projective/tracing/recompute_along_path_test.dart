@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:glados/glados.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/bifocal_conic.dart';

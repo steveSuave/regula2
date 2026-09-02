@@ -249,36 +249,32 @@ void main() {
         expect(entry.value.containsPoint(shape.basePoint!), isTrue);
       });
 
-      Glados(any.pencilAngle).test('${entry.key}: pointAt stays on the conic', (
-        phi,
-      ) {
-        final shape = ConicShape.of(entry.value);
-        final p = shape.pointAt(phi);
-        expect(p.isZero, isFalse);
-        expect(p.isReal(), isTrue);
-        expect(entry.value.containsPoint(p), isTrue, reason: 'φ = $phi');
-      });
+      Glados(any.pencilAngle)
+          .test('${entry.key}: pointAt stays on the conic', (phi) {
+            final shape = ConicShape.of(entry.value);
+            final p = shape.pointAt(phi);
+            expect(p.isZero, isFalse);
+            expect(p.isReal(), isTrue);
+            expect(entry.value.containsPoint(p), isTrue, reason: 'φ = $phi');
+          });
 
-      Glados(any.pencilAngle).test(
-        '${entry.key}: parameterOf inverts pointAt',
-        (phi) {
-          final shape = ConicShape.of(entry.value);
-          final back = shape.parameterOf(shape.pointAt(phi));
-          expect(back, isNotNull);
-          expect(angularGap(back!, phi), lessThan(1e-6), reason: 'φ = $phi');
-        },
-      );
+      Glados(any.pencilAngle)
+          .test('${entry.key}: parameterOf inverts pointAt', (phi) {
+            final shape = ConicShape.of(entry.value);
+            final back = shape.parameterOf(shape.pointAt(phi));
+            expect(back, isNotNull);
+            expect(angularGap(back!, phi), lessThan(1e-6), reason: 'φ = $phi');
+          });
 
-      Glados(any.pencilAngle).test('${entry.key}: pointAt is π-periodic', (
-        phi,
-      ) {
-        final shape = ConicShape.of(entry.value);
-        expect(
-          shape.pointAt(phi).closeTo(shape.pointAt(phi + math.pi), 1e-9),
-          isTrue,
-          reason: 'φ = $phi',
-        );
-      });
+      Glados(any.pencilAngle)
+          .test('${entry.key}: pointAt is π-periodic', (phi) {
+            final shape = ConicShape.of(entry.value);
+            expect(
+              shape.pointAt(phi).closeTo(shape.pointAt(phi + math.pi), 1e-9),
+              isTrue,
+              reason: 'φ = $phi',
+            );
+          });
     }
 
     test('the parameterization is a bijection onto the whole curve', () {
@@ -333,9 +329,8 @@ void main() {
         (min: points.reduce(min), max: points.reduce(max));
 
     test('a fully visible circle is one closed loop covering the rim', () {
-      final strokes = ConicShape.of(
-        unitCircle,
-      ).polylines(min: Vec2(-2, -2), max: Vec2(2, 2));
+      final strokes = ConicShape.of(unitCircle)
+          .polylines(min: Vec2(-2, -2), max: Vec2(2, 2));
       expect(strokes, hasLength(1));
       final stroke = strokes.single;
       expect(stroke.closed, isTrue);
@@ -355,9 +350,8 @@ void main() {
     });
 
     test('clipping is exact: a half-visible circle ends on the edge', () {
-      final strokes = ConicShape.of(
-        unitCircle,
-      ).polylines(min: Vec2(0, -2), max: Vec2(2, 2));
+      final strokes = ConicShape.of(unitCircle)
+          .polylines(min: Vec2(0, -2), max: Vec2(2, 2));
       expect(strokes, hasLength(1));
       final stroke = strokes.single;
       expect(stroke.closed, isFalse);
@@ -384,9 +378,8 @@ void main() {
     });
 
     test('a hyperbola draws its two branches, on their own sides', () {
-      final strokes = ConicShape.of(
-        hyperbola,
-      ).polylines(min: Vec2(-3, -3), max: Vec2(3, 3));
+      final strokes = ConicShape.of(hyperbola)
+          .polylines(min: Vec2(-3, -3), max: Vec2(3, 3));
       expect(strokes, hasLength(2));
       for (final stroke in strokes) {
         expect(stroke.closed, isFalse);
@@ -407,9 +400,8 @@ void main() {
     });
 
     test('a parabola draws one arm reaching both box edges', () {
-      final strokes = ConicShape.of(
-        parabola,
-      ).polylines(min: Vec2(-1, -4), max: Vec2(5, 4));
+      final strokes = ConicShape.of(parabola)
+          .polylines(min: Vec2(-1, -4), max: Vec2(5, 4));
       expect(strokes, hasLength(1));
       final stroke = strokes.single;
       for (final p in stroke.points) {
@@ -422,9 +414,8 @@ void main() {
     });
 
     test('degenerate conics draw their real line components, clipped', () {
-      final crossing = ConicShape.of(
-        crossingLines,
-      ).polylines(min: Vec2(-1, -1), max: Vec2(1, 1));
+      final crossing = ConicShape.of(crossingLines)
+          .polylines(min: Vec2(-1, -1), max: Vec2(1, 1));
       expect(crossing, hasLength(2));
       for (final stroke in crossing) {
         expect(stroke.points, hasLength(2));
@@ -435,15 +426,13 @@ void main() {
         }
       }
 
-      final doubled = ConicShape.of(
-        doubleLine,
-      ).polylines(min: Vec2(-1, -2), max: Vec2(1, 2));
+      final doubled = ConicShape.of(doubleLine)
+          .polylines(min: Vec2(-1, -2), max: Vec2(1, 2));
       expect(doubled, hasLength(1));
       expect(doubled.single.points.map((p) => p.x), everyElement(0));
 
-      final parallel = ConicShape.of(
-        parallelLines,
-      ).polylines(min: Vec2(-3, -1), max: Vec2(3, 1));
+      final parallel = ConicShape.of(parallelLines)
+          .polylines(min: Vec2(-3, -1), max: Vec2(3, 1));
       expect(parallel, hasLength(2));
       expect(
         parallel.expand((s) => s.points).map((p) => p.x.abs()),
@@ -452,9 +441,8 @@ void main() {
     });
 
     test('a line pair partly outside the box draws only what fits', () {
-      final strokes = ConicShape.of(
-        parallelLines,
-      ).polylines(min: Vec2(0.5, -1), max: Vec2(3, 1));
+      final strokes = ConicShape.of(parallelLines)
+          .polylines(min: Vec2(0.5, -1), max: Vec2(3, 1));
       expect(strokes, hasLength(1), reason: 'x = −1 misses the box');
       expect(strokes.single.points.map((p) => p.x), everyElement(1));
     });
@@ -652,9 +640,8 @@ void main() {
       // A circle of radius 1e6 through a unit box: nearly a straight line,
       // and the clip must not walk the whole rim to find that out.
       final huge = ConicMatrix.lift(CircleEq(Vec2(0, -1000000), 1000000));
-      final strokes = ConicShape.of(
-        huge,
-      ).polylines(min: Vec2(-1, -1), max: Vec2(1, 1));
+      final strokes = ConicShape.of(huge)
+          .polylines(min: Vec2(-1, -1), max: Vec2(1, 1));
       expect(strokes, hasLength(1));
       expect(strokes.single.points.length, lessThan(200));
       for (final p in strokes.single.points) {
@@ -666,9 +653,8 @@ void main() {
     Glados2(any.rescale, any.rescale).test(
       'the drawn point set is invariant under rescaling the matrix',
       (k, l) {
-        final scaled = ConicShape.of(
-          unitCircle.scaledBy(Complex(k, l)),
-        ).polylines(min: Vec2(-2, -2), max: Vec2(2, 2));
+        final scaled = ConicShape.of(unitCircle.scaledBy(Complex(k, l)))
+            .polylines(min: Vec2(-2, -2), max: Vec2(2, 2));
         expect(scaled, hasLength(1));
         for (final p in scaled.single.points) {
           expect(p.norm, closeTo(1, 1e-9));
@@ -703,9 +689,8 @@ void main() {
     test('a tangency to the box edge does not split the stroke', () {
       // The unit circle is tangent to x = 1 from inside: that edge cuts the
       // parameter circle at a point the curve never actually leaves through.
-      final strokes = ConicShape.of(
-        unitCircle,
-      ).polylines(min: Vec2(-2, -2), max: Vec2(1, 2));
+      final strokes = ConicShape.of(unitCircle)
+          .polylines(min: Vec2(-2, -2), max: Vec2(1, 2));
       expect(strokes, hasLength(1));
       expect(strokes.single.closed, isTrue);
     });
@@ -867,14 +852,13 @@ void main() {
       );
     });
 
-    Glados(any.pencilAngle).test('every swept point reads distance zero', (
-      phi,
-    ) {
-      final shape = ConicShape.of(ellipse);
-      final v = shape.chartPointAt(phi);
-      if (v == null) return;
-      expect(shape.distanceTo(v), lessThan(1e-8), reason: 'φ = $phi');
-    });
+    Glados(any.pencilAngle)
+        .test('every swept point reads distance zero', (phi) {
+          final shape = ConicShape.of(ellipse);
+          final v = shape.chartPointAt(phi);
+          if (v == null) return;
+          expect(shape.distanceTo(v), lessThan(1e-8), reason: 'φ = $phi');
+        });
   });
 
   group('extremesAlong', () {

@@ -52,9 +52,9 @@ void main() {
       final construction = Construction();
       final tool = toolFor(min: 4, max: 7);
 
-      final result =
-          tool.onInput(const ToolInput(tap, snapThreshold: threshold))
-              as ToolCommitted;
+      final result = tool.onInput(
+        const ToolInput(tap, snapThreshold: threshold),
+      ) as ToolCommitted;
       result.command.apply(construction);
 
       for (final vertex in construction.objects.whereType<FreePoint>()) {
@@ -179,10 +179,9 @@ void main() {
           newId: () => 'n${nextId++}',
           random: math.Random(seed),
         );
-        (tool.onInput(const ToolInput(tap, snapThreshold: threshold))
-                as ToolCommitted)
-            .command
-            .apply(construction);
+        (tool.onInput(
+          const ToolInput(tap, snapThreshold: threshold),
+        ) as ToolCommitted).command.apply(construction);
 
         // On-circle distance 40, stretched by axis factors in [0.7, 1.3].
         for (final vertex in construction.objects.whereType<FreePoint>()) {

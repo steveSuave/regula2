@@ -23,9 +23,9 @@ void main() {
       objects.singleWhere((o) => o.attributes.name == name);
 
   setUpAll(() {
-    final json =
-        jsonDecode(File('test/fixtures/provoleas2.json').readAsStringSync())
-            as Map<String, dynamic>;
+    final json = jsonDecode(
+      File('test/fixtures/provoleas2.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
     objects = decodeDocument(json).construction.objects.toList();
   });
 

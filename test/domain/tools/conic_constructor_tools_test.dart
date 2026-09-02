@@ -77,9 +77,9 @@ void main() {
         final line = directrix();
         final tool = FocalConicTool(newId: newId, eccentricity: e);
         tool.onInput(ToolInput(focus.position, hit: focus));
-        final result =
-            tool.onInput(ToolInput(const Vec2(-1, 0), hit: line))
-                as ToolCommitted;
+        final result = tool.onInput(
+          ToolInput(const Vec2(-1, 0), hit: line),
+        ) as ToolCommitted;
         final conic = (result.command as AddObjectCommand).object as FocalConic;
         expect(conic.eccentricity, e);
         expect(ConicShape.of(conic.conic!).kind, expected);
@@ -113,9 +113,9 @@ void main() {
         final tool = BifocalConicTool(newId: newId, difference: difference);
         tool.onInput(const ToolInput(f1));
         tool.onInput(const ToolInput(f2));
-        final result =
-            tool.onInput(ToolInput(difference ? const Vec2(1, 4) : on))
-                as ToolCommitted;
+        final result = tool.onInput(
+          ToolInput(difference ? const Vec2(1, 4) : on),
+        ) as ToolCommitted;
 
         expect(result.command, isA<MacroCommand>());
         result.command.apply(construction);

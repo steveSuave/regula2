@@ -12,6 +12,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+
 import '../../wide_window.dart';
 
 /// End-to-end snap-to-grid (Phase 45): with the document toggle on, the

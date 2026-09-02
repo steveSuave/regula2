@@ -311,11 +311,12 @@ void main() {
       drag(construction, 'D', start + wobble);
       drag(construction, 'D', start);
       final chart = seating(points, home);
-      expect(
-        chart.split('')..sort(),
-        ['G', 'H', 'I', 'J'],
-        reason: 'trip $trip seated $chart — a name was lost or doubled',
-      );
+      expect(chart.split('')..sort(), [
+        'G',
+        'H',
+        'I',
+        'J',
+      ], reason: 'trip $trip seated $chart — a name was lost or doubled');
       expect(
         points.map((p) => p.branchIndex).toSet(),
         hasLength(4),

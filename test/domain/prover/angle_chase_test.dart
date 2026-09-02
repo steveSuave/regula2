@@ -273,9 +273,8 @@ void main() {
     Construction jgexDocument() {
       final construction = decodeDocument(
         jsonDecode(
-              File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-            )
-            as Map<String, dynamic>,
+          File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+        ) as Map<String, dynamic>,
       ).construction;
       GeoPoint named(String name) => construction.objects
           .whereType<GeoPoint>()

@@ -86,11 +86,11 @@ void main() {
         cong([a, b, c, d]),
       ])!;
       expect(chase.isSound, isTrue);
-      expect(
-        chase.render(),
-        ['|CD|^2 = |AB|·|EF|', '|AB|^2 = |CD|^2', '⟹ |AB| = |EF|'],
-        reason: 'the repeated segment is an exponent, not a coefficient',
-      );
+      expect(chase.render(), [
+        '|CD|^2 = |AB|·|EF|',
+        '|AB|^2 = |CD|^2',
+        '⟹ |AB| = |EF|',
+      ], reason: 'the repeated segment is an exponent, not a coefficient');
     });
 
     test('the separator is decided once per chase', () {

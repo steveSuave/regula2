@@ -40,10 +40,8 @@ bool structurallyIncident(GeoObject curve, GeoPoint point) {
   if (point case PointOnObject(curve: final host) when identical(host, curve)) {
     return true;
   }
-  if (point case IntersectionPoint(
-    :final curve1,
-    :final curve2,
-  ) when identical(curve1, curve) || identical(curve2, curve)) {
+  if (point case IntersectionPoint(:final curve1, :final curve2)
+      when identical(curve1, curve) || identical(curve2, curve)) {
     return true;
   }
   if (onCarrierDefiningPoints(curve).any((p) => identical(p, point))) {

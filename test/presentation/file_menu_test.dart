@@ -20,6 +20,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+
 import '../wide_window.dart';
 
 /// Captures saves and replays canned open results instead of touching the
@@ -57,6 +58,7 @@ class _FakeFilePicker extends FilePickerPlatform {
     void Function(FilePickerStatus)? onFileLoading,
     int compressionQuality = 0,
     AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
     WindowsOptions windowsOptions = const WindowsOptions(),
     LinuxOptions linuxOptions = const LinuxOptions(),
     WebOptions webOptions = const WebOptions(),
@@ -87,6 +89,9 @@ base class _FakePickedFile extends PlatformFile {
 
   @override
   Never get xFile => throw UnimplementedError('unused by these tests');
+
+  @override
+  int? lengthSync() => bytes.length;
 
   @override
   Future<int> length() async => bytes.length;

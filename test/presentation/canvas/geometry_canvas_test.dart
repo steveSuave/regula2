@@ -47,6 +47,7 @@ import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/canvas/label_layout.dart';
 import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
+
 import '../../wide_window.dart';
 
 /// End-to-end tool flow: activate the point tool, tap the canvas, see
@@ -140,11 +141,9 @@ void main() {
         .map((paint) => paint.painter)
         .whereType<GeometryPainter>()
         .single;
-    expect(
-      painter.previewObjectIds,
-      {'l'},
-      reason: 'the consumed line is haloed like a selection',
-    );
+    expect(painter.previewObjectIds, {
+      'l',
+    }, reason: 'the consumed line is haloed like a selection');
     expect(
       painter.previewMarkers,
       isEmpty,
@@ -1583,11 +1582,11 @@ void main() {
     await tester.pump();
     await drag.up();
     await tester.pump();
-    expect(
-      freePositions(),
-      [const Vec2(100, -100), const Vec2(150, -100), const Vec2(330, -260)],
-      reason: 'only the center translates; the radius pair is a measurement',
-    );
+    expect(freePositions(), [
+      const Vec2(100, -100),
+      const Vec2(150, -100),
+      const Vec2(330, -260),
+    ], reason: 'only the center translates; the radius pair is a measurement');
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
@@ -1806,9 +1805,8 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final cursor = origin + const Offset(240, 180);
-    final fixedWorld = const CanvasViewport(
-      ViewportState(),
-    ).screenToWorld(cursor - origin);
+    final fixedWorld = const CanvasViewport(ViewportState())
+        .screenToWorld(cursor - origin);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
     final pointer = TestPointer(1, PointerDeviceKind.mouse);
@@ -1936,9 +1934,8 @@ void main() {
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final centerLocal = tester.getCenter(find.byType(GeometryCanvas)) - origin;
-    final centerWorld = const CanvasViewport(
-      rotated,
-    ).screenToWorld(centerLocal);
+    final centerWorld = const CanvasViewport(rotated)
+        .screenToWorld(centerLocal);
 
     await tester.tap(find.byKey(compass));
     await tester.pump();
@@ -1970,9 +1967,8 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final focal = tester.getCenter(find.byType(GeometryCanvas));
-    final fixedWorld = const CanvasViewport(
-      ViewportState(),
-    ).screenToWorld(focal - origin);
+    final fixedWorld = const CanvasViewport(ViewportState())
+        .screenToWorld(focal - origin);
 
     // Two fingers 80 px apart spreading to 200 px in small alternating
     // steps (real pinches interleave per-finger moves the same way; big
@@ -2016,9 +2012,8 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final center = tester.getCenter(find.byType(GeometryCanvas));
-    final fixedWorld = const CanvasViewport(
-      ViewportState(),
-    ).screenToWorld(center - origin);
+    final fixedWorld = const CanvasViewport(ViewportState())
+        .screenToWorld(center - origin);
 
     // Fingers 100 px above/below the center walking a quarter circle
     // counterclockwise on screen (decreasing screen angle φ — screen y
@@ -2363,11 +2358,9 @@ void main() {
     // Inside the text rect (top-left local (150, 62), 12 px line).
     await tester.tapAt(origin + const Offset(160, 68));
     await tester.pump();
-    expect(
-      container.read(selectionProvider),
-      {'d'},
-      reason: 'the text is the measurement\'s body',
-    );
+    expect(container.read(selectionProvider), {
+      'd',
+    }, reason: 'the text is the measurement\'s body');
 
     // An empty tap still clears — the text rect is not sticky.
     await tester.tapAt(origin + const Offset(400, 300));
@@ -2862,9 +2855,8 @@ void main() {
       'selects on touch but misses with a mouse', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
-    final world = CanvasViewport(
-      container.read(viewportProvider),
-    ).screenToWorld(const Offset(200, 200));
+    final world = CanvasViewport(container.read(viewportProvider))
+        .screenToWorld(const Offset(200, 200));
     container
         .read(constructionProvider)
         .construction
@@ -2882,11 +2874,9 @@ void main() {
 
     await tester.tapAt(nearby, kind: PointerDeviceKind.touch);
     await tester.pump();
-    expect(
-      container.read(selectionProvider),
-      {'a'},
-      reason: '12 px is inside the 16-px touch radius',
-    );
+    expect(container.read(selectionProvider), {
+      'a',
+    }, reason: '12 px is inside the 16-px touch radius');
   });
 
   group('DeleteTool taps (Phase 41)', () {
@@ -2988,11 +2978,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(objectCount(), 3);
-      expect(
-        container.read(selectionProvider),
-        {'b'},
-        reason: 'the active tool owns the tap; no selection clear',
-      );
+      expect(container.read(selectionProvider), {
+        'b',
+      }, reason: 'the active tool owns the tap; no selection clear');
       expect(container.read(commandStackProvider).canUndo, isFalse);
     });
   });

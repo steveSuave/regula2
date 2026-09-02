@@ -9,6 +9,7 @@ import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/shortcuts/cheat_sheet.dart';
 import 'package:regula/presentation/shortcuts/shortcut_table.dart';
+
 import '../../wide_window.dart';
 
 void main() {

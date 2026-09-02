@@ -278,11 +278,9 @@ void main() {
 
         expect(resolved.isNew, isTrue);
         final point = resolved.point as PointOnObject;
-        expect(
-          point.parents,
-          [diameter],
-          reason: 'the carrier glue must skip to the in-reach curve',
-        );
+        expect(point.parents, [
+          diameter,
+        ], reason: 'the carrier glue must skip to the in-reach curve');
         expect(point.position!.closeTo(const Vec2(0.5, 0)), isTrue);
       });
 

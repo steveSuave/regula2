@@ -57,7 +57,7 @@ abstract class _$DocumentSettingsNotifier extends $Notifier<DocumentSettings> {
   DocumentSettings build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<DocumentSettings, DocumentSettings>;
     final element =
         ref.element
@@ -67,6 +67,6 @@ abstract class _$DocumentSettingsNotifier extends $Notifier<DocumentSettings> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

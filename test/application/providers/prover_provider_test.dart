@@ -189,11 +189,8 @@ void main() {
           .replace(
             decodeDocument(
               jsonDecode(
-                    File(
-                      'test/fixtures/perp-true-unproved.rgl',
-                    ).readAsStringSync(),
-                  )
-                  as Map<String, dynamic>,
+                File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+              ) as Map<String, dynamic>,
             ).construction,
           );
       final seen = <ProverState>[];
@@ -312,9 +309,8 @@ void main() {
     /// conclude a `perp` and neither has a route here.
     Construction loadUnprovable() => decodeDocument(
       jsonDecode(
-            File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-          )
-          as Map<String, dynamic>,
+        File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+      ) as Map<String, dynamic>,
     ).construction;
 
     GeoPoint named(Construction construction, String name) => construction
@@ -845,9 +841,8 @@ void main() {
     /// stopped at all.
     Construction loadBlowup() => decodeDocument(
       jsonDecode(
-            File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
-          )
-          as Map<String, dynamic>,
+        File('test/fixtures/perp-true-unproved.rgl').readAsStringSync(),
+      ) as Map<String, dynamic>,
     ).construction;
 
     GeoPoint named(Construction construction, String name) => construction
@@ -891,9 +886,9 @@ void main() {
       expect(finished.reachedFixpoint, isTrue);
       expect(
         finished.database.facts.toSet(),
-        exchangeRun(
-          container.read(constructionProvider).construction.objects,
-        ).facts.toSet(),
+        exchangeRun(container.read(constructionProvider).construction.objects)
+            .facts
+            .toSet(),
         reason: 'stopped-then-resumed lands where an uninterrupted run lands',
       );
     });

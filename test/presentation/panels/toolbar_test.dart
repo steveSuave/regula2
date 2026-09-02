@@ -56,6 +56,7 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
 import 'package:regula/presentation/shortcuts/shortcut_table.dart';
+
 import '../../wide_window.dart';
 
 /// Tests for the toolbar's group flyouts: activation, the active-group

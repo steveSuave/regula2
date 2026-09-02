@@ -77,7 +77,7 @@ abstract class _$ConstructionNotifier extends $Notifier<ConstructionState> {
   ConstructionState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ConstructionState, ConstructionState>;
     final element =
         ref.element
@@ -87,6 +87,6 @@ abstract class _$ConstructionNotifier extends $Notifier<ConstructionState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

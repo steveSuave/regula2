@@ -23,7 +23,8 @@ void main() {
     test('the radius is exact, positive, and fixed', () {
       final center = FreePoint(id: 'o', position: Vec2.zero);
       expect(
-        () => StatedRadiusCircle(id: 'k', center: center, radius: Rational.zero),
+        () =>
+            StatedRadiusCircle(id: 'k', center: center, radius: Rational.zero),
         throwsArgumentError,
       );
       expect(

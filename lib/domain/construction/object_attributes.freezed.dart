@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'object_attributes.dart';
@@ -9,6 +9,7 @@ part of 'object_attributes.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -74,16 +75,21 @@ $ObjectAttributesCopyWith<ObjectAttributes> get copyWith => _$ObjectAttributesCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ObjectAttributes&&(identical(other.name, name) || other.name == name)&&(identical(other.colorArgb, colorArgb) || other.colorArgb == colorArgb)&&(identical(other.visible, visible) || other.visible == visible)&&(identical(other.labelVisible, labelVisible) || other.labelVisible == labelVisible)&&(identical(other.showValue, showValue) || other.showValue == showValue)&&(identical(other.valueDecimals, valueDecimals) || other.valueDecimals == valueDecimals)&&(identical(other.labelDx, labelDx) || other.labelDx == labelDx)&&(identical(other.labelDy, labelDy) || other.labelDy == labelDy)&&(identical(other.labelFontSize, labelFontSize) || other.labelFontSize == labelFontSize)&&(identical(other.strokeWidth, strokeWidth) || other.strokeWidth == strokeWidth)&&(identical(other.dashPeriod, dashPeriod) || other.dashPeriod == dashPeriod)&&(identical(other.tickMarks, tickMarks) || other.tickMarks == tickMarks)&&(identical(other.pointSize, pointSize) || other.pointSize == pointSize)&&(identical(other.angleMarkerRadius, angleMarkerRadius) || other.angleMarkerRadius == angleMarkerRadius)&&(identical(other.fillAlpha, fillAlpha) || other.fillAlpha == fillAlpha)&&(identical(other.lineClip, lineClip) || other.lineClip == lineClip));
+  final _this = this as ObjectAttributes;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ObjectAttributes&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.colorArgb, _this.colorArgb) || other.colorArgb == _this.colorArgb)&&(identical(other.visible, _this.visible) || other.visible == _this.visible)&&(identical(other.labelVisible, _this.labelVisible) || other.labelVisible == _this.labelVisible)&&(identical(other.showValue, _this.showValue) || other.showValue == _this.showValue)&&(identical(other.valueDecimals, _this.valueDecimals) || other.valueDecimals == _this.valueDecimals)&&(identical(other.labelDx, _this.labelDx) || other.labelDx == _this.labelDx)&&(identical(other.labelDy, _this.labelDy) || other.labelDy == _this.labelDy)&&(identical(other.labelFontSize, _this.labelFontSize) || other.labelFontSize == _this.labelFontSize)&&(identical(other.strokeWidth, _this.strokeWidth) || other.strokeWidth == _this.strokeWidth)&&(identical(other.dashPeriod, _this.dashPeriod) || other.dashPeriod == _this.dashPeriod)&&(identical(other.tickMarks, _this.tickMarks) || other.tickMarks == _this.tickMarks)&&(identical(other.pointSize, _this.pointSize) || other.pointSize == _this.pointSize)&&(identical(other.angleMarkerRadius, _this.angleMarkerRadius) || other.angleMarkerRadius == _this.angleMarkerRadius)&&(identical(other.fillAlpha, _this.fillAlpha) || other.fillAlpha == _this.fillAlpha)&&(identical(other.lineClip, _this.lineClip) || other.lineClip == _this.lineClip));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,colorArgb,visible,labelVisible,showValue,valueDecimals,labelDx,labelDy,labelFontSize,strokeWidth,dashPeriod,tickMarks,pointSize,angleMarkerRadius,fillAlpha,lineClip);
+int get hashCode {
+  final _this = this as ObjectAttributes;
+  return Object.hash(runtimeType,_this.name,_this.colorArgb,_this.visible,_this.labelVisible,_this.showValue,_this.valueDecimals,_this.labelDx,_this.labelDy,_this.labelFontSize,_this.strokeWidth,_this.dashPeriod,_this.tickMarks,_this.pointSize,_this.angleMarkerRadius,_this.fillAlpha,_this.lineClip);
+}
 
 @override
 String toString() {
-  return 'ObjectAttributes(name: $name, colorArgb: $colorArgb, visible: $visible, labelVisible: $labelVisible, showValue: $showValue, valueDecimals: $valueDecimals, labelDx: $labelDx, labelDy: $labelDy, labelFontSize: $labelFontSize, strokeWidth: $strokeWidth, dashPeriod: $dashPeriod, tickMarks: $tickMarks, pointSize: $pointSize, angleMarkerRadius: $angleMarkerRadius, fillAlpha: $fillAlpha, lineClip: $lineClip)';
+  final _this = this as ObjectAttributes;
+  return 'ObjectAttributes(name: ${_this.name}, colorArgb: ${_this.colorArgb}, visible: ${_this.visible}, labelVisible: ${_this.labelVisible}, showValue: ${_this.showValue}, valueDecimals: ${_this.valueDecimals}, labelDx: ${_this.labelDx}, labelDy: ${_this.labelDy}, labelFontSize: ${_this.labelFontSize}, strokeWidth: ${_this.strokeWidth}, dashPeriod: ${_this.dashPeriod}, tickMarks: ${_this.tickMarks}, pointSize: ${_this.pointSize}, angleMarkerRadius: ${_this.angleMarkerRadius}, fillAlpha: ${_this.fillAlpha}, lineClip: ${_this.lineClip})';
 }
 
 
@@ -112,7 +118,7 @@ class _$ObjectAttributesCopyWithImpl<$Res>
 /// Create a copy of ObjectAttributes
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? colorArgb = freezed,Object? visible = null,Object? labelVisible = null,Object? showValue = null,Object? valueDecimals = freezed,Object? labelDx = null,Object? labelDy = null,Object? labelFontSize = null,Object? strokeWidth = null,Object? dashPeriod = null,Object? tickMarks = null,Object? pointSize = null,Object? angleMarkerRadius = null,Object? fillAlpha = freezed,Object? lineClip = null,}) {
-  return _then(_self.copyWith(
+  return _then(ObjectAttributes(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,colorArgb: freezed == colorArgb ? _self.colorArgb : colorArgb // ignore: cast_nullable_to_non_nullable
 as int?,visible: null == visible ? _self.visible : visible // ignore: cast_nullable_to_non_nullable
@@ -349,16 +355,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ObjectAttributes&&(identical(other.name, name) || other.name == name)&&(identical(other.colorArgb, colorArgb) || other.colorArgb == colorArgb)&&(identical(other.visible, visible) || other.visible == visible)&&(identical(other.labelVisible, labelVisible) || other.labelVisible == labelVisible)&&(identical(other.showValue, showValue) || other.showValue == showValue)&&(identical(other.valueDecimals, valueDecimals) || other.valueDecimals == valueDecimals)&&(identical(other.labelDx, labelDx) || other.labelDx == labelDx)&&(identical(other.labelDy, labelDy) || other.labelDy == labelDy)&&(identical(other.labelFontSize, labelFontSize) || other.labelFontSize == labelFontSize)&&(identical(other.strokeWidth, strokeWidth) || other.strokeWidth == strokeWidth)&&(identical(other.dashPeriod, dashPeriod) || other.dashPeriod == dashPeriod)&&(identical(other.tickMarks, tickMarks) || other.tickMarks == tickMarks)&&(identical(other.pointSize, pointSize) || other.pointSize == pointSize)&&(identical(other.angleMarkerRadius, angleMarkerRadius) || other.angleMarkerRadius == angleMarkerRadius)&&(identical(other.fillAlpha, fillAlpha) || other.fillAlpha == fillAlpha)&&(identical(other.lineClip, lineClip) || other.lineClip == lineClip));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ObjectAttributes&&(identical(other.name, name) || other.name == name)&&(identical(other.colorArgb, colorArgb) || other.colorArgb == colorArgb)&&(identical(other.visible, visible) || other.visible == visible)&&(identical(other.labelVisible, labelVisible) || other.labelVisible == labelVisible)&&(identical(other.showValue, showValue) || other.showValue == showValue)&&(identical(other.valueDecimals, valueDecimals) || other.valueDecimals == valueDecimals)&&(identical(other.labelDx, labelDx) || other.labelDx == labelDx)&&(identical(other.labelDy, labelDy) || other.labelDy == labelDy)&&(identical(other.labelFontSize, labelFontSize) || other.labelFontSize == labelFontSize)&&(identical(other.strokeWidth, strokeWidth) || other.strokeWidth == strokeWidth)&&(identical(other.dashPeriod, dashPeriod) || other.dashPeriod == dashPeriod)&&(identical(other.tickMarks, tickMarks) || other.tickMarks == tickMarks)&&(identical(other.pointSize, pointSize) || other.pointSize == pointSize)&&(identical(other.angleMarkerRadius, angleMarkerRadius) || other.angleMarkerRadius == angleMarkerRadius)&&(identical(other.fillAlpha, fillAlpha) || other.fillAlpha == fillAlpha)&&(identical(other.lineClip, lineClip) || other.lineClip == lineClip));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,colorArgb,visible,labelVisible,showValue,valueDecimals,labelDx,labelDy,labelFontSize,strokeWidth,dashPeriod,tickMarks,pointSize,angleMarkerRadius,fillAlpha,lineClip);
+int get hashCode {
+    return Object.hash(runtimeType,name,colorArgb,visible,labelVisible,showValue,valueDecimals,labelDx,labelDy,labelFontSize,strokeWidth,dashPeriod,tickMarks,pointSize,angleMarkerRadius,fillAlpha,lineClip);
+}
 
 @override
 String toString() {
-  return 'ObjectAttributes(name: $name, colorArgb: $colorArgb, visible: $visible, labelVisible: $labelVisible, showValue: $showValue, valueDecimals: $valueDecimals, labelDx: $labelDx, labelDy: $labelDy, labelFontSize: $labelFontSize, strokeWidth: $strokeWidth, dashPeriod: $dashPeriod, tickMarks: $tickMarks, pointSize: $pointSize, angleMarkerRadius: $angleMarkerRadius, fillAlpha: $fillAlpha, lineClip: $lineClip)';
+    return 'ObjectAttributes(name: $name, colorArgb: $colorArgb, visible: $visible, labelVisible: $labelVisible, showValue: $showValue, valueDecimals: $valueDecimals, labelDx: $labelDx, labelDy: $labelDy, labelFontSize: $labelFontSize, strokeWidth: $strokeWidth, dashPeriod: $dashPeriod, tickMarks: $tickMarks, pointSize: $pointSize, angleMarkerRadius: $angleMarkerRadius, fillAlpha: $fillAlpha, lineClip: $lineClip)';
 }
 
 

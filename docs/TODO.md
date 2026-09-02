@@ -14,11 +14,23 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## Phase 187 — the toolchain upgrade: Flutter 3.41.9 → 3.47.2 (closed)
+
+PLAN §"Deferred decisions" booked this for after M-P, and CI has proved the tree on `channel: stable` (3.47.2, commit `d3b14c8`) on every push since it shipped. What CI does not cover is where the work lands: the local SDK, the `dart format` version, goldens, the dependency pins the old SDK held (`riverpod` 3.4.2, `analyzer` ≥ 10 want Dart ≥ 3.12 and `meta ^1.18`), the newer analyzer's lint set, and the renderer look. The Phase 120c rule holds: a reformat is its own commit, landed before any behaviour change.
+
+- [x] **The SDK moved**: `flutter upgrade` on the stable clone to `d3b14c8`, the commit CI runs — Flutter 3.47.2 / Dart 3.13.2; `environment.sdk` raised to `^3.13.0`, so the tree states what it is developed against
+- [x] **Format first, alone**: 62 files, one commit. A dry run before the sdk floor moved touched 16; the floor raised the language version and brought the formatter's version-gated rules in — the floor decides the reformat's size, not the SDK
+- [x] **The pins released**: `flutter pub upgrade --major-versions`, 40 packages moved, the one constraint change `freezed` ^3 → ^4 (the lock had held a `-dev.1` prerelease); `riverpod` 3.4.2, `analyzer` 13.3.0; `build_runner` regenerated ten providers and one freezed class. `file_picker_platform_interface` 3.3.0 added `darwinOptions` and `PlatformFile.lengthSync`, so the test fake grew both
+- [x] **The lint sweep**: one rule, eight sites — `prefer_initializing_formals`, now firing because Dart 3.13 admits a private field as a named initializing formal (`Construction({this._kernel})` is exposed as `kernel:`). Applied; nothing to argue against. `analysis_options.yaml` gained the tool's own `build/android/ios/web` excludes on first `pub get`
+- [x] Gates: analyze clean, suite **3541** (3509 + 32 goldens, unchanged from Phase 185), browser gate green (15), **4 of 32 goldens moved** — markers and measures, dark and light, 93–114 px (0.03–0.04 %), every differing pixel on the two free edges of the right-angle square, anti-aliasing weight moving between the rows either side of the stroke centre: the rasterizer, not our arithmetic; regenerated, 28 byte-identical. `flutter build web --wasm --release` compiles
+- [x] Docs: PLAN §"Deferred decisions" rewritten to the new pin, with the rule for the next one (CI's `stable` moving past the local SDK); the dependency-drift note dated; STATUS entry
+- [ ] Deployed look after merge (the renderer moved; the wasm build compiles, the browser is what shows it)
+
 ## Phase 186 — the kernel track resumes (open)
 
 The app-facing constants are complete (Phases 184–185): the four carrier kinds are drawable, askable and readable. The corpus number is recorded as the plateau at **525 / 92 / 409 / 24 / 0** (PLAN §"The constants stack's verdict"), and the prover threads left are named carries, not phases. What is open on the kernel/UI side, each its own phase and none started:
 
-- [ ] **Decide, with the user, which first.** Candidates, oldest first: the **toolchain upgrade** (PLAN §"Deferred decisions" — booked for after M-P, which has landed; CI already proves the tree on 3.47, the cost is the local SDK, goldens, `dart format` and the renderer look, and drift compounds); the **chart-free line orientation** (Phase 137's left-open, a branch-ordering change moving `PolarLine`/`RadicalAxisLine`/`TangentLine`); the **join budget unit** (Phase 161's decision box, charge the enumeration or yield mid-join); the **locus starve** (a pass that declines a detour it cannot afford). Recommendation: the toolchain first, because every other item is measured against goldens and a renderer the upgrade moves
+- [x] **Decided (session 184): the toolchain first** — Phase 187 below, on the recommendation recorded here: every other item is measured against goldens and a renderer the upgrade moves. Still open after it, oldest first, each its own phase: the **chart-free line orientation** (Phase 137's left-open, a branch-ordering change moving `PolarLine`/`RadicalAxisLine`/`TangentLine`); the **join budget unit** (Phase 161's decision box, charge the enumeration or yield mid-join); the **locus starve** (Phase 139's left-open, a pass that declines a detour it cannot afford)
 - [ ] Carried, unchanged: `readFact` on listed `eqangle`s can still read magnitude-false; the skeptical re-glance on old `entails`-based zeros; the Phase 176 trigger (`pip index versions newclid`, 3.0.1 as of 2026-09-02); `regular_hexagon#2`'s quiescence asterisk
 
 ## Phase 185 — the constants ask: value templates and the "what is this angle?" reader (closed)

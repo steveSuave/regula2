@@ -72,7 +72,7 @@ abstract class _$ViewportNotifier extends $Notifier<ViewportState> {
   ViewportState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ViewportState, ViewportState>;
     final element =
         ref.element
@@ -82,6 +82,6 @@ abstract class _$ViewportNotifier extends $Notifier<ViewportState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

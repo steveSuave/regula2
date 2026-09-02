@@ -18,16 +18,16 @@ import 'package:regula/domain/tools/drag_session.dart';
 /// refinement — is exercised on real-world geometry, not scaled fixtures.
 void main() {
   Construction construction(String fixture) {
-    final json =
-        jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
-            as Map<String, dynamic>;
+    final json = jsonDecode(
+      File('test/fixtures/$fixture').readAsStringSync(),
+    ) as Map<String, dynamic>;
     return decodeDocument(json).construction;
   }
 
   Locus loadLocus(String fixture, {required List<FreePoint> freeOut}) {
-    final json =
-        jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
-            as Map<String, dynamic>;
+    final json = jsonDecode(
+      File('test/fixtures/$fixture').readAsStringSync(),
+    ) as Map<String, dynamic>;
     final construction = decodeDocument(json).construction;
     freeOut.addAll(construction.objects.whereType<FreePoint>());
     return construction.objects.whereType<Locus>().single;
@@ -270,11 +270,9 @@ void main() {
     );
     // The invariant the seed exists for: a locus passes through the
     // position its traced point actually has.
-    final g =
-        construction(
-              'no-locus.rgl',
-            ).objects.singleWhere((o) => o.attributes.name == 'G')
-            as GeoPoint;
+    final g = construction(
+      'no-locus.rgl',
+    ).objects.singleWhere((o) => o.attributes.name == 'G') as GeoPoint;
     expect(
       points.map((p) => p.distanceTo(g.position!)).reduce(math.min),
       lessThan(1e-9),
@@ -304,9 +302,9 @@ void main() {
       // A fresh document per trial: the point of the test is that no
       // *sequence* of gestures can strand the locus, so each one starts
       // from the state the user opens.
-      final json =
-          jsonDecode(File('test/fixtures/no-locus.rgl').readAsStringSync())
-              as Map<String, dynamic>;
+      final json = jsonDecode(
+        File('test/fixtures/no-locus.rgl').readAsStringSync(),
+      ) as Map<String, dynamic>;
       final construction = decodeDocument(json).construction;
       final f = construction.objects.whereType<PointOnObject>().single;
       final locus = construction.objects.whereType<Locus>().single;

@@ -168,19 +168,17 @@ void main() {
       expect(l.toOrientedLineEq() == null, l.toLineEq() == null);
     });
 
-    Glados(any.projLine).test(
-      'the chart direction points along the representative',
-      (l) {
-        final chart = l.toOrientedLineEq();
-        if (chart == null || !l.isReal(1e-12)) return;
-        final reNorm = l.a.re * l.a.re + l.b.re * l.b.re;
-        final imNorm = l.a.im * l.a.im + l.b.im * l.b.im;
-        final along = reNorm >= imNorm
-            ? chart.direction.x * l.b.re - chart.direction.y * l.a.re
-            : chart.direction.x * l.b.im - chart.direction.y * l.a.im;
-        expect(along, greaterThanOrEqualTo(0));
-      },
-    );
+    Glados(any.projLine)
+        .test('the chart direction points along the representative', (l) {
+          final chart = l.toOrientedLineEq();
+          if (chart == null || !l.isReal(1e-12)) return;
+          final reNorm = l.a.re * l.a.re + l.b.re * l.b.re;
+          final imNorm = l.a.im * l.a.im + l.b.im * l.b.im;
+          final along = reNorm >= imNorm
+              ? chart.direction.x * l.b.re - chart.direction.y * l.a.re
+              : chart.direction.x * l.b.im - chart.direction.y * l.a.im;
+          expect(along, greaterThanOrEqualTo(0));
+        });
 
     Glados2(any.projLine, any.positiveDouble).test(
       'orientation is invariant under positive real rescaling',

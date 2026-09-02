@@ -12,6 +12,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+
 import '../wide_window.dart';
 
 /// The hide flows through the app-bar hide/delete group: its Hide item

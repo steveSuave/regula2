@@ -63,9 +63,8 @@ abstract final class AppTheme {
   static const Color _darkCanvas = Color(0xFF14181D);
 
   static ThemeData light() => ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: _seed,
-    ).copyWith(primary: _lightPrimary, tertiary: _lightTertiary),
+    colorScheme: ColorScheme.fromSeed(seedColor: _seed)
+        .copyWith(primary: _lightPrimary, tertiary: _lightTertiary),
     scaffoldBackgroundColor: _lightCanvas,
     extensions: const [
       CanvasColors(

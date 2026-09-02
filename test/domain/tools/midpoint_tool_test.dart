@@ -106,9 +106,9 @@ void main() {
       final t = tool();
 
       t.onInput(ToolInput(p.position, hit: p));
-      final result =
-          t.onInput(ToolInput(const Vec2(5, 1.1), hit: circle))
-              as ToolCommitted;
+      final result = t.onInput(
+        ToolInput(const Vec2(5, 1.1), hit: circle),
+      ) as ToolCommitted;
 
       result.command.apply(construction);
       expect(construction.objects.whereType<CircleCenter>(), isEmpty);
