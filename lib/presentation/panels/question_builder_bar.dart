@@ -5,6 +5,8 @@ import '../../application/providers/construction_provider.dart';
 import '../../application/providers/prover_provider.dart';
 import '../../application/providers/question_draft_provider.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/math/rational.dart';
+import '../../domain/prover/predicate.dart';
 import '../../domain/prover/question_draft.dart';
 import '../../domain/prover/question_template.dart';
 import 'object_kind_label.dart';
@@ -38,6 +40,9 @@ class QuestionBuilderBar extends ConsumerWidget {
 
   static Key slotKey(int index) => Key('question-slot-$index');
 
+  /// The value field of a value-carrying template (Phase 185).
+  static const Key valueKey = Key('question-value');
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final draft = ref.watch(questionDraftProvider);
@@ -50,6 +55,13 @@ class QuestionBuilderBar extends ConsumerWidget {
     final notifier = ref.read(questionDraftProvider.notifier);
     final question = check?.question;
     final canAsk = question != null && !check!.refuted;
+    // The reader (Phase 185): a complete value draft can be read from
+    // the construction instead of typed, unless the prover is busy.
+    final spellings = draft.template.carriesValue && draft.isComplete
+        ? draft.constantSpellings(objects)
+        : null;
+    final running = ref.watch(proverProvider) is ProverRunning;
+    final canRead = spellings != null && !running;
 
     return Material(
       key: barKey,
@@ -120,6 +132,45 @@ class QuestionBuilderBar extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (draft.template.carriesValue) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    _ValueField(
+                      key: valueKey,
+                      kind: draft.template.kind,
+                      value: draft.value,
+                      onChanged: notifier.setValue,
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: canRead
+                          ? () async {
+                              final messenger = ScaffoldMessenger.maybeOf(
+                                context,
+                              );
+                              final value = await ref
+                                  .read(proverProvider.notifier)
+                                  .read(draft.template.kind, spellings);
+                              if (value != null) {
+                                notifier.setValue(value);
+                              } else {
+                                messenger?.showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'The construction does not determine '
+                                      'this value.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
+                      child: const Text('Read'),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 6),
               Row(
                 children: [
@@ -184,6 +235,10 @@ class QuestionBuilderBar extends ConsumerWidget {
       };
       return 'Tap $what on the figure: ${slot.role} (${group.label}).';
     }
+    if (draft.needsValue) {
+      return 'Type the ${_ValueField.noun(draft.template.kind)}, or Read '
+          'it from the construction.';
+    }
     if (check == null) return '';
     final question = check.question;
     if (question == null) {
@@ -194,6 +249,111 @@ class QuestionBuilderBar extends ConsumerWidget {
           'perturbed.';
     }
     return questionLabel(question);
+  }
+}
+
+/// The value of a value-carrying template (Phase 185): an angle in
+/// degrees, a ratio, or a length, typed as an exact rational — the
+/// constant tools' parser, `Rational.tryParse`, so what the question
+/// states is what was typed — or filled by the reader, in which case
+/// the field follows the draft.
+///
+/// Owns its controller for the dialogs' reason (the widget outlives a
+/// rebuild). What it shows for an angle is degrees, what it hands the
+/// draft is the residue: degrees over 180, reduced mod 1, so 60, 240
+/// and −120 are one question. An unparseable text clears the value —
+/// the draft then waits, and Ask stays off — rather than keeping a
+/// stale one the field no longer shows.
+class _ValueField extends StatefulWidget {
+  const _ValueField({
+    super.key,
+    required this.kind,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final PredicateKind kind;
+  final Rational? value;
+  final ValueChanged<Rational?> onChanged;
+
+  /// What the status line calls the value.
+  static String noun(PredicateKind kind) => switch (kind) {
+    PredicateKind.aconst => 'angle in degrees',
+    PredicateKind.rconst => 'ratio',
+    _ => 'length',
+  };
+
+  /// The value as the field shows it: degrees for an angle.
+  static String display(PredicateKind kind, Rational value) =>
+      kind == PredicateKind.aconst
+      ? (value * Rational.whole(180)).toString()
+      : value.toString();
+
+  /// The field's text as the draft's value: the residue for an angle.
+  static Rational? parse(PredicateKind kind, String text) {
+    final value = Rational.tryParse(text);
+    if (value == null) return null;
+    return kind == PredicateKind.aconst
+        ? (value / Rational.whole(180)).modOne()
+        : value;
+  }
+
+  @override
+  State<_ValueField> createState() => _ValueFieldState();
+}
+
+class _ValueFieldState extends State<_ValueField> {
+  late final _controller = TextEditingController(
+    text: widget.value == null
+        ? ''
+        : _ValueField.display(widget.kind, widget.value!),
+  );
+
+  @override
+  void didUpdateWidget(_ValueField old) {
+    super.didUpdateWidget(old);
+    // The draft moved without the field (the reader filled it, or the
+    // template changed): show what it holds, unless the text already
+    // means it — retyping "60" as "60" would move the caret for nothing.
+    final held = widget.value;
+    if (held == old.value &&
+        widget.kind == old.kind &&
+        _ValueField.parse(widget.kind, _controller.text) == held) {
+      return;
+    }
+    if (_ValueField.parse(widget.kind, _controller.text) != held) {
+      _controller.text = held == null
+          ? ''
+          : _ValueField.display(widget.kind, held);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 150,
+      child: TextField(
+        controller: _controller,
+        style: theme.textTheme.bodyMedium,
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: switch (widget.kind) {
+            PredicateKind.aconst => 'degrees — e.g. 60 or 45/2',
+            PredicateKind.rconst => 'ratio — e.g. 2 or 3/2',
+            _ => 'length — e.g. 5/2',
+          },
+        ),
+        onChanged: (text) =>
+            widget.onChanged(_ValueField.parse(widget.kind, text)),
+      ),
+    );
   }
 }
 

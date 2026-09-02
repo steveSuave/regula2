@@ -7,8 +7,12 @@ import 'package:regula/application/providers/question_draft_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/question_draft.dart';
 import 'package:regula/domain/prover/question_template.dart';
@@ -322,6 +326,139 @@ void main() {
         ProverVerdict.proved,
       );
       expect(find.textContaining('proved'), findsOneWidget);
+    });
+  });
+
+  group('the value templates and the reader (Phase 185)', () {
+    /// Line AB and the 60° line through C carrying P, at screen scale.
+    Map<String, GeoPoint> seedSixty() {
+      final construction = container.read(constructionProvider).construction;
+      final a = free('a', 'A', 100, -300);
+      final b = free('b', 'B', 400, -300);
+      final c = free('c', 'C', 150, -150);
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final sixty = FixedAngleLine(
+        id: 'sixty',
+        through: c,
+        reference: ab,
+        turn: Rational.fromInts(1, 3),
+      );
+      final p = PointOnObject(
+        id: 'p',
+        curve: sixty,
+        parameter: 80,
+        attributes: const ObjectAttributes(name: 'P'),
+      );
+      for (final object in [a, b, c, ab, sixty, p]) {
+        construction.add(object);
+      }
+      return {'a': a, 'b': b, 'c': c, 'p': p};
+    }
+
+    TextButton readButton(WidgetTester tester) =>
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'Read'));
+
+    testWidgets('an angle of stated size waits for its value, reads it '
+        'from the construction, and asks with it', (tester) async {
+      final at = seedSixty();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await openBuilder(tester, QuestionTemplate.aconst);
+      expect(find.byKey(QuestionBuilderBar.valueKey), findsOneWidget);
+      expect(readButton(tester).onPressed, isNull, reason: 'slots first');
+
+      for (final id in ['a', 'b', 'c', 'p']) {
+        await tapPoint(tester, at[id]!);
+      }
+      expect(slotText(tester, 0), 'A·B');
+      expect(slotText(tester, 1), 'C·P');
+      expect(
+        inBar(find.textContaining('Type the angle in degrees, or Read')),
+        findsOneWidget,
+      );
+      expect(askButton(tester).onPressed, isNull, reason: 'no value yet');
+      expect(readButton(tester).onPressed, isNotNull);
+
+      await tester.tap(find.text('Read'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(
+              find.descendant(
+                of: find.byKey(QuestionBuilderBar.valueKey),
+                matching: find.byType(TextField),
+              ),
+            )
+            .controller!
+            .text,
+        '60',
+        reason: 'the reader fills the field, in degrees',
+      );
+      expect(
+        container.read(questionDraftProvider)!.value,
+        Rational.fromInts(1, 3),
+      );
+      expect(
+        inBar(find.text('the angle from AB to CP is π/3')),
+        findsOneWidget,
+      );
+      expect(askButton(tester).onPressed, isNotNull);
+
+      await tester.tap(find.text('Ask'));
+      await tester.pumpAndSettle();
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(
+        state.answer.question.canonical.toString(),
+        'aconst(a, b, c, p; 1/3)',
+      );
+    });
+
+    testWidgets('a typed value is exact and in degrees; a wrong one is '
+        'refuted before Ask; an undetermined read says so', (tester) async {
+      final at = seedSixty();
+      await pumpEditor(tester);
+      await openPanel(tester);
+      await openBuilder(tester, QuestionTemplate.aconst);
+      for (final id in ['a', 'b', 'c', 'p']) {
+        await tapPoint(tester, at[id]!);
+      }
+
+      await tester.enterText(find.byKey(QuestionBuilderBar.valueKey), '-120');
+      await tester.pump();
+      expect(
+        container.read(questionDraftProvider)!.value,
+        Rational.fromInts(1, 3),
+        reason: '−120° is the 60° line',
+      );
+      expect(askButton(tester).onPressed, isNotNull);
+
+      await tester.enterText(find.byKey(QuestionBuilderBar.valueKey), '45');
+      await tester.pump();
+      expect(find.textContaining('Not true in this figure'), findsOneWidget);
+      expect(askButton(tester).onPressed, isNull);
+
+      await tester.enterText(find.byKey(QuestionBuilderBar.valueKey), 'pi/3');
+      await tester.pump();
+      expect(container.read(questionDraftProvider)!.value, isNull);
+      expect(
+        inBar(find.textContaining('Type the angle in degrees')),
+        findsOneWidget,
+      );
+
+      // AC is at no stated angle to AB: the reader has nothing to say.
+      final notifier = container.read(questionDraftProvider.notifier);
+      notifier.put(1, at['c']!);
+      notifier.put(1, at['a']!);
+      await tester.pump();
+      expect(slotText(tester, 1), 'C·A');
+      await tester.tap(find.text('Read'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('The construction does not determine this value.'),
+        findsOneWidget,
+      );
+      expect(container.read(questionDraftProvider)!.value, isNull);
     });
   });
 }
