@@ -1,0 +1,19 @@
+test/domain/prover/fact_test.dart
+  s_ff61d5a94efd8a::t_805e495f7ca244 415
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "576ed165b10b917e3c30e4d8e506bd2c6702d70b",
+  "prompts": {},
+  "sessions": {
+    "s_ff61d5a94efd8a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b2765aed-fe38-4787-b722-48622e94dcdd",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
