@@ -60,7 +60,8 @@ class SlotGroup {
 /// question can be asked with no selection at all. Exhaustive over the
 /// vocabulary by construction: a `PredicateKind` with no template is a
 /// question the builder cannot phrase, and the test pins that there is
-/// none.
+/// none — the value-carrying kinds included since Phase 185, whose
+/// value is the one input a slot cannot hold ([carriesValue]).
 ///
 /// The [kind] is the kind of the question *produced*. For the two
 /// sugared templates it is the kind the sugar lowers to — `coll` about a
@@ -152,6 +153,22 @@ enum QuestionTemplate {
   tangent('Tangent', PredicateKind.perp, [
     SlotGroup('Line', [QuestionSlot(SlotType.line, 'Line')]),
     SlotGroup('Circle', [QuestionSlot(SlotType.circle, 'Circle')]),
+  ]),
+  // The value-carrying templates (Phase 185): their slots are figure
+  // objects like every other template's, and the value they state is
+  // the draft's separate [QuestionDraft.value] — typed, or read from
+  // the closure. The order is the statement's: `aconst(from, to)` is
+  // the turn from the first line to the second.
+  aconst('Angle of stated size', PredicateKind.aconst, [
+    SlotGroup('From line', [QuestionSlot(SlotType.line, 'Line')]),
+    SlotGroup('To line', [QuestionSlot(SlotType.line, 'Line')]),
+  ]),
+  rconst('Ratio of stated value', PredicateKind.rconst, [
+    SlotGroup('First segment', [QuestionSlot(SlotType.segment, 'Segment')]),
+    SlotGroup('Second segment', [QuestionSlot(SlotType.segment, 'Segment')]),
+  ]),
+  lconst('Length of stated value', PredicateKind.lconst, [
+    SlotGroup('Segment', [QuestionSlot(SlotType.segment, 'Segment')]),
   ]);
 
   const QuestionTemplate(this.label, this.kind, this.groups);
@@ -164,6 +181,11 @@ enum QuestionTemplate {
 
   /// The slots, grouped, in fill order.
   final List<SlotGroup> groups;
+
+  /// Whether a filled template still needs a value before it is a
+  /// question — `aconst`, `rconst` and `lconst`, whose statement is
+  /// "this angle is 60°" and not merely "these two lines".
+  bool get carriesValue => kind.carriesValue;
 
   /// The slots flattened, in fill order — the index space a
   /// `QuestionDraft` is addressed in.

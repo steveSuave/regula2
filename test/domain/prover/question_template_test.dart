@@ -7,6 +7,7 @@ import 'package:regula/domain/construction/objects/line_through_two_points.dart'
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
 import 'package:regula/domain/prover/predicate.dart';
@@ -59,24 +60,21 @@ void main() {
   ];
 
   group('the templates', () {
-    test('every point-pure kind has a template that produces it', () {
-      // The value-carrying kinds (`rconst`/`lconst`, Phase 181) are the
-      // stated exclusion: a template's slots are figure objects, and a
-      // *value* needs an input surface the builder does not have — the
-      // app-facing constants ask is its own phase (PLAN §"The constants
-      // stack"). Until then they are stated by hypotheses and asked by
-      // the corpus rig, never phrased from a selection.
+    test('every kind has a template that produces it', () {
+      // The value-carrying kinds included (Phase 185): a template's
+      // slots are figure objects, and the value rides on the draft
+      // beside them — typed, or read from the closure.
       expect(
         {for (final t in QuestionTemplate.values) t.kind},
-        containsAll(PredicateKind.values.where((kind) => !kind.carriesValue)),
+        containsAll(PredicateKind.values),
         reason: 'any question can be asked with no selection at all',
       );
       expect(
         {
-          for (final t in QuestionTemplate.values) t.kind,
-        }.any((kind) => kind.carriesValue),
-        isFalse,
-        reason: 'no template can fill a value slot it does not have',
+          for (final t in QuestionTemplate.values)
+            if (t.carriesValue) t.kind,
+        },
+        {PredicateKind.aconst, PredicateKind.rconst, PredicateKind.lconst},
       );
     });
 
@@ -423,6 +421,101 @@ void main() {
       draft.tap(r.o['a']!);
       expect(draft.current, 0);
       expect(() => draft.values[0] = null, throwsUnsupportedError);
+    });
+  });
+
+  group('the value templates (Phase 185)', () {
+    test('a filled aconst names its tuples, and is a question only with '
+        'a value', () {
+      final r = rig();
+      final draft = fill(QuestionTemplate.aconst, [r.o['ab']!, r.o['cd']!]);
+      expect(draft.isComplete, isTrue);
+      expect(draft.needsValue, isTrue);
+      expect(draft.question(r.construction.objects), isNull);
+      // Every witness pair on each line, the turn from the first to the
+      // second — cd's group includes x through the coincident line l.
+      expect(draft.constantSpellings(r.construction.objects), [
+        [r.o['a'], r.o['b'], r.o['c'], r.o['d']],
+        [r.o['a'], r.o['b'], r.o['c'], r.o['x']],
+        [r.o['a'], r.o['b'], r.o['d'], r.o['x']],
+      ]);
+
+      final stated = draft.withValue(Rational.zero);
+      expect(stated.needsValue, isFalse);
+      expect(stated.values, draft.values, reason: 'the slots are kept');
+      expect(spelled(stated.question(r.construction.objects)), [
+        'aconst(a, b, c, d; 0)',
+        'aconst(a, b, c, x; 0)',
+        'aconst(a, b, d, x; 0)',
+      ]);
+      expect(stated.withValue(null).needsValue, isTrue);
+    });
+
+    test('rconst and lconst read through the bounding pairs only', () {
+      final r = rig();
+      final ratio = fill(QuestionTemplate.rconst, [
+        r.o['ab']!,
+        r.o['cd']!,
+      ]).withValue(Rational.fromInts(3, 2));
+      expect(spelled(ratio.question(r.construction.objects)), [
+        'rconst(a, b, c, d; 3/2)',
+      ]);
+      final length = fill(QuestionTemplate.lconst, [
+        r.o['ab']!,
+      ]).withValue(Rational.whole(4));
+      expect(spelled(length.question(r.construction.objects)), [
+        'lconst(a, b; 4)',
+      ]);
+      // A ratio of a segment to itself names no statement.
+      final same = fill(QuestionTemplate.rconst, [
+        r.o['ab']!,
+        r.o['ab']!,
+      ]).withValue(Rational.whole(2));
+      expect(same.constantSpellings(r.construction.objects), isNull);
+      expect(same.question(r.construction.objects), isNull);
+    });
+
+    test('a value the kind cannot state is no question, not a throw', () {
+      final r = rig();
+      final angle = fill(QuestionTemplate.aconst, [r.o['ab']!, r.o['cd']!]);
+      expect(
+        angle
+            .withValue(Rational.fromInts(4, 3))
+            .question(r.construction.objects),
+        isNull,
+        reason: 'a residue lives in [0, 1)',
+      );
+      final ratio = fill(QuestionTemplate.rconst, [r.o['ab']!, r.o['cd']!]);
+      expect(
+        ratio.withValue(Rational.zero).question(r.construction.objects),
+        isNull,
+      );
+      expect(
+        ratio
+            .withValue(Rational.fromInts(-1, 2))
+            .question(r.construction.objects),
+        isNull,
+      );
+    });
+
+    test('a point-pure template has nowhere to put a value', () {
+      final r = rig();
+      final draft = fill(QuestionTemplate.para, [r.o['ab']!, r.o['cd']!]);
+      expect(identical(draft.withValue(Rational.one), draft), isTrue);
+      expect(draft.needsValue, isFalse);
+      expect(draft.constantSpellings(r.construction.objects), isNull);
+    });
+
+    test('correcting a slot keeps the value; the value survives put and '
+        'clear', () {
+      final r = rig();
+      final draft = fill(QuestionTemplate.aconst, [
+        r.o['ab']!,
+        r.o['cd']!,
+      ]).withValue(Rational.fromInts(1, 3));
+      expect(draft.put(1, r.o['bc']!)!.value, Rational.fromInts(1, 3));
+      expect(draft.clear(0).value, Rational.fromInts(1, 3));
+      expect(draft.clear(0).needsValue, isFalse, reason: 'not complete');
     });
   });
 }

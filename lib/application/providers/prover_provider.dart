@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/construction/geo_object.dart';
+import '../../domain/math/rational.dart';
 import '../../domain/prover/auxiliary_search.dart';
 import '../../domain/prover/carriers.dart';
 import '../../domain/prover/diagram_filter.dart';
@@ -8,6 +9,7 @@ import '../../domain/prover/event_loop_yield.dart';
 import '../../domain/prover/fact.dart';
 import '../../domain/prover/fact_database.dart';
 import '../../domain/prover/hypotheses.dart';
+import '../../domain/prover/predicate.dart';
 import '../../domain/prover/proof.dart';
 import '../../domain/prover/prover.dart';
 import '../../domain/prover/questions.dart';
@@ -696,6 +698,35 @@ class ProverNotifier extends _$ProverNotifier {
   /// a line is the prover's business (see [ProverQuestion]). "Holds"
   /// through [Prover.resolve], so an `eqangle` the angle side entails
   /// but DD never stores is an answer too, with its certificate.
+  /// The "what is this angle?" reader (Phase 185): runs the exchange to
+  /// its fixpoint — [prove], reusing a held run — and answers the value
+  /// the closures entail for [kind] over the first of [spellings] that
+  /// determines one, or null when none does. The spellings are one
+  /// statement's tuples (the draft's `constantSpellings`), tried in
+  /// order because the closure may know a line by one witness pair and
+  /// not another.
+  ///
+  /// Nothing is recorded and no answer is published: the run that was
+  /// consulted stays as the state ([ProverReady]), and the value goes
+  /// back to the draft, whose ordinary *Ask* then proves it with a
+  /// certificate. A reading is never a verdict — the ℤ-module line
+  /// (`AngleClosure.constantOf`) means a value comes back only when
+  /// unscaled entailment determines it.
+  Future<Rational?> read(
+    PredicateKind kind,
+    List<List<GeoPoint>> spellings, {
+    int? applicationBudget,
+  }) async {
+    await prove(applicationBudget: applicationBudget);
+    final engine = _engine;
+    if (engine == null || state is! ProverReady) return null;
+    for (final points in spellings) {
+      final value = engine.readConstant(kind, points);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
   static Fact? _derived(Prover engine, ProverQuestion question) {
     for (final spelling in question.spellings) {
       final fact = Fact.of(spelling);

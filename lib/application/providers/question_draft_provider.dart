@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/construction/geo_object.dart';
+import '../../domain/math/rational.dart';
 import '../../domain/prover/diagram_filter.dart';
 import '../../domain/prover/question_draft.dart';
 import '../../domain/prover/question_template.dart';
@@ -80,6 +81,15 @@ class QuestionDraftNotifier extends _$QuestionDraftNotifier {
     final draft = state;
     if (draft == null) return;
     state = draft.clear(index);
+  }
+
+  /// The stated value of a value-carrying draft (Phase 185) — typed
+  /// in the bar, or filled by the reader. A no-op while closed.
+  void setValue(Rational? value) {
+    final draft = state;
+    if (draft == null) return;
+    final next = draft.withValue(value);
+    if (!identical(next, draft)) state = next;
   }
 }
 
