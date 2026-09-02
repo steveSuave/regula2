@@ -353,10 +353,9 @@ void main() {
 class _StubLocus extends GeoLocus {
   _StubLocus({
     required super.id,
-    required List<Vec2?>? samples,
-    required List<Vec2> coreSamples,
-  }) : _samples = samples,
-       _coreSamples = coreSamples;
+    required this._samples,
+    required this._coreSamples,
+  });
 
   final List<Vec2?>? _samples;
   final List<Vec2> _coreSamples;

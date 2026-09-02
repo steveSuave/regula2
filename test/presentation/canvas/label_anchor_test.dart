@@ -138,10 +138,8 @@ void main() {
 /// A [GeoLocus] with hand-picked samples and core samples: the anchor
 /// consumes the kind accessors only.
 class _StubLocus extends GeoLocus {
-  _StubLocus({required List<Vec2?>? samples, required List<Vec2> coreSamples})
-    : _samples = samples,
-      _coreSamples = coreSamples,
-      super(id: 'loc');
+  _StubLocus({required this._samples, required this._coreSamples})
+    : super(id: 'loc');
 
   final List<Vec2?>? _samples;
   final List<Vec2> _coreSamples;

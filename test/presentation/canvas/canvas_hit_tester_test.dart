@@ -1113,8 +1113,7 @@ Matcher hasId(String id) => isA<GeoObject>().having((o) => o.id, 'id', id);
 /// kind accessor only, so tests can spell out runs and gaps directly
 /// instead of arranging a construction that produces them.
 class _StubLocus extends GeoLocus {
-  _StubLocus({required super.id, required List<Vec2?>? samples})
-    : _samples = samples;
+  _StubLocus({required super.id, required this._samples});
 
   final List<Vec2?>? _samples;
 

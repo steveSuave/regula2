@@ -377,9 +377,8 @@ class _TranslateDragSession implements DragSession {
     this._isFreePoint,
     this._grabStart,
     List<FreePoint> points, {
-    double gridSnapStep = 0,
-  }) : _gridSnapStep = gridSnapStep,
-       _pointIds = [for (final point in points) point.id],
+    this._gridSnapStep = 0,
+  }) : _pointIds = [for (final point in points) point.id],
        _startPositions = {
          for (final point in points) point.id: point.position,
        } {

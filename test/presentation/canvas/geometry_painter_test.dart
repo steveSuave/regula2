@@ -1069,8 +1069,7 @@ void main() {
 /// the painter consumes the kind accessor only, so runs and gaps can be
 /// spelled out directly.
 class _StubLocus extends GeoLocus {
-  _StubLocus({required super.id, required List<Vec2?>? samples})
-    : _samples = samples;
+  _StubLocus({required super.id, required this._samples});
 
   final List<Vec2?>? _samples;
 
