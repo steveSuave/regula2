@@ -1,0 +1,19 @@
+docs/TODO.md
+  s_a9d1761818649f::t_3fde60d3a72e93 17-27,32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "56435a3de80b27c82fe80aefd6fbc3f096aba467",
+  "prompts": {},
+  "sessions": {
+    "s_a9d1761818649f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "97095338-2210-4f46-b715-5cdd5c794b3a",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
