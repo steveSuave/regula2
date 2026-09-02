@@ -10,6 +10,8 @@ import 'package:regula/domain/commands/set_geometry_command.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/nine_point_circle.dart';
+import 'package:regula/domain/math/rational.dart';
+import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
@@ -17,6 +19,7 @@ import 'package:regula/domain/tools/bifocal_conic_tool.dart';
 import 'package:regula/domain/tools/conic_tool.dart';
 import 'package:regula/domain/tools/distance_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/fixed_angle_line_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
 import 'package:regula/domain/tools/focal_conic_tool.dart';
@@ -32,15 +35,19 @@ import 'package:regula/domain/tools/polar_line_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/radical_axis_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
+import 'package:regula/domain/tools/ratio_apollonius_circle_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/rhombus_macro_tool.dart';
 import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/scaled_compass_circle_tool.dart';
 import 'package:regula/domain/tools/slope_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
+import 'package:regula/domain/tools/stated_radius_circle_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/three_point_tool.dart';
+import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/triangle_circle_tool.dart';
@@ -579,6 +586,227 @@ void main() {
       for (final entry in macros.entries)
         if (!entry.value.availableUnder(Absolute.hyperbolic)) entry.key,
     }, euclideanOnlyMacros.keys.toSet());
+  });
+
+  test('every constant row the toolbar disables is one its tool refuses', () {
+    // The Phase 184 twin of the macro check above: `euclideanOnlyConstants`
+    // for the user, the tools' own refusal for the construction.
+    final constants = <AppAction, bool Function()>{
+      AppAction.fixedAngleLineTool: () =>
+          FixedAngleLineTool(
+                newId: () => 'x',
+                turn: Rational.fromInts(1, 3),
+              ).onInput(
+                const ToolInput(Vec2(1, 1), absolute: Absolute.hyperbolic),
+              )
+              is ToolIgnored,
+      AppAction.statedRadiusCircleTool: () => !StatedRadiusCircleTool(
+        newId: () => 'x',
+        radius: Rational.one,
+      ).availableUnder(Absolute.hyperbolic),
+      AppAction.scaledCompassCircleTool: () => !ScaledCompassCircleTool(
+        newId: () => 'x',
+        factor: Rational.whole(2),
+      ).availableUnder(Absolute.hyperbolic),
+      AppAction.ratioApolloniusCircleTool: () => !RatioApolloniusCircleTool(
+        newId: () => 'x',
+        ratio: Rational.whole(2),
+      ).availableUnder(Absolute.hyperbolic),
+    };
+    expect({
+      for (final entry in constants.entries)
+        if (entry.value()) entry.key,
+    }, euclideanOnlyConstants.keys.toSet());
+  });
+
+  testWidgets('the stated-angle item asks in degrees and keeps the residue; '
+      'the stated-radius item refuses an irrational', (tester) async {
+    await pumpEditor(tester);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+
+    Future<void> pickStatedAngle() async {
+      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Line at a stated angle…'));
+      await tester.pumpAndSettle();
+    }
+
+    await pickStatedAngle();
+    expect(find.text('Stated angle'), findsOneWidget);
+    expect(
+      find.text('G ⇧ D'),
+      findsOneWidget,
+      reason: 'the title carries the chord',
+    );
+    await tester.enterText(find.byType(TextField), 'pi/3');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(
+      container.read(toolProvider).tool,
+      isNull,
+      reason: 'the exact dialog reads an expression as cancel, never rounds',
+    );
+
+    await pickStatedAngle();
+    await tester.enterText(find.byType(TextField), '-120');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final line = container.read(toolProvider).tool;
+    expect(line, isA<FixedAngleLineTool>());
+    expect(
+      (line! as FixedAngleLineTool).turn,
+      Rational.fromInts(1, 3),
+      reason: '−120° is the 60° line: degrees over 180, reduced mod 1',
+    );
+    expect(
+      iconColor(tester, Icons.timeline),
+      theme.colorScheme.primary,
+      reason: 'FixedAngleLineTool must highlight the Lines group',
+    );
+
+    container.read(toolProvider.notifier).deactivate();
+    await tester.pump();
+
+    Future<void> pickStatedRadius() async {
+      await tester.tap(find.byIcon(Icons.circle_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Circle with stated radius…'));
+      await tester.pumpAndSettle();
+    }
+
+    await pickStatedRadius();
+    expect(find.text('Stated radius'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'sqrt(2)');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await pickStatedRadius();
+    await tester.enterText(find.byType(TextField), '-2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull, reason: 'positive only');
+
+    await pickStatedRadius();
+    await tester.enterText(find.byType(TextField), '2.5');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final circle = container.read(toolProvider).tool;
+    expect(circle, isA<StatedRadiusCircleTool>());
+    expect((circle! as StatedRadiusCircleTool).radius, Rational.fromInts(5, 2));
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      theme.colorScheme.primary,
+      reason: 'StatedRadiusCircleTool must highlight the Circles group',
+    );
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+    );
+  });
+
+  testWidgets('the compass-scale and Apollonius-ratio items ask, and 1 is '
+      'accepted by both', (tester) async {
+    await pumpEditor(tester);
+
+    Future<void> pickCircleItem(String name) async {
+      await tester.tap(find.byIcon(Icons.circle_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(name));
+      await tester.pumpAndSettle();
+    }
+
+    await pickCircleItem('Compass scaled by a stated ratio…');
+    expect(find.text('Compass scale'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '3/2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final compass = container.read(toolProvider).tool;
+    expect(compass, isA<ScaledCompassCircleTool>());
+    expect(
+      (compass! as ScaledCompassCircleTool).factor,
+      Rational.fromInts(3, 2),
+    );
+
+    container.read(toolProvider.notifier).deactivate();
+    await tester.pump();
+    await pickCircleItem('Apollonius circle with stated ratio…');
+    expect(find.text('Apollonius ratio'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '1');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final apollonius = container.read(toolProvider).tool;
+    expect(apollonius, isA<RatioApolloniusCircleTool>());
+    expect(
+      (apollonius! as RatioApolloniusCircleTool).ratio,
+      Rational.one,
+      reason: 'ratio 1 is a legal ask — the tool builds the bisector for it',
+    );
+  });
+
+  testWidgets('the constant rows are disabled in a curved plane, with the '
+      'reason where the explanation was', (tester) async {
+    await pumpEditor(tester);
+
+    Future<Map<String, bool>> rowsOf(IconData icon) async {
+      await tester.tap(find.byIcon(icon));
+      await tester.pumpAndSettle();
+      final rows = <String, bool>{};
+      for (final element in find.byType(ToolMenuRow).evaluate()) {
+        final row = element.widget as ToolMenuRow;
+        final item = element
+            .findAncestorWidgetOfExactType<PopupMenuItem<ToolPick>>()!;
+        rows[row.label] = item.enabled;
+      }
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+      return rows;
+    }
+
+    expect(
+      (await rowsOf(
+        Icons.timeline,
+      ))['Line at a stated angle (point, then reference line)…'],
+      isTrue,
+    );
+
+    container
+        .read(commandStackProvider.notifier)
+        .execute(
+          SetGeometryCommand(
+            const DocumentKernel(metric: FundamentalConic.hyperbolic),
+          ),
+        );
+    await tester.pumpAndSettle();
+
+    final lines = await rowsOf(Icons.timeline);
+    expect(
+      lines['Line at a stated angle (a stated angle is Euclidean)'],
+      isFalse,
+    );
+    expect(
+      lines['Perpendicular line'],
+      isTrue,
+      reason: 'only the constant rows',
+    );
+    final circles = await rowsOf(Icons.circle_outlined);
+    expect(
+      circles['Circle with stated radius (a stated length is Euclidean)'],
+      isFalse,
+    );
+    expect(
+      circles['Compass scaled by a stated ratio (a stated ratio is Euclidean)'],
+      isFalse,
+    );
+    expect(
+      circles['Apollonius circle with stated ratio (a stated ratio is Euclidean)'],
+      isFalse,
+    );
+    expect(
+      circles.entries.where((row) => !row.value).length,
+      3,
+      reason: 'the float circle-by-radius row and the rest stay enabled',
+    );
   });
 
   testWidgets('the macros a curved plane has no figure for are disabled, '

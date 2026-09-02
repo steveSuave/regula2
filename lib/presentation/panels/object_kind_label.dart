@@ -11,6 +11,7 @@ import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/five_point_conic.dart';
+import '../../domain/construction/objects/fixed_angle_line.dart';
 import '../../domain/construction/objects/focal_conic.dart';
 import '../../domain/construction/objects/harmonic_conjugate_point.dart';
 import '../../domain/construction/objects/homothetic_point.dart';
@@ -29,13 +30,17 @@ import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
+import '../../domain/construction/objects/ratio_apollonius_circle.dart';
 import '../../domain/construction/objects/ray.dart';
+import '../../domain/construction/objects/scaled_compass_circle.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/slope_measurement.dart';
+import '../../domain/construction/objects/stated_radius_circle.dart';
 import '../../domain/construction/objects/tangent_line.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
+import '../../domain/math/rational.dart';
 
 /// The user-facing name of an object's construction kind, for the
 /// inspector and (later) the object tree.
@@ -69,6 +74,11 @@ String objectKindLabel(GeoObject object) => switch (object) {
   TangentLine() => 'Tangent line',
   PolarLine() => 'Polar line',
   RadicalAxisLine() => 'Radical axis',
+  // The constant-stating kinds (Phase 184) carry their value in the
+  // label: the number *is* what distinguishes them from the kind they
+  // otherwise look like, and it is exact, so it is spelled exactly —
+  // "45/2°", never "22.5°".
+  FixedAngleLine(:final turn) => 'Line at ${turn * Rational.whole(180)}°',
   GeoLine() => 'Line',
   Arc() => 'Arc',
   Sector() => 'Sector',
@@ -77,6 +87,9 @@ String objectKindLabel(GeoObject object) => switch (object) {
   NinePointCircle() => 'Nine-point circle',
   InscribedCircle() => 'Inscribed circle',
   ApolloniusCircle() => 'Apollonius circle',
+  StatedRadiusCircle(:final radius) => 'Circle of radius $radius',
+  ScaledCompassCircle(:final factor) => 'Compass circle × $factor',
+  RatioApolloniusCircle(:final ratio) => 'Apollonius circle, ratio $ratio',
   FivePointConic() => 'Conic',
   // The stored parameter *is* the class here, so the label reads it
   // back rather than asking `ConicShape` — a parabola built as one

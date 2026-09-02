@@ -3,6 +3,7 @@ import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
@@ -12,10 +13,14 @@ import 'package:regula/domain/construction/objects/line_through_two_points.dart'
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
+import 'package:regula/domain/construction/objects/ratio_apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
+import 'package:regula/domain/construction/objects/scaled_compass_circle.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
 
@@ -99,6 +104,65 @@ void main() {
     expect(
       objectKindLabel(LineAngle(id: 'la', line1: line1, line2: line2)),
       'Angle between lines',
+    );
+  });
+
+  test('the constant-stating kinds spell their exact value in the label', () {
+    expect(
+      objectKindLabel(
+        FixedAngleLine(
+          id: 'fa',
+          through: c,
+          reference: line1,
+          turn: Rational.fromInts(1, 3),
+        ),
+      ),
+      'Line at 60°',
+    );
+    expect(
+      objectKindLabel(
+        FixedAngleLine(
+          id: 'fb',
+          through: c,
+          reference: line1,
+          turn: Rational.fromInts(1, 8),
+        ),
+      ),
+      'Line at 45/2°',
+      reason: 'exact, never a rounded decimal',
+    );
+    expect(
+      objectKindLabel(
+        StatedRadiusCircle(
+          id: 'sr',
+          center: a,
+          radius: Rational.fromInts(5, 2),
+        ),
+      ),
+      'Circle of radius 5/2',
+    );
+    expect(
+      objectKindLabel(
+        ScaledCompassCircle(
+          id: 'sc',
+          center: c,
+          radiusPoint1: a,
+          radiusPoint2: b,
+          factor: Rational.fromInts(3, 2),
+        ),
+      ),
+      'Compass circle × 3/2',
+    );
+    expect(
+      objectKindLabel(
+        RatioApolloniusCircle(
+          id: 'ra',
+          point1: a,
+          point2: b,
+          ratio: Rational.whole(2),
+        ),
+      ),
+      'Apollonius circle, ratio 2',
     );
   });
 }
