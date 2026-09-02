@@ -29,6 +29,7 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/math/expression.dart';
+import '../../domain/math/rational.dart';
 import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/angle_tool.dart';
@@ -37,6 +38,7 @@ import '../../domain/tools/bifocal_conic_tool.dart';
 import '../../domain/tools/conic_tool.dart';
 import '../../domain/tools/distance_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
+import '../../domain/tools/fixed_angle_line_tool.dart';
 import '../../domain/tools/fixed_length_segment_tool.dart';
 import '../../domain/tools/fixed_radius_circle_tool.dart';
 import '../../domain/tools/focal_conic_tool.dart';
@@ -55,13 +57,16 @@ import '../../domain/tools/polar_line_tool.dart';
 import '../../domain/tools/polygon_tool.dart';
 import '../../domain/tools/radical_axis_tool.dart';
 import '../../domain/tools/random_shape_stamp_tool.dart';
+import '../../domain/tools/ratio_apollonius_circle_tool.dart';
 import '../../domain/tools/rectangle_macro_tool.dart';
 import '../../domain/tools/regular_polygon_macro_tool.dart';
 import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
 import '../../domain/tools/right_triangle_macro_tool.dart';
+import '../../domain/tools/scaled_compass_circle_tool.dart';
 import '../../domain/tools/slope_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
+import '../../domain/tools/stated_radius_circle_tool.dart';
 import '../../domain/tools/tangent_tool.dart';
 import '../../domain/tools/three_point_tool.dart';
 import '../../domain/tools/tool.dart';
@@ -173,6 +178,20 @@ const euclideanOnlyMacros = <AppAction, String>{
   AppAction.rightTrapeziumMacroTool: 'no unique parallel outside Euclid',
 };
 
+/// The constant-stating tools (Phase 184), Euclidean-only for the reason
+/// the vocabulary they feed is: a rational turn of π, a stated length
+/// and a stated ratio are chart statements, and a Cayley–Klein measure
+/// is a logarithm — reinterpreting the number would change what the
+/// hypothesis asserts (PLAN §"The constants stack"). Same arrangement as
+/// [euclideanOnlyMacros]: the tools refuse the document themselves, and
+/// `toolbar_test` checks the two against each other.
+const euclideanOnlyConstants = <AppAction, String>{
+  AppAction.fixedAngleLineTool: 'a stated angle is Euclidean',
+  AppAction.statedRadiusCircleTool: 'a stated length is Euclidean',
+  AppAction.scaledCompassCircleTool: 'a stated ratio is Euclidean',
+  AppAction.ratioApolloniusCircleTool: 'a stated ratio is Euclidean',
+};
+
 /// [label] with its parenthesized explanation replaced by [reason] — the
 /// disabled form of a flyout row, which still has to name its tool.
 String unavailableLabel(String label, String reason) =>
@@ -220,9 +239,13 @@ class GeometryToolbar extends ConsumerWidget {
         tool is PolarLineTool ||
         tool is RadicalAxisTool ||
         tool is FixedLengthSegmentTool ||
+        tool is FixedAngleLineTool ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
         tool is FixedRadiusCircleTool ||
+        tool is StatedRadiusCircleTool ||
+        tool is ScaledCompassCircleTool ||
+        tool is RatioApolloniusCircleTool ||
         tool is TriangleCircleTool ||
         (tool is TwoPointTool &&
             _twoPointCircleBuilders.contains(tool.build)) ||
@@ -309,6 +332,34 @@ class GeometryToolbar extends ConsumerWidget {
           : FixedLengthSegmentTool(newId: newObjectId, length: length);
     }
 
+    Future<Tool?> fixedAngleLinePick() async {
+      final turn = await askStatedAngle(context);
+      return turn == null
+          ? null
+          : FixedAngleLineTool(newId: newObjectId, turn: turn);
+    }
+
+    Future<Tool?> statedRadiusPick() async {
+      final radius = await askStatedRadius(context);
+      return radius == null
+          ? null
+          : StatedRadiusCircleTool(newId: newObjectId, radius: radius);
+    }
+
+    Future<Tool?> scaledCompassPick() async {
+      final factor = await askCompassScale(context);
+      return factor == null
+          ? null
+          : ScaledCompassCircleTool(newId: newObjectId, factor: factor);
+    }
+
+    Future<Tool?> ratioApolloniusPick() async {
+      final ratio = await askApolloniusRatio(context);
+      return ratio == null
+          ? null
+          : RatioApolloniusCircleTool(newId: newObjectId, ratio: ratio);
+    }
+
     final moveActive = tool == null;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -378,6 +429,7 @@ class GeometryToolbar extends ConsumerWidget {
               'Lines: line, segment, ray, perpendicular, parallel, '
               'bisectors, tangents, polar, radical axis',
           active: linesActive,
+          unavailable: euclidean ? const {} : euclideanOnlyConstants,
           items: [
             ('Line', _twoPoint(buildLine), AppAction.lineTool),
             ('Segment', _twoPoint(buildSegment), AppAction.segmentTool),
@@ -390,6 +442,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Segment with given length (endpoint, then direction)…',
               segmentLengthPick,
               AppAction.fixedLengthSegmentTool,
+            ),
+            (
+              'Line at a stated angle (point, then reference line)…',
+              fixedAngleLinePick,
+              AppAction.fixedAngleLineTool,
             ),
             (
               'Perpendicular line',
@@ -450,6 +507,7 @@ class GeometryToolbar extends ConsumerWidget {
               'three-point, compass, arc, sector, nine-point, inscribed, '
               'Apollonius',
           active: circlesActive,
+          unavailable: euclidean ? const {} : euclideanOnlyConstants,
           items: [
             (
               'Circle (center, then rim)',
@@ -467,6 +525,11 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.fixedRadiusCircleTool,
             ),
             (
+              'Circle with stated radius (tap the center)…',
+              statedRadiusPick,
+              AppAction.statedRadiusCircleTool,
+            ),
+            (
               'Circle through three points',
               _threePoint(buildThreePointCircle),
               AppAction.threePointCircleTool,
@@ -475,6 +538,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Compass (radius points, then center)',
               _threePoint(buildCompassCircle),
               AppAction.compassTool,
+            ),
+            (
+              'Compass scaled by a stated ratio (radius points, then center)…',
+              scaledCompassPick,
+              AppAction.scaledCompassCircleTool,
             ),
             ('Arc (start, via, end)', _threePoint(buildArc), AppAction.arcTool),
             (
@@ -496,6 +564,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Apollonius circle (A, B, then the ratio point)',
               _threePoint(buildApolloniusCircle),
               AppAction.apolloniusCircleTool,
+            ),
+            (
+              'Apollonius circle with stated ratio (A, then B)…',
+              ratioApolloniusPick,
+              AppAction.ratioApolloniusCircleTool,
             ),
           ],
         ),
@@ -990,6 +1063,71 @@ Future<double?> askEccentricity(BuildContext context) => _askLength(
   hint: 'ratio — below 1 an ellipse, 1 a parabola, above 1 a hyperbola',
 );
 
+/// Asks for the stated angle of a `FixedAngleLine` in degrees and
+/// returns it as the carrier's residue — a rational in units of π,
+/// reduced into `[0, 1)` — behind the Lines flyout item and the `G ⇧ D`
+/// chord (Phase 184). Degrees are what a user thinks in; the residue is
+/// what the hypothesis states, and 60, 240 and −120 are one line.
+///
+/// Exact input only ([Rational.tryParse]): `sqrt(2)` or `pi` reads as
+/// cancel rather than rounding, because the value goes into a
+/// hypothesis a proof will cite. Negative is clockwise, as in the float
+/// angle dialogs.
+Future<Rational?> askStatedAngle(BuildContext context) => _askRational(
+  context,
+  'Stated angle',
+  AppAction.fixedAngleLineTool,
+  hint: 'degrees from the reference line, exact — e.g. 60, -30 or 45/2',
+  read: (degrees) => (degrees / Rational.whole(180)).modOne(),
+);
+
+/// Asks for a `StatedRadiusCircle`'s exact radius in world units —
+/// behind the Circles flyout item and the `G ⇧ R` chord. Positive only;
+/// an irrational reads as cancel (see [askStatedAngle]).
+Future<Rational?> askStatedRadius(BuildContext context) => _askRational(
+  context,
+  'Stated radius',
+  AppAction.statedRadiusCircleTool,
+  hint: 'world units, exact — e.g. 3, 5/2 or 2.5',
+  read: (value) => value.isNegative || value.isZero ? null : value,
+);
+
+/// Asks for a `ScaledCompassCircle`'s exact scale factor — behind the
+/// Circles flyout item and the `G ⇧ O` chord. Positive only; 1 is
+/// accepted and builds the plain compass circle.
+Future<Rational?> askCompassScale(BuildContext context) => _askRational(
+  context,
+  'Compass scale',
+  AppAction.scaledCompassCircleTool,
+  hint: 'radius = ratio · distance between the radius points — e.g. 2 or 3/2',
+  read: (value) => value.isNegative || value.isZero ? null : value,
+);
+
+/// Asks for a `RatioApolloniusCircle`'s exact ratio — behind the Circles
+/// flyout item and the `G ⇧ Q` chord. Positive only; 1 is accepted and
+/// builds the perpendicular bisector, which is that locus.
+Future<Rational?> askApolloniusRatio(BuildContext context) => _askRational(
+  context,
+  'Apollonius ratio',
+  AppAction.ratioApolloniusCircleTool,
+  hint: '|PA| / |PB| for every point P of the circle — e.g. 2 or 1/3',
+  read: (value) => value.isNegative || value.isZero ? null : value,
+);
+
+/// The exact-rational sibling of [_askLength]: [read] turns the parsed
+/// number into the value the tool wants, or null to read as cancel.
+Future<Rational?> _askRational(
+  BuildContext context,
+  String title,
+  AppAction action, {
+  required String hint,
+  required Rational? Function(Rational value) read,
+}) => showDialog<Rational>(
+  context: context,
+  builder: (context) =>
+      _RationalDialog(title: title, action: action, hint: hint, read: read),
+);
+
 /// Asks for a regular polygon's side count — the shared path behind the
 /// Macros flyout item and the `X G` shortcut. Integer 3–100; anything
 /// else (cancel, garbage, out of range) reads as cancel, matching the
@@ -1219,6 +1357,65 @@ class _LengthDialogState extends State<_LengthDialog> {
         TextButton(
           onPressed: () =>
               Navigator.pop(context, _parseLength(_controller.text)),
+          child: const Text('OK'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Exact-rational sibling of [_LengthDialog] (same controller-lifetime
+/// reasoning) for the constant-stating tools (Phase 184): the text is
+/// read through [Rational.tryParse], never the float expression parser,
+/// so what the tool states is what the user typed.
+class _RationalDialog extends StatefulWidget {
+  const _RationalDialog({
+    required this.title,
+    required this.action,
+    required this.hint,
+    required this.read,
+  });
+
+  final String title;
+  final AppAction action;
+  final String hint;
+  final Rational? Function(Rational value) read;
+
+  @override
+  State<_RationalDialog> createState() => _RationalDialogState();
+}
+
+class _RationalDialogState extends State<_RationalDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Rational? _parse(String text) {
+    final value = Rational.tryParse(text);
+    return value == null ? null : widget.read(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: _DialogTitle(widget.title, widget.action),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(hintText: widget.hint),
+        onSubmitted: (text) => Navigator.pop(context, _parse(text)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _parse(_controller.text)),
           child: const Text('OK'),
         ),
       ],

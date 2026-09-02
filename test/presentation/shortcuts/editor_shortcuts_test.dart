@@ -33,7 +33,9 @@ import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/slope_measurement.dart';
+import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
@@ -60,6 +62,7 @@ import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/slope_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
+import 'package:regula/domain/tools/stated_radius_circle_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/three_point_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
@@ -912,6 +915,42 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
     expect(activeTool(), isA<RadicalAxisTool>());
+  });
+
+  testWidgets('G ⇧ R asks for the stated radius; OK builds an exact circle '
+      'end to end', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Stated radius'),
+      findsOneWidget,
+      reason: 'G ⇧ R is the stated radius — G R stays the segment ratio',
+    );
+
+    await tester.enterText(find.byType(TextField), '5/2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final tool = activeTool();
+    expect(tool, isA<StatedRadiusCircleTool>());
+    expect((tool! as StatedRadiusCircleTool).radius, Rational.fromInts(5, 2));
+
+    tapWorld(1, 1);
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
+    expect(objects.last, isA<StatedRadiusCircle>());
+    expect(
+      (objects.last as StatedRadiusCircle).radius,
+      Rational.fromInts(5, 2),
+      reason: 'the value the circle states is the one typed, exactly',
+    );
   });
 
   testWidgets('G ⇧ P activates the polar-line tool', (tester) async {

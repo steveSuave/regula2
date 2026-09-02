@@ -42,6 +42,7 @@ import 'domain/tools/conic_tool.dart';
 import 'domain/tools/delete_tool.dart';
 import 'domain/tools/distance_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
+import 'domain/tools/fixed_angle_line_tool.dart';
 import 'domain/tools/fixed_length_segment_tool.dart';
 import 'domain/tools/fixed_radius_circle_tool.dart';
 import 'domain/tools/focal_conic_tool.dart';
@@ -60,16 +61,20 @@ import 'domain/tools/polar_line_tool.dart';
 import 'domain/tools/polygon_tool.dart';
 import 'domain/tools/radical_axis_tool.dart';
 import 'domain/tools/random_shape_stamp_tool.dart';
+import 'domain/tools/ratio_apollonius_circle_tool.dart';
 import 'domain/tools/rectangle_macro_tool.dart';
 import 'domain/tools/regular_polygon_macro_tool.dart';
 import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/right_triangle_macro_tool.dart';
+import 'domain/tools/scaled_compass_circle_tool.dart';
 import 'domain/tools/slope_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
+import 'domain/tools/stated_radius_circle_tool.dart';
 import 'domain/tools/tangent_tool.dart';
 import 'domain/tools/text_tool.dart';
 import 'domain/tools/three_point_tool.dart';
+import 'domain/tools/tool.dart';
 import 'domain/tools/transform_object_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
@@ -718,6 +723,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     ref.read(toolProvider.notifier).activate(tool);
   }
 
+  /// The dialog-then-activate shape of the constant tools (Phase 184):
+  /// [ask] returns null on cancel or unusable input, and nothing happens.
+  Future<void> _activateAfterAsking<T extends Object>(
+    Future<T?> Function(BuildContext context) ask,
+    Tool Function(T value) make,
+  ) async {
+    final value = await ask(context);
+    if (value == null) {
+      return;
+    }
+    ref.read(toolProvider.notifier).activate(make(value));
+  }
+
   Future<void> _activateFixedRadiusCircleTool() async {
     final radius = await askCircleRadius(context);
     if (radius == null) {
@@ -907,6 +925,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _activateFixedRadiusCircleTool();
       case AppAction.fixedLengthSegmentTool:
         _activateFixedLengthSegmentTool();
+      case AppAction.fixedAngleLineTool:
+        _activateAfterAsking(
+          askStatedAngle,
+          (turn) => FixedAngleLineTool(newId: newObjectId, turn: turn),
+        );
+      case AppAction.statedRadiusCircleTool:
+        _activateAfterAsking(
+          askStatedRadius,
+          (radius) =>
+              StatedRadiusCircleTool(newId: newObjectId, radius: radius),
+        );
+      case AppAction.scaledCompassCircleTool:
+        _activateAfterAsking(
+          askCompassScale,
+          (factor) =>
+              ScaledCompassCircleTool(newId: newObjectId, factor: factor),
+        );
+      case AppAction.ratioApolloniusCircleTool:
+        _activateAfterAsking(
+          askApolloniusRatio,
+          (ratio) =>
+              RatioApolloniusCircleTool(newId: newObjectId, ratio: ratio),
+        );
       case AppAction.distanceTool:
         tools.activate(DistanceTool(newId: newObjectId));
       case AppAction.areaTool:
