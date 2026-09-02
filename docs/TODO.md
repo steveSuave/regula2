@@ -14,14 +14,22 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
-## Phase 185 — the constants ask: value templates and the "what is this angle?" reader (open)
+## Phase 186 — the kernel track resumes (open)
 
-The other half of the verdict (PLAN §"The constants stack's verdict"). Phase 184 made the four carrier kinds drawable; this phase makes their statements askable. Two pieces, the second the one with user value.
+The app-facing constants are complete (Phases 184–185): the four carrier kinds are drawable, askable and readable. The corpus number is recorded as the plateau at **525 / 92 / 409 / 24 / 0** (PLAN §"The constants stack's verdict"), and the prover threads left are named carries, not phases. What is open on the kernel/UI side, each its own phase and none started:
 
-- [ ] **Value-carrying templates**: `aconst` (two lines + a degrees field), `rconst` (two segments + a ratio field), `lconst` (a segment + a length field) in `QuestionTemplate`, with a value input surface in the builder bar. The template test's "no template can fill a value slot it does not have" exclusion flips to its positive. Exact input through `Rational.tryParse`, like the tools
-- [ ] **The reader**: `AngleClosure`/`LengthClosure` answer "what constant does this pair entail?" — the `entails` reduction returning the residual constant instead of checking it is zero (null when the variable part does not vanish). ℤ-module line held: no root screening, so a `3Δθ ≡ 0` closure answers null for Δθ, not one of three roots. Length side answers a `Rational` only when every `ln p` exponent is an integer
-- [ ] **Wire the reader as a fill**: an `aconst`/`rconst`/`lconst` draft with an empty value asks the prover to read it; the read value fills the slot and the ordinary ask proves it, so the answer comes with a proof rather than as an oracle verdict
-- [ ] Gates: analyze clean, suite green, corpus baseline unchanged (**525 / 92 / 409 / 24 / 0**), fixtures untouched
+- [ ] **Decide, with the user, which first.** Candidates, oldest first: the **toolchain upgrade** (PLAN §"Deferred decisions" — booked for after M-P, which has landed; CI already proves the tree on 3.47, the cost is the local SDK, goldens, `dart format` and the renderer look, and drift compounds); the **chart-free line orientation** (Phase 137's left-open, a branch-ordering change moving `PolarLine`/`RadicalAxisLine`/`TangentLine`); the **join budget unit** (Phase 161's decision box, charge the enumeration or yield mid-join); the **locus starve** (a pass that declines a detour it cannot afford). Recommendation: the toolchain first, because every other item is measured against goldens and a renderer the upgrade moves
+- [ ] Carried, unchanged: `readFact` on listed `eqangle`s can still read magnitude-false; the skeptical re-glance on old `entails`-based zeros; the Phase 176 trigger (`pip index versions newclid`, 3.0.1 as of 2026-09-02); `regular_hexagon#2`'s quiescence asterisk
+
+## Phase 185 — the constants ask: value templates and the "what is this angle?" reader (closed)
+
+The other half of the verdict (PLAN §"The reader: a value is read off the closure and then proved"). Phase 184 made the four carrier kinds drawable; this phase made their statements askable and readable.
+
+- [x] **The reader on both closures** — `AngleClosure.constantOf` and `LengthClosure.constantOf`, the `entails` reduction returning the residual constant instead of testing it (angle side negated, length side as it stands: the two rows keep their constant on different sides); `LengthEquation.antilog` back to a rational only where every exponent is whole. The ℤ-module line held: `2Δθ ≡ 0` reads no `Δθ`. `readAngle`/`readRatio`/`readLength` on the translations register nothing; `Prover.readConstant` dispatches by kind
+- [x] **Value-carrying templates**: `aconst` (from line, to line), `rconst` (two segments), `lconst` (one segment) in `QuestionTemplate`; the value on `QuestionDraft.value` beside the slots (`withValue`, `needsValue`, `constantSpellings`); the template test's exclusion flipped to its positive. Out-of-range values are "no question", not a throw
+- [x] **The reader wired as a fill**: `ProverNotifier.read` runs to the fixpoint (reusing a held run), tries the spellings in order, leaves the run held; the bar's value field takes degrees for an angle and hands the draft the residue, *Read* fills it, an undetermined read says so, and the ordinary *Ask* proves the value with a certificate
+- [x] `ProofHighlightNotifier.clear` guards `ref.mounted` — the panel schedules it from `dispose`, and a tree torn down with its container has nothing to clear; surfaced by the new tests' ordering, latent before
+- [x] Gates: analyze clean, suite **3541 (3517 + 24)**, corpus baseline unchanged (**525 / 92 / 409 / 24 / 0**, no prover behaviour change — readers only), fixtures untouched
 
 ## Phase 184 — the constant tools: the app draws what the prover reads (closed)
 
