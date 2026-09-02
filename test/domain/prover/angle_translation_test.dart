@@ -126,7 +126,8 @@ void main() {
         'first line to second', () {
       // aconst(a,b,c,d; r) is θ_cd − θ_ab ≡ r — Newclid's convention,
       // and the sign matters for every value other than 0 and ½.
-      final translation = AngleTranslation()..absorb(aconst([a, b, c, d], 1, 3));
+      final translation = AngleTranslation()
+        ..absorb(aconst([a, b, c, d], 1, 3));
       final row = translation.closure.inputs.single;
       expect(row.coefficients, {
         AngleTranslation.lineVariable(a, b): -BigInt.one,
@@ -390,6 +391,40 @@ void main() {
       expect(found, [
         perp([a, b, c, d]),
       ]);
+    });
+  });
+
+  group('readAngle — the reader (Phase 185)', () {
+    test('reads the residue the absorbed facts entail, either way round', () {
+      final translation = AngleTranslation()
+        ..absorb(aconst([a, b, c, d], 1, 3))
+        ..absorb(perp([c, d, e, f]));
+      expect(translation.readAngle(a, b, c, d), Rational.fromInts(1, 3));
+      expect(translation.readAngle(c, d, a, b), Rational.fromInts(2, 3));
+      expect(translation.readAngle(b, a, d, c), Rational.fromInts(1, 3));
+      expect(
+        translation.readAngle(a, b, e, f),
+        Rational.fromInts(5, 6),
+        reason: '1/3 + 1/2',
+      );
+      expect(translation.readAngle(a, b, g, h), isNull);
+      expect(translation.readAngle(a, a, c, d), isNull);
+    });
+
+    test('reading registers nothing and the value read is then proved', () {
+      final translation = AngleTranslation()
+        ..absorb(aconst([a, b, c, d], 1, 3));
+      final before = translation.variables.length;
+      final read = translation.readAngle(a, b, e, f);
+      expect(read, isNull);
+      expect(translation.variables.length, before);
+      final value = translation.readAngle(a, b, c, d)!;
+      expect(
+        translation.entailmentOf(
+          Fact(PredicateKind.aconst, [a, b, c, d], value: value),
+        ),
+        isNotNull,
+      );
     });
   });
 }

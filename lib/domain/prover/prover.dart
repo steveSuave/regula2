@@ -1,3 +1,5 @@
+import '../construction/geo_object.dart';
+import '../math/rational.dart';
 import 'angle_translation.dart';
 import 'carriers.dart';
 import 'diagram_filter.dart';
@@ -5,6 +7,7 @@ import 'event_loop_yield.dart';
 import 'fact.dart';
 import 'fact_database.dart';
 import 'length_translation.dart';
+import 'predicate.dart';
 import 'rule.dart';
 import 'rule_engine.dart';
 
@@ -268,5 +271,39 @@ class Prover {
       return true;
     }
     return false;
+  }
+
+  /// The value the closures entail for a value-carrying [kind] over
+  /// [points] — the `aconst` residue, the `rconst` ratio, the `lconst`
+  /// length — or null when they do not determine it (Phase 185, the
+  /// "what is this angle?" reader). Nothing is recorded: a reading is a
+  /// question about the closure, and [resolve] on the fact with the
+  /// value read is what records the answer, certificate and all.
+  ///
+  /// Throws [ArgumentError] on a kind that carries no value, or the
+  /// wrong number of points for it.
+  Rational? readConstant(PredicateKind kind, List<GeoPoint> points) {
+    if (!kind.carriesValue) {
+      throw ArgumentError.value(kind, 'kind', 'carries no value to read');
+    }
+    if (points.length != kind.arity) {
+      throw ArgumentError.value(points, 'points', 'arity is ${kind.arity}');
+    }
+    return switch (kind) {
+      PredicateKind.aconst => angles.readAngle(
+        points[0],
+        points[1],
+        points[2],
+        points[3],
+      ),
+      PredicateKind.rconst => lengths.readRatio(
+        points[0],
+        points[1],
+        points[2],
+        points[3],
+      ),
+      PredicateKind.lconst => lengths.readLength(points[0], points[1]),
+      _ => null,
+    };
   }
 }

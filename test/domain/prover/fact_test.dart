@@ -412,8 +412,7 @@ void main() {
       String key(List<GeoPoint> form) => form.map((p) => p.id).join(',');
       final random = math.Random(7);
       for (final kind in PredicateKind.values.where(
-        (kind) =>
-            kind != PredicateKind.rconst && kind != PredicateKind.aconst,
+        (kind) => kind != PredicateKind.rconst && kind != PredicateKind.aconst,
       )) {
         final rig = rigFor(kind);
         for (var round = 0; round < 5; round++) {

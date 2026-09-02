@@ -2109,3 +2109,21 @@ Gates: analyze clean, suite 3489, fixtures untouched, full name diff both ways.
 - **Import placement in `object_kind_label.dart`**: `domain/math/…` sorts after every `domain/construction/objects/…`, and the `directives_ordering` lint is the only thing that says so. Cheap to get wrong when inserting by neighbour.
 - **The flyout row a test taps is the name half of the label** — `find.text('Circle with stated radius…')`, not the full "(tap the center)" string; `ToolMenuRow` splits the parenthetical into a subtitle and keeps the ellipsis on the name line.
 
+## 2026-09-02 — session 183 (continued): Phase 185, the ask and the reader — "what is this angle?" answered with a proof
+
+**Done — three commits on `phase-185-constants-ask`, phase closed, merged to `main`.** Suite **3517 → 3541 (+24)**, analyze clean, no prover behaviour change (readers only, corpus untouched). The app-facing constants thread the user chose in Phase 183 is complete: the four carrier kinds are drawable (184), askable and readable (185).
+
+- **The reader is `entails` stopped one step early.** `constantOf` on both closures runs the same reduction and returns the residual constant instead of testing it. The one subtlety was a sign: `AngleEquation` keeps its constant on the right (`Σ c·θ ≡ k`, so the variable part is `−k`), `LengthEquation` on the left (`Σ c·l + k = 0`, so it is `k`). The first draft negated both and the length tests said `2/5` for `5/2`. PLAN §"The reader" records which side negates and why.
+- **The ℤ-module line held, and it is now pinned twice.** `constantOf` refuses the non-divisible step `entails` refuses: a closure holding `2Δθ ≡ 0` reads no `Δθ` — the disjunction stays a disjunction, and the reader will not pick the root the figure sits on. Test in `angle_closure_test`. `antilog` is the length side's refusal: `{2: ½}` is `√2`, carried exactly and stated by nothing.
+- **A reading is never a verdict.** `ProverNotifier.read` runs to the fixpoint and leaves the run held as the state; the value goes back to the draft, and the ordinary *Ask* proves it with a certificate. `readConstant` records nothing (pinned: database length unchanged across a read).
+- **The value rides on the draft beside the slots.** Three templates, `QuestionDraft.value`/`withValue`/`needsValue`/`constantSpellings`; the bar's field takes degrees for an angle and hands the draft the residue (−120 is the 60° line), *Read* fills it, an undetermined read says so in a snackbar. Out-of-range values are "no question", never a throw from a rebuild.
+- **A latent test-ordering fragility surfaced**: `ProofPanel.dispose` schedules `proofHighlightProvider.clear()` post-frame, and a tree torn down together with its container (the next test's first frame) hit a disposed ref. `clear` now checks `ref.mounted`. It had never fired because no test followed the last "on a phone" test until this phase added one.
+
+**Next session: Phase 186** — the kernel track resumes; a decision with the user among the named open items (toolchain upgrade recommended first, since every other item is measured against goldens and a renderer the upgrade moves). Carried: `readFact` magnitude-false; the skeptical re-glance; Phase 176 trigger; `regular_hexagon#2`'s asterisk.
+
+**Gotchas.**
+
+- **The two AR equation types keep their constant on opposite sides.** Any new reader, chase or renderer that touches both must check the sign against a stated value, not derive it from the other side's code. The `5/2` vs `2/5` failure is the cheap way to find out.
+- **A `const Key` on a wrapper widget is not a key on its `TextField`** — `tester.widget<TextField>(find.byKey(...))` casts the wrapper and throws; find the field as a descendant.
+- **`ref.read` from a post-frame callback scheduled in `dispose`** can run after the container is gone. Guard with `ref.mounted` in the notifier, not in the widget.
+

@@ -32,6 +32,10 @@ class ProofHighlightNotifier extends _$ProofHighlightNotifier {
   }
 
   void clear() {
+    // The proof panel schedules this from its `dispose`, and a panel can
+    // be torn down together with its container — an app closing, a test
+    // ending — in which case there is nothing left to clear.
+    if (!ref.mounted) return;
     if (state.isEmpty) return;
     state = const {};
   }

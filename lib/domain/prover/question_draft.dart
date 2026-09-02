@@ -1,6 +1,7 @@
 import '../construction/geo_object.dart';
 import '../construction/objects/ray.dart';
 import '../construction/objects/segment.dart';
+import '../math/rational.dart';
 import 'predicate.dart';
 import 'question_spellings.dart';
 import 'question_template.dart';
@@ -89,9 +90,10 @@ class QuestionDraft {
   QuestionDraft(this.template)
     : values = List.unmodifiable(
         List<SlotValue?>.filled(template.slots.length, null),
-      );
+      ),
+      value = null;
 
-  QuestionDraft._(this.template, List<SlotValue?> values)
+  QuestionDraft._(this.template, List<SlotValue?> values, this.value)
     : values = List.unmodifiable(values);
 
   /// A draft of [template] seeded from what was selected when it opened
@@ -118,6 +120,23 @@ class QuestionDraft {
 
   /// One entry per slot of [template], null while empty.
   final List<SlotValue?> values;
+
+  /// The stated value of a value-carrying template (Phase 185) — the
+  /// `aconst` residue in units of π, the `rconst` ratio, the `lconst`
+  /// length — typed by the user or read from the closure; null while
+  /// none is held, and always null for a point-pure template. Not a
+  /// slot: [current] and [isComplete] are about the figure objects, and
+  /// the value is the one input a tap on the figure cannot supply.
+  final Rational? value;
+
+  /// Whether [question] still waits on a [value]: a value-carrying
+  /// template with its slots full and no value yet.
+  bool get needsValue => template.carriesValue && isComplete && value == null;
+
+  /// This draft holding [value] (null to drop it), the slots kept. A
+  /// point-pure template ignores the call — it has nowhere to put one.
+  QuestionDraft withValue(Rational? value) =>
+      template.carriesValue ? QuestionDraft._(template, values, value) : this;
 
   /// The first slot that is empty or half filled, or null when the
   /// draft is complete.
@@ -168,7 +187,7 @@ class QuestionDraft {
     }
     final next = List.of(values);
     next[index] = value;
-    return QuestionDraft._(template, next);
+    return QuestionDraft._(template, next, this.value);
   }
 
   /// The tap gesture: [object] into the current slot, advancing. The
@@ -183,7 +202,7 @@ class QuestionDraft {
   QuestionDraft clear(int index) {
     final next = List.of(values);
     next[index] = null;
-    return QuestionDraft._(template, next);
+    return QuestionDraft._(template, next, value);
   }
 
   /// The question a complete draft spells, over [objects] (the
@@ -196,6 +215,15 @@ class QuestionDraft {
   ProverQuestion? question(Iterable<GeoObject> objects) {
     if (!isComplete) return null;
     final all = objects is List<GeoObject> ? objects : objects.toList();
+    if (template.carriesValue) {
+      final stated = value;
+      final tuples = constantSpellings(all);
+      if (stated == null || tuples == null || !_inRange(stated)) return null;
+      return ProverQuestion(template.kind, [
+        for (final points in tuples)
+          Predicate(template.kind, points, value: stated),
+      ]);
+    }
 
     GeoPoint point(int i) => (values[i]! as PointValue).point;
     CarrierGroup? group(int i) => switch (values[i]!) {
@@ -275,8 +303,76 @@ class QuestionDraft {
         final line = group(0);
         if (line == null) return null;
         return tangencyQuestion(all, line, (values[1]! as CircleValue).circle);
+      case QuestionTemplate.aconst:
+      case QuestionTemplate.rconst:
+      case QuestionTemplate.lconst:
+        throw StateError('value templates are handled before the switch');
     }
   }
+
+  /// The point tuples a value-carrying template names, with no value
+  /// attached (Phase 185): what the reader reads the closure through,
+  /// and what [question] states [value] over. The spelling rules are
+  /// the point-pure templates': an angle reads through every witness
+  /// pair of each line (`para`'s shape, the turn from the first to the
+  /// second), a ratio and a length through the bounding pairs only
+  /// (`cong`'s shape). Null while incomplete, for a point-pure
+  /// template, or when the slots name no statement — a ratio of a
+  /// segment to itself, a carrier with no named points.
+  List<List<GeoPoint>>? constantSpellings(Iterable<GeoObject> objects) {
+    if (!template.carriesValue || !isComplete) return null;
+    final all = objects is List<GeoObject> ? objects : objects.toList();
+    CarrierGroup? group(int i) => switch (values[i]!) {
+      CarrierValue(:final line) => CarrierGroup.ofCarrier(all, line),
+      PairValue(:final first, :final second?) => CarrierGroup.ofPoints(
+        first,
+        second,
+      ),
+      _ => null,
+    };
+    WitnessPair? length(int i) {
+      final pair = group(i)?.lengthPairs.firstOrNull;
+      return pair == null || pair.isDegenerate ? null : pair;
+    }
+
+    switch (template) {
+      case QuestionTemplate.aconst:
+        final from = group(0);
+        final to = group(1);
+        if (from == null || to == null) return null;
+        final tuples = [
+          for (final p in from.pairs)
+            for (final q in to.pairs)
+              if (!degeneratePairs(p, q)) [p.a, p.b, q.a, q.b],
+        ];
+        return tuples.isEmpty ? null : tuples;
+      case QuestionTemplate.rconst:
+        final first = length(0);
+        final second = length(1);
+        if (first == null || second == null || first.namesSameLine(second)) {
+          return null;
+        }
+        return [
+          [first.a, first.b, second.a, second.b],
+        ];
+      case QuestionTemplate.lconst:
+        final segment = length(0);
+        if (segment == null) return null;
+        return [
+          [segment.a, segment.b],
+        ];
+      default:
+        return null;
+    }
+  }
+
+  /// Whether [stated] is a value the kind can state — the `Predicate`
+  /// contract, checked here so an out-of-range value is "no question"
+  /// rather than a throw from a widget rebuild.
+  bool _inRange(Rational stated) => switch (template.kind) {
+    PredicateKind.aconst => stated == stated.modOne(),
+    _ => !stated.isZero && !stated.isNegative,
+  };
 
   /// Whether [point] already sits in a point slot of the group slot
   /// [index] belongs to. A triangle needs three vertices and a line
@@ -297,5 +393,7 @@ class QuestionDraft {
 
   @override
   String toString() =>
-      'QuestionDraft(${template.name}, ${current == null ? 'complete' : 'at $current'})';
+      'QuestionDraft(${template.name}, '
+      '${current == null ? 'complete' : 'at $current'}'
+      '${value == null ? '' : ', value $value'})';
 }

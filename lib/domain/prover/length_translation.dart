@@ -253,6 +253,29 @@ class LengthTranslation {
     return closure.entails(equation);
   }
 
+  /// The ratio `|ab| / |cd|` the closure entails, as the value an
+  /// `rconst` would state — or null when the closure does not determine
+  /// it, when it is irrational, or when a pair names no segment (Phase
+  /// 185, the length side of the reader). Registers nothing, like
+  /// [equationOf].
+  Rational? readRatio(GeoPoint a, GeoPoint b, GeoPoint c, GeoPoint d) {
+    if (a.id == b.id || c.id == d.id) return null;
+    final constant = closure.constantOf(
+      LengthEquation.difference(segmentVariable(a, b), segmentVariable(c, d)),
+    );
+    return constant == null ? null : LengthEquation.antilog(constant);
+  }
+
+  /// The length `|ab|` the closure entails, as the value an `lconst`
+  /// would state — the same reading as [readRatio] over one segment.
+  Rational? readLength(GeoPoint a, GeoPoint b) {
+    if (a.id == b.id) return null;
+    final constant = closure.constantOf(
+      LengthEquation.fromTerms([(segmentVariable(a, b), Rational.one)]),
+    );
+    return constant == null ? null : LengthEquation.antilog(constant);
+  }
+
   /// Every `cong` the closure entails between distinct segments, with
   /// certificates.
   ///

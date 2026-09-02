@@ -10,8 +10,12 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/fixed_angle_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/math/rational.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/prover/angle_translation.dart';
 import 'package:regula/domain/prover/diagram_filter.dart';
@@ -1009,6 +1013,89 @@ void main() {
         reason: 'the ask\'s partial run is the prefix, not waste',
       );
       expect(state.reachedFixpoint, isTrue);
+    });
+  });
+
+  group('reading a constant (Phase 185)', () {
+    /// Line AB, the 60° line through C carrying the named P.
+    Map<String, GeoPoint> seedSixty() {
+      final construction = container.read(constructionProvider).construction;
+      final a = free('a', 'A', 0, 0);
+      final b = free('b', 'B', 4, 0);
+      final c = free('c', 'C', 1, 1);
+      final ab = LineThroughTwoPoints(id: 'ab', point1: a, point2: b);
+      final sixty = FixedAngleLine(
+        id: 'sixty',
+        through: c,
+        reference: ab,
+        turn: Rational.fromInts(1, 3),
+      );
+      final p = PointOnObject(
+        id: 'p',
+        curve: sixty,
+        parameter: 2,
+        attributes: const ObjectAttributes(name: 'P'),
+      );
+      for (final object in [a, b, c, ab, sixty, p]) {
+        construction.add(object);
+      }
+      return {'a': a, 'b': b, 'c': c, 'p': p};
+    }
+
+    test('reads the residue the closure entails, leaves the run held, and '
+        'the value read is then proved', () async {
+      final at = seedSixty();
+      final notifier = container.read(proverProvider.notifier);
+
+      final value = await notifier.read(PredicateKind.aconst, [
+        [at['a']!, at['b']!, at['c']!, at['p']!],
+      ]);
+      expect(value, Rational.fromInts(1, 3));
+      expect(
+        container.read(proverProvider),
+        isA<ProverReady>(),
+        reason: 'a reading is not a verdict — the run consulted stays',
+      );
+
+      await notifier.ask(
+        ProverQuestion(PredicateKind.aconst, [
+          Predicate(PredicateKind.aconst, [
+            at['a']!,
+            at['b']!,
+            at['c']!,
+            at['p']!,
+          ], value: value),
+        ]),
+      );
+      final state = container.read(proverProvider) as ProverAnswered;
+      expect(state.answer.verdict, ProverVerdict.proved);
+      expect(state.answer.proof!.verify(), isEmpty);
+    });
+
+    test('tries the spellings in order, and answers null when none is '
+        'determined', () async {
+      final at = seedSixty();
+      final notifier = container.read(proverProvider.notifier);
+      expect(
+        await notifier.read(PredicateKind.aconst, [
+          [at['a']!, at['b']!, at['a']!, at['c']!],
+          [at['a']!, at['b']!, at['c']!, at['p']!],
+        ]),
+        Rational.fromInts(1, 3),
+        reason: 'the first spelling is undetermined, the second reads',
+      );
+      expect(
+        await notifier.read(PredicateKind.aconst, [
+          [at['a']!, at['b']!, at['a']!, at['c']!],
+        ]),
+        isNull,
+      );
+      expect(
+        await notifier.read(PredicateKind.lconst, [
+          [at['a']!, at['b']!],
+        ]),
+        isNull,
+      );
     });
   });
 }

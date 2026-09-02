@@ -410,4 +410,54 @@ void main() {
       }
     });
   });
+
+  group('constantOf — the reader (Phase 185)', () {
+    test('reads the constant the rows entail for a variable part', () {
+      final closure = AngleClosure()
+        ..add(diff('l2', 'l1', r(1, 3)))
+        ..add(diff('l3', 'l2', r(1, 4)));
+      expect(closure.constantOf(para('l2', 'l1')), r(1, 3));
+      expect(closure.constantOf(para('l1', 'l2')), r(2, 3), reason: 'negated');
+      expect(closure.constantOf(para('l3', 'l1')), r(7, 12), reason: 'summed');
+      // The query's own constant is ignored: what is asked is the
+      // left-hand side, whatever the caller wrote on the right.
+      expect(closure.constantOf(perp('l2', 'l1')), r(1, 3));
+    });
+
+    test('a variable the closure does not determine reads null', () {
+      final closure = AngleClosure()..add(diff('l2', 'l1', r(1, 3)));
+      expect(closure.constantOf(para('l3', 'l1')), isNull);
+      expect(closure.constantOf(para('l9', 'l8')), isNull);
+    });
+
+    test('the ℤ-module line holds for the reader: 2Δθ ≡ 0 reads no Δθ', () {
+      final closure = AngleClosure()
+        ..add(eqangle('l1', 'l2', 'l3', 'l4'))
+        ..add(eqangle('l1', 'l2', 'l4', 'l3'));
+      expect(closure.proves(para('l1', 'l2')), isFalse);
+      expect(
+        closure.constantOf(para('l1', 'l2')),
+        isNull,
+        reason: 'parallel or perpendicular — a disjunction, not a value',
+      );
+      // What the rows do determine reads: 2·Δθ itself.
+      expect(
+        closure.constantOf(
+          AngleEquation({'l1': BigInt.two, 'l2': -BigInt.two}, Rational.zero),
+        ),
+        Rational.zero,
+      );
+    });
+
+    test('the value read is exactly the one entails then certifies', () {
+      final closure = AngleClosure()
+        ..add(diff('l2', 'l1', r(1, 3)))
+        ..add(diff('l3', 'l2', r(1, 4)));
+      final read = closure.constantOf(para('l3', 'l1'))!;
+      final certificate = closure.entails(diff('l3', 'l1', read));
+      expect(certificate, isNotNull);
+      expect(closure.recombine(certificate!), diff('l3', 'l1', read));
+      expect(closure.entails(diff('l3', 'l1', r(1, 2))), isNull);
+    });
+  });
 }

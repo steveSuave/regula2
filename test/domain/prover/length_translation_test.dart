@@ -319,4 +319,41 @@ void main() {
       );
     });
   });
+
+  group('readRatio and readLength — the reader (Phase 185)', () {
+    Fact stated(PredicateKind kind, List<GeoPoint> p, Rational value) =>
+        Fact(kind, p, value: value);
+    final translation = LengthTranslation()
+      ..absorb(stated(PredicateKind.lconst, [a, b], Rational.fromInts(5, 2)))
+      ..absorb(stated(PredicateKind.rconst, [c, d, a, b], Rational.whole(3)))
+      ..absorb(cong([e, f, c, d]));
+
+    test('reads lengths and ratios the rows entail, composed', () {
+      expect(translation.readLength(a, b), Rational.fromInts(5, 2));
+      expect(translation.readLength(b, a), Rational.fromInts(5, 2));
+      expect(translation.readRatio(c, d, a, b), Rational.whole(3));
+      expect(translation.readRatio(a, b, c, d), Rational.fromInts(1, 3));
+      expect(translation.readLength(e, f), Rational.fromInts(15, 2));
+      expect(translation.readRatio(e, f, a, b), Rational.whole(3));
+    });
+
+    test('what the rows do not determine, or cannot state, reads null', () {
+      expect(translation.readLength(g, h), isNull);
+      expect(translation.readRatio(a, b, g, h), isNull);
+      expect(translation.readLength(a, a), isNull);
+      // A ratio of a segment to itself is 1 by arithmetic alone.
+      expect(translation.readRatio(a, b, b, a), Rational.one);
+    });
+
+    test('reading registers nothing, and the value read is provable', () {
+      final before = translation.variables.length;
+      expect(translation.readLength(g, h), isNull);
+      expect(translation.variables.length, before);
+      final value = translation.readLength(e, f)!;
+      expect(
+        translation.entailmentOf(stated(PredicateKind.lconst, [e, f], value)),
+        isNotNull,
+      );
+    });
+  });
 }
