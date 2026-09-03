@@ -1,0 +1,27 @@
+docs/PLAN.md
+  s_92f40d78ed3a77::t_637ae7359bbf83 791-800
+test/domain/prover/rule_engine_test.dart
+  s_92f40d78ed3a77::t_3b629df4c9a8b6 12,1026-1075
+  s_92f40d78ed3a77::t_5b923e44b7a698 1076
+docs/TODO.md
+  s_92f40d78ed3a77::t_637ae7359bbf83 17-29,46,820
+lib/domain/prover/rule_engine.dart
+  s_92f40d78ed3a77::t_37af07b91af2d3 79-83,117-119,304-335,338,351-365
+  s_92f40d78ed3a77::t_4854ecd297b0c7 366-367
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7a71a9cc5aaae3e9ceafc105b64106669518edc8",
+  "prompts": {},
+  "sessions": {
+    "s_92f40d78ed3a77": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "59839054-4c1f-4040-8596-642a9f1fd7e3",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
