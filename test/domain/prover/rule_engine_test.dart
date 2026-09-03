@@ -9,7 +9,6 @@ import 'package:regula/domain/construction/objects/central_reflection_point.dart
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
-import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
@@ -1024,30 +1023,22 @@ void main() {
     });
 
     test('a fully bound premise is one probe, not a scan', () {
-      // `perp_from_inclination`: `eqangle(a,b,p,q,c,d,u,v) & perp(p,q,u,v)`
-      // — an eqangle pivot binds every variable, so the perp premise
-      // names one statement. An incentre states three eqangles; an
-      // orthocentre over three *other* points states three perps that
-      // no eqangle names. With the lookup, the extra perps cost exactly
-      // their own pivots (8 spellings each, and their eqangle join is
-      // screened to nothing); a scan would have charged every eqangle
-      // pivot spelling × 3 perps × 8 spellings on top.
+      // `orthocentre`: `perp(a,b,c,d) & perp(a,c,b,d)` — a perp pivot
+      // binds all four variables, and the second premise names one
+      // statement over the *same* four points. An orthocentre states
+      // three perps over one point set, so the bound-point screen
+      // passes every one of them; only the lookup keeps the join from
+      // scanning. Counted: 3 facts × 2 slots × (8 spellings + 8
+      // probes) = 96. Scanned, each binding would visit 3 × 8 = 24:
+      // 3 × 2 × (8 + 8 × 24) = 1200.
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(7, 0));
       final c = FreePoint(id: 'c', position: const Vec2(2, 5));
-      final i = Incenter(id: 'i', vertex1: a, vertex2: b, vertex3: c);
-      final d = FreePoint(id: 'd', position: const Vec2(20, 0));
-      final e = FreePoint(id: 'e', position: const Vec2(27, 1));
-      final f = FreePoint(id: 'f', position: const Vec2(22, 6));
-      final h = Orthocenter(id: 'h', vertex1: d, vertex2: e, vertex3: f);
-      final rules = [ruleNamed('perp_from_inclination')];
-      final alone = engineOver([a, b, c, i], rules: rules)..run();
-      final withPerps = engineOver([a, b, c, i, d, e, f, h], rules: rules)
+      final h = Orthocenter(id: 'h', vertex1: a, vertex2: b, vertex3: c);
+      final engine = engineOver([a, b, c, h], rules: [ruleNamed('orthocentre')])
         ..run();
-      expect(withPerps.database.facts.length, alone.database.facts.length + 3);
-      final visitsAlone = alone.tallies['perp_from_inclination']!.visits;
-      final visitsWith = withPerps.tallies['perp_from_inclination']!.visits;
-      expect(visitsWith - visitsAlone, 3 * 8);
+      expect(engine.database.facts.length, 3);
+      expect(engine.tallies['orthocentre']!.visits, 96);
     });
 
     test('a partially bound premise is screened by its bound points', () {
