@@ -1,0 +1,27 @@
+docs/archive/STATUS-sessions-108-175.md
+  s_92f40d78ed3a77::t_de0a9615c2a298 1-1802
+docs/archive/TODO-completed-phases.md
+  s_92f40d78ed3a77::t_de0a9615c2a298 3,796-1734
+docs/STATUS.md
+  s_92f40d78ed3a77::t_de0a9615c2a298 3,7
+  s_92f40d78ed3a77::t_3b6a696d663910 375-392
+docs/TODO.md
+  s_92f40d78ed3a77::t_39d8583fe1b27a 40
+  s_92f40d78ed3a77::t_3b6a696d663910 86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "08ffedf9578823c9be53d0bac9a018e58cf35208",
+  "prompts": {},
+  "sessions": {
+    "s_92f40d78ed3a77": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "59839054-4c1f-4040-8596-642a9f1fd7e3",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
