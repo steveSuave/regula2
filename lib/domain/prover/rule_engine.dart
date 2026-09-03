@@ -76,6 +76,11 @@ class ProverEngine {
     for (final kind in PredicateKind.values) kind: [],
   };
 
+  /// Each fact's position in its `_byKind` list — what lets a fully
+  /// bound premise be resolved by one probe and still be checked
+  /// against the pivot's snapshot (Phase 188).
+  final Map<Fact, int> _slotOf = {};
+
   int _nextPivot = 0;
   Iterator<_Candidate>? _current;
   int _applications = 0;
@@ -109,7 +114,9 @@ class ProverEngine {
 
   void _append(Fact fact) {
     _facts.add(fact);
-    _byKind[fact.kind]!.add(fact);
+    final ofKind = _byKind[fact.kind]!;
+    _slotOf[fact] = ofKind.length;
+    ofKind.add(fact);
   }
 
   /// Takes into the pivot queue any fact added to [database] by someone
@@ -294,8 +301,41 @@ class ProverEngine {
     final premise = rule.premises[position];
     final candidates = _byKind[premise.kind]!;
     final limit = snapshot[premise.kind]!;
+    // Phase 188 (PLAN §"A fully bound premise is a lookup, not a
+    // join"): the points the earlier premises already fixed. A fact
+    // that does not carry every one of them binds under no spelling,
+    // so it is skipped before its orbit is built; and a premise with
+    // no free variable left names one statement, which is looked up
+    // rather than searched for — one probe in place of every fact of
+    // the kind times every spelling, and the measured freeze with it.
+    final required = <GeoPoint>[];
+    var fullyBound = !premise.kind.carriesValue;
+    for (final variable in premise.variables) {
+      final point = binding[variable];
+      if (point == null) {
+        fullyBound = false;
+      } else if (!required.any((p) => identical(p, point))) {
+        required.add(point);
+      }
+    }
+    if (fullyBound) {
+      _visits[ruleIndex]++;
+      final slot =
+          _slotOf[Fact(premise.kind, [
+            for (final variable in premise.variables) binding[variable]!,
+          ])];
+      // Past the snapshot is a fact younger than the pivot: its turn
+      // enumerates this combination, so this one must not.
+      if (slot == null || slot >= limit) return;
+      yield* _joinRemaining(ruleIndex, pivotSlot, position + 1, binding, {
+        ...bound,
+        position: candidates[slot],
+      }, snapshot);
+      return;
+    }
     for (var i = 0; i < limit; i++) {
       final fact = candidates[i];
+      if (!_carries(fact, required)) continue;
       for (final form in orbitArguments(fact.kind, fact.points)) {
         final extended = Map.of(binding);
         _visits[ruleIndex]++;
@@ -306,6 +346,23 @@ class ProverEngine {
         }, snapshot);
       }
     }
+  }
+
+  /// Whether every point of [required] occurs among [fact]'s — the
+  /// necessary condition for any spelling of [fact] to bind a premise
+  /// whose variables are already bound to [required].
+  static bool _carries(Fact fact, List<GeoPoint> required) {
+    for (final point in required) {
+      var found = false;
+      for (final p in fact.points) {
+        if (identical(p, point)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+    return true;
   }
 
   /// Unifies [points] with [pattern] into [binding] (mutated), false on

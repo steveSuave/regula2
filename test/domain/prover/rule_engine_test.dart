@@ -9,6 +9,7 @@ import 'package:regula/domain/construction/objects/central_reflection_point.dart
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
@@ -1020,6 +1021,57 @@ void main() {
         3,
       );
       expect(() => second['midp_coll'] = const RuleTally(), throwsA(anything));
+    });
+
+    test('a fully bound premise is one probe, not a scan', () {
+      // `perp_from_inclination`: `eqangle(a,b,p,q,c,d,u,v) & perp(p,q,u,v)`
+      // — an eqangle pivot binds every variable, so the perp premise
+      // names one statement. An incentre states three eqangles; an
+      // orthocentre over three *other* points states three perps that
+      // no eqangle names. With the lookup, the extra perps cost exactly
+      // their own pivots (8 spellings each, and their eqangle join is
+      // screened to nothing); a scan would have charged every eqangle
+      // pivot spelling × 3 perps × 8 spellings on top.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(7, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 5));
+      final i = Incenter(id: 'i', vertex1: a, vertex2: b, vertex3: c);
+      final d = FreePoint(id: 'd', position: const Vec2(20, 0));
+      final e = FreePoint(id: 'e', position: const Vec2(27, 1));
+      final f = FreePoint(id: 'f', position: const Vec2(22, 6));
+      final h = Orthocenter(id: 'h', vertex1: d, vertex2: e, vertex3: f);
+      final rules = [ruleNamed('perp_from_inclination')];
+      final alone = engineOver([a, b, c, i], rules: rules)..run();
+      final withPerps = engineOver([a, b, c, i, d, e, f, h], rules: rules)
+        ..run();
+      expect(withPerps.database.facts.length, alone.database.facts.length + 3);
+      final visitsAlone = alone.tallies['perp_from_inclination']!.visits;
+      final visitsWith = withPerps.tallies['perp_from_inclination']!.visits;
+      expect(visitsWith - visitsAlone, 3 * 8);
+    });
+
+    test('a partially bound premise is screened by its bound points', () {
+      // The disjoint circumcentres again, counted exactly: each of the
+      // four `cong` facts pivots in both slots of `perp_bisector` (8
+      // spellings each, 2 of which bind the repeated centre), and each
+      // binding joins the other slot over the one fact carrying both
+      // bound points — its own, 8 spellings. 4 × 2 × (8 + 2 × 8) = 192.
+      // Unscreened, every binding would have scanned all four facts:
+      // 4 × 2 × (8 + 2 × 32) = 576.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(1, 3));
+      final d = FreePoint(id: 'd', position: const Vec2(10, 0));
+      final e = FreePoint(id: 'e', position: const Vec2(14, 3));
+      final f = FreePoint(id: 'f', position: const Vec2(11, 7));
+      final o = Circumcenter(id: 'o', vertex1: a, vertex2: b, vertex3: c);
+      final p = Circumcenter(id: 'p', vertex1: d, vertex2: e, vertex3: f);
+      final engine = engineOver(
+        [a, b, c, d, e, f, o, p],
+        rules: [ruleNamed('perp_bisector')],
+      )..run();
+      expect(engine.database.facts.length, 4);
+      expect(engine.tallies['perp_bisector']!.visits, 192);
     });
 
     test('RuleTally arithmetic', () {
