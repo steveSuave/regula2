@@ -934,6 +934,148 @@ void main() {
     });
   });
 
+  group('the tallies', () {
+    // Phase 188: the uncharged half of a step, counted per rule.
+    // Two midpoints of one triangle: the midline rules fire (Phase 143's
+    // depth-three chain), so every counter moves.
+    List<GeoObject> midlineRig() {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(6, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 5));
+      final mab = Midpoint(id: 'mab', point1: a, point2: b);
+      final mbc = Midpoint(id: 'mbc', point1: b, point2: c);
+      return [a, b, c, mab, mbc];
+    }
+
+    ProverEngine engineOver(List<GeoObject> objects, {List<Rule>? rules}) {
+      final construction = build(objects);
+      final filter = DiagramFilter.probe(construction.objects);
+      final database = FactDatabase();
+      seedHypotheses(database, hypotheses(construction.objects), filter);
+      return ProverEngine(database: database, filter: filter, rules: rules);
+    }
+
+    test('a fresh engine has tallied nothing, for every rule', () {
+      final engine = engineOver(midlineRig());
+      expect(engine.tallies.keys, ddCoreRules.map((r) => r.name));
+      expect(engine.tallies.values, everyElement(const RuleTally()));
+    });
+
+    test('visits are spent without being charged', () {
+      // Two circumcentres of disjoint triangles: four `cong` facts,
+      // and `perp_bisector` joins every pair — each clashes on a point
+      // or concludes over a repeated one, so nothing is ever a
+      // candidate. The enumeration ran all the same.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(1, 3));
+      final d = FreePoint(id: 'd', position: const Vec2(10, 0));
+      final e = FreePoint(id: 'e', position: const Vec2(14, 3));
+      final f = FreePoint(id: 'f', position: const Vec2(11, 7));
+      final o = Circumcenter(id: 'o', vertex1: a, vertex2: b, vertex3: c);
+      final p = Circumcenter(id: 'p', vertex1: d, vertex2: e, vertex3: f);
+      final engine = engineOver(
+        [a, b, c, d, e, f, o, p],
+        rules: [ruleNamed('perp_bisector')],
+      );
+      expect(engine.step(1 << 30), 0);
+      expect(engine.isComplete, isTrue);
+      final tally = engine.tallies['perp_bisector']!;
+      expect(tally.visits, greaterThan(0));
+      expect(tally.applications, 0);
+      expect(tally.derived, 0);
+      expect(engine.applications, 0);
+    });
+
+    test('applications and derivations are attributed to their rule', () {
+      final engine = engineOver(midlineRig());
+      final before = engine.database.facts.length;
+      engine.run();
+      final sum = RuleTally.sum(engine.tallies.values);
+      expect(sum.applications, engine.applications);
+      expect(sum.derived, engine.database.facts.length - before);
+      for (final entry in engine.tallies.entries) {
+        final derivedBy = engine.database.facts
+            .where((f) => engine.database.derivationOf(f)?.rule == entry.key)
+            .length;
+        expect(entry.value.derived, derivedBy, reason: entry.key);
+        expect(
+          entry.value.visits,
+          greaterThanOrEqualTo(entry.value.applications),
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('the tallies are a copy, and two reads isolate a step', () {
+      final engine = engineOver(midlineRig());
+      final first = engine.tallies;
+      engine.step(3);
+      final second = engine.tallies;
+      expect(RuleTally.sum(first.values).applications, 0);
+      expect(
+        RuleTally.sum([
+          for (final name in second.keys) second[name]! - first[name]!,
+        ]).applications,
+        3,
+      );
+      expect(() => second['midp_coll'] = const RuleTally(), throwsA(anything));
+    });
+
+    test('a fully bound premise is one probe, not a scan', () {
+      // `orthocentre`: `perp(a,b,c,d) & perp(a,c,b,d)` — a perp pivot
+      // binds all four variables, and the second premise names one
+      // statement over the *same* four points. An orthocentre states
+      // three perps over one point set, so the bound-point screen
+      // passes every one of them; only the lookup keeps the join from
+      // scanning. Counted: 3 facts × 2 slots × (8 spellings + 8
+      // probes) = 96. Scanned, each binding would visit 3 × 8 = 24:
+      // 3 × 2 × (8 + 8 × 24) = 1200.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(7, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 5));
+      final h = Orthocenter(id: 'h', vertex1: a, vertex2: b, vertex3: c);
+      final engine = engineOver([a, b, c, h], rules: [ruleNamed('orthocentre')])
+        ..run();
+      expect(engine.database.facts.length, 3);
+      expect(engine.tallies['orthocentre']!.visits, 96);
+    });
+
+    test('a partially bound premise is screened by its bound points', () {
+      // The disjoint circumcentres again, counted exactly: each of the
+      // four `cong` facts pivots in both slots of `perp_bisector` (8
+      // spellings each, 2 of which bind the repeated centre), and each
+      // binding joins the other slot over the one fact carrying both
+      // bound points — its own, 8 spellings. 4 × 2 × (8 + 2 × 8) = 192.
+      // Unscreened, every binding would have scanned all four facts:
+      // 4 × 2 × (8 + 2 × 32) = 576.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(1, 3));
+      final d = FreePoint(id: 'd', position: const Vec2(10, 0));
+      final e = FreePoint(id: 'e', position: const Vec2(14, 3));
+      final f = FreePoint(id: 'f', position: const Vec2(11, 7));
+      final o = Circumcenter(id: 'o', vertex1: a, vertex2: b, vertex3: c);
+      final p = Circumcenter(id: 'p', vertex1: d, vertex2: e, vertex3: f);
+      final engine = engineOver(
+        [a, b, c, d, e, f, o, p],
+        rules: [ruleNamed('perp_bisector')],
+      )..run();
+      expect(engine.database.facts.length, 4);
+      expect(engine.tallies['perp_bisector']!.visits, 192);
+    });
+
+    test('RuleTally arithmetic', () {
+      const a = RuleTally(visits: 10, applications: 3, derived: 1);
+      const b = RuleTally(visits: 4, applications: 1, derived: 1);
+      expect(a + b, const RuleTally(visits: 14, applications: 4, derived: 2));
+      expect(a - b, const RuleTally(visits: 6, applications: 2, derived: 0));
+      expect(RuleTally.sum([a, b, a]), a + b + a);
+      expect(a.hashCode, (a + const RuleTally()).hashCode);
+      expect(a.toString(), 'tally(visits 10, applications 3, derived 1)');
+    });
+  });
+
   group('seedHypotheses', () {
     test('drops a hypothesis the filter refuses', () {
       // A reflected point whose source is glued to its own mirror: the

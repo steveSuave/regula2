@@ -76,12 +76,37 @@ class ProverEngine {
     for (final kind in PredicateKind.values) kind: [],
   };
 
+  /// Each fact's position in its `_byKind` list — what lets a fully
+  /// bound premise be resolved by one probe and still be checked
+  /// against the pivot's snapshot (Phase 188).
+  final Map<Fact, int> _slotOf = {};
+
   int _nextPivot = 0;
   Iterator<_Candidate>? _current;
   int _applications = 0;
 
+  // Per-rule work counters, indexed like [rules] (Phase 188).
+  late final List<int> _visits = List.filled(rules.length, 0);
+  late final List<int> _ruleApplications = List.filled(rules.length, 0);
+  late final List<int> _derived = List.filled(rules.length, 0);
+
   /// Rule applications performed so far, across all [step] calls.
   int get applications => _applications;
+
+  /// What each rule has cost and yielded so far, keyed by rule name
+  /// (Phase 188). The **visits** are the uncharged half of a step:
+  /// every binding attempt the enumeration made, pivot and join alike,
+  /// one per spelling of every fact a slot was joined over — the work
+  /// [applications] never counted and the budget therefore never
+  /// bounded. Read-only, and a copy: diff two reads to tally one pass.
+  Map<String, RuleTally> get tallies => Map.unmodifiable({
+    for (var i = 0; i < rules.length; i++)
+      rules[i].name: RuleTally(
+        visits: _visits[i],
+        applications: _ruleApplications[i],
+        derived: _derived[i],
+      ),
+  });
 
   /// Whether the fixpoint is reached: every fact has served as pivot and
   /// no candidate remains. A completed engine's [step] answers 0.
@@ -89,7 +114,9 @@ class ProverEngine {
 
   void _append(Fact fact) {
     _facts.add(fact);
-    _byKind[fact.kind]!.add(fact);
+    final ofKind = _byKind[fact.kind]!;
+    _slotOf[fact] = ofKind.length;
+    ofKind.add(fact);
   }
 
   /// Takes into the pivot queue any fact added to [database] by someone
@@ -129,6 +156,7 @@ class ProverEngine {
       performed++;
       _applications++;
       final candidate = current.current;
+      _ruleApplications[candidate.ruleIndex]++;
       if (!filter.holds(candidate.statement)) continue;
       final fact = Fact.of(candidate.statement);
       if (database.add(
@@ -136,6 +164,7 @@ class ProverEngine {
         Derivation(candidate.rule.name, candidate.premises),
       )) {
         _append(fact);
+        _derived[candidate.ruleIndex]++;
       }
     }
     return performed;
@@ -223,13 +252,15 @@ class ProverEngine {
     Fact pivot,
     Map<PredicateKind, int> snapshot,
   ) sync* {
-    for (final rule in rules) {
+    for (var ruleIndex = 0; ruleIndex < rules.length; ruleIndex++) {
+      final rule = rules[ruleIndex];
       for (var slot = 0; slot < rule.premises.length; slot++) {
         if (rule.premises[slot].kind != pivot.kind) continue;
         for (final form in orbitArguments(pivot.kind, pivot.points)) {
           final binding = <String, GeoPoint>{};
+          _visits[ruleIndex]++;
           if (!_bind(rule.premises[slot], form, binding)) continue;
-          yield* _joinRemaining(rule, slot, 0, binding, {
+          yield* _joinRemaining(ruleIndex, slot, 0, binding, {
             slot: pivot,
           }, snapshot);
         }
@@ -238,26 +269,27 @@ class ProverEngine {
   }
 
   Iterable<_Candidate> _joinRemaining(
-    Rule rule,
+    int ruleIndex,
     int pivotSlot,
     int position,
     Map<String, GeoPoint> binding,
     Map<int, Fact> bound,
     Map<PredicateKind, int> snapshot,
   ) sync* {
+    final rule = rules[ruleIndex];
     if (position == rule.premises.length) {
       final points = [
         for (final variable in rule.conclusion.variables) binding[variable]!,
       ];
       if (!_admissibleConclusion(rule.conclusion.kind, points)) return;
-      yield _Candidate(rule, [
+      yield _Candidate(ruleIndex, rule, [
         for (var i = 0; i < rule.premises.length; i++) bound[i]!,
       ], Predicate(rule.conclusion.kind, points));
       return;
     }
     if (position == pivotSlot) {
       yield* _joinRemaining(
-        rule,
+        ruleIndex,
         pivotSlot,
         position + 1,
         binding,
@@ -269,17 +301,68 @@ class ProverEngine {
     final premise = rule.premises[position];
     final candidates = _byKind[premise.kind]!;
     final limit = snapshot[premise.kind]!;
+    // Phase 188 (PLAN §"A fully bound premise is a lookup, not a
+    // join"): the points the earlier premises already fixed. A fact
+    // that does not carry every one of them binds under no spelling,
+    // so it is skipped before its orbit is built; and a premise with
+    // no free variable left names one statement, which is looked up
+    // rather than searched for — one probe in place of every fact of
+    // the kind times every spelling, and the measured freeze with it.
+    final required = <GeoPoint>[];
+    var fullyBound = !premise.kind.carriesValue;
+    for (final variable in premise.variables) {
+      final point = binding[variable];
+      if (point == null) {
+        fullyBound = false;
+      } else if (!required.any((p) => identical(p, point))) {
+        required.add(point);
+      }
+    }
+    if (fullyBound) {
+      _visits[ruleIndex]++;
+      final slot =
+          _slotOf[Fact(premise.kind, [
+            for (final variable in premise.variables) binding[variable]!,
+          ])];
+      // Past the snapshot is a fact younger than the pivot: its turn
+      // enumerates this combination, so this one must not.
+      if (slot == null || slot >= limit) return;
+      yield* _joinRemaining(ruleIndex, pivotSlot, position + 1, binding, {
+        ...bound,
+        position: candidates[slot],
+      }, snapshot);
+      return;
+    }
     for (var i = 0; i < limit; i++) {
       final fact = candidates[i];
+      if (!_carries(fact, required)) continue;
       for (final form in orbitArguments(fact.kind, fact.points)) {
         final extended = Map.of(binding);
+        _visits[ruleIndex]++;
         if (!_bind(premise, form, extended)) continue;
-        yield* _joinRemaining(rule, pivotSlot, position + 1, extended, {
+        yield* _joinRemaining(ruleIndex, pivotSlot, position + 1, extended, {
           ...bound,
           position: fact,
         }, snapshot);
       }
     }
+  }
+
+  /// Whether every point of [required] occurs among [fact]'s — the
+  /// necessary condition for any spelling of [fact] to bind a premise
+  /// whose variables are already bound to [required].
+  static bool _carries(Fact fact, List<GeoPoint> required) {
+    for (final point in required) {
+      var found = false;
+      for (final p in fact.points) {
+        if (identical(p, point)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+    return true;
   }
 
   /// Unifies [points] with [pattern] into [binding] (mutated), false on
@@ -363,9 +446,55 @@ bool _admissibleConclusion(PredicateKind kind, List<GeoPoint> points) {
 }
 
 class _Candidate {
-  _Candidate(this.rule, this.premises, this.statement);
+  _Candidate(this.ruleIndex, this.rule, this.premises, this.statement);
 
+  final int ruleIndex;
   final Rule rule;
   final List<Fact> premises;
   final Predicate statement;
+}
+
+/// One rule's share of an engine's work (Phase 188): [visits] is the
+/// enumeration's inner step — a binding attempt against one spelling of
+/// one fact — and is what a step spends without charging;
+/// [applications] is the charged half, the fully-bound combinations
+/// the budget counts; [derived] is what those applications actually
+/// added to the database. A value: subtract two reads of
+/// [ProverEngine.tallies] to isolate one pass.
+class RuleTally {
+  const RuleTally({this.visits = 0, this.applications = 0, this.derived = 0});
+
+  final int visits;
+  final int applications;
+  final int derived;
+
+  /// Sums the tallies — an engine's total across its rules.
+  static RuleTally sum(Iterable<RuleTally> tallies) =>
+      tallies.fold(const RuleTally(), (a, b) => a + b);
+
+  RuleTally operator +(RuleTally other) => RuleTally(
+    visits: visits + other.visits,
+    applications: applications + other.applications,
+    derived: derived + other.derived,
+  );
+
+  RuleTally operator -(RuleTally other) => RuleTally(
+    visits: visits - other.visits,
+    applications: applications - other.applications,
+    derived: derived - other.derived,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is RuleTally &&
+      other.visits == visits &&
+      other.applications == applications &&
+      other.derived == derived;
+
+  @override
+  int get hashCode => Object.hash(visits, applications, derived);
+
+  @override
+  String toString() =>
+      'tally(visits $visits, applications $applications, derived $derived)';
 }

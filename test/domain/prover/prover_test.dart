@@ -263,6 +263,14 @@ void main() {
       expect(joint.prover.passes.single.published, 0);
     });
 
+    test('the tallies are DD\'s, and they sum to its applications', () {
+      // Phase 188: the per-rule work counters reach the facade.
+      final joint = exchange(jgexDocument(), cap: 50);
+      final sum = RuleTally.sum(joint.prover.tallies.values);
+      expect(sum.applications, joint.prover.applications);
+      expect(sum.visits, greaterThan(sum.applications));
+    });
+
     test('the cap counts DD applications and is respected', () {
       final construction = jgexDocument();
       final joint = exchange(construction, cap: 50);
