@@ -89,6 +89,10 @@ class Prover {
 
   int get applications => _dd.applications;
 
+  /// DD's per-rule work so far, keyed by rule name — what a pass cost
+  /// in visits as well as in applications ([ProverEngine.tallies]).
+  Map<String, RuleTally> get tallies => _dd.tallies;
+
   /// Whether both halves have nothing left: DD quiescent and the last
   /// pass silent.
   bool get isComplete =>
