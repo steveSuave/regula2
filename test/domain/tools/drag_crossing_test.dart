@@ -180,18 +180,71 @@ void main() {
       expect(g.position!.distanceTo(otherCrossing(-12)), lessThan(1e-9));
     });
 
-    test('and it does not, at the constant this rig used to get', () {
-      // The control for the test above: the same sweep, pinned back to
-      // the shipped 128, still loses G to the driver's own root. What
-      // changed is the budget and nothing else.
+    test('and at the constant this rig used to get, the crossing is kept '
+        'across two frames (Phase 189)', () {
+      // This was the control: pinned back to 128, the same sweep lost G
+      // to the driver's own root, because the frame straddling t = −8
+      // ran out of trials in the detour's *exit* — past the crossing —
+      // and bailed to a static solve that relabelled it. A pass now
+      // keeps a crossing it can vouch for: it stops where the budget ran
+      // out, the driver lags the pointer by the rest of the path, and
+      // the next frame finishes the climb from there.
       TracingFlags.dragStepBudget = 128;
       final (:construction, :f, :g) = rig();
-      slide(construction, f, from: -6, to: -12, step: 0.25);
-      expect(
-        g.position!.distanceTo(otherCrossing(-12)),
-        greaterThan(1e-9),
-        reason: 'if 128 now suffices, the payoff test proves nothing',
+      final session = DragSession.start(construction, f, f.position!)!;
+      var kept = 0;
+      var lagged = 0;
+      var bailed = 0;
+      for (var at = -6.25; at > -12 - 1e-9; at -= 0.25) {
+        session.update(Vec2(at, 0));
+        final stats = session.traceStats!;
+        if (stats.bailed) bailed++;
+        if (!stats.bailed && stats.reached < 1) {
+          kept++;
+          if ((f.parameter - at).abs() > 1e-9) lagged++;
+        }
+      }
+      // The frame whose pointer lands *exactly* on t = −8 (the grid step
+      // divides it) still bails: its singularity is an endpoint no arc
+      // can enclose, the Phase 134 case, and the anchor holds. The frame
+      // after it spans the crossing, keeps it, and stops just past it.
+      expect(bailed, 1);
+      expect(kept, 1, reason: 'the crossing frame stops short');
+      expect(lagged, kept, reason: 'and the driver lags the pointer there');
+      session.end()?.apply(construction);
+      expect(g.position!.distanceTo(otherCrossing(-12)), lessThan(1e-9));
+    });
+
+    test('the walk itself: at 128 the transversal pass stops past the '
+        'crossing with G on its own root, and a pass from there finishes', () {
+      TracingFlags.dragStepBudget = 128;
+      final (:construction, :f, :g) = rig();
+      final first = construction.recomputeAlongParameterPath(
+        'drv',
+        -6.25,
+        -9,
+        stepBudget: 128,
       );
+      expect(first.detours, 1);
+      expect(first.reached, greaterThan(0));
+      expect(first.reached, lessThan(1));
+      // The driver sits at the lerp of the stop — bitwise what the slide
+      // session anchors to — and it is past the crossing at t = −8.
+      final stop = -6.25 * (1 - first.reached) + -9 * first.reached;
+      expect(f.parameter, stop);
+      expect(stop, lessThan(-8));
+      // Identity carried: G is the *other* crossing there, not the
+      // driver's root the static relabel used to hand it.
+      expect(g.position!.distanceTo(otherCrossing(stop)), lessThan(1e-9));
+      final second = construction.recomputeAlongParameterPath(
+        'drv',
+        stop,
+        -9,
+        stepBudget: 128,
+      );
+      expect(second.reached, 1);
+      expect(second.detours, 0);
+      expect(g.position!.distanceTo(otherCrossing(-9)), lessThan(1e-9));
     });
   });
 

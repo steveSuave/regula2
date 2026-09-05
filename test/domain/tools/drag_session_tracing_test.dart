@@ -8,6 +8,7 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/projective/tracing/drag_path.dart';
 import 'package:regula/domain/projective/tracing/tracing_flags.dart';
 import 'package:regula/domain/tools/drag_session.dart';
 
@@ -210,6 +211,44 @@ void main() {
     final command = session.end();
     expect(command, isA<MoveFreePointCommand>());
     expect(center.position, const Vec2(0, 5));
+  });
+
+  test('a frame that runs out of budget past the crossing keeps it: the '
+      'point lags the pointer, and the next frame catches up (Phase 189)', () {
+    // (0,5)→(0,1) crosses the tangency at t = 0.5. Measured regimes
+    // (`benchmark/detour_cost_probe.dart`): the pass throws below 84
+    // trials, keeps from 84 to 108, completes from 110 — so 96 is well
+    // inside the kept one.
+    TracingFlags.dragStepBudget = 96;
+    const path = DragPath(Vec2(0, 5), Vec2(0, 1));
+    final session = DragSession.start(construction, center, const Vec2(0, 5))!;
+    session.update(const Vec2(0, 1));
+    final first = session.traceStats!;
+    expect(first.bailed, isFalse);
+    expect(first.detours, 1);
+    expect(first.reached, greaterThan(0.5));
+    expect(first.reached, lessThan(1));
+    // The point lags: it sits where the pass stopped, not at the pointer.
+    expect(center.position, path.at(first.reached));
+    expect(center.position, isNot(const Vec2(0, 1)));
+    // Real, and on the side the one-frame crossing lands on.
+    expect(p0.position, isNotNull);
+    expect(p0.position!.x, lessThan(0));
+    expect(p0.tracedBranch.isActive, isFalse);
+    // The next frame walks from the stop to the pointer and catches up.
+    session.update(const Vec2(0, 1));
+    final second = session.traceStats!;
+    expect(second.bailed, isFalse);
+    expect(second.reached, 1);
+    expect(center.position, const Vec2(0, 1));
+    expect(p0.position!.closeTo(Vec2(-2.8284271247461903, 0)), isTrue);
+    // One command for the gesture, as ever.
+    final command = session.end();
+    expect(command, isA<MoveFreePointCommand>());
+    expect(center.position, const Vec2(0, 5));
+    command!.apply(construction);
+    expect(center.position, const Vec2(0, 1));
+    expect(p0.position!.x, lessThan(0));
   });
 
   group('slide-drag tracing (Phase 116b): the Cinderella demo rig', () {

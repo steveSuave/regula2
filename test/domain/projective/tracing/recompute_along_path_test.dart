@@ -1093,6 +1093,11 @@ void main() {
       // the budget and bails, and the static solve recovers. (A silent
       // swap here would be wrong by ~1e-10 world units; a bail is
       // honest.)
+      //
+      // Phase 189 keeps a crossing at the budget — but not this one, and
+      // this test is the pin: the arcs here are extrapolated, not
+      // measured, and no root changes realness across them, so the pass
+      // has nothing it can vouch for and throws as before.
       const y = 4.0 + 1e-10;
       final (construction, p0, p1) = circlePair(const Vec2(-6, y));
       expect(
@@ -1132,6 +1137,145 @@ void main() {
       construction.moveFreePoint('c2', const Vec2(0, 4));
       expect(p0.position!.closeTo(const Vec2(0, 2)), isTrue);
       expect(p1.position!.closeTo(const Vec2(0, 2)), isTrue);
+    });
+  });
+
+  group('recomputeAlongPath: a pass keeps what it carried across '
+      '(Phase 189)', () {
+    // The toy tangency drag (0,5)→(0,0), read by
+    // `benchmark/detour_cost_probe.dart`: the approach creeps to the
+    // detour trigger in ~70 trials, the arc takes 4, and the exit climbs
+    // back to path scale in ~28. Three budget regimes follow. Below the
+    // arc's end the pass has crossed nothing and throws, as it always
+    // did. From there to the exit's end it *has* crossed — the roots
+    // went complex and came back real on the far side — so it stops at
+    // its last accepted parameter and reports how far it got. Past that
+    // it completes.
+    const path = DragPath(Vec2(0, 5), Vec2(0, 0));
+
+    (String kind, ({double reached, int detours})? result) runAt(
+      Construction construction,
+      int budget,
+    ) {
+      try {
+        final r = construction.recomputeAlongPath(
+          'c',
+          path,
+          stepBudget: budget,
+        );
+        return (
+          r.reached < 1 ? 'kept' : 'complete',
+          (reached: r.reached, detours: r.detours),
+        );
+      } on TraceStepBudgetException {
+        return ('throw', null);
+      }
+    }
+
+    test('the regimes come in order — throw, keep, complete — and the kept '
+        'one exists', () {
+      final seen = <String>[];
+      for (var budget = 60; budget <= 110; budget += 2) {
+        final (construction, _, _, _) = lineAndCircle(const Vec2(0, 5));
+        final (kind, result) = runAt(construction, budget);
+        if (kind == 'kept') {
+          expect(result!.detours, 1, reason: 'kept means crossed');
+          expect(result.reached, greaterThan(0.4), reason: 'past t* = 0.4');
+        }
+        if (seen.isEmpty || seen.last != kind) seen.add(kind);
+      }
+      expect(seen, ['throw', 'kept', 'complete']);
+    });
+
+    test('a kept pass stops where it stopped, identity carried, and the '
+        'next pass finishes the climb to the same end state', () {
+      // The reference: one pass with budget to spare.
+      final (reference, _, r0, r1) = lineAndCircle(const Vec2(0, 5));
+      reference.recomputeAlongPath('c', path, stepBudget: 2048);
+      final leftIsP0 = r0.position!.x < 0;
+      expect(r1.position!.x < 0, !leftIsP0, reason: 'one on each side');
+
+      // The kept run, at the first budget that keeps.
+      var budget = 60;
+      Construction construction;
+      FreePoint center;
+      IntersectionPoint p0;
+      IntersectionPoint p1;
+      String kind;
+      ({double reached, int detours})? result;
+      do {
+        (construction, center, p0, p1) = lineAndCircle(const Vec2(0, 5));
+        (kind, result) = runAt(construction, budget += 2);
+      } while (kind == 'throw' && budget < 200);
+      expect(kind, 'kept');
+      final reached = result!.reached;
+      expect(reached, greaterThan(0.4));
+      expect(reached, lessThan(1));
+      // The construction sits exactly where the pass says it stopped —
+      // the same lerp the drive uses, so the anchor a caller derives is
+      // bitwise the state.
+      expect(center.position, path.at(reached));
+      // Real, sides as continuity dictates, slots released.
+      expect(p0.position, isNotNull);
+      expect(p1.position, isNotNull);
+      expect(p0.position!.x < 0, leftIsP0);
+      expect(p1.position!.x < 0, !leftIsP0);
+      expect(p0.tracedBranch.isActive, isFalse);
+      expect(p1.tracedBranch.isActive, isFalse);
+      // Adoption happened at the stop: the static solve there reproduces
+      // the traced state, labels included.
+      final kept0 = p0.projPoint!;
+      final kept1 = p1.projPoint!;
+      construction.moveFreePoint('c', path.at(reached));
+      expect(p0.projPoint!.closeTo(kept0, 1e-9), isTrue);
+      expect(p1.projPoint!.closeTo(kept1, 1e-9), isTrue);
+
+      // The next pass, from the stop to the end, on the shipped budget:
+      // nothing left to cross, so it completes, and it lands where the
+      // reference did.
+      final second = construction.recomputeAlongPath(
+        'c',
+        DragPath(path.at(reached), path.end),
+        stepBudget: 128,
+      );
+      expect(second.reached, 1);
+      expect(second.detours, 0);
+      expect(p0.position!.closeTo(r0.position!), isTrue);
+      expect(p1.position!.closeTo(r1.position!), isTrue);
+    });
+
+    test('a pass that has crossed nothing still throws at the budget', () {
+      // Just short of the arc's end: the walk is inside the arc, the
+      // entry state is restored, and there is nothing a static solve
+      // would lose — so the old contract stands, `tReached` at the arc's
+      // entry.
+      var budget = 60;
+      var lastThrowingBudget = -1;
+      while (budget < 200) {
+        final (construction, _, _, _) = lineAndCircle(const Vec2(0, 5));
+        final (kind, _) = runAt(construction, budget);
+        if (kind != 'throw') break;
+        lastThrowingBudget = budget;
+        budget += 1;
+      }
+      expect(lastThrowingBudget, greaterThan(60));
+      final (construction, _, p0, p1) = lineAndCircle(const Vec2(0, 5));
+      expect(
+        () => construction.recomputeAlongPath(
+          'c',
+          path,
+          stepBudget: lastThrowingBudget,
+        ),
+        throwsA(
+          isA<TraceStepBudgetException>().having(
+            (e) => e.tReached,
+            'tReached',
+            closeTo(0.4, 1e-3),
+          ),
+        ),
+      );
+      expect(p0.tracedBranch.isActive, isFalse);
+      expect(p1.tracedBranch.isActive, isFalse);
     });
   });
 
