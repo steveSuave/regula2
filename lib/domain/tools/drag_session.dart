@@ -64,12 +64,16 @@ import '../projective/tracing/tracing_flags.dart';
 /// One traced preview frame's step-controller counts, plus whether the
 /// frame fell back to the static solve — the Phase 116 debug-overlay
 /// feed (`Construction.recomputeAlongPath` returns the counts; the drag
-/// session records them per frame).
+/// session records them per frame). [reached] is how far along its path
+/// the frame carried identity: 1 for a complete pass, less for one that
+/// ran out of budget past a detour and kept the crossing (Phase 189),
+/// 0 for a bail.
 typedef TraceFrameStats = ({
   int accepted,
   int rejected,
   int detours,
   bool bailed,
+  double reached,
 });
 
 abstract class DragSession {
@@ -553,10 +557,11 @@ class _TranslateDragSession implements DragSession {
   void _tracedUpdate(Vec2 target) {
     final id = _pointIds.single;
     final from = _lastPreview ?? _startPositions[id]!;
+    final path = DragPath(from, target);
     try {
       final result = _construction.recomputeAlongPath(
         id,
-        DragPath(from, target),
+        path,
         stepBudget: _stepBudget,
         startStep: _startStep,
         seedMemory: _seedMemory,
@@ -564,9 +569,12 @@ class _TranslateDragSession implements DragSession {
       // Zero says the roots closed all the way, so this end state is
       // one no pass can seed from: hold the anchor, exactly as a bail
       // does. The anchor advances only to states identity can be picked
-      // up again at.
+      // up again at — which, for a pass that kept a crossing and
+      // stopped short (Phase 189), is where it stopped: the point lags
+      // the pointer by the rest of the path, and the next frame walks
+      // it from there.
       if (result.closing > 0) {
-        _lastPreview = target;
+        _lastPreview = result.reached < 1 ? path.at(result.reached) : target;
         _stale = 0;
       }
       _startStep = result.closing.clamp(_minStartStep, 1.0);
@@ -575,9 +583,16 @@ class _TranslateDragSession implements DragSession {
         rejected: result.rejectedSteps,
         detours: result.detours,
         bailed: false,
+        reached: result.reached,
       );
     } catch (_) {
-      _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
+      _traceStats = (
+        accepted: 0,
+        rejected: 0,
+        detours: 0,
+        bailed: true,
+        reached: 0,
+      );
       TraceDiagnostics.count(TraceCounter.dragBails);
       _seedMemory.clear();
       _startStep = _minStartStep;
@@ -885,9 +900,14 @@ class _SlideDragSession implements DragSession {
         startStep: _startStep,
         seedMemory: _seedMemory,
       );
-      // See the free-point session: a fully-closed end is not an anchor.
+      // See the free-point session: a fully-closed end is not an anchor,
+      // and a pass that kept a crossing anchors where it stopped — the
+      // same lerp form as the drive, so the anchor is bitwise the
+      // parameter the construction sits at.
       if (result.closing > 0) {
-        _anchor = _parameter;
+        _anchor = result.reached < 1
+            ? from * (1 - result.reached) + _parameter * result.reached
+            : _parameter;
         _stale = 0;
       }
       _startStep = result.closing.clamp(_minStartStep, 1.0);
@@ -896,9 +916,16 @@ class _SlideDragSession implements DragSession {
         rejected: result.rejectedSteps,
         detours: result.detours,
         bailed: false,
+        reached: result.reached,
       );
     } catch (_) {
-      _traceStats = (accepted: 0, rejected: 0, detours: 0, bailed: true);
+      _traceStats = (
+        accepted: 0,
+        rejected: 0,
+        detours: 0,
+        bailed: true,
+        reached: 0,
+      );
       TraceDiagnostics.count(TraceCounter.dragBails);
       _seedMemory.clear();
       _startStep = _minStartStep;

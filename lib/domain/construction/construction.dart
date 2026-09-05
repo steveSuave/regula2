@@ -198,6 +198,21 @@ class Construction {
   /// counts and the number of completed detours (the Phase 116
   /// debug-overlay feed).
   ///
+  /// **A pass keeps what it carried across (Phase 189).** Exhausting the
+  /// budget *after* a completed detour is not a failure: the identity
+  /// the detour exists to carry has already crossed the singularity,
+  /// and what is left is the exit's climb back to path scale — ~15
+  /// trials on a tangency, ~40 on a transversal crossing, against an
+  /// approach that already cost 47–93. So once `detours > 0` the pass
+  /// does not throw at the budget; it stops at its last accepted real
+  /// parameter, drives the construction there, adopts branches from that
+  /// state exactly as a complete pass adopts them at the end, and
+  /// reports `reached < 1`. The caller anchors its next path there and
+  /// the exit finishes on a fresh budget. A pass with no detour behind
+  /// it still throws: it has carried nothing a static solve would lose,
+  /// and a path ending on a singularity would otherwise lag for ever.
+  /// See PLAN §"A pass keeps what it carried across".
+  ///
   /// Excluded from seeding: intersection points inside a [Locus.chain] —
   /// the sweep-and-restore recompute would drag their roots along the
   /// sweep (Phase 117 rewrites loci on tracing). Points whose candidate
@@ -228,7 +243,13 @@ class Construction {
   /// the observation hook for the toy harness and the Phase 116 debug
   /// overlay. Notifies once, like [moveFreePoint]. Throws
   /// [ArgumentError] when [id] is not a [FreePoint] or [stepBudget] < 1.
-  ({int acceptedSteps, int rejectedSteps, int detours, double closing})
+  ({
+    int acceptedSteps,
+    int rejectedSteps,
+    int detours,
+    double closing,
+    double reached,
+  })
   recomputeAlongPath(
     String id,
     DragPath path, {
@@ -272,7 +293,13 @@ class Construction {
   /// [from] and recomputes before it seeds. Throws
   /// [ArgumentError] when [id] is not a [PointOnObject] or [stepBudget]
   /// < 1.
-  ({int acceptedSteps, int rejectedSteps, int detours, double closing})
+  ({
+    int acceptedSteps,
+    int rejectedSteps,
+    int detours,
+    double closing,
+    double reached,
+  })
   recomputeAlongParameterPath(
     String id,
     double from,
@@ -416,7 +443,13 @@ class Construction {
   /// or stops being held back changes both together.
   int tracedWorkPerTrial(String id) => _tracedPartition(id).affectedCore.length;
 
-  ({int acceptedSteps, int rejectedSteps, int detours, double closing})
+  ({
+    int acceptedSteps,
+    int rejectedSteps,
+    int detours,
+    double closing,
+    double reached,
+  })
   _traceAlong({
     required String id,
     required void Function(double t) driveReal,
@@ -518,7 +551,13 @@ class Construction {
         driveReal(1);
         _recomputeAffected(affectedCore);
         onStep?.call(1);
-        return (acceptedSteps: 1, rejectedSteps: 0, detours: 0, closing: 1.0);
+        return (
+          acceptedSteps: 1,
+          rejectedSteps: 0,
+          detours: 0,
+          closing: 1.0,
+          reached: 1.0,
+        );
       }
       final checkpoints = List<TracedBranchCheckpoint?>.filled(
         seeded.length,
@@ -558,12 +597,33 @@ class Construction {
         }
       }
 
+      // Where the pass ends: 1 for a complete walk, the last accepted
+      // real parameter for one that ran out of budget past a crossing.
+      var reached = 1.0;
+      // Whether this pass has made a crossing it can *vouch for* — the
+      // only kind the budget rule below keeps. A detour vouches for
+      // itself in one of two ways: its collision was measured
+      // (`SeparationMinimum.isCollision`: the separation profile ahead
+      // went below the double-root floor, so the arc encloses a real
+      // singularity — the transversal shape), or a tracked root changed
+      // realness across it (complex conjugates at the entry, real at the
+      // exit, or the reverse: a real branch point lies under the arc's
+      // diameter — the tangency shape, whose collision sits inside the
+      // measurement's first probe and is never bracketed). An arc that
+      // is neither is a bet on the extrapolated estimate — an
+      // ultra-tight near-miss plans short arcs that wind around nothing
+      // — and a bet that ran the budget out is bailed on as before.
+      var carried = false;
+
       /// Walks [arc] from θ = π (its entry — where the pass already
       /// sits) down to θ = 0 (its real exit past the singularity) with
       /// the identical acceptance machinery, complex carriers allowed
       /// for the duration. Trials share the pass budget; exhaustion
-      /// mid-arc restores the real entry state and throws.
-      void traceArc(DetourArc arc) {
+      /// mid-arc restores the real entry state and throws — unless a
+      /// detour is already behind this pass, in which case it answers
+      /// false with the entry state restored, and the pass ends there
+      /// (Phase 189).
+      bool traceArc(DetourArc arc) {
         for (final o in seeded) {
           o.tracedBranch.allowComplexCarriers = true;
         }
@@ -584,6 +644,9 @@ class Construction {
               }
               driveReal(arc.entry);
               _recomputeAffected(affectedCore);
+              if (carried) {
+                return false;
+              }
               throw TraceStepBudgetException(
                 tReached: arc.entry,
                 trials: accepted + rejected,
@@ -603,6 +666,9 @@ class Construction {
               }
               driveReal(arc.entry);
               _recomputeAffected(affectedCore);
+              if (carried) {
+                return false;
+              }
               throw TraceStepBudgetException(
                 tReached: arc.entry,
                 trials: accepted + rejected,
@@ -610,6 +676,7 @@ class Construction {
             }
             driveComplex(arc.tAt(trialTheta));
             _recomputeAffected(affectedCore);
+            TraceDiagnostics.count(TraceCounter.dragArcTrials);
             if (trialAccepted(
                   seeded,
                   checkpoints,
@@ -631,6 +698,7 @@ class Construction {
               dTheta /= 2;
             }
           }
+          return true;
         } finally {
           for (final o in seeded) {
             o.tracedBranch.allowComplexCarriers = false;
@@ -648,6 +716,19 @@ class Construction {
               'trials=${accepted + rejected}/$stepBudget',
         );
         if (accepted + rejected >= stepBudget) {
+          if (carried) {
+            // Past a measured crossing: keep it. The construction sits
+            // at the last *trial* (a refused one, past `t`, or short of
+            // it when the step limit refused it unevaluated) with the
+            // slots restored to the accepted state, so drive back to
+            // `t` and recompute: the slots re-match their own roots
+            // there and adoption below reads the state a static solve
+            // at `t` reproduces.
+            reached = t;
+            driveReal(t);
+            _recomputeAffected(affectedCore);
+            break;
+          }
           throw TraceStepBudgetException(
             tReached: t,
             trials: accepted + rejected,
@@ -718,6 +799,8 @@ class Construction {
               restoreAll,
               t,
             );
+            final certified =
+                measured != null && measured.isCollision && measured.t > t;
             final tStar = measured == null
                 ? estimateSingularParameter(
                     t1: tPrev,
@@ -725,7 +808,7 @@ class Construction {
                     t2: tCurr,
                     s2: sepCurr,
                   )
-                : (measured.isCollision && measured.t > t ? measured.t : null);
+                : (certified ? measured.t : null);
             final arc = tStar == null
                 ? null
                 : DetourArc.plan(
@@ -734,8 +817,25 @@ class Construction {
                     orientation: detourHalfPlane,
                   );
             if (arc != null) {
-              traceArc(arc);
+              final realAtEntry = [
+                for (final o in seeded) o.tracedBranch.root.isReal(),
+              ];
+              if (!traceArc(arc)) {
+                // Out of budget inside a later arc: the entry state is
+                // restored and `t` is the entry, so end there.
+                reached = t;
+                break;
+              }
               detours++;
+              var flipped = false;
+              for (var i = 0; i < seeded.length; i++) {
+                if (seeded[i].tracedBranch.root.isReal() != realAtEntry[i]) {
+                  flipped = true;
+                }
+              }
+              if (certified || flipped) {
+                carried = true;
+              }
               TraceDiagnostics.count(TraceCounter.dragDetours);
               t = arc.exit;
               // Resume at the arc's own scale: the roots just crossed a
@@ -754,7 +854,8 @@ class Construction {
         }
       }
       // Branch adoption (Phase 116): the final accepted step ran at
-      // t = 1 on real carriers, so each slot's matchedIndex is the
+      // t = 1 on real carriers (or at `reached`, for a pass that kept
+      // a crossing — Phase 189), so each slot's matchedIndex is the
       // index of the tracked root in the end state's canonically
       // ordered candidate list — exactly the re-derived branchIndex.
       // No adoption when the step coasted (matchedIndex −1: nothing
@@ -850,6 +951,7 @@ class Construction {
             : sepStart.isFinite && sepStart > 0
             ? (sepCurr / sepStart).clamp(0.0, 1.0)
             : 1.0,
+        reached: reached,
       );
     } finally {
       for (final o in seeded) {

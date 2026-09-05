@@ -31,11 +31,19 @@ class TraceStatsOverlay extends ConsumerWidget {
     final stats = ref.read(toolProvider.notifier).lastTraceStats;
     final text = switch (stats) {
       null => 'trace: waiting for a traced drag',
-      (:final bailed, accepted: _, rejected: _, detours: _) when bailed =>
+      (:final bailed, accepted: _, rejected: _, detours: _, reached: _)
+          when bailed =>
         'trace: static bail',
-      (:final accepted, :final rejected, :final detours, bailed: _) =>
+      (
+        :final accepted,
+        :final rejected,
+        :final detours,
+        :final reached,
+        bailed: _,
+      ) =>
         'trace: $accepted accepted · $rejected rejected · '
-            '$detours detour${detours == 1 ? '' : 's'}',
+            '$detours detour${detours == 1 ? '' : 's'}'
+            '${reached < 1 ? ' · kept at ${reached.toStringAsFixed(2)}' : ''}',
     };
     final theme = Theme.of(context);
     final style = theme.textTheme.labelMedium!.copyWith(
