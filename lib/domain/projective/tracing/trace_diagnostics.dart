@@ -35,6 +35,12 @@ enum TraceCounter {
   /// Detour arcs walked around a root collision during a drag.
   dragDetours,
 
+  /// Trials spent *inside* those arcs, accepted and rejected alike —
+  /// the arc's own share of [dragAccepted] + [dragRejected], so a
+  /// detour's cost can be read apart from the creep that triggered it
+  /// and the exit that follows it (Phase 189).
+  dragArcTrials,
+
   /// Passes that gave up and fell back to the static solve.
   dragBails,
 
