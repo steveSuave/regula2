@@ -1,0 +1,28 @@
+lib/domain/projective/tracing/trace_diagnostics.dart
+  s_f1a8bd4e4e5f5c::t_219b362faf6f5a 38-43
+benchmark/detour_cost_probe.dart
+  s_f1a8bd4e4e5f5c::t_fb4874d06560d9 119-127,148-149,172,193-195,198-200,202-204,250-259,268-277,282-292,296-306,310-320
+  s_f1a8bd4e4e5f5c::t_0c5c0ce8837a25 1-4,22-28,30-49,52-54,56-118,128-147,150-170,174-192,196-197,201,205-207,247,249,279-281,293-295,307-309,321,323
+  s_f1a8bd4e4e5f5c::t_990e3bc97bc0e6 278
+  s_f1a8bd4e4e5f5c::t_ae57b951843829 208-246,322
+  s_f1a8bd4e4e5f5c::t_0ff8f49bcb0b91 29,50-51,55,248,260
+  s_f1a8bd4e4e5f5c::t_58f7c80fb4cbed 5-21
+  s_f1a8bd4e4e5f5c::t_186c8160451540 261-267
+  s_f1a8bd4e4e5f5c::t_1807100ac533e6 171,173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "31aa91285709e154df729d0e0f89cde9f4d11e01",
+  "prompts": {},
+  "sessions": {
+    "s_f1a8bd4e4e5f5c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9440ac64-5eb8-4aa2-917a-ea0092465e91",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
