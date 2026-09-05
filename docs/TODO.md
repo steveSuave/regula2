@@ -14,6 +14,18 @@ Phase numbering starts at 100 to mark the V2 era (V1 ended at Phase 73). Prover 
 - [ ] iOS simulator smoke + `flutter build ios` — blocked on complete Xcode install + CocoaPods
 - [ ] Stretch from V1 Phase 19: hand-written SVG export (may slip forever)
 
+## M-3D — three dimensions (opened session 186, 2026-09-05; Phases 190–196)
+
+The decision record is PLAN §"M-3D — three dimensions", written before any code and specified by one fixture: the pyramid OABCD with a square base of side a and equilateral lateral faces, read for ∠OAC (45°), the base-to-face dihedral (arctan √2 ≈ 54.7356°) and the face-to-face dihedral (arccos(−1/3) ≈ 109.4712°), under a drag of either base vertex. Phases are sized by that construction: seven concrete kinds under four abstract ones, no free point off the workplane, no tracing in 3D, line ∩ line in space excluded with quadric ∩ quadric. Planned on the `m-3d-planning` branch; Phase 190 closes when that branch is on `main`.
+
+- [ ] **Phase 190 — M-3D0, the record.** PLAN section and this entry merged to `main`; no code
+- [ ] **Phase 191 — M-3D2, the kernel types.** `lib/domain/projective/space/`: `ProjPoint3`, `Plane` (the dual), `Sphere`, the plane's orthonormal frame, plane-through-three-points (normal oriented by point order), perpendicular-to-plane, line ∩ sphere with the branch rule pinned (roots ordered along the line's direction). Every public function tested; property tests where the 2D kernel has them
+- [ ] **Phase 192 — M-3D1, the camera.** A 4×4 camera on `CanvasViewport`, locked identity by default with the V1 Phase 43 rotation re-expressed as its roll; alt-scroll orbit, ctrl-alt-scroll dolly; saved as an additive viewport key. Gate: the 32 goldens byte-identical with the camera at rest
+- [ ] **Phase 193 — M-3D4a, the kinds and the codec.** `GeoPoint3` / `GeoLine3` / `GeoPlane` / `GeoSphere` beside the eight; `projPoint3` total on every `GeoPoint` (the lift), `projPoint` on a `GeoPoint3` null off the workplane; `PlaneThroughThreePoints`, `PerpendicularToPlaneLine`, `CompassSphere`, `LineSphereIntersectionPoint`, `Segment3`, `VertexAngle3`, `DihedralAngle` (interior angle, normals oriented away from each plane's third point); painter and hit-tester arms; codec v4 for a document carrying a 3D kind, with the loader test and a pin that a 2D document still stamps 3
+- [ ] **Phase 194 — M-3D4b, the tools.** The seven tools on the `MultiPointTool` shape; the workplane landing in `point_resolution.dart` (the M-3D3 minimum — no lift modifier yet); toolbar, shortcuts, cheat sheet
+- [ ] **Phase 195 — M-3D5, depth-aware presentation.** Painter's-algorithm depth sort, depth cueing, depth as the hit tiebreaker after (priority, distance); goldens per camera preset
+- [ ] **Phase 196 — the fixture.** The pyramid under `test/fixtures/3d/`, its three readings pinned under a drag of A and of B, and the browser look on the deployed build. Closes the milestone
+- [ ] Deferred past the milestone, named: off-workplane free points and the lift modifier; a `Workplane` object and construction in a plane's chart; polyhedra; circle-as-plane ∩ sphere and conic-in-a-plane as kinds; any 3D locus or trace
 ## Phase 189 — a pass keeps what it carried across (closed)
 
 Phase 139's left-open, taken up as Phase 186's last kernel item. The box asked for a pass to *decline* a detour it cannot afford; the measurement said the budget runs out on the far side of the crossing, with the identity already carried, so the fix is to keep it. See PLAN §"A pass keeps what it carried across".
