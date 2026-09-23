@@ -1,0 +1,269 @@
+lib/domain/construction/objects/focal_conic.dart
+  s_b55ef2d22b311b::t_08b4632c681526 19,69
+lib/domain/construction/objects/fixed_angle_line.dart
+  s_b55ef2d22b311b::t_08b4632c681526 13
+test/domain/construction/geometry_switch_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 23
+lib/presentation/canvas/geometry_painter.dart
+  s_b55ef2d22b311b::t_08b4632c681526 140
+lib/domain/projective/conic_shape.dart
+  s_b55ef2d22b311b::t_08b4632c681526 75
+lib/presentation/shortcuts/shortcut_table.dart
+  s_b55ef2d22b311b::t_08b4632c681526 114,135,236,240
+lib/domain/construction/objects/distance_measurement.dart
+  s_b55ef2d22b311b::t_08b4632c681526 8,54
+lib/application/providers/question_draft_provider.g.dart
+  s_b55ef2d22b311b::t_08b4632c681526 12,32,50,96
+lib/domain/construction/document_kernel.dart
+  s_b55ef2d22b311b::t_08b4632c681526 17
+lib/domain/prover/question_spellings.dart
+  s_b55ef2d22b311b::t_08b4632c681526 178
+lib/domain/construction/objects/ratio_apollonius_circle.dart
+  s_b55ef2d22b311b::t_08b4632c681526 13
+lib/domain/projective/tracing/tracing_flags.dart
+  s_b55ef2d22b311b::t_08b4632c681526 28,45,66
+test/domain/construction/point_representative_sign_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 12
+lib/domain/prover/proof.dart
+  s_b55ef2d22b311b::t_08b4632c681526 59
+lib/domain/construction/geometry_change.dart
+  s_b55ef2d22b311b::t_08b4632c681526 10
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 267
+lib/domain/prover/derivation_check.dart
+  s_b55ef2d22b311b::t_08b4632c681526 24
+test/domain/prover/length_closure_upside_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 73
+lib/presentation/canvas/geometry_canvas.dart
+  s_b55ef2d22b311b::t_08b4632c681526 269
+lib/domain/prover/questions.dart
+  s_b55ef2d22b311b::t_08b4632c681526 8
+benchmark/run_corpus.sh
+  s_b55ef2d22b311b::t_08b4632c681526 5
+lib/domain/tools/tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 109
+test/domain/projective/tracing/tracing_flags_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 6
+lib/domain/construction/objects/tangent_line.dart
+  s_b55ef2d22b311b::t_08b4632c681526 90
+lib/domain/projective/ck_measure.dart
+  s_b55ef2d22b311b::t_08b4632c681526 2
+lib/domain/prover/numeric_checks.dart
+  s_b55ef2d22b311b::t_08b4632c681526 8
+lib/domain/construction/objects/five_point_conic.dart
+  s_b55ef2d22b311b::t_08b4632c681526 19
+lib/application/providers/prover_provider.dart
+  s_b55ef2d22b311b::t_08b4632c681526 81,166,302,357,365,383
+benchmark/tracing_bench.dart
+  s_b55ef2d22b311b::t_08b4632c681526 12
+lib/domain/prover/prover.dart
+  s_b55ef2d22b311b::t_08b4632c681526 38
+lib/domain/construction/objects/arc.dart
+  s_b55ef2d22b311b::t_08b4632c681526 95
+test/domain/tools/ck_macro_triage_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 35
+lib/application/providers/proof_highlight_provider.g.dart
+  s_b55ef2d22b311b::t_08b4632c681526 11,31,49,95
+lib/domain/tools/drag_session.dart
+  s_b55ef2d22b311b::t_08b4632c681526 223,551
+lib/domain/tools/square_macro_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 37
+lib/domain/prover/fact_database.dart
+  s_b55ef2d22b311b::t_08b4632c681526 33,38
+lib/domain/math/rational.dart
+  s_b55ef2d22b311b::t_08b4632c681526 1
+lib/domain/prover/length_closure.dart
+  s_b55ef2d22b311b::t_08b4632c681526 32,336
+test/domain/tools/rhombus_macro_tool_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 219
+test/web/web_renderer_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 26
+lib/domain/tools/scaled_compass_circle_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 11
+lib/main.dart
+  s_b55ef2d22b311b::t_08b4632c681526 1551
+lib/domain/tools/rhombus_macro_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 31,176,187
+lib/presentation/panels/question_builder_bar.dart
+  s_b55ef2d22b311b::t_08b4632c681526 15
+test/corpus/newclid_translation.dart
+  s_b55ef2d22b311b::t_08b4632c681526 1219
+.github/workflows/deploy.yml
+  s_b55ef2d22b311b::t_08b4632c681526 36
+lib/domain/tools/regular_polygon_macro_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 10
+lib/domain/tools/stated_radius_circle_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 10
+test/web/angle_closure_web_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 70
+lib/domain/prover/angle_chase.dart
+  s_b55ef2d22b311b::t_08b4632c681526 10
+test/application/persistence/line_clip_fixture_regression_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 18
+.github/workflows/benchmarks.yml
+  s_b55ef2d22b311b::t_08b4632c681526 4
+lib/domain/prover/fact.dart
+  s_b55ef2d22b311b::t_08b4632c681526 6,183
+test/kitchen_sink.dart
+  s_b55ef2d22b311b::t_08b4632c681526 271
+test/domain/construction/ck_isometry_invariance_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 58
+lib/domain/prover/event_loop_yield.dart
+  s_b55ef2d22b311b::t_08b4632c681526 1
+lib/domain/tools/fixed_angle_line_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 9
+lib/domain/projective/proj_point.dart
+  s_b55ef2d22b311b::t_08b4632c681526 92
+benchmark/drag_budget_bench.dart
+  s_b55ef2d22b311b::t_08b4632c681526 6
+benchmark/threading_bench.dart
+  s_b55ef2d22b311b::t_08b4632c681526 3,75
+lib/domain/construction/objects/radical_axis_line.dart
+  s_b55ef2d22b311b::t_08b4632c681526 73
+lib/domain/projective/ck_circles.dart
+  s_b55ef2d22b311b::t_08b4632c681526 2
+lib/domain/prover/length_translation.dart
+  s_b55ef2d22b311b::t_08b4632c681526 39
+test/domain/prover/angle_closure_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 147
+lib/domain/tools/equilateral_triangle_macro_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 18
+lib/domain/tools/point_resolution.dart
+  s_b55ef2d22b311b::t_08b4632c681526 16
+test/domain/prover/angle_chase_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 84
+test/domain/prover/para_transitive_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 16
+lib/presentation/panels/toolbar.dart
+  s_b55ef2d22b311b::t_08b4632c681526 157,166,185
+lib/domain/prover/rule.dart
+  s_b55ef2d22b311b::t_08b4632c681526 8,96,163
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_b55ef2d22b311b::t_08b4632c681526 24,115
+lib/domain/projective/circles.dart
+  s_b55ef2d22b311b::t_08b4632c681526 144
+lib/domain/construction/objects/intersection_point.dart
+  s_b55ef2d22b311b::t_08b4632c681526 29,70,547
+lib/presentation/canvas/canvas_hit_tester.dart
+  s_b55ef2d22b311b::t_08b4632c681526 27
+lib/domain/projective/proj_line.dart
+  s_b55ef2d22b311b::t_08b4632c681526 123
+lib/domain/construction/construction.dart
+  s_b55ef2d22b311b::t_08b4632c681526 43,55,197,214,286,1063
+lib/domain/tools/ratio_apollonius_circle_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 10
+lib/presentation/panels/attributes_inspector.dart
+  s_b55ef2d22b311b::t_08b4632c681526 535
+test/v1_oracle/intersections.dart
+  s_b55ef2d22b311b::t_08b4632c681526 9
+lib/domain/projective/proj_transform.dart
+  s_b55ef2d22b311b::t_08b4632c681526 315
+test/corpus/newclid_problem.dart
+  s_b55ef2d22b311b::t_08b4632c681526 10,38
+lib/domain/prover/angle_closure.dart
+  s_b55ef2d22b311b::t_08b4632c681526 7,133,295
+test/domain/construction/objects/five_point_conic_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 381
+lib/domain/tools/regular_polygon_orbit.dart
+  s_b55ef2d22b311b::t_08b4632c681526 17
+test/domain/construction/ck_kind_coverage_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 91
+benchmark/comparator/README.md
+  s_b55ef2d22b311b::t_08b4632c681526 3
+lib/domain/prover/question_template.dart
+  s_b55ef2d22b311b::t_08b4632c681526 7,48
+lib/domain/projective/conic_intersection.dart
+  s_b55ef2d22b311b::t_08b4632c681526 68
+lib/domain/projective/tracing/trace_step_budget_exception.dart
+  s_b55ef2d22b311b::t_08b4632c681526 15
+lib/application/providers/question_draft_provider.dart
+  s_b55ef2d22b311b::t_08b4632c681526 15,97
+test/domain/tools/ck_tool_kernel_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 32
+test/domain/layer_rule_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 20
+lib/domain/prover/angle_translation.dart
+  s_b55ef2d22b311b::t_08b4632c681526 37
+lib/application/providers/prover_provider.g.dart
+  s_b55ef2d22b311b::t_08b4632c681526 12,20,38,52,60,78,90,98,116,155,163,181
+lib/domain/construction/objects/polar_line.dart
+  s_b55ef2d22b311b::t_08b4632c681526 65
+test/domain/construction/objects/intersection_pair_order_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 243
+lib/domain/construction/objects/length_measurement.dart
+  s_b55ef2d22b311b::t_08b4632c681526 25
+lib/domain/prover/diagram_filter.dart
+  s_b55ef2d22b311b::t_08b4632c681526 17
+lib/domain/construction/objects/slope_measurement.dart
+  s_b55ef2d22b311b::t_08b4632c681526 24
+benchmark/chain_solve_bench.dart
+  s_b55ef2d22b311b::t_08b4632c681526 4
+lib/domain/projective/conics.dart
+  s_b55ef2d22b311b::t_08b4632c681526 7,74
+lib/domain/construction/objects/bifocal_conic.dart
+  s_b55ef2d22b311b::t_08b4632c681526 22,78
+lib/domain/projective/metric.dart
+  s_b55ef2d22b311b::t_08b4632c681526 2,66,90
+lib/application/export/png_exporter.dart
+  s_b55ef2d22b311b::t_08b4632c681526 16
+test/domain/tools/ck_macro_tools_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 20
+lib/presentation/panels/proof_panel.dart
+  s_b55ef2d22b311b::t_08b4632c681526 1,186
+benchmark/detour_cost_probe.dart
+  s_b55ef2d22b311b::t_08b4632c681526 7
+lib/domain/math/line_eq.dart
+  s_b55ef2d22b311b::t_08b4632c681526 10
+lib/domain/construction/geo_object.dart
+  s_b55ef2d22b311b::t_08b4632c681526 63,87,118,145,193,234
+lib/domain/construction/objects/scaled_compass_circle.dart
+  s_b55ef2d22b311b::t_08b4632c681526 11
+lib/domain/prover/rule_engine.dart
+  s_b55ef2d22b311b::t_08b4632c681526 123,304,419
+lib/domain/construction/objects/line_angle.dart
+  s_b55ef2d22b311b::t_08b4632c681526 38
+lib/domain/construction/objects/stated_radius_circle.dart
+  s_b55ef2d22b311b::t_08b4632c681526 9
+test/domain/prover/length_closure_test.dart
+  s_b55ef2d22b311b::t_08b4632c681526 312
+lib/domain/prover/predicate.dart
+  s_b55ef2d22b311b::t_08b4632c681526 6,10
+lib/application/persistence/construction_codec.dart
+  s_b55ef2d22b311b::t_08b4632c681526 120,378,506
+lib/domain/construction/objects/point_on_object.dart
+  s_b55ef2d22b311b::t_08b4632c681526 14,32,131,153
+lib/domain/tools/multi_point_tool.dart
+  s_b55ef2d22b311b::t_08b4632c681526 47
+lib/domain/projective/absolute.dart
+  s_b55ef2d22b311b::t_08b4632c681526 2,28,282
+lib/application/providers/proof_highlight_provider.dart
+  s_b55ef2d22b311b::t_08b4632c681526 5
+lib/domain/prover/carriers.dart
+  s_b55ef2d22b311b::t_08b4632c681526 21,247
+lib/domain/prover/auxiliary_points.dart
+  s_b55ef2d22b311b::t_08b4632c681526 18
+lib/domain/prover/hypotheses.dart
+  s_b55ef2d22b311b::t_08b4632c681526 40
+lib/domain/prover/arithmetic_chase.dart
+  s_b55ef2d22b311b::t_08b4632c681526 7
+benchmark/corpus_bench.dart
+  s_b55ef2d22b311b::t_08b4632c681526 3
+lib/domain/projective/conic_matrix.dart
+  s_b55ef2d22b311b::t_08b4632c681526 425
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "64e8b8f68390b9f745712d8145b5b4d90b618de4",
+  "prompts": {},
+  "sessions": {
+    "s_b55ef2d22b311b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7719b968-9b31-4cc4-8afd-4cf3bec76a70",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
