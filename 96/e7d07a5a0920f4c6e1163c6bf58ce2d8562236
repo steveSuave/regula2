@@ -1,0 +1,36 @@
+README.md
+  s_b55ef2d22b311b::t_1ad7c598b1b33c 120-122
+  s_b55ef2d22b311b::t_0ebe5f4ac05081 84
+docs/SPEC.md
+  s_b55ef2d22b311b::t_08b4632c681526 17,257,322,434,490,536,600,632
+  s_b55ef2d22b311b::t_a5a9f85ae0c91d 1-3,789
+CLAUDE.md
+  s_b55ef2d22b311b::t_1671fc9efd2126 7-17,22-26,31,33,41,44,47,50,99-101
+  s_b55ef2d22b311b::t_651a29a7e49249 18
+docs/STATUS.md
+  s_b55ef2d22b311b::t_a5a9f85ae0c91d 7-8
+  s_b55ef2d22b311b::t_3a486192604746 410-424
+.claude/commands/continue-build.md
+  s_b55ef2d22b311b::t_651a29a7e49249 2,10,13-16,24,37-39,41
+docs/PLAN.md
+  s_b55ef2d22b311b::t_a5a9f85ae0c91d 1,3
+  s_b55ef2d22b311b::t_08b4632c681526 5,9,19,31,40,44,51,56,102,113,117,130
+docs/INTENT.md
+  s_b55ef2d22b311b::t_072070126e17a8 1-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "96e7d07a5a0920f4c6e1163c6bf58ce2d8562236",
+  "prompts": {},
+  "sessions": {
+    "s_b55ef2d22b311b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7719b968-9b31-4cc4-8afd-4cf3bec76a70",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
