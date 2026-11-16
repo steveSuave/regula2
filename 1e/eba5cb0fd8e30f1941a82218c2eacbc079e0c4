@@ -1,0 +1,31 @@
+.claude/commands/continue-build.md
+  s_91bad8f6d2239d::t_87a296e60a43c1 8-11
+intent/README.md
+  s_91bad8f6d2239d::t_a20d3bb3d79a51 1-20
+CLAUDE.md
+  s_91bad8f6d2239d::t_58d4ee45c0844d 11-12
+intent/003-prover-flag/intent.md
+  s_91bad8f6d2239d::t_8cabf4d62c3bbd 1-41
+intent/004-stereometry/intent.md
+  s_91bad8f6d2239d::t_06762ee9162650 1-64
+intent/001-docs-method/intent.md
+  s_91bad8f6d2239d::t_b60be3722985f1 1-46
+intent/002-fold-into-regula/intent.md
+  s_91bad8f6d2239d::t_33bd1073e9d969 1-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1eeba5cb0fd8e30f1941a82218c2eacbc079e0c4",
+  "prompts": {},
+  "sessions": {
+    "s_91bad8f6d2239d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ffa827e7-ff97-4a25-8328-5dc664e60848",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
