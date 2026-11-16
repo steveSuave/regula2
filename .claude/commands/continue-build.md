@@ -5,6 +5,10 @@ argument-hint: "[optional: focus area, e.g. 'phase 2', 'tests', 'fix lint']"
 
 You are resuming work on the **regula** dynamic geometry Flutter app. A previous session has already done some of the work; your first job is to orient yourself, then propose a concrete next step before writing any code.
 
+## Step 0 — Intents first
+
+Read `intent/README.md` and the `intent.md` files it lists. It names the active intent and where to start; it overrides the steps below wherever they disagree (the steps below describe the old PLAN / TODO / STATUS method, which intent 001 replaces). An intent marked "draft, awaiting review" is shown to the user for acceptance before its `spec.md` is written, and no code is written before its `plan.md` is approved.
+
 ## Step 1 — Orient
 
 Read the four durable artifacts in this order:

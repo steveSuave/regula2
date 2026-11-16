@@ -8,6 +8,8 @@ V2 of regula: a cross-platform (web / Android / iOS) dynamic geometry app writte
 
 ## Session start
 
+**Read `intent/README.md` first.** Since 2026-11-17 the project is moving to per-change `intent/<number>-<slug>/` folders (intent → spec → plan); that file says where the next session starts. Until intent 001 lands, the steps below and `docs/` describe the old method, and `intent/` wins where they disagree.
+
 1. Read `docs/PLAN.md` — architecture & decisions, read-mostly.
 2. Read the newest 2–3 entries of `docs/STATUS.md` — that's where the previous session left off. Don't read the whole file or `docs/archive/` unless hunting for old history.
 3. Read `docs/TODO.md` — open phases plus the most recent couple of completed ones; older completed phases live in `docs/archive/`.
