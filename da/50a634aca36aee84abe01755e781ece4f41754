@@ -1,0 +1,21 @@
+intent/005-toolchain-3-50/plan.md
+  s_11a21a1b0d663f::t_0d96b5037ffcdc 3,41-43
+intent/README.md
+  s_11a21a1b0d663f::t_aebe25ea327144 11,15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da50a634aca36aee84abe01755e781ece4f41754",
+  "prompts": {},
+  "sessions": {
+    "s_11a21a1b0d663f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15148504-623a-4ff9-86aa-895d4e1b480f",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
