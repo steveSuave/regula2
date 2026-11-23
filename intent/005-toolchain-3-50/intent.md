@@ -1,6 +1,6 @@
 # Intent: CI is green again on Flutter stable
 
-Author: drafted by Claude · Status: draft, awaiting review · 2026-11-23
+Author: drafted by Claude · Status: part 1 (the pin) done 2026-11-23 on the user's request to fix CI; part 2 (the migration) draft, awaiting review
 
 ## Problem
 
@@ -28,7 +28,14 @@ Deploy and benchmarks do not run `flutter analyze` and still pass, so `main` kee
 
 ## Open questions
 
-- Migrate the 43 imports to `material_ui` now, or pin CI to the local Flutter version and migrate later? Proposed: migrate, since pinning only defers it and DECISIONS already says CI's stable is the trigger.
-- Should CI pin an exact Flutter version from now on, with upgrades as deliberate intents, so a release cannot turn the gate red on an unrelated push?
-- Does this go before 002? Proposed: yes.
-- What else did 3.48–3.50 deprecate or change that the analyzer has not yet flagged (renderer, wasm, text metrics)?
+Settled 2026-11-23, when the user asked for the CI failure to be fixed:
+
+- **Pin or migrate?** Both, in that order. Part 1 pins all three workflows to Flutter 3.47.2, the version the tree is developed and tested on, which makes the gate green without touching the app. Part 2 is the upgrade itself.
+- **Should CI pin an exact version from now on?** Yes, and deploy with it, so the build that ships is the build that was tested. Recorded in `docs/DECISIONS.md` §"Deferred decisions".
+
+Open, for part 2:
+
+- The migration is `dart fix --apply --code=migrate_design_widgets` plus `flutter pub add material_ui` (Flutter's guide: docs.flutter.dev/release/breaking-changes/material-ui-and-cupertino-ui). The types in `material_ui` are distinct classes from the SDK's. The suite calls `find.byTooltip` about 80 times, and whether `flutter_test`'s finder matches a `material_ui` `Tooltip` is not stated in the guide; it has to be tried.
+- It needs the local SDK at 3.50.1 (`flutter upgrade` in `~/Code/flutter/flutter-upstream`), which changes the machine, not only the repo.
+- What else 3.48–3.50 changed that the analyzer has not flagged (renderer, wasm, text metrics, goldens).
+- When: before 002, or after the stereometry work starts? Nothing forces it while the pin holds; the in-framework library is deprecated in 3.50, not removed, and the guide gives no removal date.

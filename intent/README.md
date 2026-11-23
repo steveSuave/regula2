@@ -8,11 +8,11 @@ One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md
 | 002 | [regula2 becomes regula again](002-fold-into-regula/intent.md) | draft, awaiting review | 001 |
 | 003 | [Prover is experimental, off by default](003-prover-flag/intent.md) | draft, awaiting review | 002 (so it ships to the final URL) |
 | 004 | [Stereometry](004-stereometry/intent.md) | draft, awaiting review | 001; after 003 |
-| 005 | [CI is green again on Flutter stable](005-toolchain-3-50/intent.md) | draft, awaiting review | —; proposed to go before 002 |
+| 005 | [CI is green again on Flutter stable](005-toolchain-3-50/intent.md) | part 1 done (workflows pinned to Flutter 3.47.2); part 2, the `material_ui` migration, is a draft awaiting review | — |
 
 ## Where the next session starts
 
-**CI on `main` is red, and not from anything in the tree:** Flutter stable moved to 3.50.1 and deprecated `package:flutter/material.dart`. Intent 005 is the fix and is proposed first. Then 002, 003, 004 in order: the user reviews each intent, then spec and plan, then code.
+002, 003, 004 in order: the user reviews each intent, then spec and plan, then code. Intent 005's part 2 (the Flutter upgrade) is not blocking while the workflows are pinned; the user decides when it goes.
 
 ## Parked
 
