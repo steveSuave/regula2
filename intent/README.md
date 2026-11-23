@@ -8,7 +8,7 @@ One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md
 | 002 | [regula2 becomes regula again](002-fold-into-regula/intent.md) | draft, awaiting review | 001 |
 | 003 | [Prover is experimental, off by default](003-prover-flag/intent.md) | draft, awaiting review | 002 (so it ships to the final URL) |
 | 004 | [Stereometry](004-stereometry/intent.md) | draft, awaiting review | 001; after 003 |
-| 005 | [CI is green again on Flutter stable](005-toolchain-3-50/intent.md) | part 1 done (workflows pinned to Flutter 3.47.2); part 2, the upgrade to Flutter 3.50 and `material_ui`, is next | — |
+| 005 | [CI is green again on Flutter stable](005-toolchain-3-50/intent.md) | part 1 done (workflows pinned to Flutter 3.47.2); part 2 (upgrade to Flutter 3.50 and `material_ui`): trial green, [spec](005-toolchain-3-50/spec.md) and [plan](005-toolchain-3-50/plan.md) awaiting approval | — |
 
 ## Where the next session starts
 
