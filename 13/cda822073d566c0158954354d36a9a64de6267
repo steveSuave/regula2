@@ -1,0 +1,23 @@
+.github/workflows/benchmarks.yml
+  s_11a21a1b0d663f::t_c73cfb0782a084 27
+.github/workflows/ci.yml
+  s_11a21a1b0d663f::t_bb51a195fa323c 17
+.github/workflows/deploy.yml
+  s_11a21a1b0d663f::t_ed077090ed5cec 33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "13cda822073d566c0158954354d36a9a64de6267",
+  "prompts": {},
+  "sessions": {
+    "s_11a21a1b0d663f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15148504-623a-4ff9-86aa-895d4e1b480f",
+        "model": "unknown"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
