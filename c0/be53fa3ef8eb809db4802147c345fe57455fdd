@@ -1,0 +1,29 @@
+.github/workflows/deploy.yml
+  s_4a195f9d2ee531::t_a514563f5ebe09 31-33
+.github/workflows/benchmarks.yml
+  s_4a195f9d2ee531::t_a514563f5ebe09 26-27
+.github/workflows/ci.yml
+  s_4a195f9d2ee531::t_a514563f5ebe09 16-17
+docs/DECISIONS.md
+  s_4a195f9d2ee531::t_b96836a2797a83 858
+intent/005-toolchain-3-50/intent.md
+  s_4a195f9d2ee531::t_dd5efde8015075 3,31-41
+intent/README.md
+  s_4a195f9d2ee531::t_4132d1412a4ff6 11,15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c0be53fa3ef8eb809db4802147c345fe57455fdd",
+  "prompts": {},
+  "sessions": {
+    "s_4a195f9d2ee531": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d464ce72-2404-435f-b21f-85933b1e35fc",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
