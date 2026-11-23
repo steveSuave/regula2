@@ -87,7 +87,7 @@ class TangentLine extends GeoLine {
   }
 
   /// [tangent] with its representative sign carrying the V1 orientation
-  /// (Phase 137, PLAN §"Orientation is the representative's sign"). For a
+  /// (Phase 137, DECISIONS §"Orientation is the representative's sign"). For a
   /// circle-shaped conic the raw `A·t` has normal `s·w_t·(touch − center)`
   /// while V1 runs the tangent along the touch radius rotated
   /// counter-clockwise — normal along `−(touch − center)` — so the V1

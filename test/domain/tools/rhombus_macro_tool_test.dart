@@ -216,7 +216,7 @@ void main() {
     });
 
     test('sliding C once around its circle never jumps D', () {
-      // The pin on the design, and the reason the Euclid I.1 route PLAN
+      // The pin on the design, and the reason the Euclid I.1 route DECISIONS
       // recorded was not taken: B lies on both of I.1's compass circles,
       // so its two crossings are B and D — and they *swap* as B crosses
       // the axis, which sliding C right around does twice. Measured on

@@ -29,7 +29,7 @@ import '../math/rational.dart';
 /// modulus, so `2·l₁ = 2·l₂` says `|ab| = |cd|` and dividing a row by
 /// its leading coefficient loses nothing. The angle system may not do
 /// that — halving a relation read mod π turns a disjunction into a
-/// theorem (PLAN §"AR is a ℤ-module, not a ℚ-vector space") — and the
+/// theorem (DECISIONS §"AR is a ℤ-module, not a ℚ-vector space") — and the
 /// two classes are separate files for exactly that reason. Nothing here
 /// may be shared with the angle side, because a ℚ pivot reaching θ is a
 /// soundness bug that no test on this side would see.
@@ -333,7 +333,7 @@ enum LengthAddOutcome {
 }
 
 /// The closure of a set of [LengthEquation]s under **rational** linear
-/// combination — the AR half of DDAR for lengths (PLAN §M-P3).
+/// combination — the AR half of DDAR for lengths (DECISIONS §M-P3).
 ///
 /// This *is* a Gaussian elimination, and saying so is the point: the
 /// angle side next door is deliberately not one. Log-lengths are real

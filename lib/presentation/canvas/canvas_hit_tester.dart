@@ -24,7 +24,7 @@ import '../../domain/projective/conic_shape.dart';
 /// Selection order is (priority, distance), lexicographically: any point
 /// within the threshold beats any circle, which beats any line — small,
 /// precise targets must not be shadowed by the big shapes drawn through
-/// them (PLAN: points > arcs/circles > segments/rays/lines/loci >
+/// them (DECISIONS: points > arcs/circles > segments/rays/lines/loci >
 /// angles > measurements > polygons). Ties go to the object added
 /// latest, i.e. the one drawn on top.
 ///

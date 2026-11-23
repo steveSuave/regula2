@@ -34,7 +34,7 @@ class AngleConclusion {
 }
 
 /// The boundary between the fact vocabulary and the angle algebra
-/// (PLAN §M-P3): predicates in, relations between line directions out,
+/// (DECISIONS §M-P3): predicates in, relations between line directions out,
 /// and conclusions back.
 ///
 /// **A variable is a point pair, and line identity is not θ-equality.**

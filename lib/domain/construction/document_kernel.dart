@@ -14,7 +14,7 @@ export '../projective/absolute.dart' show FundamentalConic;
 ///
 /// This lives in the domain layer because [Construction] holds one: the
 /// absolute is an input to every metric recompute, not a presentation
-/// setting (PLAN §"The threading decision"). The save format is where it
+/// setting (DECISIONS §"The threading decision"). The save format is where it
 /// is *written*, not where it belongs.
 class DocumentKernel {
   const DocumentKernel({

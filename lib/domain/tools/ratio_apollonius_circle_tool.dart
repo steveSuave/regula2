@@ -7,7 +7,7 @@ import 'multi_point_tool.dart';
 
 /// Two taps, A then B, make the `RatioApolloniusCircle` of points P with
 /// `|PA| / |PB|` equal to the stated [ratio] (Phase 184, the app-facing
-/// half of PLAN §"The constants stack"). The ratio comes from a dialog
+/// half of DECISIONS §"The constants stack"). The ratio comes from a dialog
 /// before the tool activates; the three-point Apollonius tool stays the
 /// way to state the ratio with a point instead of a number.
 ///

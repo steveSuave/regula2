@@ -21,7 +21,7 @@ import '../geo_object.dart';
 /// through the subject's anchored affine projection: slope itself is
 /// sign-invariant, but the anchor is placed by [GeoLine.parameterExtent],
 /// whose parameters are measured against the anchored orientation — the
-/// sanctioned chart read of PLAN §Parameterization.
+/// sanctioned chart read of DECISIONS §Parameterization.
 ///
 /// [subject] is a plain [GeoObject] with the allowed kind enforced in the
 /// constructor — the `AreaMeasurement.subject` precedent, so an ill-typed

@@ -264,7 +264,7 @@ void main() {
     // Phase 136c measured four kinds orienting their chart *against*
     // their own representative, so a parent that lost its chart swapped
     // the branch below it. Phase 137 re-founded orientation on the
-    // representative's sign (PLAN §"Orientation is the representative's
+    // representative's sign (DECISIONS §"Orientation is the representative's
     // sign"): every line kind's stored representative now carries the V1
     // orientation, derived projectively — so the agreement is universal
     // and the chart's presence or absence changes nothing downstream.

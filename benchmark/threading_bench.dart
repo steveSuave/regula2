@@ -1,6 +1,6 @@
 // Phase 140 / M-P0 SPIKE: how a long fixpoint runs without freezing the UI.
 //
-// PLAN pins the shape before any prover code exists: "No isolates on web.
+// DECISIONS pins the shape before any prover code exists: "No isolates on web.
 // The prover engine is written as a resumable state machine with an
 // explicit work queue from day one — cooperatively chunked on web,
 // `Isolate.run`-wrapped on native, Worker-portable later. A straight-line
@@ -72,7 +72,7 @@ const _rules = [_rule0, _rule1, _rule2];
 
 /// The engine, as a resumable state machine with an explicit work queue.
 ///
-/// This is the shape PLAN mandates, and the point of writing it here is
+/// This is the shape DECISIONS mandates, and the point of writing it here is
 /// that the same object serves all three drivers below: [runToFixpoint]
 /// is the straight-line loop, and [step] is that loop with a budget and a
 /// return. Nothing about the algorithm differs between them — which is

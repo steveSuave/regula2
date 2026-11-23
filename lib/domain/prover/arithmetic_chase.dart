@@ -4,7 +4,8 @@ import 'fact.dart';
 /// produced it.
 ///
 /// A DD step's rule name *is* its explanation; an AR step's is a label
-/// for a sum, so the sum is what reads (PLAN §"Proofs must read"). There
+/// for a sum, so the sum is what reads ("naming the facts is not yet
+/// reading", DECISIONS §"The prover against a real benchmark"). There
 /// are two such algebras — directions and lengths — and a proof holds
 /// one explanation per step without caring which, so this is the type
 /// `ProofStep.chase` is written in.

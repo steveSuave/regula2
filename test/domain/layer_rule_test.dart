@@ -17,7 +17,7 @@ void main() {
   // `dart:typed_data` entered with Phase 113: the tracing engine's SoA
   // `Float64List` buffers are the Phase 101 benchmark decision.
   // `dart:async` entered with Phase 143: the prover's chunked fixpoint
-  // yields to the event loop between steps (PLAN §"The prover yields
+  // yields to the event loop between steps (DECISIONS §"The prover yields
   // with a MessageChannel"), and Completer/Future-returning APIs are as
   // portable as dart:core.
   const allowedDartLibs = {

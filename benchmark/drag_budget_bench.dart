@@ -3,7 +3,7 @@
 // `TracingFlags.dragStepBudget` shipped as the constant 128 (Phase 114).
 // A constant is the wrong shape because a trial is not a fixed amount of
 // work: it recomputes every object downstream of the dragged point. This
-// harness is the evidence for the replacement (PLAN §"The step budget is
+// harness is the evidence for the replacement (DECISIONS §"The step budget is
 // an amount of work, not a number of trials"), and it is what recalibrates
 // `dragStepBudgetWork` if the kernel ever gets materially faster.
 //

@@ -22,7 +22,7 @@ Written 2026-11-23 from [spec](spec.md) · Status: draft, awaiting approval · B
 
 1. **Baseline.** `flutter analyze`, `flutter test`, `flutter test --platform chrome test/web`. Record the counts here.
 2. **Renames.** The three `git mv`s and `docs/archive/README.md`. Nothing else, so history follows the files.
-3. **Citation rewrite.** Script from the scratchpad (not committed): rewrite per the spec's table, refuse any non-comment line, list what it changed. Fix the two dangling citations and add the `#### Proofs must read` heading. Run `dart format lib test benchmark` and confirm it changes nothing.
+3. **Citation rewrite.** Script from the scratchpad (not committed): rewrite per the spec's table, refuse any non-comment line, list what it changed. Fix the dangling citations. Run `dart format lib test benchmark` and confirm it changes nothing.
 4. **Citation test.** Add `test/docs/decision_citations_test.dart`; confirm it fails when a citation is broken on purpose, then passes.
 5. **DECISIONS header and map.** New header paragraph, the one-page map, the long-form kernel invariants.
 6. **`CLAUDE.md`, `README.md`, `continue-build.md`.** Including the harvest from `docs-intent-spec-plan:docs/INTENT.md`.
@@ -62,3 +62,9 @@ Written 2026-11-23 from [spec](spec.md) · Status: draft, awaiting approval · B
 ## Progress and gotchas
 
 - 2026-11-23: intent accepted, spec and plan drafted. Nothing restructured yet.
+- 2026-11-23: plan approved ("carry on"). Baseline: analyze clean, 3554 tests, 15 browser tests.
+- Step 2 done (`7f5d3d7`).
+- Step 3 done: 199 comment lines in 126 files (124 Dart, `run_corpus.sh`, `benchmark/comparator/README.md`, two workflows), no line refused, `dart format` changed nothing. `prover_provider.g.dart` changed with its source's doc comment, so a rebuild reproduces it.
+- Departures from the plan, spec updated in the same commit: no `#### Proofs must read` heading (the two paragraphs are not adjacent; the citations were repointed); four `§Migration` citations found dangling and repointed to `§Architecture`; the test also accepts bold lead-ins and checks `§` citations without the `DECISIONS` prefix.
+- Gotcha: 13 rewritten comment lines are now 81–84 columns (`DECISIONS` is five letters longer). There is no line-length lint and `dart format` does not wrap comments; left as they are.
+- Gotcha: `docs/STATUS.md` and `docs/TODO.md` references in four code comments now point into `docs/archive/`.

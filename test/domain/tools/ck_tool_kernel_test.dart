@@ -29,7 +29,7 @@ void main() {
 
   /// Five points on a Euclidean circle — a *projective* kind, so it is
   /// exactly as buildable in a hyperbolic document as in a Euclidean one
-  /// (PLAN §"The audit", tier 1). That is the whole point: a hyperbolic
+  /// (DECISIONS §"The audit", tier 1). That is the whole point: a hyperbolic
   /// document can contain conics through the circular points.
   FivePointConic concyclic(String id, Vec2 centre, double radius) =>
       FivePointConic(

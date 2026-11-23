@@ -40,7 +40,7 @@ class Construction {
   Construction({this._kernel = const DocumentKernel()});
 
   /// The geometry this document is drawn in — the absolute every metric
-  /// recompute is founded on (PLAN §"M-CK — Cayley–Klein").
+  /// recompute is founded on (DECISIONS §"M-CK — Cayley–Klein").
   ///
   /// **Read-only, and there is no setter — deliberately.** Through Phase
   /// 125 this was a `final` field, on the reasoning that a settable one is
@@ -52,7 +52,7 @@ class Construction {
   /// `IntersectionPoint`'s `branchIndex` addresses is itself a function of
   /// the absolute (the circular-point filter, and canonical order's
   /// centre), so a switch that merely assigned would leave every stored
-  /// address naming whatever crossing now sits at that index — PLAN
+  /// address naming whatever crossing now sits at that index — DECISIONS
   /// §"The audit".
   DocumentKernel get kernel => _kernel;
   DocumentKernel _kernel;
@@ -194,7 +194,7 @@ class Construction {
   /// plus refused trials reach [stepBudget], leaving the point real (at
   /// the last trial position, or back at the arc entry after a failed
   /// arc) with slots cleared; callers bail to a static solve (the drag
-  /// session does — PLAN §Risks). Returns the accepted/rejected trial
+  /// session does — DECISIONS §Risks). Returns the accepted/rejected trial
   /// counts and the number of completed detours (the Phase 116
   /// debug-overlay feed).
   ///
@@ -211,7 +211,7 @@ class Construction {
   /// the exit finishes on a fresh budget. A pass with no detour behind
   /// it still throws: it has carried nothing a static solve would lose,
   /// and a path ending on a singularity would otherwise lag for ever.
-  /// See PLAN §"A pass keeps what it carried across".
+  /// See DECISIONS §"A pass keeps what it carried across".
   ///
   /// Excluded from seeding: intersection points inside a [Locus.chain] —
   /// the sweep-and-restore recompute would drag their roots along the
@@ -283,7 +283,7 @@ class Construction {
   /// starve the controller, since the position is constant there. A
   /// complex detour instead evaluates the carrier's chart form at the
   /// complex interpolated parameter (`PointOnObject.tracedPosition`,
-  /// pass-internal; the stored parameter stays real throughout — PLAN
+  /// pass-internal; the stored parameter stays real throughout — DECISIONS
   /// §Parameterization). The carrier itself never moves during a
   /// parameter drag, so its chart form is captured once per pass.
   ///
@@ -1060,7 +1060,7 @@ class Construction {
   /// every stored address naming whatever crossing now happens to sit at
   /// that index. Points then land on each other's crossings while others
   /// sit vacant — the Phase 120c defect, reached from a third direction
-  /// (PLAN §"The audit").
+  /// (DECISIONS §"The audit").
   ///
   /// Matching is by chordal distance from where the point was, the same
   /// primitive as the constructor's canonical remap and a tracing pass's

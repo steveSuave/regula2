@@ -1,6 +1,6 @@
 # The Newclid comparator (Phase 175)
 
-`docs/PLAN.md` ends Phase 174 with the one measurement that separates
+`docs/DECISIONS.md` ends Phase 174 with the one measurement that separates
 the three surviving explanations for the corpus's 379 quiescent-unproved
 goals: **run the reference implementation over the same corpus and diff
 the proved sets.** This is the harness for that.

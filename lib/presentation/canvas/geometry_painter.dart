@@ -137,7 +137,7 @@ class GeometryPainter extends CustomPainter {
 
   /// The proof-step emphasis is the selection halo's geometry at twice
   /// the width, so a highlighted object that is *also* selected shows
-  /// both rings rather than one swallowing the other. PLAN §M-P4 says to
+  /// both rings rather than one swallowing the other. DECISIONS §M-P4 says to
   /// reuse the selection styling; it does not say to be indistinguishable
   /// from a selection, which would make a proof step look like something
   /// the next tool would act on.

@@ -78,7 +78,7 @@ const int proverChunkBudget = 250;
 /// document-dependent.
 const int proverApplicationBudget = 30000;
 
-/// What the prover has to say about one asked question (PLAN §M-P4).
+/// What the prover has to say about one asked question (DECISIONS §M-P4).
 ///
 /// **Three answers, not two, and the middle one is the point.** The
 /// numeric filter sits beside the prover, so "false" and "true but out
@@ -163,7 +163,7 @@ class ProverAnswer {
   String toString() => 'ProverAnswer(${question.kind.name}, ${verdict.name})';
 }
 
-/// What the prover has to say about the document (PLAN §M-P4).
+/// What the prover has to say about the document (DECISIONS §M-P4).
 sealed class ProverState {
   const ProverState();
 }
@@ -299,7 +299,7 @@ class ProverReady extends ProverState {
 ///
 /// Today that means one thing: a non-Euclidean absolute. The predicate
 /// vocabulary is Euclidean, and `hypotheses` refuses rather than
-/// approximating (PLAN §M-P1) — a CK document is a perfectly good
+/// approximating (DECISIONS §M-P1) — a CK document is a perfectly good
 /// document about which DD has nothing to say, which is a state to
 /// render, not an exception to throw at a panel.
 class ProverRefused extends ProverState {
@@ -354,7 +354,7 @@ class ProverAnswered extends ProverState {
 }
 
 /// Runs the DD prover over the live construction, and holds what it
-/// derived (PLAN §M-P4).
+/// derived (DECISIONS §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
 /// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
@@ -362,7 +362,7 @@ class ProverAnswered extends ProverState {
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.
 ///
-/// **On demand, never on every edit.** PLAN §M-P4 divides the labour
+/// **On demand, never on every edit.** DECISIONS §M-P4 divides the labour
 /// explicitly: the numeric probe is the always-on cheap path, DD
 /// certifies and explains when asked. So [prove] is a method, not a
 /// `build` — and this notifier deliberately does *not* watch
@@ -380,7 +380,7 @@ class ProverAnswered extends ProverState {
 /// structural revision counter, which does not exist.
 ///
 /// **`Isolate.run` is not here yet, and the measurement says it should
-/// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+/// be.** DECISIONS §"The prover yields with a MessageChannel" states the rule
 /// — export a job only when it is longer than the round trip
 /// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
 /// well past 13 s (Phase 145 notes). So the native arm clears that bar

@@ -1,5 +1,5 @@
 /// Metric constructions in the complex projective plane, against an
-/// [Absolute] (PLAN §"M-CK — Cayley–Klein").
+/// [Absolute] (DECISIONS §"M-CK — Cayley–Klein").
 ///
 /// The projective plane has no parallels, midpoints or right angles of its
 /// own; those come from a distinguished conic. Under the Euclidean
@@ -63,7 +63,7 @@ ProjPoint normalDirectionOf(
 /// parallel through it would do) or [l] is the line at infinity.
 ///
 /// **Euclidean only, and refused rather than approximated elsewhere** —
-/// the zero triple under a proper absolute (PLAN §"Four tiers of kind").
+/// the zero triple under a proper absolute (DECISIONS §"Four tiers of kind").
 /// "The parallel through `P`" is a *uniqueness*, and it is precisely the
 /// uniqueness hyperbolic geometry exists to deny: through a point off a
 /// line there pass infinitely many lines missing it, and exactly two
@@ -87,7 +87,7 @@ ProjLine parallelThrough(
 ///
 /// **Generalizes verbatim** — the Euclidean formula is already this
 /// construction with {I, J} substituted in, which is the audit's
-/// structural result (PLAN §"The audit"). The zero triple when [p] is
+/// structural result (DECISIONS §"The audit"). The zero triple when [p] is
 /// that pole itself, or when [l] is the absolute's degenerate line.
 ProjLine perpendicularThrough(
   ProjPoint p,

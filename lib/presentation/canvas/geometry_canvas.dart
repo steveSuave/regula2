@@ -266,7 +266,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     );
   }
 
-  /// Figma-style pointer-signal mapping (decided in Phase 14, see PLAN):
+  /// Figma-style pointer-signal mapping (decided in Phase 14, see DECISIONS):
   /// plain scroll = pan (a trackpad two-finger swipe pans naturally),
   /// pinch = zoom about the cursor (the web engine synthesizes a
   /// [PointerScaleEvent] from a browser pinch's ctrl-flagged wheel event),

@@ -240,7 +240,7 @@ void main() {
   });
 
   // What the user sees as "the names roll". Pinned here because it is a
-  // *consequence* of the chosen convention (PLAN §"A round trip is
+  // *consequence* of the chosen convention (DECISIONS §"A round trip is
   // honest"), not an accident: one out-and-back drag is a loop around a
   // branch point, and a loop around a branch point permutes the sheets.
   // The alternative — a round trip restoring every label — is the

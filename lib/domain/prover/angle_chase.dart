@@ -7,8 +7,9 @@ import 'fact.dart';
 import 'fact_naming.dart';
 
 /// An `angle_arithmetic` step written out as the angle chase it is
-/// (PLAN §M-P3, and §"Proofs must read" — the reason Wu and Gröbner were
-/// refused).
+/// (DECISIONS §M-P3, and "A proof obligation, carried from the start" under
+/// §"The prover against a real benchmark" — the reason Wu and Gröbner
+/// were refused).
 ///
 /// **The problem this exists to fix.** A DD step reads:
 /// `[6] para(E, D, A, D)  midline_para from [3], [5]`, and the rule name

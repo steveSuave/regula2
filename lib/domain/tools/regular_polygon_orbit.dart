@@ -14,7 +14,7 @@ typedef PolygonOrbit = ({List<GeoPoint> created, List<GeoPoint> vertices});
 /// [sideCount] fixing the centre.
 ///
 /// **This is the construction that survives a change of absolute** (Phase
-/// 128, PLAN §"A shape is not an angle"). `2πk/n` is an angle at the
+/// 128, DECISIONS §"A shape is not an angle"). `2πk/n` is an angle at the
 /// centre of the *symmetry that generates the figure*, not an angle of
 /// the figure, so it is a genuine constant in every geometry — the cyclic
 /// group of order n fixing the centre acts transitively on a regular

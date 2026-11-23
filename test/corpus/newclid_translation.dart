@@ -1216,7 +1216,7 @@ class _Builder {
   /// slots in order, which is exactly the corpus's own argument order —
   /// so the question carries every witness-pair spelling of each named
   /// line, not only the pair Newclid wrote. Asking one spelling would
-  /// under-report the prover: PLAN §M-P4 records that a run can hold the
+  /// under-report the prover: DECISIONS §M-P4 records that a run can hold the
   /// statement under a different name.
   UntranslatableProblem? _goal() {
     final goal = _respelled(problem.goal);

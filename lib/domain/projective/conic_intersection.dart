@@ -1,6 +1,6 @@
 // Phase 105: production conic∩conic on the proper projective types,
 // implementing the stability recipe established by the Phase 102 pencil
-// spike (docs/STATUS.md session 101) plus the translation balancing the
+// spike (session 101, in `docs/archive/`) plus the translation balancing the
 // spike identified as its known gap.
 //
 // The algorithm (Richter-Gebert, *Perspectives on Projective Geometry*
@@ -65,7 +65,7 @@ import 'tolerances.dart';
 /// list, and pencils degenerate beyond repair propagate zero triples rather
 /// than throwing.
 ///
-/// Canonical order (old-ordering compatibility, see PLAN §Migration; [eps]
+/// Canonical order (old-ordering compatibility, see DECISIONS §Architecture; [eps]
 /// is the classification tolerance):
 /// - Real finite points first. When both conics have real finite distinct
 ///   centers (poles of the line at infinity), points order like V1

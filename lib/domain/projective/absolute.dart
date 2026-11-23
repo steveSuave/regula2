@@ -1,5 +1,5 @@
 /// The fundamental conic — *the absolute* — a document's measurement is
-/// founded on (PLAN §"M-CK — Cayley–Klein").
+/// founded on (DECISIONS §"M-CK — Cayley–Klein").
 ///
 /// Incidence is projective and needs none of this. Distance and angle are
 /// cross-ratio logarithms against the absolute, and perpendicularity is
@@ -25,7 +25,7 @@ import 'tolerances.dart';
 /// to *reserve* the two unimplemented names: a build that silently read a
 /// hyperbolic document as Euclidean would draw the wrong geometry rather
 /// than refuse the file, which is what the v2 version stamp exists to
-/// prevent (PLAN §"The version field is a requirement").
+/// prevent (DECISIONS §"The version field is a requirement").
 enum FundamentalConic {
   /// The degenerate absolute: the doubled line at infinity as a point
   /// conic, the circular points {I, J} as its dual.
@@ -279,7 +279,7 @@ class Absolute {
   ///
   /// Under [euclidean] this is `a² + b²`, vanishing on the isotropic lines
   /// — those through I or J, including ℓ∞ itself. It is the whole of the
-  /// Euclidean structure in `focalConicOf` (PLAN §"The conic
+  /// Euclidean structure in `focalConicOf` (DECISIONS §"The conic
   /// constructors"), so it is the single substitution that re-founds it.
   Complex evaluateLine(ProjLine l) =>
       dualConic.xx * l.a * l.a +

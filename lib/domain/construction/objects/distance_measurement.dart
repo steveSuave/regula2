@@ -5,7 +5,7 @@ import '../geo_object.dart';
 
 /// The live distance between two points, displayed as canvas text at
 /// their midpoint. Undefined while either point is (point–line distance
-/// is deferred, per PLAN).
+/// is deferred, per DECISIONS).
 ///
 /// Reads the parents' projective views; where the value comes from then
 /// depends on the geometry (Phase 124). Euclidean distance is *parabolic*
@@ -51,7 +51,7 @@ class DistanceMeasurement extends GeoMeasurement {
       return;
     }
     // Euclidean distance is parabolic — not a cross-ratio, so the chart
-    // is not a shortcut here but the only place it exists (PLAN §"Angle
+    // is not a shortcut here but the only place it exists (DECISIONS §"Angle
     // unifies, distance does not"). A proper absolute measures
     // projectively instead, off the same parents' homogeneous values.
     _value = distanceKindOf(absolute) == MeasureKind.parabolic

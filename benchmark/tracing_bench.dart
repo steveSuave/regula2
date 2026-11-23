@@ -9,7 +9,7 @@
 //   traced frame    recomputeAlongPath under the Phase 114 adaptive step
 //                   controller (whole-path first trial, halve on refusal)
 //
-// The gate is ≤ 8 ms kernel time per drag frame (PLAN, Phase 116), and
+// The gate is ≤ 8 ms kernel time per drag frame (DECISIONS, Phase 116), and
 // since Phase 122 it is mechanical: exceeding it throws, so a CI job can
 // enforce it without reading the text. On smooth frames the controller
 // accepts the whole path in one trial, so the expected shape is a small

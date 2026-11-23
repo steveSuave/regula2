@@ -9,7 +9,7 @@ part of 'prover_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Runs the DD prover over the live construction, and holds what it
-/// derived (PLAN §M-P4).
+/// derived (DECISIONS §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
 /// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
@@ -17,7 +17,7 @@ part of 'prover_provider.dart';
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.
 ///
-/// **On demand, never on every edit.** PLAN §M-P4 divides the labour
+/// **On demand, never on every edit.** DECISIONS §M-P4 divides the labour
 /// explicitly: the numeric probe is the always-on cheap path, DD
 /// certifies and explains when asked. So [prove] is a method, not a
 /// `build` — and this notifier deliberately does *not* watch
@@ -35,7 +35,7 @@ part of 'prover_provider.dart';
 /// structural revision counter, which does not exist.
 ///
 /// **`Isolate.run` is not here yet, and the measurement says it should
-/// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+/// be.** DECISIONS §"The prover yields with a MessageChannel" states the rule
 /// — export a job only when it is longer than the round trip
 /// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
 /// well past 13 s (Phase 145 notes). So the native arm clears that bar
@@ -49,7 +49,7 @@ part of 'prover_provider.dart';
 final proverProvider = ProverNotifierProvider._();
 
 /// Runs the DD prover over the live construction, and holds what it
-/// derived (PLAN §M-P4).
+/// derived (DECISIONS §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
 /// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
@@ -57,7 +57,7 @@ final proverProvider = ProverNotifierProvider._();
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.
 ///
-/// **On demand, never on every edit.** PLAN §M-P4 divides the labour
+/// **On demand, never on every edit.** DECISIONS §M-P4 divides the labour
 /// explicitly: the numeric probe is the always-on cheap path, DD
 /// certifies and explains when asked. So [prove] is a method, not a
 /// `build` — and this notifier deliberately does *not* watch
@@ -75,7 +75,7 @@ final proverProvider = ProverNotifierProvider._();
 /// structural revision counter, which does not exist.
 ///
 /// **`Isolate.run` is not here yet, and the measurement says it should
-/// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+/// be.** DECISIONS §"The prover yields with a MessageChannel" states the rule
 /// — export a job only when it is longer than the round trip
 /// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
 /// well past 13 s (Phase 145 notes). So the native arm clears that bar
@@ -87,7 +87,7 @@ final proverProvider = ProverNotifierProvider._();
 final class ProverNotifierProvider
     extends $NotifierProvider<ProverNotifier, ProverState> {
   /// Runs the DD prover over the live construction, and holds what it
-  /// derived (PLAN §M-P4).
+  /// derived (DECISIONS §M-P4).
   ///
   /// **This is the domain/Flutter boundary and nothing more.** Everything
   /// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
@@ -95,7 +95,7 @@ final class ProverNotifierProvider
   /// application layer adds is a lifetime, a revision to compare against,
   /// and a budget.
   ///
-  /// **On demand, never on every edit.** PLAN §M-P4 divides the labour
+  /// **On demand, never on every edit.** DECISIONS §M-P4 divides the labour
   /// explicitly: the numeric probe is the always-on cheap path, DD
   /// certifies and explains when asked. So [prove] is a method, not a
   /// `build` — and this notifier deliberately does *not* watch
@@ -113,7 +113,7 @@ final class ProverNotifierProvider
   /// structural revision counter, which does not exist.
   ///
   /// **`Isolate.run` is not here yet, and the measurement says it should
-  /// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+  /// be.** DECISIONS §"The prover yields with a MessageChannel" states the rule
   /// — export a job only when it is longer than the round trip
   /// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
   /// well past 13 s (Phase 145 notes). So the native arm clears that bar
@@ -152,7 +152,7 @@ final class ProverNotifierProvider
 String _$proverNotifierHash() => r'5f4ab899bf29360a46799c706cdf27dc440deeea';
 
 /// Runs the DD prover over the live construction, and holds what it
-/// derived (PLAN §M-P4).
+/// derived (DECISIONS §M-P4).
 ///
 /// **This is the domain/Flutter boundary and nothing more.** Everything
 /// it drives — `hypotheses`, `DiagramFilter`, `Prover`, `Proof` —
@@ -160,7 +160,7 @@ String _$proverNotifierHash() => r'5f4ab899bf29360a46799c706cdf27dc440deeea';
 /// application layer adds is a lifetime, a revision to compare against,
 /// and a budget.
 ///
-/// **On demand, never on every edit.** PLAN §M-P4 divides the labour
+/// **On demand, never on every edit.** DECISIONS §M-P4 divides the labour
 /// explicitly: the numeric probe is the always-on cheap path, DD
 /// certifies and explains when asked. So [prove] is a method, not a
 /// `build` — and this notifier deliberately does *not* watch
@@ -178,7 +178,7 @@ String _$proverNotifierHash() => r'5f4ab899bf29360a46799c706cdf27dc440deeea';
 /// structural revision counter, which does not exist.
 ///
 /// **`Isolate.run` is not here yet, and the measurement says it should
-/// be.** PLAN §"The prover yields with a MessageChannel" states the rule
+/// be.** DECISIONS §"The prover yields with a MessageChannel" states the rule
 /// — export a job only when it is longer than the round trip
 /// (0.05–0.09 ms) — and a real document's fixpoint measures 10 ms to
 /// well past 13 s (Phase 145 notes). So the native arm clears that bar

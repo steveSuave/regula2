@@ -21,7 +21,7 @@ import '../object_attributes.dart';
 /// Migrated (Phase 110): the carrier is [twoLineBisectorOf] on the
 /// parents' projective views. Since Phase 137 the branch semantics live
 /// on the parents' *representatives* directly — every line kind's
-/// representative sign carries its orientation (PLAN §"Orientation is
+/// representative sign carries its orientation (DECISIONS §"Orientation is
 /// the representative's sign"), so the chart re-anchoring that stood
 /// here is gone, and a parent with a carrier but no chart names the same
 /// branch it names with one. Parallel and coincident carriers degenerate
@@ -112,7 +112,7 @@ class TwoLineBisectorLine extends GeoLine {
   }
 
   /// [carrier] with its representative sign carrying the V1 orientation
-  /// (Phase 137, PLAN §"Orientation is the representative's sign"). The
+  /// (Phase 137, DECISIONS §"Orientation is the representative's sign"). The
   /// Euclidean route builds `crossing.join(direction)`, whose chart
   /// direction is `w_crossing` times the branch combination `d̂1 ± d̂2` of
   /// the parents' representative directions — so the V1 orientation is

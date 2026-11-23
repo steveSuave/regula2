@@ -117,7 +117,7 @@ class DecodedDocument {
 }
 
 /// Encodes [construction] and the current [viewport] into a JSON-encodable
-/// map (see PLAN's persistence schema).
+/// map (see DECISIONS's persistence schema).
 ///
 /// Objects are written in the construction's insertion order, which is a
 /// topological order — [decodeDocument] relies on parents appearing before
@@ -375,7 +375,7 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
   return (repaired: repaired, unrepaired: unrepaired);
 }
 
-/// The document's kernel block (PLAN §M-CK): absent → Euclidean, which is
+/// The document's kernel block (DECISIONS §M-CK): absent → Euclidean, which is
 /// what every v1 document is.
 ///
 /// **The second guard is gone as of Phase 126** — hyperbolic and elliptic
@@ -503,7 +503,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     InscribedCircle() => ('InscribedCircle', const {}),
     ApolloniusCircle() => ('ApolloniusCircle', const {}),
     // The five parents determine the conic, so it stores no params — and
-    // therefore needs no version bump (PLAN §"The version field is a
+    // therefore needs no version bump (DECISIONS §"The version field is a
     // requirement, not a build number"): a v1 reader refuses the unknown
     // type outright rather than misreading it, which is exactly what the
     // stamp would have bought.

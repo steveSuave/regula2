@@ -4,7 +4,7 @@
 ///
 /// Both constructors here are **metric**: a focus, a directrix, an
 /// eccentricity and a pair of foci are all Euclidean data, so unlike five
-/// points they are exactly what M-CK has to re-found. PLAN §"The conic
+/// points they are exactly what M-CK has to re-found. DECISIONS §"The conic
 /// constructors, and where the metric enters" says which is which, and
 /// this library is where the two answers sit side by side:
 ///
@@ -71,7 +71,7 @@ ConicMatrix focalConicOf(ProjPoint f, ProjLine l, Complex eccentricity) {
 ///
 /// **Chart points, deliberately.** The semi-axis `a` is a sum of square
 /// roots of distances and has no polynomial form in homogeneous
-/// coordinates, so this constructor sits at the metric boundary of PLAN
+/// coordinates, so this constructor sits at the metric boundary of DECISIONS
 /// §Architecture alongside the measurement kinds: callers project
 /// the parents themselves and pass the affine points, and everything
 /// downstream of the returned matrix is projective again.

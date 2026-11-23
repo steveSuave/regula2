@@ -3,7 +3,7 @@ import '../math/rational.dart';
 import 'predicate.dart';
 
 /// A predicate reduced to the one form that stands for every way of
-/// writing the same statement — the fact database's key (PLAN §M-P2).
+/// writing the same statement — the fact database's key (DECISIONS §M-P2).
 ///
 /// `Predicate` deliberately compares by identity: it is a *statement*
 /// applied to points in a documented argument order, and M-P1 had no
@@ -180,7 +180,7 @@ List<List<GeoPoint>> orbitArguments(PredicateKind kind, List<GeoPoint> points) {
     PredicateKind.contri => [for (final form in _triangleForms(points)) form],
     // The value-carrying kinds list their **value-preserving** forms
     // only: rconst's and aconst's pair swaps transform the value, which
-    // a point list cannot express. No rule matches these kinds (PLAN
+    // a point list cannot express. No rule matches these kinds (DECISIONS
     // §"The constants stack"), so the matcher never binds them; the
     // forms here exist for the contract's sake and are honest as far as
     // they go.

@@ -10,7 +10,7 @@ import 'relative_line.dart';
 /// The line through [through] making a *stated* angle with [reference]:
 /// the direction turned from the reference's by [turn], a rational in
 /// units of π reduced mod 1 — the constants stack's fixed-angle carrier
-/// (PLAN §"The constants stack"). A pair of points on it satisfies
+/// (DECISIONS §"The constants stack"). A pair of points on it satisfies
 /// `aconst(ref…, self…; turn)` by construction, which is what
 /// `hypotheses()` emits and no combination of the angle-free kinds can
 /// state.

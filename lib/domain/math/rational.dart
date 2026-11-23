@@ -1,4 +1,4 @@
-/// An exact rational number, for the prover's algebra (PLAN §"AR is a
+/// An exact rational number, for the prover's algebra (DECISIONS §"AR is a
 /// ℤ-module, not a ℚ-vector space").
 ///
 /// **`BigInt` and not `int`, deliberately.** `int` is not the same type

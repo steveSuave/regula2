@@ -106,7 +106,7 @@ class ToolIgnored extends ToolResult {
 /// tool must be back in its initial state, ready to build the next object
 /// of its kind.
 ///
-/// Hover previews (`onHover` in the PLAN sketch) are deliberately absent
+/// Hover previews (`onHover` in the DECISIONS sketch) are deliberately absent
 /// until the first tool needs them (Phase 6).
 abstract interface class Tool {
   ToolResult onInput(ToolInput input);

@@ -89,7 +89,7 @@ class ProjPoint {
   /// otherwise (points at infinity, complex values, and triples already
   /// compliant pass through untouched).
   ///
-  /// The Phase 137 point-representative contract (PLAN §"Orientation is
+  /// The Phase 137 point-representative contract (DECISIONS §"Orientation is
   /// the representative's sign"): line orientation flows covariantly
   /// through joins and relative-line constructions as products of the
   /// parents' `w` signs, so every point kind normalizes solver and matrix

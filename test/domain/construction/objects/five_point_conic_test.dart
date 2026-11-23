@@ -378,7 +378,7 @@ void main() {
         // between them: its doubled meet with ℓ∞ is only √eps-accurate, so a
         // reconstructed one reads as whichever side the rounding lands on.
         // Harmless, because `kind` labels the curve and never selects a code
-        // path (PLAN §119: a parabola's arm is not a case, it is the arc
+        // path (DECISIONS §119: a parabola's arm is not a case, it is the arc
         // between the parameters where the curve passes through infinity).
         expect(
           ConicShape.of(k.conic!).kind,

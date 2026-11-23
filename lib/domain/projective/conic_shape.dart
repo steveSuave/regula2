@@ -72,7 +72,7 @@ class ConicPolyline {
 /// and — for the three curve classes — a rational parameterization of the
 /// whole curve by one real angle.
 ///
-/// **The parameterization is stereographic** (PLAN §Parameterization): fix a
+/// **The parameterization is stereographic** (DECISIONS §Parameterization): fix a
 /// real point `P₀` on the conic; every line through `P₀` meets the conic in
 /// `P₀` and exactly one further point, so the pencil of lines through `P₀`
 /// — a real projective line — parameterizes the curve bijectively. Writing

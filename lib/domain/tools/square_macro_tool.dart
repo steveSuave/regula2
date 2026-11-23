@@ -34,7 +34,7 @@ import 'regular_polygon_orbit.dart';
 /// scaffolding is not added.
 ///
 /// **Under a proper absolute that composition builds a Saccheri
-/// quadrilateral rather than a square** (Phase 129, PLAN §"The macro
+/// quadrilateral rather than a square** (Phase 129, DECISIONS §"The macro
 /// triage"). Every step of it generalizes — the perpendicular and the
 /// compass circle are both metric — and the figure still comes out with
 /// three equal sides and two right base angles, which in a Cayley–Klein

@@ -21,7 +21,7 @@ class DerivationCheck {
 }
 
 /// Re-matches [derivation] against the rule it names, asking the one
-/// question the `DiagramFilter` structurally cannot (PLAN §M-P2c).
+/// question the `DiagramFilter` structurally cannot (DECISIONS §M-P2c).
 ///
 /// The filter screens every candidate conclusion, so a fact in the
 /// database is numerically true in the diagram. That is a statement

@@ -422,7 +422,7 @@ class ConicMatrix {
 /// propagate zero triples rather than throwing, and a line lying entirely on
 /// a degenerate conic returns two (arbitrary) spanning points of the line.
 ///
-/// Canonical order (old-ordering compatibility, see PLAN §Migration):
+/// Canonical order (old-ordering compatibility, see DECISIONS §Architecture):
 /// - Both points real and finite: increasing parameter along the
 ///   representative's direction `(b, −a)` — exactly [ProjLine.lift] of a
 ///   V1 `LineEq` orders like V1 `intersectLineCircle`. Like V1, flipping

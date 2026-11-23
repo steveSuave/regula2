@@ -56,7 +56,7 @@ class ProofStep {
   bool get isGiven => rule == null;
 }
 
-/// A proof of one goal fact, read out of a [FactDatabase] (PLAN §M-P2c).
+/// A proof of one goal fact, read out of a [FactDatabase] (DECISIONS §M-P2c).
 ///
 /// The edges were stored as the prover ran — every fact carries its
 /// [Derivation] from the moment it was inserted — so this is a walk, not

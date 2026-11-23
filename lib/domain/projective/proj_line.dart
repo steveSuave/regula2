@@ -120,7 +120,7 @@ class ProjLine {
   /// Null exactly where [toLineEq] is.
   ///
   /// This is what makes the representative's sign the single source of
-  /// orientation (PLAN §"Orientation is the representative's sign"):
+  /// orientation (DECISIONS §"Orientation is the representative's sign"):
   /// every line kind projects through this, so a consumer reading the
   /// representative where the chart is missing sees the same orientation
   /// the chart would have carried. The direction is taken from the real

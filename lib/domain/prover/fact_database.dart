@@ -30,12 +30,12 @@ class Derivation {
       : '$rule(${premises.map((f) => '$f').join(', ')})';
 }
 
-/// The prover's fact database (PLAN §M-P2): the derived-so-far set that
+/// The prover's fact database (DECISIONS §M-P2): the derived-so-far set that
 /// forward chaining grows to quiescence, keyed on [Fact]'s canonical
 /// forms so that one statement written two ways is stored once.
 ///
 /// **Every entry carries its [Derivation], from day one**, which is what
-/// PLAN means by the proof DAG being free: the edges are already here,
+/// DECISIONS means by the proof DAG being free: the edges are already here,
 /// and M-P2c only has to walk them.
 ///
 /// Two invariants make that walk safe, and both are enforced rather than

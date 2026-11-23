@@ -16,7 +16,7 @@ import '../geo_object.dart';
 /// and hit-tester's circle arm — nothing special-cases it.
 ///
 /// **[isDefined] is [ConicShape.isDrawable]**, not `GeoCircle`'s default
-/// "projects to a circle" (PLAN §"A conic is drawn by its own
+/// "projects to a circle" (DECISIONS §"A conic is drawn by its own
 /// parameterization"): the migration's "real and finite after projection",
 /// put to a conic. A degenerate five-point set is therefore still defined
 /// when it draws — a crossing or parallel line pair, a doubled line — and

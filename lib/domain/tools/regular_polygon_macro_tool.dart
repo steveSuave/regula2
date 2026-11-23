@@ -7,7 +7,7 @@ import 'multi_point_tool.dart';
 import 'regular_polygon_orbit.dart';
 
 /// Two taps make a regular polygon of [sideCount] sides, and **what the
-/// two taps mean depends on the document's geometry** (Phase 128, PLAN
+/// two taps mean depends on the document's geometry** (Phase 128, DECISIONS
 /// §"A shape is not an angle"):
 ///
 /// - **Euclidean**: A and B are adjacent vertices, and the remaining

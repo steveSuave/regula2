@@ -11,7 +11,7 @@ import '../geo_object.dart';
 /// `LineEq.pointOnLine`, or the polar angle for a circle — and recomputes
 /// its position from the curve's current geometry, so it rides along when
 /// the curve moves. Undefined exactly while the curve's *chart projection*
-/// is: per PLAN §Parameterization the parameter is a real number of the
+/// is: per DECISIONS §Parameterization the parameter is a real number of the
 /// affine chart, so a carrier that is complex or wholly at infinity has no
 /// chart to evaluate in and takes the point down with it.
 ///
@@ -29,7 +29,7 @@ import '../geo_object.dart';
 /// the curve but does not stick to the points that defined it (e.g.
 /// translating a line along itself leaves the constrained point where it
 /// was). Deterministic, same spirit as the intersection-branch ordering
-/// wart in PLAN. Dragging the point *along* its curve re-sets [parameter]
+/// wart in DECISIONS. Dragging the point *along* its curve re-sets [parameter]
 /// via `Construction.setPointOnObjectParameter`, the same way free points
 /// move through `moveFreePoint`.
 ///
@@ -128,7 +128,7 @@ class PointOnObject extends GeoPoint {
 
   /// Position on the curve: arc-length along a line's direction, polar
   /// angle (radians) on a circle. Always real, read in the affine chart
-  /// (PLAN §Parameterization). See the class doc for stability caveats.
+  /// (DECISIONS §Parameterization). See the class doc for stability caveats.
   ///
   /// Mutated only by `Construction.setPointOnObjectParameter` (via
   /// commands) so every change goes through dependent recomputation.
@@ -150,7 +150,7 @@ class PointOnObject extends GeoPoint {
   /// point real — real steps and the sweep's restore re-enter
   /// [recompute], which rebuilds [_point] from the stored real
   /// [parameter] — before returning or throwing. The stored [parameter]
-  /// itself stays real throughout (PLAN §Parameterization).
+  /// itself stays real throughout (DECISIONS §Parameterization).
   set tracedPosition(ProjPoint value) => _point = value;
 
   @override

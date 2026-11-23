@@ -312,7 +312,7 @@ class ProjTransform {
   /// `(ℓᵀc)·I − 2·c·ℓᵀ`, the involution fixing [c] and every point of [l].
   ///
   /// **Reflection and point reflection are both this**, and that is the
-  /// audit's structural result made concrete (PLAN §"The audit"):
+  /// audit's structural result made concrete (DECISIONS §"The audit"):
   ///
   /// - reflection across `ℓ` is the homology about `(poleOf(ℓ), ℓ)`, and
   ///   expanding it under the Euclidean absolute reproduces

@@ -15,7 +15,7 @@ import 'point_resolution.dart';
 /// order picks the side), following drags continuously.
 ///
 /// **How C is built depends on the document's geometry** (Phase 128,
-/// PLAN §"A shape is not an angle"), because a 60° apex is equilateral
+/// DECISIONS §"A shape is not an angle"), because a 60° apex is equilateral
 /// only where a triangle's angles sum to π:
 ///
 /// - **Euclidean**: C is B rotated about A by +60° — a plain

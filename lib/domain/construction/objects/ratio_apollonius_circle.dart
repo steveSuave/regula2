@@ -10,7 +10,7 @@ import '../geo_object.dart';
 /// The Apollonius circle over [point1] (A) and [point2] (B) with a
 /// *stated* rational distance ratio: the locus of points P with
 /// `|PA| / |PB| = ratio` — the constants stack's two-anchor scaled tie
-/// (PLAN §"The constants stack"). A point `p` on it satisfies
+/// (DECISIONS §"The constants stack"). A point `p` on it satisfies
 /// `rconst(p, point1, p, point2; ratio)` by construction, which is what
 /// `hypotheses()` emits; [ApolloniusCircle] draws the same family with
 /// the ratio supplied by a third point, which states `eqratio`, not a

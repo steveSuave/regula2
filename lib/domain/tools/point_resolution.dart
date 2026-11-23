@@ -13,7 +13,7 @@ typedef ResolvedPoint = ({GeoPoint point, bool isNew});
 
 /// Turns a hit-tested tap into the point every point-collecting tool
 /// agrees on — the single resolution ladder shared by `PointTool` and
-/// `MultiPointTool.collectVertex` (PLAN, Phase 20):
+/// `MultiPointTool.collectVertex` (DECISIONS, Phase 20):
 ///
 /// 1. The topmost hit is a point → reuse it. The hit tester ranks any
 ///    in-threshold point above every curve, so this also dedups taps on

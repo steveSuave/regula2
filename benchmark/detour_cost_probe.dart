@@ -4,7 +4,7 @@
 // the Phase 139 floor to bind, the arc plus its exit may not fit the
 // trials left. Phase 139 asked for a pass to decline a detour it cannot
 // afford; this probe was the measurement before building that, and it
-// is the evidence for what was built instead (PLAN §"A pass keeps what
+// is the evidence for what was built instead (DECISIONS §"A pass keeps what
 // it carried across").
 //
 // Two readings:

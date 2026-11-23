@@ -1,4 +1,4 @@
-/// The prover's yield to the event loop (PLAN §"The prover yields with a
+/// The prover's yield to the event loop (DECISIONS §"The prover yields with a
 /// MessageChannel, not a timer") — the primitive Phase 140 measured and
 /// M-P2b is the first consumer of, promoted here from the browser gate's
 /// measurement rig.

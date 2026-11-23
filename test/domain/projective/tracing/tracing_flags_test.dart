@@ -3,7 +3,7 @@ import 'package:regula/domain/projective/tracing/tracing_flags.dart';
 
 /// Phase 139: the trial budget is an amount of work divided by what one
 /// trial of a given construction costs, not a constant number of trials.
-/// PLAN §"The step budget is an amount of work, not a number of trials".
+/// DECISIONS §"The step budget is an amount of work, not a number of trials".
 void main() {
   group('dragStepBudgetFor', () {
     test('the gate rig gets exactly what shipped as the constant', () {

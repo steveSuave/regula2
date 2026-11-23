@@ -18,7 +18,7 @@ enum CarrierKind {
 }
 
 /// A line or a circle as an *object*, carrying the points known to lie
-/// on it (PLAN §"Two closures the rule table is standing in for").
+/// on it (DECISIONS §"Two closures the rule table is standing in for").
 ///
 /// The prover's vocabulary is point-tuples, so a line is named by a pair
 /// of points on it and one line has many names: `para(A,B,C,D)` and
@@ -244,7 +244,7 @@ class CarrierIndex {
   /// These exist because the DD table's implicit non-degeneracy
   /// conditions ride on the numeric screen, and the screen cannot
   /// refuse a degenerate instance whose conclusion is *true* — `0 = 0`,
-  /// `AB ∥ AB` (PLAN §"Nondegeneracy the numeric screen cannot carry").
+  /// `AB ∥ AB` (DECISIONS §"Nondegeneracy the numeric screen cannot carry").
   /// They are load-bearing in the closure, so this is a reading of the
   /// database, not a filter on it: the panel folds them away.
   bool isTrivial(Fact fact) {

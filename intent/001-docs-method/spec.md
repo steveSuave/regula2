@@ -7,7 +7,7 @@ Written 2026-11-23 from the accepted [intent](intent.md) · Status: draft, await
 1. **R1 — One folder per change.** Every change from 001 on lives in `intent/<number>-<slug>/` as `intent.md`, `spec.md`, `plan.md`, in the formats the intent lists. `intent/README.md` is the index: one row per intent with its status, plus a "Parked" list (R6).
 2. **R2 — The decision log gets an honest name.** `docs/PLAN.md` becomes `docs/DECISIONS.md` by `git mv`, content unchanged apart from R3, R4 and its header paragraph.
 3. **R3 — DECISIONS opens with a map.** A new first section, at most one page, names the standing subsystems (projective kernel, tracing/continuation, Cayley–Klein, prover, persistence, the V1 shell), gives each two or three sentences and the headings to read for it, and says where a space kernel attaches. It also carries the long form of the kernel invariants that `CLAUDE.md` keeps as one-liners.
-4. **R4 — Every citation resolves.** Every `DECISIONS §"…"` and `DECISIONS §Word` in `lib/`, `test/`, `benchmark/`, `.github/` and `CLAUDE.md` names text found in a heading of `docs/DECISIONS.md`. A test enforces it.
+4. **R4 — Every citation resolves.** Every `§"…"` and `§Word` in `lib/`, `test/` and `benchmark/` names text found in a heading or bold lead-in of `docs/DECISIONS.md`. A test enforces it.
 5. **R5 — TODO and STATUS are frozen.** `docs/TODO.md` → `docs/archive/TODO-final.md`; `docs/STATUS.md` → `docs/archive/STATUS-sessions-176-186.md`. Both by `git mv`, content as written. `docs/archive/README.md` (new, short) says which name meant what and when.
 6. **R6 — No open item is lost silently.** Each unticked box in `docs/TODO.md` is disposed of by name in `plan.md`: folded into an intent, parked in `intent/README.md` with its trigger, recorded in DECISIONS as a known limit, or dropped.
 7. **R7 — `CLAUDE.md` is about a page.** What the project is, commands, invariants (one line each), conventions, the what-goes-where table, and how to find the active intent. Target: 70 lines or fewer.
@@ -52,11 +52,12 @@ Measured on `intent-method` today:
 Two citations do not resolve today and are fixed by hand in the same commit:
 
 - `"AR is a Z-module"` (`test/domain/prover/angle_chase_test.dart:84`): the heading spells it `ℤ`. The citation changes to `"AR is a ℤ-module"`.
-- `"Proofs must read"` (`lib/domain/prover/angle_chase.dart:10`, `arithmetic_chase.dart:7`): no such heading. The text it means is the two paragraphs at `docs/PLAN.md:630–636` ("A proof obligation, carried from the start" and the one after). They get the heading `#### Proofs must read`; no words in them change.
+- `"Proofs must read"` (`lib/domain/prover/angle_chase.dart:10`, `arithmetic_chase.dart:7`): no such heading. The text it means is two bold-led paragraphs under §"The prover against a real benchmark" ("A proof obligation, carried from the start" and "naming the facts is not yet reading"). They are not adjacent, so a new heading would have swallowed the paragraphs between them; the two citations now name the section and quote the paragraph's lead-in instead. DECISIONS is not changed for this.
+- `§Migration` (4 sites, found during the rewrite): the Migration section was folded into §Architecture when Phase 121 finished, and the canonical-order rule these cite is item 4 there. They now read `§Architecture`.
 
 ### The citation test
 
-`test/docs/decision_citations_test.dart`, plain Dart: collect every `DECISIONS §"…"` and `DECISIONS §Word` from `lib/`, `test/`, `benchmark/` (comment markers and line breaks normalised), and assert each is a substring of some heading line of `docs/DECISIONS.md`. It fails with the file and line of the dangling citation.
+`test/docs/decision_citations_test.dart`, plain Dart: collect every `DECISIONS §"…"` and `DECISIONS §Word` from `lib/`, `test/`, `benchmark/` (comment markers and line breaks normalised), and assert each is a substring of some heading line of `docs/DECISIONS.md` or of a bold lead-in there (that is how the file labels `M-P4`, "compile target" and similar decisions inside a section). It checks every `§` citation, with or without the `DECISIONS` prefix, since chained citations drop it. It fails with the file and line of the dangling citation.
 
 ### `CLAUDE.md`
 

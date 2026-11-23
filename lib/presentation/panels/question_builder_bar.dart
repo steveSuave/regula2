@@ -12,7 +12,7 @@ import '../../domain/prover/question_template.dart';
 import 'object_kind_label.dart';
 import 'proof_panel.dart';
 
-/// The question builder (Phase 160, PLAN §"The question builder"): a
+/// The question builder (Phase 160, DECISIONS §"The question builder"): a
 /// relation picker, the template's slots grouped as the statement
 /// groups them, the verdict the figure gives before any run, and *Ask*.
 ///

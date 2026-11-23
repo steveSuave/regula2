@@ -2,7 +2,7 @@
 # Phase 167: the prover against Newclid's problem corpus.
 #
 # Informational, like every other benchmark here — it reports a baseline
-# and never fails a build. What it is for is the sentence PLAN repeats
+# and never fails a build. What it is for is the sentence DECISIONS repeats
 # five times: "the corpus is the limiting factor, not the algebra". Every
 # later prover phase is kept or deleted on what it moves in this table.
 #

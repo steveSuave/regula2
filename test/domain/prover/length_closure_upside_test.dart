@@ -70,7 +70,7 @@ import 'package:regula/domain/prover/rule_engine.dart';
 /// `l_ab − l_cd − l_ef + l_gh = 0`, and `midp(m,a,b)` is `l_ma − l_mb = 0`
 /// beside `l_ab − l_ma = ln 2`, with `ln 2` carried as one more
 /// variable that no statement may lean on. Lengths are real numbers with
-/// no modulus, so — unlike the angle system (PLAN §"AR is a ℤ-module") —
+/// no modulus, so — unlike the angle system (DECISIONS §"AR is a ℤ-module") —
 /// rational pivots are sound here: `2·l_ab = 2·l_cd` *does* say
 /// `|ab| = |cd|`. Entailment is membership of the row span.
 class _LengthSpan {

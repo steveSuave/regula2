@@ -5,7 +5,7 @@ import 'predicate.dart';
 /// points its premises already found, never conjure new ones, which is
 /// what keeps matching a join rather than a search.
 ///
-/// Rules are *data* the engine matches (PLAN §M-P2: "rules, not code"),
+/// Rules are *data* the engine matches (DECISIONS §M-P2: "rules, not code"),
 /// written in the DD sources' own notation so the table reads against
 /// them: `'cong(o,a,o,b) & cong(p,a,p,b) => perp(o,p,a,b)'`.
 ///
@@ -93,7 +93,7 @@ class RulePattern {
   String toString() => '${kind.name}(${variables.join(',')})';
 }
 
-/// The DD core (PLAN §M-P2b): the forward-chaining rule set, from the
+/// The DD core (DECISIONS §M-P2b): the forward-chaining rule set, from the
 /// open DDAR/Newclid sources — their *statements*, restated over this
 /// vocabulary, never their code. Kept deliberately small: every rule
 /// here is a classical theorem a reader can check line by line, and the
@@ -160,7 +160,7 @@ final List<Rule> ddCoreRules = List.unmodifiable([
   // angle closure *is*: with M-P3 in the exchange, every statement it
   // could store is already entailed, and `Prover.resolve` answers an
   // ask against the closure. It was also the most expensive line in the
-  // table by a wide margin, for a reason PLAN §"Two closures" named
+  // table by a wide margin, for a reason DECISIONS §"Two closures" named
   // before it was measured: an `eqangle` has 128 orbit forms, and a
   // premise pair with no shared variable lets every form of the pivot
   // join every form of every other `eqangle` — 16 384 bind attempts per

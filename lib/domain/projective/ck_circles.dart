@@ -1,5 +1,5 @@
 /// Cayley–Klein circles: the level sets of [distanceBetween] against a
-/// proper [Absolute] (PLAN §"A circle follows its distance measure").
+/// proper [Absolute] (DECISIONS §"A circle follows its distance measure").
 ///
 /// **Circles split the way distance splits, and for the same reason** —
 /// a circle *is* a level set of distance, so wherever the distance

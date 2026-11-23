@@ -88,7 +88,7 @@ void main() {
 
         // Kinds that are *supposed* to be identical: incidence is projective
         // and does not move — that is the dividend the kernel track bought,
-        // not an omission (PLAN §"The audit", tier 1).
+        // not an omission (DECISIONS §"The audit", tier 1).
         const incidence = {
           'FreePoint',
           'LineThroughTwoPoints',

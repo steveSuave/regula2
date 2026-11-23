@@ -7,7 +7,7 @@
 /// is deliberately separate so a parse failure and a translation failure
 /// are never the same error.
 ///
-/// **The corpus is the reason this exists.** `docs/PLAN.md` records five
+/// **The corpus is the reason this exists.** `docs/DECISIONS.md` records five
 /// separate measurements ending in "the corpus is the limiting factor,
 /// not the algebra" — the seven fixtures cannot show a prover feature
 /// working or failing. 879 goals over problems drawn from the
@@ -35,7 +35,7 @@
 /// was supposed to find would measure the corpus's authors rather than
 /// the prover. Phase 153's auxiliary search is what they are for.
 ///
-/// **Several goals after one `?` are a conjunction**, and PLAN §"No
+/// **Several goals after one `?` are a conjunction**, and DECISIONS §"No
 /// compound question" settles what to do with it: the verdict is
 /// three-way about the figure, and a compound whose conjuncts split would
 /// need a fourth answer about the question's shape. So a body with `n`

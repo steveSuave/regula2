@@ -13,7 +13,7 @@ import 'package:regula/domain/prover/rule.dart';
 import 'package:regula/domain/prover/rule_engine.dart';
 
 /// `para_transitive` was deleted from the table in Phase 166, on the
-/// argument Phase 163 made for `eqangle_transitive` (PLAN §"A row sum is
+/// argument Phase 163 made for `eqangle_transitive` (DECISIONS §"A row sum is
 /// not a rule"): it is a row sum, the angle closure publishes `para`,
 /// so every composite the rule could store is stored by the exchange
 /// anyway. Measured one rule at a time over the seven fixtures: no fact

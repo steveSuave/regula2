@@ -9,7 +9,7 @@ part of 'question_draft_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// The question being built, or null while the builder is closed
-/// (Phase 160, PLAN §"The question builder").
+/// (Phase 160, DECISIONS §"The question builder").
 ///
 /// A provider for [selectionProvider]'s reason: the builder's bar and
 /// the canvas share no ancestor worth threading it through, and a canvas
@@ -29,7 +29,7 @@ part of 'question_draft_provider.dart';
 final questionDraftProvider = QuestionDraftNotifierProvider._();
 
 /// The question being built, or null while the builder is closed
-/// (Phase 160, PLAN §"The question builder").
+/// (Phase 160, DECISIONS §"The question builder").
 ///
 /// A provider for [selectionProvider]'s reason: the builder's bar and
 /// the canvas share no ancestor worth threading it through, and a canvas
@@ -47,7 +47,7 @@ final questionDraftProvider = QuestionDraftNotifierProvider._();
 final class QuestionDraftNotifierProvider
     extends $NotifierProvider<QuestionDraftNotifier, QuestionDraft?> {
   /// The question being built, or null while the builder is closed
-  /// (Phase 160, PLAN §"The question builder").
+  /// (Phase 160, DECISIONS §"The question builder").
   ///
   /// A provider for [selectionProvider]'s reason: the builder's bar and
   /// the canvas share no ancestor worth threading it through, and a canvas
@@ -93,7 +93,7 @@ String _$questionDraftNotifierHash() =>
     r'38d6e81ba98820993a9a9e8286d7b7eba98cb12d';
 
 /// The question being built, or null while the builder is closed
-/// (Phase 160, PLAN §"The question builder").
+/// (Phase 160, DECISIONS §"The question builder").
 ///
 /// A provider for [selectionProvider]'s reason: the builder's bar and
 /// the canvas share no ancestor worth threading it through, and a canvas
