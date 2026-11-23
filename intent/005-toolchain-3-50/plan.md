@@ -1,6 +1,6 @@
 # Plan: CI is green again on Flutter stable
 
-Status: awaiting approval. Branch `intent-005-toolchain-3-50`.
+Status: approved 2026-11-23; steps 1–6 done, post-merge checks and the site look remain. Branch `intent-005-toolchain-3-50`.
 
 ## Files that change
 
@@ -38,4 +38,6 @@ Status: awaiting approval. Branch `intent-005-toolchain-3-50`.
 
 - 2026-11-23: trial done and reverted (all green, see spec). Local SDK is already 3.50.1.
 - The SDK checkout's own `pubspec.lock` drift is in `git stash` there; harmless to drop.
-- No commits made yet beyond this spec and plan.
+- Step 1 was partial: only the 3.50.0 notes were found; 3.48, 3.49 and 3.50.1 notes were not. 3.50.0 mentions soft-hyphen rendering, WidgetSpan RTL order and web text-paint fixes; none showed up in the suite, goldens or browser gate. The notes say "Dart 3.13"; the SDK actually reports Dart 3.14.0.
+- Steps 2–5 landed as planned, one commit each. CI runs only on `main` pushes and pull requests, so the branch needed PR #2 to get its run: green in 5m.
+- Local proof on 3.50.1 matched the trial: analyze clean, 3555 + 15 tests, 32 goldens, wasm build, format clean, no `flutter/material.dart` import left, nothing from `package:flutter` in `lib/domain`.
