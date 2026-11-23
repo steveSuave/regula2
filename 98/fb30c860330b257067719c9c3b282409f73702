@@ -1,0 +1,25 @@
+intent/001-docs-method/intent.md
+  s_4a195f9d2ee531::t_7b330951189a26 3,39,41-46
+intent/001-docs-method/plan.md
+  s_4a195f9d2ee531::t_898a9210ab471e 1-64
+intent/001-docs-method/spec.md
+  s_4a195f9d2ee531::t_5e75514a1fafb3 1-85
+intent/README.md
+  s_4a195f9d2ee531::t_7b330951189a26 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "98fb30c860330b257067719c9c3b282409f73702",
+  "prompts": {},
+  "sessions": {
+    "s_4a195f9d2ee531": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d464ce72-2404-435f-b21f-85933b1e35fc",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
