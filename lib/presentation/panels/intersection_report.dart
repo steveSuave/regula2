@@ -15,7 +15,7 @@
 /// worth testing, and that should not need a widget tree to read.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../application/persistence/construction_codec.dart';
 import '../../domain/construction/geometry_change.dart';

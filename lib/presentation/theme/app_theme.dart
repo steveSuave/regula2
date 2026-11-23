@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Light and dark themes with a palette tuned for canvas contrast.
 ///

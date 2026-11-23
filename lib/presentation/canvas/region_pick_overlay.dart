@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// One-shot marquee for picking an export region. Stacked on top of
 /// `GeometryCanvas` and opaque to pointers, so the canvas below can't

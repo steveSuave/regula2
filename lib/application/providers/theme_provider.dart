@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart' show Brightness, ThemeMode;
+import 'package:material_ui/material_ui.dart' show Brightness, ThemeMode;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'preferences_provider.dart';

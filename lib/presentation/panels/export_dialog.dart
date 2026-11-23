@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// How the export frames the construction. `region` is only selectable
 /// once the user has dragged one on the canvas (see `RegionPickOverlay`).

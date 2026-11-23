@@ -16,7 +16,7 @@
 /// widget tree to read.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/command_stack_provider.dart';
