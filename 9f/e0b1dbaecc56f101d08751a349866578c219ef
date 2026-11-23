@@ -1,0 +1,19 @@
+test/docs/decision_citations_test.dart
+  s_4a195f9d2ee531::t_a81a1a38195592 1-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9fe0b1dbaecc56f101d08751a349866578c219ef",
+  "prompts": {},
+  "sessions": {
+    "s_4a195f9d2ee531": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d464ce72-2404-435f-b21f-85933b1e35fc",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
