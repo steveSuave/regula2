@@ -1,0 +1,25 @@
+.github/workflows/deploy.yml
+  s_c92dc30b6f1df1::t_3e89ad36c70f42 1,6,24-30
+404.html
+  s_c92dc30b6f1df1::t_97ea0a78514dca 1-16
+README.md
+  s_c92dc30b6f1df1::t_b8c19233287e87 1,3-4
+index.html
+  s_c92dc30b6f1df1::t_8b7656f49313da 2,4-11,14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "74f4200aa17ef60a059d79f87fb0f25a53f67fcf",
+  "prompts": {},
+  "sessions": {
+    "s_c92dc30b6f1df1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "371047de-b672-42cf-ab17-6d17aeaae986",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
