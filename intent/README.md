@@ -4,7 +4,7 @@ One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md
 
 | # | Intent | Status | Depends on |
 |---|---|---|---|
-| 001 | [Docs follow the intent → spec → plan method](001-docs-method/intent.md) | draft, awaiting review | — |
+| 001 | [Docs follow the intent → spec → plan method](001-docs-method/intent.md) | accepted; [spec](001-docs-method/spec.md) and [plan](001-docs-method/plan.md) drafted, awaiting approval | — |
 | 002 | [regula2 becomes regula again](002-fold-into-regula/intent.md) | draft, awaiting review | 001 |
 | 003 | [Prover is experimental, off by default](003-prover-flag/intent.md) | draft, awaiting review | 002 (so it ships to the final URL) |
 | 004 | [Stereometry](004-stereometry/intent.md) | draft, awaiting review | 001; after 003 |

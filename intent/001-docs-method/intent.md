@@ -1,6 +1,6 @@
 # Intent: project-management files follow Anthropic's intent → spec → plan method
 
-Author: SLevantis, drafted with Claude · Status: draft, awaiting review · 2026-11-17
+Author: SLevantis, drafted with Claude · Status: accepted 2026-11-23 (open questions settled by Claude on the user's delegation; see the end) · drafted 2026-11-17
 
 ## Problem
 
@@ -36,11 +36,13 @@ Anthropic's published method (the AI-native SDLC playbook) is different in kind.
 - Nothing worth keeping from the branch's `docs/INTENT.md` is lost: the product description, non-goals and quality bar move to `CLAUDE.md` or `README.md`.
 - Build on `main`, not on `docs-intent-spec-plan`, so citations are rewritten once (`PLAN §` → `DECISIONS §`) and not twice.
 
-## Open questions
+## Open questions — settled 2026-11-23
 
-- Freezing `STATUS.md` goes beyond the playbook, which says nothing about session logs. Accepted in conversation on 2026-11-16 by not objecting; confirm at review.
-- Does `CLAUDE.md` fit a page with all the kernel invariants, or do the invariants move to a file it points at?
-- Do the completed kernel, Cayley–Klein and prover tracks need retroactive intents? Proposed: no, the archive is their record.
-- The `intent/<number>-<slug>/` layout is this repo's convention; the playbook only says "an `intent/` folder in the product repo".
+The user delegated these ("choose what you would if you'd built it from scratch"). Each is reversible at spec review.
+
+- **Freeze `STATUS.md`?** Yes. Progress and gotchas live in each change's `plan.md`.
+- **Does `CLAUDE.md` fit a page with the kernel invariants?** Each invariant stays in `CLAUDE.md` as one line; its long explanation moves to `docs/DECISIONS.md`.
+- **Retroactive intents for the kernel, Cayley–Klein and prover tracks?** No. This is paperwork only and changes nothing in the app. The archive is their history, `docs/DECISIONS.md` is their standing record, and it gains a one-page architecture map at its top so later intents have something to cite.
+- **`intent/<number>-<slug>/` layout?** Kept.
 
 Source: https://claude.com/resources/articles/the-ai-native-sdlc-playbook
