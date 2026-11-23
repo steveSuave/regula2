@@ -1,0 +1,19 @@
+README.md
+  s_c92dc30b6f1df1::t_ba85448abc67a2 1,3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0ac8b6a7a66ad5cf9e4ed69afaf1def5adb7065",
+  "prompts": {},
+  "sessions": {
+    "s_c92dc30b6f1df1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "371047de-b672-42cf-ab17-6d17aeaae986",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
