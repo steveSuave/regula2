@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/commands/set_geometry_command.dart';

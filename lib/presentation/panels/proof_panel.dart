@@ -16,8 +16,8 @@
 /// widget tree to read.
 library;
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
@@ -34,7 +34,6 @@ import '../../domain/prover/predicate.dart';
 import '../../domain/prover/proof.dart';
 import '../../domain/prover/question_template.dart';
 import '../../domain/prover/questions.dart';
-
 import 'object_kind_label.dart';
 
 /// The statements worth offering as goals: what the run *derived*.
