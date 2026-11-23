@@ -1,4 +1,23 @@
-# regula2 — V2 Plan: Complex Projective Kernel
+# Decisions — the architecture record
+
+This file is the standing record of how the app is built and why: the architecture, and every decision that was pinned by a measurement or a refusal. Code comments cite it as `DECISIONS §"…"`, and `test/docs/decision_citations_test.dart` keeps those citations resolving.
+
+**Read it when a citation or the map below sends you here, not at session start.** Work is tracked in `intent/`; this file changes only when a decision is made or reversed, in the same commit as the code that makes it true.
+
+Until 2026-11-23 this file was `docs/PLAN.md`. Where its older text says "PLAN" it means this file, and where it says "Phase N" it means a step of the old method, whose checklists are in `docs/archive/`.
+
+## Map
+
+Six subsystems, and where each one's decisions are.
+
+- **Projective kernel** (`lib/domain/projective/`). Homogeneous coordinates over ℂ: line ∩ line is always one point, line ∩ conic two, conic ∩ conic four. Every kind stores projective state and the affine getters are projections of it. Start at §"Architecture", whose five numbered points are the long form of the kernel invariants in `CLAUDE.md`; then §"Parameterization", §"The conic constructors, and where the metric enters", §"Orientation is the representative's sign".
+- **Tracing and continuation** (`lib/domain/projective/tracing/`, `drag_session.dart`). A drag is a path; intersection points keep their branch by analytic continuation along it, detouring through complex space around degeneracies. Loci are swept by the same engine. §"Locus on tracing", §"Root collisions", §"The engine says what it costs", §"A round trip is honest", §"Two intersection points may never share a branch", §"A crossing the construction already knows is named, not navigated", §"The step budget is an amount of work", §"A pass keeps what it carried across".
+- **Cayley–Klein geometries.** One document, three geometries, switched as one undoable edit; the metric enters through the absolute conic, which is passed to recompute. The whole of §"M-CK", starting with §"The absolute is carried as its dual" and §"Four tiers of kind".
+- **Prover** (`lib/domain/prover/`). A deductive database with an angle and ratio algebra over ℤ, a numeric screen in front, proofs replayed on the figure. Planar, and independent of the kernel: it reads projected positions only. §"M-P" for the outline, then §"The prover yields with a MessageChannel", §"Two closures the rule table is standing in for", §"AR is a ℤ-module", §"The prover against a real benchmark", §"The constants stack", §"The question builder".
+- **Persistence** (`lib/application/persistence/`). Versioned JSON; version 1 is permanent and the encoder stamps the lowest version that reads back correctly. §"The version field is a requirement, not a build number".
+- **The shell.** Construction DAG, commands and undo, tool state machines, painter, hit-tester, panels, shortcuts. Carried from V1 and extended by new arms, never rewritten. §"Reuse contract"; its design is in `docs/archive/PLAN-v1.md`.
+
+**Where a space kernel attaches** (intent 004). Beside `lib/domain/projective/`, not inside it: the planar kernel stays the kernel of each plane, and geometry inside a plane runs on it in that plane's coordinates. New kinds join the construction DAG and are dispatched by the same painter and hit-tester switches; the camera lives in presentation, so the domain stays frame-free. The outline under §"M-3D" predates intent 004 and is superseded by it where they differ.
 
 ## Context
 
@@ -12,7 +31,7 @@ The driver is the assessment in `docs/V2-assessment.md`: Cinderella-class behavi
 - `isDefined` stops being a graph property and becomes a *rendering* question: "is this point real and finite?",
 - circles become conics through the circular points I=(1,i,0), J=(1,−i,0), which also unlocks Cayley–Klein non-Euclidean geometries nearly free.
 
-Beyond the kernel, the V2 scope (in payoff-per-risk order) is: tracing/continuation engine, port of the ~39 object kinds and ~42 tools, a JGEX-style deductive-database prover with visually replayed proofs, and — last — 3D. The kernel track is planned phase-by-phase in `docs/TODO.md` (Phases 100–122); prover and 3D are milestone outlines below, opened as numbered phases when their time comes.
+Beyond the kernel, the V2 scope (in payoff-per-risk order) is: tracing/continuation engine, port of the ~39 object kinds and ~42 tools, a JGEX-style deductive-database prover with visually replayed proofs, and — last — 3D. The kernel track was planned phase-by-phase (Phases 100–122; checklists in `docs/archive/TODO-completed-phases.md`); prover and 3D are milestone outlines below, opened as numbered phases when their time comes.
 
 Mathematics sources: Richter-Gebert & Kortenkamp's published papers and *Perspectives on Projective Geometry* (Cinderella itself is proprietary — take the math, never code); Chou–Gao–Zhang for the deductive database and area methods; JGEX (open Java), AlphaGeometry DDAR / Newclid (open Python) for rule sets.
 
@@ -252,7 +271,7 @@ Phase 122 was written as "tracing inner loop fully on SoA `Float64List` (no boxe
 
 ## Kernel track (Phases 100–122)
 
-Full checklists live in `docs/TODO.md`. The arc, with the three de-risking spikes marked:
+Full checklists live in `docs/archive/TODO-completed-phases.md`. The arc, with the three de-risking spikes marked:
 
 | Phases | Arc |
 |---|---|
@@ -757,6 +776,8 @@ Independent of the kernel track; can start any time after Phase 112 (it consumes
 
 ### M-3D (last)
 
+*Superseded by `intent/004-stereometry/` where they differ: that intent admits line ∩ line in space and off-plane free points, and replaces the alt-scroll camera with touch gestures.*
+
 - **M-3D0 — decision record, written before any code.** Taxonomy bounded hard: point / line / plane / sphere / circle-as-plane∩sphere / conic-in-a-plane / polyhedra; **general quadric∩quadric excluded permanently** (a quartic space curve — a phase of effort for almost no user value). 2D remains the default *mode*: locked camera, plane-constrained construction, zero tax on the existing one-tap tool UX. Rendering is wireframe `CustomPainter` with painter's-algorithm depth sorting and depth cueing — no `flutter_gpu`/`flutter_scene`. Tracing is *not* generalized to 3D initially; the bounded taxonomy keeps static intersections simple.
 - **M-3D1 — camera.** 4×4 camera; alt-scroll orbit, ctrl-alt-scroll z-dolly — an extension of the existing viewport rotation (V1 Phase 43). Camera lives in presentation; domain stays frame-free.
 - **M-3D2 — 3D kernel types + workplane model.** `ProjPoint3`/`Plane`/`Sphere` (real-first; complexify only where a total-intersection payoff exists), reusing `Complex` and the SoA patterns; `Workplane` as a construction-level current-plane object. 3D objects are new `Geo*3` kinds beside the 2D ones, dispatched by the same painter/hit-tester switches.
@@ -784,7 +805,7 @@ Future sessions must not churn these; they are the V2 dividend (see `docs/archiv
 - **Presentation shell** — toolbar, attributes inspector, object tree, shortcut system (85 actions / 91 bindings / cheat sheet), the `AppAction` switch in `main.dart`, theme, export, file IO, label layout/declutter, grid. Extended with new arms per new kind; never restructured.
 - **Painter / hit-tester contracts** — per-kind switch on the abstract kinds; (priority, distance) lexicographic hit ordering. They gain conic arms; the contracts stand.
 - **Codec shape** — insertion-ordered `{version, viewport, flags, objects:[{id, type, parents, params, attributes}]}`; version bumps are additive with permanent old-version loaders.
-- **Docs & process** — PLAN/STATUS/TODO/archive rotation, CLAUDE.md session protocol, branch-per-phase, analyze-clean + tests-green definition of done, goldens tag-excluded in CI.
+- **Docs & process** — until 2026-11-23, PLAN/STATUS/TODO with archive rotation and a branch per phase; since then one `intent/<number>-<slug>/` folder per change (intent 001). Unchanged across both: analyze-clean + tests-green definition of done, goldens tag-excluded in CI.
 - **Remote, CI and deploy** — `origin` is `github.com:steveSuave/regula2`, and it stopped being a deferred decision on 2026-08-18. Three workflows run on every push to `main`: `ci.yml` (analyze, test, and the `test/web/` browser gate), `benchmarks.yml` (informational, non-failing — see §"The engine says what it costs"), and `deploy.yml`, which builds `--wasm` and publishes to GitHub Pages at `https://stevesuave.github.io/regula2/` under `--base-href "/regula2/"`. **`main` is deployed**, so a merge there is a release. Note that the workflows take `channel: stable` rather than a pinned version, so **CI does not run the SDK development runs** — see §Deferred decisions on the toolchain.
 - **`Vec2`** — permanent as the rendering/UI coordinate type; `LineEq`/`CircleEq` become presentation view structs after Phase 121.
 
