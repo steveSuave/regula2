@@ -13,6 +13,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned, and moved only by an intent: see intent/005-toolchain-3-50.
+          flutter-version: 3.47.2
           cache: true
       - run: flutter pub get
       - run: flutter analyze
