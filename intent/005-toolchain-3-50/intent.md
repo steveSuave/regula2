@@ -1,6 +1,6 @@
 # Intent: CI is green again on Flutter stable
 
-Author: drafted by Claude · Status: part 1 (the pin) done 2026-11-23 on the user's request to fix CI; part 2 (the migration) draft, awaiting review
+Author: drafted by Claude · Status: part 1 (the pin) done 2026-11-23 on the user's request to fix CI; part 2 (the upgrade) accepted 2026-11-23 and next in line
 
 ## Problem
 
@@ -38,4 +38,4 @@ Open, for part 2:
 - The migration is `dart fix --apply --code=migrate_design_widgets` plus `flutter pub add material_ui` (Flutter's guide: docs.flutter.dev/release/breaking-changes/material-ui-and-cupertino-ui). The types in `material_ui` are distinct classes from the SDK's. The suite calls `find.byTooltip` about 80 times, and whether `flutter_test`'s finder matches a `material_ui` `Tooltip` is not stated in the guide; it has to be tried.
 - It needs the local SDK at 3.50.1 (`flutter upgrade` in `~/Code/flutter/flutter-upstream`), which changes the machine, not only the repo.
 - What else 3.48–3.50 changed that the analyzer has not flagged (renderer, wasm, text metrics, goldens).
-- When: before 002, or after the stereometry work starts? Nothing forces it while the pin holds; the in-framework library is deprecated in 3.50, not removed, and the guide gives no removal date.
+- When: settled by the user on 2026-11-23. It is the first step of the next session, before 002.

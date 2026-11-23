@@ -1,6 +1,6 @@
 # Plan: project-management files follow the intent → spec → plan method
 
-Written 2026-11-23 from [spec](spec.md) · Status: approved 2026-11-23; done bar step 10 · Branch: `intent-method`
+Written 2026-11-23 from [spec](spec.md) · Status: done 2026-11-23 · Branch: `intent-method`
 
 ## Files that change
 
@@ -75,3 +75,4 @@ Written 2026-11-23 from [spec](spec.md) · Status: approved 2026-11-23; done bar
 - Step 8 done: analyze clean, 3555 tests (baseline plus the citation test), 15 browser tests.
 - Step 9 done: merged as `057a4ca` and pushed. Deploy and Benchmarks green. **CI failed, at `flutter analyze`, for a reason outside this change:** CI's Flutter stable is now 3.50.1, which deprecates `package:flutter/material.dart` (43 infos, and analyze exits non-zero). Local is 3.47.2, where analyze is clean. Drafted as intent 005.
 - Step 10 open: deleting `docs-intent-spec-plan` waits for the user's go-ahead.
+- Step 10 done: `docs-intent-spec-plan` deleted on the user's go-ahead. `intent-method` deleted too, being merged.
