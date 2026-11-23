@@ -60,7 +60,7 @@ import 'object_attributes.dart';
 /// 136b) and `Sector` (Phase 136c) each read as correct under every
 /// static test and each meant the object could not be continued through.
 /// Phase 136c swept all 52 kinds for the shape; its result is in
-/// `docs/TODO.md`.
+/// `docs/archive/TODO-completed-phases.md`.
 sealed class GeoObject {
   GeoObject({required this.id, ObjectAttributes? attributes})
     : attributes = attributes ?? const ObjectAttributes();
@@ -84,7 +84,7 @@ sealed class GeoObject {
   /// Must be cheap, must not throw on degenerate input — degeneracy makes
   /// the object undefined instead.
   ///
-  /// **Why the absolute is a parameter** (PLAN §"The threading decision").
+  /// **Why the absolute is a parameter** (DECISIONS §"The threading decision").
   /// 38 of the 50 kinds depend on it — incidence does not, but every
   /// metric and affine construction and every measurement does — and a
   /// near-universal dependency belongs in the signature rather than in a
@@ -115,7 +115,7 @@ abstract class GeoPoint extends GeoObject {
 
   Vec2? get position;
 
-  /// The point in homogeneous coordinates — the canonical V2 view (PLAN
+  /// The point in homogeneous coordinates — the canonical V2 view (DECISIONS
   /// §Architecture). New domain code reads this, never [position].
   ///
   /// Abstract since Phase 121. Through the migration this carried a
@@ -142,7 +142,7 @@ abstract class GeoLine extends GeoObject {
   LineEq? get line;
 
   /// The carrier in homogeneous coefficients — the canonical V2 view
-  /// (PLAN §Architecture). New domain code reads this, never [line].
+  /// (DECISIONS §Architecture). New domain code reads this, never [line].
   ///
   /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
   /// lift-from-affine default went. A kind stores homogeneous state,
@@ -190,7 +190,7 @@ abstract class GeoCircle extends GeoObject {
 
   CircleEq? get circle;
 
-  /// The carrier as a projective conic — the canonical V2 view (PLAN
+  /// The carrier as a projective conic — the canonical V2 view (DECISIONS
   /// §Architecture). New domain code reads this, never [circle].
   ///
   /// Abstract since Phase 121 — see [GeoPoint.projPoint] for why the
@@ -231,7 +231,7 @@ abstract class GeoCircle extends GeoObject {
   /// `circle != null` answers that under the **Euclidean** absolute and
   /// only there, because only there is a circle a circle. Under a proper
   /// absolute a Cayley–Klein circle is a conic *bitangent to the
-  /// absolute* (PLAN §"A circle follows its distance measure") — a
+  /// absolute* (DECISIONS §"A circle follows its distance measure") — a
   /// genuine ellipse or hyperbola in the chart — so `toCircleEq` answers
   /// null and every compass circle, three-point circle and triangle
   /// circle in a hyperbolic document reported itself undefined and was

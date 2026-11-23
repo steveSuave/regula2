@@ -6,7 +6,7 @@ import '../../projective/conic_matrix.dart';
 import '../geo_object.dart';
 
 /// The circle around [center] whose radius is a *stated* exact rational
-/// — the constants stack's fixed-radius tie (PLAN §"The constants
+/// — the constants stack's fixed-radius tie (DECISIONS §"The constants
 /// stack"). A point on it satisfies `lconst(p, center; radius)` by
 /// construction, which is what `hypotheses()` emits and what separates
 /// this kind from [FixedRadiusCircle]: that one's float parameter draws

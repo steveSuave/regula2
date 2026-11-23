@@ -70,7 +70,7 @@ class RadicalAxisLine extends GeoLine {
   }
 
   /// [axis] with its representative sign carrying the V1 orientation
-  /// (Phase 137, PLAN §"Orientation is the representative's sign").
+  /// (Phase 137, DECISIONS §"Orientation is the representative's sign").
   /// `radicalAxisOf`'s linear part is `s₁·s₂·(center₂ − center₁)` for
   /// circle-shaped conics with quadratic scales `s₁`, `s₂` — V1's
   /// "normal points centre₁→centre₂" is the raw representative times

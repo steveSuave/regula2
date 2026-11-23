@@ -25,7 +25,7 @@ abstract final class TracingFlags {
 
   /// The trial budget a traced pass gets when [dragStepBudget] does not
   /// pin one: an amount of *work* divided by what one trial of this
-  /// construction costs (Phase 139; PLAN §"The step budget is an amount
+  /// construction costs (Phase 139; DECISIONS §"The step budget is an amount
   /// of work, not a number of trials").
   ///
   /// [objectsPerTrial] is how many objects the pass recomputes on every
@@ -42,7 +42,7 @@ abstract final class TracingFlags {
   ///
   /// Deterministic on purpose: a wall-clock deadline would bound the
   /// same quantity more directly and would make which root a point holds
-  /// depend on the machine. See PLAN for that rejection, and for why the
+  /// depend on the machine. See DECISIONS for that rejection, and for why the
   /// clamps are where they are.
   static int dragStepBudgetFor(int objectsPerTrial) =>
       (dragStepBudgetWork ~/ (objectsPerTrial < 1 ? 1 : objectsPerTrial)).clamp(
@@ -63,7 +63,7 @@ abstract final class TracingFlags {
   /// less budget than it did, so graphs past the ~96-object crossover
   /// behave exactly as before. Their starving frames still cost time
   /// linear in the graph and still have too few trials to finish a
-  /// detour — a pre-existing limit, named in PLAN, whose fix is to
+  /// detour — a pre-existing limit, named in DECISIONS, whose fix is to
   /// decline the detour rather than to raise the number.
   static const int dragStepBudgetMin = 128;
 

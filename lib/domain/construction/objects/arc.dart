@@ -92,7 +92,7 @@ class Arc extends GeoCircle {
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
     // Euclidean only (Phase 125). The carrier circle generalizes, but the angular extent that makes
-    // it an arc is a chart parameterization (PLAN, Parameterization), and
+    // it an arc is a chart parameterization (DECISIONS, Parameterization), and
     // a CK circle is not a Euclidean circle in the chart. The extent would
     // have to be re-founded on the CK angle first.
     if (!absolute.isEuclidean) {

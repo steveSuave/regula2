@@ -1548,7 +1548,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   @override
   Widget build(BuildContext context) {
     final undoRedo = ref.watch(commandStackProvider);
-    // One gate (PLAN "Unified scrollable app bar"): the Material compact
+    // One gate (DECISIONS "Unified scrollable app bar"): the Material compact
     // breakpoint decides only where the panels live (drawers vs docked).
     // The app bar itself is the same at every width — too-narrow windows
     // scroll it horizontally instead of re-arranging it.

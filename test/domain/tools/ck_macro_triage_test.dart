@@ -32,7 +32,7 @@ import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/trapezium_macro_tool.dart';
 
 /// The nine macro tools that survived Phase 128, sorted by what happens
-/// to their *figure* under a proper absolute (Phase 129, PLAN §"The macro
+/// to their *figure* under a proper absolute (Phase 129, DECISIONS §"The macro
 /// triage").
 ///
 /// Unlike the two Phase 128 fixed, these specify their shapes with metric

@@ -4,7 +4,7 @@ import 'predicate.dart';
 ///
 /// A slot is typed so that the builder can say what the next tap should
 /// land on, and so that a carrier can stand in for the pair of points
-/// that names it (PLAN §"The question builder"): JGEX's dialog makes the
+/// that names it (DECISIONS §"The question builder"): JGEX's dialog makes the
 /// user name two points on a line the app already knows.
 enum SlotType {
   /// One point.
@@ -45,7 +45,7 @@ class SlotGroup {
 }
 
 /// The questions the builder can phrase, each as its ordered, typed,
-/// grouped slots (Phase 160, PLAN §"The question builder").
+/// grouped slots (Phase 160, DECISIONS §"The question builder").
 ///
 /// A template is a second way to phrase a question beside the selection
 /// chips, not a replacement: filling one produces the same

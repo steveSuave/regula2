@@ -220,7 +220,7 @@ class _PencilFrame extends _HostFrame {
 /// A conic-glued [PointOnObject]'s parameter names a point of the curve
 /// only through `ConicShape`'s canonical frame, and that frame's discrete
 /// choices switch as the host moves — a stored angle then names a
-/// different point (up to 2.7 world units on the measured rig, PLAN
+/// different point (up to 2.7 world units on the measured rig, DECISIONS
 /// §Parameterization). Statics stay canonical: `recompute` remains a pure
 /// function of (parents, params, ambient), a save carries a canonical
 /// angle, a load re-derives everything — the alternative, re-anchoring
@@ -548,7 +548,7 @@ class _TranslateDragSession implements DragSession {
       : 'translate ${_pointIds.length} points';
 
   /// One traced preview frame: continue branches along the path from the
-  /// previous preview position to [target]. The static-solve bail (PLAN
+  /// previous preview position to [target]. The static-solve bail (DECISIONS
   /// §Risks) stands in every phase: whatever goes wrong inside the
   /// tracing engine — including the step controller starving against a
   /// degeneracy and throwing `TraceStepBudgetException` (Phase 114) —

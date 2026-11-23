@@ -8,7 +8,7 @@ import '../geo_object.dart';
 /// The compass construction with a *stated* rational scale: the circle
 /// around [center] whose radius is [factor] times the distance from
 /// [radiusPoint1] to [radiusPoint2] — the constants stack's scaled tie
-/// (PLAN §"The constants stack"). A point `p` on it satisfies
+/// (DECISIONS §"The constants stack"). A point `p` on it satisfies
 /// `rconst(p, center, radiusPoint1, radiusPoint2; factor)` by
 /// construction, which is what `hypotheses()` emits. At factor 1 the
 /// curve is [CompassCircle]'s, whose `cong` is the plainer statement —

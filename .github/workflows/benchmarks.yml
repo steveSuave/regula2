@@ -1,7 +1,7 @@
 name: Benchmarks
 
 # Informational only — never gates a merge. A shared runner's absolute
-# timings are not what the 8 ms drag budget is about (PLAN §"The engine
+# timings are not what the 8 ms drag budget is about (DECISIONS §"The engine
 # says what it costs"); this exists so an order-of-magnitude regression
 # shows up in the log of every push to main, and so the numbers are one
 # click away rather than a local setup away.

@@ -6,7 +6,7 @@ import 'tool.dart';
 /// Collects a point and a reference line — in either order, the
 /// `PointAndLineTool` flow — and emits the `FixedAngleLine` through the
 /// point at the stated [turn] from the line (Phase 184, the app-facing
-/// half of PLAN §"The constants stack"). The turn comes from a dialog
+/// half of DECISIONS §"The constants stack"). The turn comes from a dialog
 /// before the tool activates, in degrees, and arrives here already
 /// reduced to the carrier's residue: a rational in units of π in
 /// `[0, 1)`.

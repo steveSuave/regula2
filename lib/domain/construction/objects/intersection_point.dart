@@ -26,7 +26,7 @@ import '../object_attributes.dart';
 ///
 /// [branchIndex] (`0..maxBranchCount − 1`) addresses the canonical order,
 /// which agrees with the old deterministic orderings on real transverse
-/// cases (PLAN §Migration):
+/// cases (DECISIONS §Architecture):
 ///
 /// - line ∩ line: one point, the index clamps to it.
 /// - line ∩ circle: ordered along the line's direction. The line parent's
@@ -67,7 +67,7 @@ import '../object_attributes.dart';
 /// numbering, which is what makes those guards total.
 ///
 /// Segments intersect via their infinite carrier line for now — clipping
-/// to the segment's extent is a later refinement (tracked in PLAN).
+/// to the segment's extent is a later refinement (tracked in DECISIONS).
 class IntersectionPoint extends GeoPoint {
   /// Builds the point that is branch [branchIndex] of
   /// `intersectionCandidates(curve1, curve2)` — the caller's order, which
@@ -544,7 +544,7 @@ List<ProjPoint> _lineConicCandidates(
   ];
   // `intersectLineConic` orders along the *representative's* direction,
   // and since Phase 137 that IS the V1 order: the representative's sign
-  // carries every line kind's orientation (PLAN §"Orientation is the
+  // carries every line kind's orientation (DECISIONS §"Orientation is the
   // representative's sign"), and the chart is a positive multiple of it
   // (`ProjLine.toOrientedLineEq`). The chart re-anchor that stood here
   // through Phases 110–136 was deleted as a provable identity — the

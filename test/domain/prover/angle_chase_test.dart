@@ -81,7 +81,7 @@ void main() {
 
     test('a doubled row shows its coefficient, because it is the point', () {
       // The row that entails neither `para` nor `perp` reads as what it
-      // is rather than as either of them (PLAN §"AR is a Z-module").
+      // is rather than as either of them (DECISIONS §"AR is a ℤ-module").
       expect(
         renderAngleEquation(
           AngleEquation({'x': big(2), 'y': big(-2)}, Rational.zero),

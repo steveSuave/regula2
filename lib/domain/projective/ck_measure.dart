@@ -1,5 +1,5 @@
 /// Cayley–Klein measurement: distance and angle against an [Absolute]
-/// (PLAN §"Angle unifies, distance does not").
+/// (DECISIONS §"Angle unifies, distance does not").
 ///
 /// Measurement is the whole of what a change of geometry changes, so this
 /// is where M-CK actually lands. The classical formulas are cross-ratio

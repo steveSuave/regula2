@@ -8,7 +8,7 @@ part of 'proof_highlight_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The objects one proof step is talking about (PLAN §M-P4).
+/// The objects one proof step is talking about (DECISIONS §M-P4).
 ///
 /// A provider rather than widget state because it crosses two widgets
 /// that share no ancestor worth threading it through: the proof panel
@@ -28,7 +28,7 @@ part of 'proof_highlight_provider.dart';
 @ProviderFor(ProofHighlightNotifier)
 final proofHighlightProvider = ProofHighlightNotifierProvider._();
 
-/// The objects one proof step is talking about (PLAN §M-P4).
+/// The objects one proof step is talking about (DECISIONS §M-P4).
 ///
 /// A provider rather than widget state because it crosses two widgets
 /// that share no ancestor worth threading it through: the proof panel
@@ -46,7 +46,7 @@ final proofHighlightProvider = ProofHighlightNotifierProvider._();
 /// reader stops looking at a step.
 final class ProofHighlightNotifierProvider
     extends $NotifierProvider<ProofHighlightNotifier, Set<String>> {
-  /// The objects one proof step is talking about (PLAN §M-P4).
+  /// The objects one proof step is talking about (DECISIONS §M-P4).
   ///
   /// A provider rather than widget state because it crosses two widgets
   /// that share no ancestor worth threading it through: the proof panel
@@ -92,7 +92,7 @@ final class ProofHighlightNotifierProvider
 String _$proofHighlightNotifierHash() =>
     r'e6ea05314029b6db24039a0f36d855532484c507';
 
-/// The objects one proof step is talking about (PLAN §M-P4).
+/// The objects one proof step is talking about (DECISIONS §M-P4).
 ///
 /// A provider rather than widget state because it crosses two widgets
 /// that share no ancestor worth threading it through: the proof panel

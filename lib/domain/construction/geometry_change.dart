@@ -7,7 +7,7 @@ typedef Readdressing = ({String id, int from, int to});
 ///
 /// The return value of `Construction.switchKernel`, and the reason that
 /// method exists rather than a settable `kernel` field: a geometry switch
-/// is a **re-addressing event**, not a display setting (PLAN §"The audit").
+/// is a **re-addressing event**, not a display setting (DECISIONS §"The audit").
 /// `branchIndex` addresses the candidate list *as filtered and ordered
 /// against the absolute*, so the same stored number can name a different
 /// crossing in the new geometry — and a switch that quietly kept the

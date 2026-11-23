@@ -17,7 +17,7 @@ import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 
 /// The two macro tools that name a *shape* — "equilateral triangle",
-/// "regular polygon" — under a proper absolute (Phase 128, PLAN §"A shape
+/// "regular polygon" — under a proper absolute (Phase 128, DECISIONS §"A shape
 /// is not an angle").
 ///
 /// Both used to realise their shape with a rotation through a constant

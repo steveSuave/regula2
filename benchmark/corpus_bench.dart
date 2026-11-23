@@ -1,6 +1,6 @@
 // Phase 167: the prover against a real benchmark, for the first time.
 //
-// `docs/PLAN.md` ends five separate measurements with the same sentence
+// `docs/DECISIONS.md` ends five separate measurements with the same sentence
 // — "the corpus is the limiting factor, not the algebra". The seven
 // fixtures in `test/fixtures/` cannot show a prover feature working or
 // failing: four independent pieces of M-P3 measured to zero on them, the

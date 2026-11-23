@@ -5,7 +5,7 @@ import '../math/vec2.dart';
 /// Numeric truth of the prover's predicates, measured in the Euclidean
 /// chart.
 ///
-/// These are the evaluators behind the model filter (PLAN §M-P1): a
+/// These are the evaluators behind the model filter (DECISIONS §M-P1): a
 /// deduction is only attempted when its conclusion is already numerically
 /// true in the diagram, so each function here answers "does this
 /// predicate hold in this configuration, up to floating-point error?" —

@@ -3,11 +3,11 @@ import '../math/rational.dart';
 import '../math/vec2.dart';
 import 'numeric_checks.dart' as checks;
 
-/// The prover's predicate vocabulary (PLAN §M-P1) — the relations DD
+/// The prover's predicate vocabulary (DECISIONS §M-P1) — the relations DD
 /// forward chaining ranges over, each with its fixed arity in points.
 ///
 /// The three [carriesValue] kinds are the constants stack's vocabulary
-/// (PLAN §"The constants stack", Phases 181–182): facts that state a
+/// (DECISIONS §"The constants stack", Phases 181–182): facts that state a
 /// number as part of their identity. **No DD rule matches them** —
 /// hypotheses state them, the AR translations absorb them, asks answer
 /// them by entailment — so forward chaining still ranges over the ten

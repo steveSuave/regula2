@@ -16,7 +16,7 @@ import '../geo_object.dart';
 /// parabola kind to keep in step. The object-tree label reads the stored
 /// value back, so a parabola still calls itself one.
 ///
-/// Metric, but polynomial (PLAN §"The conic constructors, and where the
+/// Metric, but polynomial (DECISIONS §"The conic constructors, and where the
 /// metric enters"): the whole Euclidean content is the single coefficient
 /// `a² + b²`, so this kind reads its parents' projective accessors and
 /// never touches the chart.
@@ -66,7 +66,7 @@ class FocalConic extends GeoCircle {
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
     // Euclidean only (Phase 125). Focus-directrix is metric through the single coefficient a^2+b^2
-    // (PLAN, the conic constructors), so it *is* substitutable -- but the
+    // (DECISIONS, the conic constructors), so it *is* substitutable -- but the
     // eccentricity it carries is a ratio of distances, and CK distances
     // are logarithms. Deferred with the bifocal one.
     if (!absolute.isEuclidean) {

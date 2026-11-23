@@ -20,7 +20,7 @@ import 'package:regula/domain/math/vec2.dart';
 /// `branchIndex` **means something different afterwards**, so a switch
 /// that merely assigns the new absolute silently moves intersection points
 /// onto other people's crossings. That is the Phase 120c defect arriving
-/// from a third direction, and PLAN §"The audit" called it before the code
+/// from a third direction, and DECISIONS §"The audit" called it before the code
 /// existed.
 void main() {
   const hyperbolic = DocumentKernel(metric: FundamentalConic.hyperbolic);

@@ -44,7 +44,7 @@ abstract class MultiPointTool implements ToolInputPreview {
   int get pointCount;
 
   /// Whether this tool's figure exists at all in a document whose
-  /// geometry is [absolute] (Phase 129, PLAN §"The macro triage").
+  /// geometry is [absolute] (Phase 129, DECISIONS §"The macro triage").
   ///
   /// False refuses every input outright, which is the honest answer where
   /// a macro's figure has no analogue: a rectangle needs four right

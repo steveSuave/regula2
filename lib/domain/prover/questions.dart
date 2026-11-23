@@ -5,7 +5,7 @@ import 'predicate.dart';
 import 'question_spellings.dart';
 
 /// A question about the figure, and every point-tuple spelling of it
-/// (PLAN §M-P4).
+/// (DECISIONS §M-P4).
 ///
 /// **A question is a statement, not a spelling, and that distinction is
 /// load-bearing.** `para(A,B,C,D)` and `para(A,X,C,D)` are *different*

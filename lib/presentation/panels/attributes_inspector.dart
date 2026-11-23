@@ -532,7 +532,7 @@ class _AttributeToggle extends StatelessWidget {
 }
 
 /// The fill opacity the Fill checkbox turns on (the alpha byte 64 of the
-/// PLAN, as the attribute's 0–1 scale); off is null — unfilled.
+/// DECISIONS, as the attribute's 0–1 scale); off is null — unfilled.
 const double _fillAlphaOn = 0.25;
 
 /// The colors the inspector offers, as (tooltip, raw ARGB) pairs; null

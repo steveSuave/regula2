@@ -14,7 +14,7 @@ import 'predicate.dart';
 /// prover's deductions could surface.
 const int defaultProbeCount = 3;
 
-/// The numeric model filter (PLAN §M-P1): a predicate *holds in the
+/// The numeric model filter (DECISIONS §M-P1): a predicate *holds in the
 /// diagram* when it is numerically true in the diagram's own
 /// configuration **and** in [probeCount] random perturbations of every
 /// mutable root — the generalization of `coincidentExistingPoint`'s

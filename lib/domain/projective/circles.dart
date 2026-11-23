@@ -141,7 +141,7 @@ ConicMatrix diameterCircleOf(ProjPoint p, ProjPoint q) => ConicMatrix(
 ///
 /// Collinear (distinct, finite) points zero the quadratic minor, giving
 /// the degenerate line pair (their line, ℓ∞) — the V2 replacement for
-/// "undefined" (PLAN §Migration). Two coincident points make two rows
+/// "undefined" (DECISIONS §Architecture). Two coincident points make two rows
 /// proportional: the exact zero matrix. One point at infinity puts three
 /// of the conic's five points (it, I, J) on ℓ∞, so ℓ∞ is a component:
 /// the line pair (line through the two finite points, ℓ∞).

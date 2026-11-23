@@ -13,7 +13,7 @@ import '../providers/viewport_provider.dart';
 /// (the physical pixel size is this times the export's pixel ratio).
 ///
 /// Export is a read-only view operation — no `Command`, not undoable,
-/// nothing in the save format (PLAN "Export"). This file orchestrates the
+/// nothing in the save format (DECISIONS "Export"). This file orchestrates the
 /// presentation layer's painter, so like the painter it sits outside
 /// `domain/`; the layer rule (domain imports no Flutter) is untouched.
 typedef ExportFraming = ({ViewportState viewport, ui.Size logicalSize});

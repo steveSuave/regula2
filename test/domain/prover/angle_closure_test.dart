@@ -144,7 +144,7 @@ void main() {
   });
 
   group('the 2-theta row — why this is not Gaussian elimination', () {
-    // PLAN §"AR is a ℤ-module, not a ℚ-vector space". This group is the
+    // DECISIONS §"AR is a ℤ-module, not a ℚ-vector space". This group is the
     // decision, executable.
 
     AngleClosure ambiguous() => AngleClosure()

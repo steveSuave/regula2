@@ -7,7 +7,7 @@ import 'vec2.dart';
 ///
 /// **A view struct, not a kernel type (Phase 121).** Lines are computed
 /// as `ProjLine`; this is what one *projects to* for the painter, the
-/// hit-tester, the codec and the chart reads of PLAN §Parameterization,
+/// hit-tester, the codec and the chart reads of DECISIONS §Parameterization,
 /// and it is reached through `ProjLine.toLineEq`, which answers null
 /// where there is no real finite line. Nothing constructs it directly
 /// outside `lib/domain/`, and inside it only through a guard — so the

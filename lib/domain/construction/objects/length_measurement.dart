@@ -22,7 +22,7 @@ import 'sector.dart';
 /// center-and-radius form itself — circumference and arc length are chart
 /// quantities (the metric boundary). A carrier that is not a real circle
 /// (degenerate line pair, complex) leaves the measurement undefined; the
-/// angular extent stays affine metadata per PLAN §Parameterization.
+/// angular extent stays affine metadata per DECISIONS §Parameterization.
 class LengthMeasurement extends GeoMeasurement {
   LengthMeasurement({
     required super.id,

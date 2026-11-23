@@ -9,7 +9,7 @@ import '../../kitchen_sink.dart';
 /// Phase 137: every point kind stores, for an exactly-real finite value, a
 /// representative with `w.re > 0`.
 ///
-/// This is the keystone of representative-founded orientation (PLAN
+/// This is the keystone of representative-founded orientation (DECISIONS
 /// §"Orientation is the representative's sign"): a join's chart direction
 /// is `w₁w₂·(p₂ − p₁)` and a `RelativeLine`'s is `w_P` times the
 /// reference's representative direction, so line orientation flows

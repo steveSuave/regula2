@@ -6,7 +6,7 @@
 /// the projective kernel's *canonical order* is **defined** as the order
 /// this file produces on real transverse cases — that is the contract
 /// `branchIndex` addresses, and every v1 document ever saved carries one
-/// (PLAN §"The version field is a requirement, not a build number": v1 is
+/// (DECISIONS §"The version field is a requirement, not a build number": v1 is
 /// permanent, so the evidence that v2 still numbers its branches the same
 /// way has to be permanent too). Deleting the agreement tests would have
 /// deleted that evidence, not just this module.

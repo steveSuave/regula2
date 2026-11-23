@@ -35,7 +35,7 @@ import '../object_attributes.dart';
 /// of the parents' oriented affine projections — [sign1]/[sign2] are ray
 /// concepts relative to the canonical carrier orientations, which the
 /// representative's sign carries (`ProjLine.toOrientedLineEq`, Phase 137;
-/// PLAN §"Orientation is the representative's sign").
+/// DECISIONS §"Orientation is the representative's sign").
 class LineAngle extends GeoAngle {
   LineAngle({
     required super.id,

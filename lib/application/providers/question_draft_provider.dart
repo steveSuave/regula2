@@ -12,7 +12,7 @@ import 'selection_provider.dart';
 part 'question_draft_provider.g.dart';
 
 /// The question being built, or null while the builder is closed
-/// (Phase 160, PLAN §"The question builder").
+/// (Phase 160, DECISIONS §"The question builder").
 ///
 /// A provider for [selectionProvider]'s reason: the builder's bar and
 /// the canvas share no ancestor worth threading it through, and a canvas
@@ -94,7 +94,7 @@ class QuestionDraftNotifier extends _$QuestionDraftNotifier {
 }
 
 /// What a complete draft spells, and whether the figure already denies
-/// it — the verdict before *OK* (PLAN §"The question builder").
+/// it — the verdict before *OK* (DECISIONS §"The question builder").
 class DraftCheck {
   const DraftCheck({required this.question, required this.refuted});
 

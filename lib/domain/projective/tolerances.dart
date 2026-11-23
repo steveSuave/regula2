@@ -19,7 +19,7 @@
 /// arithmetic rather than geometry tolerances. They are not parameters of
 /// any public signature and are collected here only so the layer's numeric
 /// policy is auditable in one place. Their values were established
-/// empirically by the Phase 102 stress corpus (see docs/STATUS.md session
+/// empirically by the Phase 102 stress corpus (see `docs/archive/`, session
 /// 101 and `benchmark/pencil_stress.dart`); don't tune them without
 /// re-running it.
 library;

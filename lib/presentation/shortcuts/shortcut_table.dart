@@ -111,7 +111,7 @@ enum AppAction {
   randomQuadrilateralStamp,
 }
 
-/// Cheat-sheet grouping, mirroring the PLAN's shortcut tables.
+/// Cheat-sheet grouping, mirroring the DECISIONS's shortcut tables.
 enum ShortcutSection {
   appLevel('Selection & app'),
   viewport('Viewport'),
@@ -132,7 +132,7 @@ enum ShortcutSection {
 /// either — for keys like `=`/`+` where the shifted and unshifted
 /// characters should behave the same.
 ///
-/// [primary] models the PLAN's "Ctrl/Cmd": `true` matches when either
+/// [primary] models the DECISIONS's "Ctrl/Cmd": `true` matches when either
 /// Control or Meta is down, `false` requires both up. Alt is always
 /// required to be up — no binding uses it, and an Alt-modified letter
 /// types special characters on macOS.
@@ -233,11 +233,11 @@ ShortcutBinding _x(
 );
 
 /// The binding table — the single source of truth for every keyboard
-/// shortcut (PLAN "Keyboard shortcuts"). The cheat-sheet overlay renders
+/// shortcut (DECISIONS "Keyboard shortcuts"). The cheat-sheet overlay renders
 /// it; the resolver matches against it; `shortcut_table_test.dart`
 /// rejects ambiguous entries.
 ///
-/// Deliberately absent, per PLAN: `Tab` object cycling (needs cursor
+/// Deliberately absent, per DECISIONS: `Tab` object cycling (needs cursor
 /// tracking; Tab traverses focus meanwhile). `Space`+drag panning lives
 /// in the canvas's gesture code, not here — it is a modifier for a
 /// pointer gesture, not a key action; the cheat sheet lists it (and the

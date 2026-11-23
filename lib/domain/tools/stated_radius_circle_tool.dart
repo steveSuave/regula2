@@ -7,7 +7,7 @@ import 'multi_point_tool.dart';
 /// One tap makes a `StatedRadiusCircle`: the tap resolves to the centre
 /// via the shared point ladder, and the exact [radius] comes from a
 /// dialog before the tool activates (Phase 184, the app-facing half of
-/// PLAN §"The constants stack").
+/// DECISIONS §"The constants stack").
 ///
 /// The twin of `FixedRadiusCircleTool` with the value made exact: that
 /// tool's circle draws the same curve from a float and states nothing a

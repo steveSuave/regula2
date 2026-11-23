@@ -37,7 +37,7 @@ import '../math/rational.dart';
 import '../projective/absolute.dart';
 import 'predicate.dart';
 
-/// Reads the DD hypotheses off a construction (PLAN §M-P2b): every
+/// Reads the DD hypotheses off a construction (DECISIONS §M-P2b): every
 /// predicate the construction *guarantees* by its parent ties, never by
 /// the current positions — the same discipline as `incidence.dart`, which
 /// is what the incidence-shaped hypotheses are read through. A statement

@@ -35,7 +35,7 @@ class ProverPass {
       'pass(dd $applications, ar +$published, ar <- $absorbed)';
 }
 
-/// DD and AR as peers over one fact database (PLAN §M-P3).
+/// DD and AR as peers over one fact database (DECISIONS §M-P3).
 ///
 /// **The exchange is the point, and Phase 152b measured why.** AR run on
 /// a document's hypotheses alone reaches almost nothing — it misses

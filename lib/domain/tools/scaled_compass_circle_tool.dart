@@ -8,7 +8,7 @@ import 'multi_point_tool.dart';
 /// The compass tool with a stated scale: two span points, then the
 /// centre — the compass tool's own order — and a `ScaledCompassCircle`
 /// whose radius is [factor] times the span (Phase 184, the app-facing
-/// half of PLAN §"The constants stack"). The factor comes from a dialog
+/// half of DECISIONS §"The constants stack"). The factor comes from a dialog
 /// before the tool activates.
 ///
 /// At factor 1 the tool builds the plain `CompassCircle` instead: the

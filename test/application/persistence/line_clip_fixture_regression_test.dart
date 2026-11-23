@@ -15,7 +15,7 @@ import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
 /// the bisector must clip through *derived* structural facts, while the
 /// tangent, whose visible points lie on it only by theorem-of-the-figure,
 /// must stay infinite (coincidence is exactly the epsilon test the
-/// design rejects — see PLAN).
+/// design rejects — see DECISIONS).
 void main() {
   late List<GeoObject> objects;
 

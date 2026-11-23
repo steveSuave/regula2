@@ -36,7 +36,7 @@ class LengthConclusion {
 }
 
 /// The boundary between the fact vocabulary and the length algebra
-/// (PLAN §M-P3): predicates in, relations between segment log-lengths
+/// (DECISIONS §M-P3): predicates in, relations between segment log-lengths
 /// out, and conclusions back.
 ///
 /// **A variable is an unordered point pair, and there is no carrier

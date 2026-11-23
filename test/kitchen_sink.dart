@@ -268,7 +268,7 @@ Construction buildKitchenSink() {
 /// instead, and the sweeps that mean "every concrete kind" run over both.
 ///
 /// Every kind here still encodes to a v1 *document*: adding an object type
-/// is novelty, not misreading (PLAN §"The version field is a requirement,
+/// is novelty, not misreading (DECISIONS §"The version field is a requirement,
 /// not a build number") — a v1 reader refuses the unknown type outright
 /// rather than drawing the wrong thing.
 Construction buildPostV1Kinds() {

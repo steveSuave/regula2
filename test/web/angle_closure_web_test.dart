@@ -67,7 +67,7 @@ void main() {
   });
 
   group('the 2θ row, in a browser', () {
-    // The decision PLAN records, executable on the target that ships.
+    // The decision DECISIONS records, executable on the target that ships.
     AngleEquation eqangle(String a, String b, String c, String d) =>
         AngleEquation({
           a: -BigInt.one,

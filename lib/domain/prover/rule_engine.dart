@@ -120,7 +120,7 @@ class ProverEngine {
   }
 
   /// Takes into the pivot queue any fact added to [database] by someone
-  /// else — a peer engine publishing into the same store (PLAN §M-P3's
+  /// else — a peer engine publishing into the same store (DECISIONS §M-P3's
   /// facade).
   ///
   /// Sound because [_facts] is exactly [database]'s list: the engine is
@@ -301,7 +301,7 @@ class ProverEngine {
     final premise = rule.premises[position];
     final candidates = _byKind[premise.kind]!;
     final limit = snapshot[premise.kind]!;
-    // Phase 188 (PLAN §"A fully bound premise is a lookup, not a
+    // Phase 188 (DECISIONS §"A fully bound premise is a lookup, not a
     // join"): the points the earlier premises already fixed. A fact
     // that does not carry every one of them binds under no spelling,
     // so it is skipped before its orbit is built; and a premise with
@@ -416,7 +416,7 @@ bool _admissibleConclusion(PredicateKind kind, List<GeoPoint> points) {
     case PredicateKind.perp:
     case PredicateKind.cong:
       return distinct([0, 1]) && distinct([2, 3]) && !sameSegment(0, 1);
-    // No rule concludes a value-carrying kind (PLAN §"The constants
+    // No rule concludes a value-carrying kind (DECISIONS §"The constants
     // stack"), so these cases are contract completeness: the same
     // shape conditions as cong for the four-point kinds, and one real
     // segment for lconst.

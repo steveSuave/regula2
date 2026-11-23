@@ -175,7 +175,7 @@ ProverQuestion? relationQuestion(
 }
 
 /// Three line-shaped things: are they concurrent? Sugar (Phase 159,
-/// PLAN §"JGEX's question list, compared"): in a point-tuple vocabulary
+/// DECISIONS §"JGEX's question list, compared"): in a point-tuple vocabulary
 /// concurrency is `coll(P, X, Y)` where `P` is a named point on two of
 /// the lines and `X`, `Y` name the third — every pair of carriers with a
 /// named meeting point, every witness pair on the third. With no named

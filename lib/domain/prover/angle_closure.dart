@@ -4,7 +4,7 @@ import '../math/rational.dart';
 /// `Σ cᵥ·θᵥ ≡ constant (mod π)`, with the constant measured **in units
 /// of π** so that "mod π" is [Rational.modOne].
 ///
-/// The vocabulary maps onto this and nothing else (PLAN §M-P3):
+/// The vocabulary maps onto this and nothing else (DECISIONS §M-P3):
 /// `para(l₁,l₂)` is `θ₁ − θ₂ ≡ 0`, `perp(l₁,l₂)` is `θ₁ − θ₂ ≡ ½`, and
 /// `eqangle` on four lines is `−θ_ab + θ_cd + θ_ef − θ_gh ≡ 0`. Chasles
 /// needs no statement at all: it is what addition of these rows *is*.
@@ -130,7 +130,7 @@ enum AngleAddOutcome {
 }
 
 /// The closure of a set of [AngleEquation]s under **integer** linear
-/// combination (PLAN §"AR is a ℤ-module, not a ℚ-vector space").
+/// combination (DECISIONS §"AR is a ℤ-module, not a ℚ-vector space").
 ///
 /// This is the AR half of DDAR for angles, and the thing it is not is a
 /// Gaussian elimination. Rows are kept in echelon form by *lattice*
@@ -292,7 +292,7 @@ class AngleClosure {
   /// refusal, which is the ℤ-module line held for a reader too: when
   /// the closure knows `2Δθ ≡ 0` and is asked for `Δθ`, the answer is
   /// null — not one of the two roots, and not the one the diagram
-  /// happens to sit on (PLAN §"AR is a ℤ-module, not a ℚ-vector
+  /// happens to sit on (DECISIONS §"AR is a ℤ-module, not a ℚ-vector
   /// space"). `entails(equation with that constant)` then answers with
   /// the certificate, so a value read here is provable by the ordinary
   /// ask and never an oracle verdict.

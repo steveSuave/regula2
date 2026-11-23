@@ -1,6 +1,6 @@
 // Complex polynomial root solving for the projective kernel, up to cubics —
 // productionized from the Phase 102 pencil spike, where the recipe was
-// validated (see docs/STATUS.md session 101 and `conic_intersection.dart`,
+// validated (see session 101 in `docs/archive/`, and `conic_intersection.dart`,
 // its main consumer).
 
 import 'dart:math' as math;

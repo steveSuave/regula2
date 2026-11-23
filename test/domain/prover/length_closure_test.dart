@@ -309,7 +309,7 @@ void main() {
 
   group('this is a ℚ elimination — the angle side is not, deliberately', () {
     test('a doubled relation entails the relation itself', () {
-      // The exact step PLAN §"AR is a ℤ-module" forbids for θ, and the
+      // The exact step DECISIONS §"AR is a ℤ-module" forbids for θ, and the
       // reason the two closures are two files. A log-length has no
       // modulus: 2·l₁ = 2·l₂ says |ab| = |cd| and nothing weaker.
       final closure = LengthClosure()..add(row({'a': 2, 'b': -2}));

@@ -15,7 +15,7 @@ import '../projective/absolute.dart';
 enum AuxiliaryFamily { midpoint, foot, meet }
 
 /// A point the prover could construct but the user did not draw — JGEX's
-/// A2, enumerated (PLAN §M-P, Phase 153).
+/// A2, enumerated (DECISIONS §M-P, Phase 153).
 ///
 /// It names its parents by *reference*, which is `Construction.add`'s own
 /// contract: the graph is wired by identity, so a candidate enumerated

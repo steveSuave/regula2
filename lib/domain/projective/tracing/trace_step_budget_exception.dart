@@ -12,7 +12,7 @@
 /// singular parameter, the singularity sits at or past the path's end
 /// (the pass would have to finish at a complex parameter), or the detour
 /// arc itself exhausts the budget. Callers bail to a static solve (the
-/// drag session does — PLAN §Risks).
+/// drag session does — DECISIONS §Risks).
 ///
 /// The construction is left mid-path but *real*: the dragged point sits
 /// at the last trial position (or back at the arc entry after a failed

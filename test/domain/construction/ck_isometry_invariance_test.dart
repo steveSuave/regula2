@@ -55,7 +55,7 @@ void main() {
   /// Whether [o] depends on a chart parameter, directly or through a
   /// parent — the one documented exclusion.
   ///
-  /// `PointOnObject` keeps a *chart* parameter (PLAN §Parameterization):
+  /// `PointOnObject` keeps a *chart* parameter (DECISIONS §Parameterization):
   /// a polar angle or a signed arclength, read in the affine chart. An
   /// isometry moves the host curve, and the point stays at the same
   /// parameter on the moved curve rather than at the image of where it

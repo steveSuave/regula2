@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'proof_highlight_provider.g.dart';
 
-/// The objects one proof step is talking about (PLAN §M-P4).
+/// The objects one proof step is talking about (DECISIONS §M-P4).
 ///
 /// A provider rather than widget state because it crosses two widgets
 /// that share no ancestor worth threading it through: the proof panel

@@ -1,4 +1,4 @@
-/// The proof panel: what the prover derived, and why (PLAN §M-P4).
+/// The proof panel: what the prover derived, and why (DECISIONS §M-P4).
 ///
 /// Two levels, because a proof needs a goal before it can be a proof.
 /// The panel lists the statements the run *derived* — a hypothesis is
@@ -183,7 +183,7 @@ String stepReason(ProofStep step) => step.isGiven
 /// empty for every other step.
 ///
 /// `angle arithmetic from [1], [2], [4]` names what a step used and
-/// explains nothing, which is the black box PLAN refused Wu over. These
+/// explains nothing, which is the black box DECISIONS refused Wu over. These
 /// are the relations it added up, one line each: in θ for the angle
 /// side, and multiplicatively in `|AB|` for the length side. See
 /// `AngleChase` for why the multiple belongs to an equation rather than

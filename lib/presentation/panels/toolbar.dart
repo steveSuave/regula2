@@ -154,7 +154,7 @@ const _circleBuilders = {
 };
 const _twoPointCircleBuilders = {buildCircle, buildDiameterCircle};
 
-/// The tool palette (PLAN "Toolbar / tool palette"): a Move/select
+/// The tool palette (DECISIONS "Toolbar / tool palette"): a Move/select
 /// button followed by the flyout groups — Points, Lines, Circles,
 /// Angles, Transform, Macros, Measure. The active tool's group icon is
 /// highlighted; the Move button deactivates it (highlighted while no
@@ -163,7 +163,7 @@ const _twoPointCircleBuilders = {buildCircle, buildDiameterCircle};
 /// touch, where there is no Esc key and a double tap fights the flyout).
 /// The macro tools whose figure a non-Euclidean document has no place
 /// for, and the reason each — shown in the row's subtitle while it is
-/// disabled (Phase 129, PLAN §"The macro triage").
+/// disabled (Phase 129, DECISIONS §"The macro triage").
 ///
 /// The tools refuse these documents themselves
 /// (`MultiPointTool.availableUnder`); this is the same fact written where
@@ -182,7 +182,7 @@ const euclideanOnlyMacros = <AppAction, String>{
 /// the vocabulary they feed is: a rational turn of π, a stated length
 /// and a stated ratio are chart statements, and a Cayley–Klein measure
 /// is a logarithm — reinterpreting the number would change what the
-/// hypothesis asserts (PLAN §"The constants stack"). Same arrangement as
+/// hypothesis asserts (DECISIONS §"The constants stack"). Same arrangement as
 /// [euclideanOnlyMacros]: the tools refuse the document themselves, and
 /// `toolbar_test` checks the two against each other.
 const euclideanOnlyConstants = <AppAction, String>{

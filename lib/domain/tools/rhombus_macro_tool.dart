@@ -28,7 +28,7 @@ import 'tool.dart';
 ///   parallel through a point" is the uniqueness a Cayley–Klein plane
 ///   exists to deny, so the Euclidean route has no analogue there; an
 ///   equilateral quadrilateral does, and a rhombus's diagonal is an axis
-///   of symmetry in every geometry. Not the Euclid I.1 route PLAN
+///   of symmetry in every geometry. Not the Euclid I.1 route DECISIONS
 ///   §"The macro triage" recorded — see [_metricCornerD] for what
 ///   measuring it found.
 ///
@@ -173,7 +173,7 @@ class RhombusMacroTool extends MultiPointTool {
   /// |CB| = |AB| already because C rides the compass circle about B: all
   /// four sides equal, in every geometry.
   ///
-  /// **This is not the route PLAN §"The macro triage" recorded**, which
+  /// **This is not the route DECISIONS §"The macro triage" recorded**, which
   /// was Euclid I.1 — D as the crossing of the compass circles about A
   /// and about C other than B. That construction is correct and its
   /// branch is unstable, for the reason [mirrorPointAcross]'s own doc
@@ -184,7 +184,7 @@ class RhombusMacroTool extends MultiPointTool {
   /// onto B at the crossing and stays pinned there for the rest of the
   /// sweep, the figure folded flat onto triangle ABC with no drag that
   /// recovers it. Every side stays equal throughout, which is why the
-  /// obvious test cannot see it. See PLAN §"The macro triage" and Phase
+  /// obvious test cannot see it. See DECISIONS §"The macro triage" and Phase
   /// 138.
   ({List<GeoObject> scaffolding, GeoPoint corner}) _metricCornerD({
     required GeoPoint a,

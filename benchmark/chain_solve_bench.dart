@@ -1,7 +1,7 @@
 // Phase 122: where a chain solve actually goes.
 //
 // The unit that matters in this engine is the *chain solve* — one recompute
-// of the affected subgraph (PLAN §"The engine says what it costs"). A drag
+// of the affected subgraph (DECISIONS §"The engine says what it costs"). A drag
 // frame is hundreds of them and a locus sweep is hundreds more, so anything
 // worth optimizing has to be visible here. This breaks one down.
 //

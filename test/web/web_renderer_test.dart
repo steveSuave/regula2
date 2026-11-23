@@ -23,7 +23,7 @@ import 'package:regula/presentation/canvas/geometry_painter.dart';
 /// VM and CanvasKit's are different implementations.
 ///
 /// Run with `flutter test --platform chrome`. Web is the primary target
-/// (PLAN §compile target), so anything whose correctness depends on the
+/// (DECISIONS §compile target), so anything whose correctness depends on the
 /// rasterizer rather than on our own arithmetic belongs here.
 void main() {
   const size = Size(400, 300);
