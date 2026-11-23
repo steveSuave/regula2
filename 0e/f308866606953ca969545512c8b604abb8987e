@@ -1,0 +1,23 @@
+intent/001-docs-method/plan.md
+  s_4a195f9d2ee531::t_00e75e2ac35bff 3,78
+intent/005-toolchain-3-50/intent.md
+  s_4a195f9d2ee531::t_c53f0a0b0ba96a 3,41
+intent/README.md
+  s_4a195f9d2ee531::t_c7437104eeccca 7,11,15-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0ef308866606953ca969545512c8b604abb8987e",
+  "prompts": {},
+  "sessions": {
+    "s_4a195f9d2ee531": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d464ce72-2404-435f-b21f-85933b1e35fc",
+        "model": "unknown"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
