@@ -1,0 +1,19 @@
+docs/DECISIONS.md
+  s_11a21a1b0d663f::t_4d2936e78fd9b2 859
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b8249cc8356f5160247076697fc17f317ae93cd2",
+  "prompts": {},
+  "sessions": {
+    "s_11a21a1b0d663f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15148504-623a-4ff9-86aa-895d4e1b480f",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
