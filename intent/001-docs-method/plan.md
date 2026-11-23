@@ -68,3 +68,7 @@ Written 2026-11-23 from [spec](spec.md) · Status: draft, awaiting approval · B
 - Departures from the plan, spec updated in the same commit: no `#### Proofs must read` heading (the two paragraphs are not adjacent; the citations were repointed); four `§Migration` citations found dangling and repointed to `§Architecture`; the test also accepts bold lead-ins and checks `§` citations without the `DECISIONS` prefix.
 - Gotcha: 13 rewritten comment lines are now 81–84 columns (`DECISIONS` is five letters longer). There is no line-length lint and `dart format` does not wrap comments; left as they are.
 - Gotcha: `docs/STATUS.md` and `docs/TODO.md` references in four code comments now point into `docs/archive/`.
+- Steps 4–7 done. The map's citations were checked against the headings by hand (the test reads Dart files only).
+- Departure: the kernel invariants' long form was already §Architecture's five numbered points, so nothing moved into DECISIONS for them. What `CLAUDE.md` dropped and DECISIONS did not have is now there: §"A green suite is not evidence about the renderer" and §"Known limits, carried from the old checklist".
+- `CLAUDE.md` is 58 lines. It gained one invariant from the superseded branch's quality bar ("The figure never lies").
+- New convention, not in the spec: work branches are named `intent-NNN-<slug>` (in `continue-build.md`).

@@ -1,20 +1,29 @@
 # Intents
 
-One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md` (what is asked for), then `spec.md` (what was decided), then `plan.md` (how it is built and proved). The user reviews and accepts an intent before its spec is written.
+One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md` (what is asked for), then `spec.md` (what was decided), then `plan.md` (how it is built and proved, and how far it has got). The user accepts an intent before its spec is written, and approves a plan before code.
 
 | # | Intent | Status | Depends on |
 |---|---|---|---|
-| 001 | [Docs follow the intent → spec → plan method](001-docs-method/intent.md) | accepted; [spec](001-docs-method/spec.md) and [plan](001-docs-method/plan.md) drafted, awaiting approval | — |
+| 001 | [Docs follow the intent → spec → plan method](001-docs-method/intent.md) | in progress; see its [plan](001-docs-method/plan.md) | — |
 | 002 | [regula2 becomes regula again](002-fold-into-regula/intent.md) | draft, awaiting review | 001 |
 | 003 | [Prover is experimental, off by default](003-prover-flag/intent.md) | draft, awaiting review | 002 (so it ships to the final URL) |
 | 004 | [Stereometry](004-stereometry/intent.md) | draft, awaiting review | 001; after 003 |
 
-## Where the next session starts ("continue")
+## Where the next session starts
 
-Written 2026-11-17 on branch `intent-method`, which is `main` plus this folder. Nothing here is on `main` yet.
+Finish 001 if its plan shows steps open. Then 002, 003, 004 in order: the user reviews each intent, then spec and plan, then code.
 
-1. The user reviews the four intents and corrects them.
-2. Intent 001 goes first: write its `spec.md` and `plan.md`, do the restructure on this branch, and merge to `main`. The user requires the restructure before anything merges.
-3. Then 002, 003, 004 in order, each through spec and plan before code.
+## Parked
 
-Until 001 lands, `CLAUDE.md` and `docs/` on this branch still describe the old method (PLAN / TODO / STATUS). Where they disagree with this folder, this folder is current. The branch `docs-intent-spec-plan` is superseded by intent 001 and is not to be merged.
+Open items from the old checklist that are not intents yet. Each becomes an intent when its trigger fires, and not before.
+
+| Item | Trigger |
+|---|---|
+| Android emulator smoke; iOS simulator smoke and `flutter build ios` | Intent 004's first milestone, which requires a phone. Needs an AVD with a system image, and a complete Xcode install with CocoaPods |
+| The Newclid comparison (old Phase 176) | Newclid ships past 3.0.1, or fixes either crash class (`LengthEquationPredicate is not implemented`; the pydantic error on degenerate `simtri`). Check with `pip index versions newclid` |
+| Prover carries (old Phase 186): `readFact` on a listed `eqangle` can read magnitude-false; the re-glance on old `entails`-based zeros; `regular_hexagon#2`'s quiescence asterisk | The prover comes back out from behind intent 003's flag |
+| The proof sheet looked at on a narrow window (old Phase 154) | Folded into intent 003's proof. Take Chrome out of macOS fullscreen before resizing |
+
+Dropped: hand-written SVG export (a stretch item since V1 Phase 19).
+
+The full text of each item is in `docs/archive/TODO-final.md`.

@@ -12,6 +12,11 @@ instantly: the construction is a DAG in which free points are the only mutable
 roots and everything else recomputes from its parents. Every user action is a
 reversible command, so the whole history undoes and redoes.
 
+It is for people who teach, learn or explore geometry: students, teachers, and
+people setting up olympiad-style problems. They expect the figure to move
+continuously when they drag, to be able to explain itself, and to run where they
+already are, in a browser tab or on a phone.
+
 ## What "V2" means
 
 This is the second version of **regula**, a Flutter dynamic geometry app whose
@@ -79,9 +84,21 @@ Document and workspace:
   **PNG export**
 - **Light/dark theme**
 
-In progress: a JGEX-style deductive-database theorem prover with visually replayed
-proofs (the predicate vocabulary and its numeric diagram filter have landed), and,
-after it, 3D. See `docs/PLAN.md` and `docs/TODO.md`.
+Also built in: a JGEX-style deductive-database theorem prover whose proofs replay
+step by step on the figure. Next is stereometry; see `intent/README.md`.
+
+## Non-goals
+
+Decided, with the reasoning in `docs/DECISIONS.md`:
+
+- **No general quadric ∩ quadric in 3D.** It is a quartic space curve: a great
+  deal of effort for almost no user value.
+- **No Wu's method or Gröbner bases in the prover.** Their proofs are unreadable.
+- **No code from Cinderella.** It is proprietary; the mathematics comes from the
+  published papers. JGEX, DDAR and Newclid are sources for rule sets, not code.
+- **No GPU rendering stack for 3D.** `CustomPainter` with depth sorting.
+- **No rewrite of the V1 shell.** Toolbar, inspector, object tree, shortcuts,
+  command stack and construction DAG gain new arms and are never restructured.
 
 ## Getting started
 
@@ -117,6 +134,7 @@ rather than on our own arithmetic; a plain `flutter test` skips them.
 `lib/domain/` is pure Dart — it never imports `package:flutter/*` — and is unit
 tested in isolation; the boundary is crossed only through `lib/application/`.
 
-Architecture and decisions live in `docs/PLAN.md`, the phase-by-phase roadmap in
-`docs/TODO.md`, and the session log in `docs/STATUS.md`. `CLAUDE.md` states the
-invariants any change has to keep.
+Each change is one folder under `intent/` (intent, then spec, then plan);
+`intent/README.md` is the index. Architecture and pinned decisions live in
+`docs/DECISIONS.md`, the history of the old phase-by-phase method in
+`docs/archive/`. `CLAUDE.md` states the invariants any change has to keep.
