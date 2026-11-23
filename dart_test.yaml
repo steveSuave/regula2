@@ -1,5 +1,0 @@
-tags:
-  # Pixel goldens are generated on macOS and differ per platform/renderer;
-  # CI runs `flutter test --exclude-tags golden`. Regenerate locally with
-  # `flutter test --update-goldens --tags golden`.
-  golden:
