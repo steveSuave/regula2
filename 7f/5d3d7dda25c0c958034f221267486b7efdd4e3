@@ -1,0 +1,19 @@
+docs/archive/README.md
+  s_4a195f9d2ee531::t_604522d8732ef0 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7f5d3d7dda25c0c958034f221267486b7efdd4e3",
+  "prompts": {},
+  "sessions": {
+    "s_4a195f9d2ee531": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d464ce72-2404-435f-b21f-85933b1e35fc",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
