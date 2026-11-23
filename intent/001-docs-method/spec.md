@@ -1,6 +1,6 @@
 # Spec: project-management files follow the intent → spec → plan method
 
-Written 2026-11-23 from the accepted [intent](intent.md) · Status: draft, awaiting approval
+Written 2026-11-23 from the accepted [intent](intent.md) · Status: approved 2026-11-23
 
 ## Requirements
 

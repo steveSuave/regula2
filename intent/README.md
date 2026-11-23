@@ -4,14 +4,15 @@ One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md
 
 | # | Intent | Status | Depends on |
 |---|---|---|---|
-| 001 | [Docs follow the intent → spec → plan method](001-docs-method/intent.md) | in progress; see its [plan](001-docs-method/plan.md) | — |
+| 001 | [Docs follow the intent → spec → plan method](001-docs-method/intent.md) | done 2026-11-23, bar deleting branch `docs-intent-spec-plan` (needs the user's go-ahead); [spec](001-docs-method/spec.md), [plan](001-docs-method/plan.md) | — |
 | 002 | [regula2 becomes regula again](002-fold-into-regula/intent.md) | draft, awaiting review | 001 |
 | 003 | [Prover is experimental, off by default](003-prover-flag/intent.md) | draft, awaiting review | 002 (so it ships to the final URL) |
 | 004 | [Stereometry](004-stereometry/intent.md) | draft, awaiting review | 001; after 003 |
+| 005 | [CI is green again on Flutter stable](005-toolchain-3-50/intent.md) | draft, awaiting review | —; proposed to go before 002 |
 
 ## Where the next session starts
 
-Finish 001 if its plan shows steps open. Then 002, 003, 004 in order: the user reviews each intent, then spec and plan, then code.
+**CI on `main` is red, and not from anything in the tree:** Flutter stable moved to 3.50.1 and deprecated `package:flutter/material.dart`. Intent 005 is the fix and is proposed first. Then 002, 003, 004 in order: the user reviews each intent, then spec and plan, then code.
 
 ## Parked
 

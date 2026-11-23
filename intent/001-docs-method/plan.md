@@ -1,6 +1,6 @@
 # Plan: project-management files follow the intent → spec → plan method
 
-Written 2026-11-23 from [spec](spec.md) · Status: draft, awaiting approval · Branch: `intent-method`
+Written 2026-11-23 from [spec](spec.md) · Status: approved 2026-11-23; done bar step 10 · Branch: `intent-method`
 
 ## Files that change
 
@@ -72,3 +72,6 @@ Written 2026-11-23 from [spec](spec.md) · Status: draft, awaiting approval · B
 - Departure: the kernel invariants' long form was already §Architecture's five numbered points, so nothing moved into DECISIONS for them. What `CLAUDE.md` dropped and DECISIONS did not have is now there: §"A green suite is not evidence about the renderer" and §"Known limits, carried from the old checklist".
 - `CLAUDE.md` is 58 lines. It gained one invariant from the superseded branch's quality bar ("The figure never lies").
 - New convention, not in the spec: work branches are named `intent-NNN-<slug>` (in `continue-build.md`).
+- Step 8 done: analyze clean, 3555 tests (baseline plus the citation test), 15 browser tests.
+- Step 9 done: merged as `057a4ca` and pushed. Deploy and Benchmarks green. **CI failed, at `flutter analyze`, for a reason outside this change:** CI's Flutter stable is now 3.50.1, which deprecates `package:flutter/material.dart` (43 infos, and analyze exits non-zero). Local is 3.47.2, where analyze is clean. Drafted as intent 005.
+- Step 10 open: deleting `docs-intent-spec-plan` waits for the user's go-ahead.
