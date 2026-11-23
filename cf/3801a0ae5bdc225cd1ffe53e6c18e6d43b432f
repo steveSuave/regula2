@@ -1,0 +1,89 @@
+lib/main.dart
+  s_11a21a1b0d663f::t_a926a1b8d2d0a8 7
+lib/presentation/canvas/geometry_canvas.dart
+  s_11a21a1b0d663f::t_b61ba620c4b8f6 7
+lib/presentation/canvas/name_points_hint.dart
+  s_11a21a1b0d663f::t_5ca58e4c8f4f2e 2
+lib/presentation/canvas/trace_stats_overlay.dart
+  s_11a21a1b0d663f::t_a636fa471c6465 2
+lib/presentation/panels/attributes_inspector.dart
+  s_11a21a1b0d663f::t_963f5be0086168 2
+lib/presentation/panels/delete_selection.dart
+  s_11a21a1b0d663f::t_962bd39a54a51c 2
+lib/presentation/panels/geometry_menu.dart
+  s_11a21a1b0d663f::t_22079f38f6543b 2
+lib/presentation/panels/object_tree_panel.dart
+  s_11a21a1b0d663f::t_6d051fbdff1d68 3
+lib/presentation/panels/proof_panel.dart
+  s_11a21a1b0d663f::t_aa717df1a224d8 20
+lib/presentation/panels/question_builder_bar.dart
+  s_11a21a1b0d663f::t_5472a2c185bde1 2
+lib/presentation/panels/toolbar.dart
+  s_11a21a1b0d663f::t_1c10ab09bbb81d 4
+test/application/providers/theme_provider_test.dart
+  s_11a21a1b0d663f::t_6f410b20512943 3
+test/presentation/app_bar_layout_test.dart
+  s_11a21a1b0d663f::t_b2374147cb713b 3
+test/presentation/canvas/ck_presentation_test.dart
+  s_11a21a1b0d663f::t_6f5b7af1def6f6 4
+test/presentation/canvas/geometry_canvas_test.dart
+  s_11a21a1b0d663f::t_b510618dba8539 7
+test/presentation/canvas/grid_snap_flow_test.dart
+  s_11a21a1b0d663f::t_a93ec29c3113ba 3
+test/presentation/canvas/locus_clip_test.dart
+  s_11a21a1b0d663f::t_06bea3092d51b2 6
+test/presentation/delete_tool_flow_test.dart
+  s_11a21a1b0d663f::t_92826ff499a49e 5
+test/presentation/export_flow_test.dart
+  s_11a21a1b0d663f::t_fdd85bc3b93cd3 7
+test/presentation/file_menu_test.dart
+  s_11a21a1b0d663f::t_900cacb27052d6 8
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_11a21a1b0d663f::t_2c2215875e46e4 7
+test/presentation/grid_menu_test.dart
+  s_11a21a1b0d663f::t_9a1486d302083f 3
+test/presentation/hide_tool_flow_test.dart
+  s_11a21a1b0d663f::t_359acc6166c989 5
+test/presentation/name_points_flow_test.dart
+  s_11a21a1b0d663f::t_3e697fd55eecc9 3
+test/presentation/panels/attributes_inspector_test.dart
+  s_11a21a1b0d663f::t_db7bc6de0673bb 5
+test/presentation/panels/geometry_menu_test.dart
+  s_11a21a1b0d663f::t_8a2acf816d225f 5
+test/presentation/panels/intersection_report_test.dart
+  s_11a21a1b0d663f::t_af519288a8f755 2
+test/presentation/panels/object_tree_panel_test.dart
+  s_11a21a1b0d663f::t_350e21fe8fcc96 4
+test/presentation/panels/proof_panel_test.dart
+  s_11a21a1b0d663f::t_efa4cbbdc54ec3 8
+test/presentation/panels/question_builder_bar_test.dart
+  s_11a21a1b0d663f::t_ad68aba59a5f81 3
+test/presentation/panels/toolbar_test.dart
+  s_11a21a1b0d663f::t_8bd4bc8bf1ebc3 6
+test/presentation/shortcuts/cheat_sheet_test.dart
+  s_11a21a1b0d663f::t_6146d6813c0a82 4
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_11a21a1b0d663f::t_262775f7122b07 4
+test/presentation/text_tool_flow_test.dart
+  s_11a21a1b0d663f::t_dcced48f1df061 4
+test/presentation/theme/app_theme_test.dart
+  s_11a21a1b0d663f::t_47adddb87f88e2 2
+test/presentation/theme_toggle_test.dart
+  s_11a21a1b0d663f::t_0196273ea2bc5d 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cf3801a0ae5bdc225cd1ffe53e6c18e6d43b432f",
+  "prompts": {},
+  "sessions": {
+    "s_11a21a1b0d663f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15148504-623a-4ff9-86aa-895d4e1b480f",
+        "model": "unknown"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
