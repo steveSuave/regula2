@@ -1,0 +1,19 @@
+docs/DECISIONS.md
+  s_4a195f9d2ee531::t_6fdb3de63ed755 1-20,34,274,779-780,808
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d68826bd1031ee0f15fb65164974765df50fe122",
+  "prompts": {},
+  "sessions": {
+    "s_4a195f9d2ee531": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d464ce72-2404-435f-b21f-85933b1e35fc",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
